@@ -1,0 +1,62 @@
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+venv/
+.venv/
+**/venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
+logs/
+**/logs/
+
+# Testing
+.coverage
+coverage/
+.pytest_cache/
+htmlcov/
+**/htmlcov/
+
+# Temporary files
+*.tmp
+*.bak
+.cache/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Project specific
+.secrets.baseline
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker volumes
+postgres_data/
+redis_data/

@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revu - Visual Mockups</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f9fafb;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+
+        .mockup-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .mockup-section {
+            margin-bottom: 4rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .mockup-header {
+            background: #6366f1;
+            color: white;
+            padding: 1.5rem 2rem;
+        }
+
+        .mockup-content {
+            padding: 2rem;
+        }
+
+        /* Landing Page Styles */
+        .landing-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #4b5563;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: #6366f1;
+        }
+
+        .hero-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            padding: 4rem 2rem;
+            align-items: center;
+        }
+
+        .hero-content h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #111827;
+        }
+
+        .hero-content p {
+            font-size: 1.25rem;
+            color: #6b7280;
+            margin-bottom: 2rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4f46e5;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #6366f1;
+            border: 2px solid #6366f1;
+        }
+
+        .btn-secondary:hover {
+            background: #f3f4f6;
+        }
+
+        .hero-graphic {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 12px;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .feature-box {
+            padding: 2rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .feature-box:hover {
+            border-color: #6366f1;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .feature-box.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-description {
+            color: #6b7280;
+            margin-bottom: 1rem;
+        }
+
+        /* Dashboard Styles */
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            height: 100vh;
+            background: #f9fafb;
+        }
+
+        .sidebar {
+            background: white;
+            box-shadow: 1px 0 3px rgba(0,0,0,0.1);
+            padding: 2rem 0;
+        }
+
+        .sidebar-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #6366f1;
+            padding: 0 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+        }
+
+        .sidebar-item {
+            padding: 0.75rem 2rem;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sidebar-item:hover {
+            background: #f3f4f6;
+            color: #6366f1;
+        }
+
+        .sidebar-item.active {
+            background: #eef2ff;
+            color: #6366f1;
+            border-left: 3px solid #6366f1;
+        }
+
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .location-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .metric-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .metric-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .metric-label {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .metric-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .trend-up {
+            color: #10b981;
+        }
+
+        .trend-down {
+            color: #ef4444;
+        }
+
+        /* Review Hub Styles */
+        .review-filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-chip:hover {
+            border-color: #6366f1;
+        }
+
+        .filter-chip.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        .review-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .review-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+
+        .review-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .review-author {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .review-rating {
+            display: flex;
+            gap: 0.25rem;
+            margin-top: 0.25rem;
+        }
+
+        .star {
+            color: #fbbf24;
+        }
+
+        .star.empty {
+            color: #e5e7eb;
+        }
+
+        .review-date {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .review-text {
+            color: #4b5563;
+            margin-bottom: 1rem;
+        }
+
+        .review-actions {
+            display: flex;
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #e5e7eb;
+        }
+
+        .action-btn.primary {
+            background: #6366f1;
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: #4f46e5;
+        }
+
+        /* AI Response Panel */
+        .ai-response-panel {
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .ai-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #6366f1;
+            margin-bottom: 0.5rem;
+        }
+
+        .ai-response-text {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Pricing Cards */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .pricing-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .pricing-card:hover {
+            border-color: #6366f1;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+
+        .pricing-card.featured {
+            border-color: #6366f1;
+            position: relative;
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #6366f1;
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+        }
+
+        .pricing-tier {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .pricing-price {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 0.5rem;
+        }
+
+        .pricing-period {
+            color: #6b7280;
+            margin-bottom: 2rem;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .pricing-features li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .check-icon {
+            color: #10b981;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .hero-section {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                text-align: center;
+            }
+
+            .hero-content h1 {
+                font-size: 2rem;
+            }
+
+            .button-group {
+                justify-content: center;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mockup-container">
+        <h1 style="text-align: center; margin-bottom: 3rem; color: #111827;">Revu - Visual Mockups & Wireframes</h1>
+
+        <!-- Landing Page Mockup -->
+        <div class="mockup-section">
+            <div class="mockup-header">
+                <h2>Landing Page - Homepage</h2>
+            </div>
+            <div class="mockup-content" style="padding: 0;">
+                <!-- Navigation -->
+                <nav class="landing-nav">
+                    <div class="nav-links">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #6366f1;">Revu</div>
+                        <a href="#" class="nav-link">Features ▼</a>
+                        <a href="#" class="nav-link">SEO</a>
+                        <a href="#" class="nav-link">AI</a>
+                        <a href="#" class="nav-link">Pricing</a>
+                        <a href="#" class="nav-link">Explore</a>
+                        <a href="#" class="nav-link">Request Demo</a>
+                    </div>
+                    <div class="button-group">
+                        <a href="#" class="btn btn-secondary">Login</a>
+                        <a href="#" class="btn btn-primary">Sign Up</a>
+                    </div>
+                </nav>
+
+                <!-- Hero Section -->
+                <div class="hero-section">
+                    <div class="hero-content">
+                        <h1>All-in-One Dashboard to Supercharge Your Business</h1>
+                        <p>Manage reviews, monitor competitors, and grow your reputation with AI-powered insights that save you hours every week</p>
+                        <div class="button-group">
+                            <a href="#" class="btn btn-primary">Start Free Trial</a>
+                            <a href="#" class="btn btn-secondary">Request Demo</a>
+                        </div>
+                    </div>
+                    <div class="hero-graphic">
+                        [Hero Graphic]
+                    </div>
+                </div>
+
+                <!-- Feature Grid -->
+                <div class="feature-grid">
+                    <div class="feature-box">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-title">Review Management</div>
+                        <div class="feature-description">Centralize all your reviews in one intelligent inbox</div>
+                        <a href="#" class="btn btn-primary">Learn More</a>
+                    </div>
+                    <div class="feature-box">
+                        <div class="feature-icon">🤖</div>
+                        <div class="feature-title">AI Responses</div>
+                        <div class="feature-description">Generate personalized responses in your brand voice</div>
+                        <a href="#" class="btn btn-primary">Learn More</a>
+                    </div>
+                    <div class="feature-box full-width">
+                        <div class="feature-icon">🏆</div>
+                        <div class="feature-title">Competitor Tracking</div>
+                        <div class="feature-description">Monitor and benchmark against local competitors to stay ahead</div>
+                        <a href="#" class="btn btn-primary">Learn More</a>
+                    </div>
+                    <div class="feature-box">
+                        <div class="feature-icon">📱</div>
+                        <div class="feature-title">Social Monitoring</div>
+                        <div class="feature-description">Track mentions and sentiment across social platforms</div>
+                        <a href="#" class="btn btn-primary">Learn More</a>
+                    </div>
+                    <div class="feature-box">
+                        <div class="feature-icon">📈</div>
+                        <div class="feature-title">Analytics & Reports</div>
+                        <div class="feature-description">Get actionable insights with comprehensive reporting</div>
+                        <a href="#" class="btn btn-primary">Learn More</a>
+                    </div>
+                    <div class="feature-box full-width">
+                        <div class="feature-icon">👥</div>
+                        <div class="feature-title">Team Collaboration</div>
+                        <div class="feature-description">Work together with role-based permissions and assignments</div>
+                        <a href="#" class="btn btn-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Mockup -->
+        <div class="mockup-section">
+            <div class="mockup-header">
+                <h2>Dashboard - Main Overview</h2>
+            </div>
+            <div class="mockup-content" style="padding: 0;">
+                <div class="dashboard-layout">
+                    <aside class="sidebar">
+                        <div class="sidebar-logo">Revu</div>
+                        <ul class="sidebar-nav">
+                            <li class="sidebar-item active">
+                                <span>📊</span> Dashboard
+                            </li>
+                            <li class="sidebar-item">
+                                <span>💬</span> Review Hub
+                            </li>
+                            <li class="sidebar-item">
+                                <span>🤖</span> Ask RevU AI
+                            </li>
+                            <li class="sidebar-item">
+                                <span>🏆</span> Competitors
+                            </li>
+                            <li class="sidebar-item">
+                                <span>⚡</span> Automation
+                            </li>
+                            <li class="sidebar-item">
+                                <span>📈</span> Reports
+                            </li>
+                            <li class="sidebar-item">
+                                <span>⚙️</span> Settings
+                            </li>
+                        </ul>
+                    </aside>
+                    <main class="main-content">
+                        <div class="dashboard-header">
+                            <h1>Dashboard Overview</h1>
+                            <div class="location-selector">
+                                📍 Main Street Location
+                                <span>▼</span>
+                            </div>
+                        </div>
+
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-icon">⭐</div>
+                                <div class="metric-value">4.7</div>
+                                <div class="metric-label">Average Rating</div>
+                                <div class="metric-trend trend-up">↑ 0.2 from last month</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon">📈</div>
+                                <div class="metric-value">142</div>
+                                <div class="metric-label">Reviews This Month</div>
+                                <div class="metric-trend trend-up">↑ 23% increase</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon">😡</div>
+                                <div class="metric-value">8%</div>
+                                <div class="metric-label">Negative Reviews</div>
+                                <div class="metric-trend trend-down">↓ 3% improvement</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon">🧠</div>
+                                <div class="metric-value">82%</div>
+                                <div class="metric-label">Sentiment Score</div>
+                                <div class="metric-trend trend-up">↑ 5% better</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon">🔥</div>
+                                <div class="metric-value">3</div>
+                                <div class="metric-label">Trending Topics</div>
+                                <div class="metric-trend">Service, Food, Atmosphere</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon">🚨</div>
+                                <div class="metric-value">5</div>
+                                <div class="metric-label">Action Required</div>
+                                <div class="metric-trend">Pending responses</div>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                            <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                <h3 style="margin-bottom: 1rem;">Recent Activity</h3>
+                                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                    <div style="padding: 1rem; background: #f3f4f6; border-radius: 8px;">
+                                        <div style="font-weight: 600;">New 5-star review</div>
+                                        <div style="font-size: 0.875rem; color: #6b7280;">2 minutes ago • Google</div>
+                                    </div>
+                                    <div style="padding: 1rem; background: #fef2f2; border-radius: 8px;">
+                                        <div style="font-weight: 600;">Negative review needs response</div>
+                                        <div style="font-size: 0.875rem; color: #6b7280;">15 minutes ago • TripAdvisor</div>
+                                    </div>
+                                    <div style="padding: 1rem; background: #f3f4f6; border-radius: 8px;">
+                                        <div style="font-weight: 600;">Competitor alert</div>
+                                        <div style="font-size: 0.875rem; color: #6b7280;">1 hour ago • Rating increased</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                <h3 style="margin-bottom: 1rem;">Quick Actions</h3>
+                                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                    <button class="btn btn-primary" style="width: 100%;">View New Reviews (5)</button>
+                                    <button class="btn btn-secondary" style="width: 100%;">Generate Weekly Report</button>
+                                    <button class="btn btn-secondary" style="width: 100%;">Check Competitors</button>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Hub Mockup -->
+        <div class="mockup-section">
+            <div class="mockup-header">
+                <h2>Review Hub - Inbox View</h2>
+            </div>
+            <div class="mockup-content">
+                <div class="dashboard-header">
+                    <h1>Review Hub</h1>
+                    <button class="btn btn-primary">Bulk Actions</button>
+                </div>
+
+                <div class="review-filters">
+                    <div class="filter-chip">All Platforms</div>
+                    <div class="filter-chip active">Needs Response</div>
+                    <div class="filter-chip">⭐⭐⭐⭐⭐</div>
+                    <div class="filter-chip">⭐⭐⭐⭐</div>
+                    <div class="filter-chip">⭐⭐⭐ or less</div>
+                    <div class="filter-chip">Last 7 days</div>
+                    <div class="filter-chip">Tagged</div>
+                </div>
+
+                <div class="review-list">
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div>
+                                <div class="review-author">Sarah Johnson</div>
+                                <div class="review-rating">
+                                    <span class="star">⭐</span>
+                                    <span class="star">⭐</span>
+                                    <span class="star empty">⭐</span>
+                                    <span class="star empty">⭐</span>
+                                    <span class="star empty">⭐</span>
+                                </div>
+                            </div>
+                            <div class="review-date">2 hours ago • Google</div>
+                        </div>
+                        <div class="review-text">
+                            "Disappointed with my recent visit. The food took over an hour to arrive and was cold when it did. The server seemed overwhelmed and forgot our drinks order twice. This used to be our favorite place but the quality has really gone downhill."
+                        </div>
+                        <div class="ai-response-panel">
+                            <div class="ai-label">
+                                <span>🤖</span> AI Suggested Response
+                            </div>
+                            <div class="ai-response-text">
+                                Hi Sarah, I'm truly sorry to hear about your disappointing experience. This isn't the standard we aim for, and I apologize for the long wait time and cold food. I'd like to make this right - could you please email me at manager@restaurant.com so we can discuss how to restore your faith in us? We value your long-time patronage and want to ensure your next visit meets the high standards you've come to expect.
+                            </div>
+                        </div>
+                        <div class="review-actions">
+                            <button class="action-btn primary">Send AI Response</button>
+                            <button class="action-btn">Edit & Send</button>
+                            <button class="action-btn">Write Custom</button>
+                            <button class="action-btn">Tag</button>
+                            <button class="action-btn">Assign</button>
+                        </div>
+                    </div>
+
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div>
+                                <div class="review-author">Michael Chen</div>
+                                <div class="review-rating">
+                                    <span class="star">⭐</span>
+                                    <span class="star">⭐</span>
+                                    <span class="star">⭐</span>
+                                    <span class="star">⭐</span>
+                                    <span class="star">⭐</span>
+                                </div>
+                            </div>
+                            <div class="review-date">5 hours ago • Google</div>
+                        </div>
+                        <div class="review-text">
+                            "Amazing experience! The new menu items are fantastic, especially the truffle pasta. Our waiter James was incredibly attentive and knowledgeable. Will definitely be back soon!"
+                        </div>
+                        <div style="background: #ecfdf5; border: 1px solid #86efac; border-radius: 8px; padding: 0.75rem; margin-top: 1rem;">
+                            <div style="font-size: 0.875rem; color: #10b981; font-weight: 600;">✓ Auto-responded 4 hours ago</div>
+                        </div>
+                        <div class="review-actions">
+                            <button class="action-btn">View Response</button>
+                            <button class="action-btn">Tag Staff: James</button>
+                            <button class="action-btn">Share</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Assistant Mockup -->
+        <div class="mockup-section">
+            <div class="mockup-header">
+                <h2>Ask RevU AI - Natural Language Queries</h2>
+            </div>
+            <div class="mockup-content">
+                <div style="max-width: 800px; margin: 0 auto;">
+                    <h1 style="text-align: center; margin-bottom: 2rem;">Ask RevU AI Anything About Your Reviews</h1>
+
+                    <div style="background: white; border: 2px solid #6366f1; border-radius: 12px; padding: 1rem; margin-bottom: 2rem;">
+                        <input type="text" placeholder="e.g., 'Why are ratings dropping in Leeds?' or 'Show me reviews mentioning delivery times'"
+                               style="width: 100%; border: none; outline: none; font-size: 1.125rem; padding: 0.5rem;">
+                    </div>
+
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">Suggested Queries:</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                            <button class="filter-chip">What are customers saying about our new menu?</button>
+                            <button class="filter-chip">Which staff members get the most praise?</button>
+                            <button class="filter-chip">Compare this month's sentiment to last month</button>
+                            <button class="filter-chip">Show me all delivery complaints</button>
+                        </div>
+                    </div>
+
+                    <div style="background: #f9fafb; border-radius: 12px; padding: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">AI Response:</h3>
+                        <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <p style="margin-bottom: 1rem;">I analyzed your Leeds location reviews from the past 3 months. Here's what I found:</p>
+                            <p style="margin-bottom: 1rem;"><strong>Rating declined from 4.8 to 4.2</strong> starting in early February.</p>
+                            <p style="margin-bottom: 1rem;"><strong>Main issues identified:</strong></p>
+                            <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+                                <li>Staffing shortage mentioned in 35% of negative reviews</li>
+                                <li>Wait times increased from avg 15 min to 35 min</li>
+                                <li>3 reviews specifically mentioned "new manager seems overwhelmed"</li>
+                            </ul>
+                            <p><strong>Recommendation:</strong> Address staffing levels and provide additional manager training.</p>
+                        </div>
+                        <div style="display: flex; gap: 1rem;">
+                            <button class="btn btn-primary">Generate Full Report</button>
+                            <button class="btn btn-secondary">Show Source Reviews</button>
+                            <button class="btn btn-secondary">Export Findings</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Competitor Tracker Mockup -->
+        <div class="mockup-section">
+            <div class="mockup-header">
+                <h2>Competitor Tracker</h2>
+            </div>
+            <div class="mockup-content">
+                <div class="dashboard-header">
+                    <h1>Competitor Analysis</h1>
+                    <button class="btn btn-primary">Add Competitor</button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="metric-card">
+                        <h3 style="margin-bottom: 1rem;">Your Business</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div class="metric-value">4.7</div>
+                                <div class="metric-label">142 reviews</div>
+                            </div>
+                            <div style="font-size: 3rem;">📈</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <h3 style="margin-bottom: 1rem;">The Italian Place</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div class="metric-value">4.5</div>
+                                <div class="metric-label">89 reviews</div>
+                            </div>
+                            <div style="font-size: 3rem;">➡️</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <h3 style="margin-bottom: 1rem;">Pizza Express</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div class="metric-value">4.3</div>
+                                <div class="metric-label">203 reviews</div>
+                            </div>
+                            <div style="font-size: 3rem;">📉</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <h3 style="margin-bottom: 1.5rem;">Competitive Insights</h3>
+                    <div style="display: grid; gap: 1rem;">
+                        <div style="padding: 1rem; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px;">
+                            <strong>Your Advantage:</strong> Customers praise your "authentic atmosphere" 3x more than competitors
+                        </div>
+                        <div style="padding: 1rem; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                            <strong>Watch Out:</strong> Pizza Express improved delivery times by 40% last month
+                        </div>
+                        <div style="padding: 1rem; background: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 4px;">
+                            <strong>Opportunity:</strong> No competitor offers lunch specials - mentioned in 15 reviews
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Automation Rules Mockup -->
+        <div class="mockup-section">
+            <div class="mockup-header">
+                <h2>Automation & Rules</h2>
+            </div>
+            <div class="mockup-content">
+                <div class="dashboard-header">
+                    <h1>Automation Rules</h1>
+                    <button class="btn btn-primary">Create New Rule</button>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="margin-bottom: 0.5rem;">Auto-reply to 4-5 star reviews</h3>
+                                <p style="color: #6b7280;">Automatically send personalized thank you responses</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="color: #10b981; font-weight: 600;">Active</span>
+                                <label style="position: relative; display: inline-block; width: 50px; height: 24px;">
+                                    <input type="checkbox" checked style="opacity: 0; width: 0; height: 0;">
+                                    <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #10b981; transition: .4s; border-radius: 34px;">
+                                        <span style="position: absolute; content: ''; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; transform: translateX(26px);"></span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 2rem; font-size: 0.875rem; color: #6b7280;">
+                            <span>✓ 47 responses sent this month</span>
+                            <span>⏱️ Avg response time: 2 hours</span>
+                            <span>📈 98% positive feedback</span>
+                        </div>
+                    </div>
+
+                    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="margin-bottom: 0.5rem;">Alert on keyword "food poisoning"</h3>
+                                <p style="color: #6b7280;">Immediate notification to manager</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="color: #10b981; font-weight: 600;">Active</span>
+                                <button class="action-btn">Edit</button>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 2rem; font-size: 0.875rem; color: #6b7280;">
+                            <span>🚨 0 triggers this month</span>
+                            <span>📧 Alerts: manager@restaurant.com</span>
+                        </div>
+                    </div>
+
+                    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="margin-bottom: 0.5rem;">Tag staff mentions automatically</h3>
+                                <p style="color: #6b7280;">Extract and tag staff names from review text</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="color: #6b7280; font-weight: 600;">Paused</span>
+                                <button class="action-btn">Configure</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; padding: 2rem; background: #f3f4ff; border-radius: 12px; text-align: center;">
+                    <h3 style="margin-bottom: 1rem;">💡 Smart Rule Suggestions</h3>
+                    <p style="color: #6b7280; margin-bottom: 1rem;">Based on your review patterns, we recommend:</p>
+                    <button class="btn btn-secondary">Auto-tag delivery complaints</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Page Mockup -->
+        <div class="mockup-section">
+            <div class="mockup-header">
+                <h2>Pricing Page</h2>
+            </div>
+            <div class="mockup-content">
+                <h1 style="text-align: center; margin-bottom: 1rem;">Simple, Transparent Pricing</h1>
+                <p style="text-align: center; color: #6b7280; margin-bottom: 3rem;">Choose the plan that grows with your business</p>
+
+                <div style="background: #fef3c7; padding: 1rem; border-radius: 8px; text-align: center; margin-bottom: 2rem;">
+                    🎉 <strong>Launch Special:</strong> Get Professional tier for £100 for your first 100 days!
+                </div>
+
+                <div class="pricing-grid">
+                    <div class="pricing-card">
+                        <div class="pricing-tier">Essentials</div>
+                        <div class="pricing-price">£79</div>
+                        <div class="pricing-period">per month</div>
+                        <ul class="pricing-features">
+                            <li><span class="check-icon">✓</span> 1 location</li>
+                            <li><span class="check-icon">✓</span> Google Reviews integration</li>
+                            <li><span class="check-icon">✓</span> 500 AI responses/month</li>
+                            <li><span class="check-icon">✓</span> Basic analytics</li>
+                            <li><span class="check-icon">✓</span> Email support</li>
+                        </ul>
+                        <button class="btn btn-secondary" style="width: 100%;">Start Free Trial</button>
+                    </div>
+
+                    <div class="pricing-card featured">
+                        <div class="pricing-badge">Most Popular</div>
+                        <div class="pricing-tier">Professional</div>
+                        <div class="pricing-price">£179</div>
+                        <div class="pricing-period">per month</div>
+                        <ul class="pricing-features">
+                            <li><span class="check-icon">✓</span> Up to 3 locations</li>
+                            <li><span class="check-icon">✓</span> Google + Social monitoring</li>
+                            <li><span class="check-icon">✓</span> 2,000 AI responses/month</li>
+                            <li><span class="check-icon">✓</span> Advanced analytics</li>
+                            <li><span class="check-icon">✓</span> Competitor tracking</li>
+                            <li><span class="check-icon">✓</span> Priority support</li>
+                        </ul>
+                        <button class="btn btn-primary" style="width: 100%;">Start Free Trial</button>
+                    </div>
+
+                    <div class="pricing-card">
+                        <div class="pricing-tier">Enterprise</div>
+                        <div class="pricing-price">£399</div>
+                        <div class="pricing-period">per month</div>
+                        <ul class="pricing-features">
+                            <li><span class="check-icon">✓</span> 5 locations (+£49 each)</li>
+                            <li><span class="check-icon">✓</span> All platform integrations</li>
+                            <li><span class="check-icon">✓</span> Unlimited AI responses</li>
+                            <li><span class="check-icon">✓</span> Custom AI training</li>
+                            <li><span class="check-icon">✓</span> API access</li>
+                            <li><span class="check-icon">✓</span> Dedicated account manager</li>
+                        </ul>
+                        <button class="btn btn-secondary" style="width: 100%;">Contact Sales</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile View Examples -->
+        <div class="mockup-section">
+            <div class="mockup-header">
+                <h2>Mobile Responsive Views</h2>
+            </div>
+            <div class="mockup-content">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                    <!-- Mobile Dashboard -->
+                    <div style="max-width: 375px; margin: 0 auto; border: 2px solid #e5e7eb; border-radius: 20px; overflow: hidden;">
+                        <div style="background: white; padding: 1rem; border-bottom: 1px solid #e5e7eb;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 1.5rem;">☰</span>
+                                <span style="font-weight: 700; color: #6366f1;">Revu</span>
+                                <span style="font-size: 1.5rem;">🔔</span>
+                            </div>
+                        </div>
+                        <div style="padding: 1rem; background: #f9fafb;">
+                            <h2 style="margin-bottom: 1rem;">Dashboard</h2>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div style="background: white; padding: 1rem; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 2rem;">⭐</div>
+                                    <div style="font-size: 1.5rem; font-weight: 700;">4.7</div>
+                                    <div style="font-size: 0.75rem; color: #6b7280;">Avg Rating</div>
+                                </div>
+                                <div style="background: white; padding: 1rem; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 2rem;">📈</div>
+                                    <div style="font-size: 1.5rem; font-weight: 700;">142</div>
+                                    <div style="font-size: 0.75rem; color: #6b7280;">This Month</div>
+                                </div>
+                                <div style="background: white; padding: 1rem; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 2rem;">🧠</div>
+                                    <div style="font-size: 1.5rem; font-weight: 700;">82%</div>
+                                    <div style="font-size: 0.75rem; color: #6b7280;">Sentiment</div>
+                                </div>
+                                <div style="background: white; padding: 1rem; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 2rem;">🚨</div>
+                                    <div style="font-size: 1.5rem; font-weight: 700;">5</div>
+                                    <div style="font-size: 0.75rem; color: #6b7280;">Pending</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;">View All Reviews</button>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Review -->
+                    <div style="max-width: 375px; margin: 0 auto; border: 2px solid #e5e7eb; border-radius: 20px; overflow: hidden;">
+                        <div style="background: white; padding: 1rem; border-bottom: 1px solid #e5e7eb;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 1.5rem;">←</span>
+                                <span style="font-weight: 700;">Review Details</span>
+                                <span style="font-size: 1.5rem;">⋮</span>
+                            </div>
+                        </div>
+                        <div style="padding: 1rem; background: white;">
+                            <div style="margin-bottom: 1rem;">
+                                <div style="font-weight: 600;">Sarah Johnson</div>
+                                <div style="color: #fbbf24;">⭐⭐☆☆☆</div>
+                                <div style="font-size: 0.875rem; color: #6b7280;">2 hours ago • Google</div>
+                            </div>
+                            <p style="margin-bottom: 1rem; font-size: 0.875rem;">Disappointed with my recent visit. The food took over an hour...</p>
+                            <div style="background: #eef2ff; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                <div style="font-weight: 600; margin-bottom: 0.5rem;">🤖 AI Response</div>
+                                <p style="font-size: 0.875rem;">Hi Sarah, I'm truly sorry to hear about your disappointing experience...</p>
+                            </div>
+                            <button class="btn btn-primary" style="width: 100%;">Send Response</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
