@@ -132,7 +132,7 @@ def decode_token(token: str) -> dict:
 
 async def get_current_user(
     db: AsyncSession = Depends(get_async_session), token: str = Depends(oauth2_scheme)
-) -> dict:
+) -> "User":
     """
     Get the current authenticated user from JWT token.
 
@@ -146,6 +146,9 @@ async def get_current_user(
     Raises:
         HTTPException: If token is invalid or user not found
     """
+    from app.models.user import User
+    from app.services.user import UserService
+    
     # Decode token
     payload = decode_token(token)
     user_id: str = payload.get("sub")
@@ -157,13 +160,9 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # TODO: Fetch user from database
-    # from app.services.user import UserService
-    # user_service = UserService(db)
-    # user = await user_service.get(user_id)
-
-    # For now, return a mock user
-    user = {"id": user_id, "email": "test@example.com", "is_active": True}
+    # Fetch user from database
+    user_service = UserService(db)
+    user = await user_service.get(user_id)
 
     if user is None:
         raise HTTPException(
@@ -174,8 +173,8 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-    current_user: dict = Depends(get_current_user),
-) -> dict:
+    current_user: "User" = Depends(get_current_user),
+) -> "User":
     """
     Get the current active user.
 
@@ -188,7 +187,7 @@ async def get_current_active_user(
     Raises:
         HTTPException: If user is inactive
     """
-    if not current_user.get("is_active", False):
+    if not current_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user"
         )

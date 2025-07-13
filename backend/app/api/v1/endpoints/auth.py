@@ -20,6 +20,7 @@ from app.core.security import (
     create_refresh_token,
     get_current_user,
 )
+from app.core.supabase import SupabaseAuth
 from app.schemas.auth import (
     PasswordReset,
     PasswordResetRequest,

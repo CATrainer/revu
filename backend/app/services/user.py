@@ -3,11 +3,15 @@ User service for handling user operations.
 """
 
 from typing import Optional
+from uuid import UUID
 
 from loguru import logger
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import get_password_hash
+from app.core.security import get_password_hash, verify_password
+from app.core.supabase import SupabaseAuth
+from app.models.user import User
 from app.schemas.user import UserCreate
 
 
@@ -17,7 +21,22 @@ class UserService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_by_email(self, email: str) -> Optional[dict]:
+    async def get(self, user_id: UUID) -> Optional[User]:
+        """
+        Get a user by ID.
+
+        Args:
+            user_id: User UUID
+
+        Returns:
+            Optional[User]: User object if found
+        """
+        result = await self.db.execute(
+            select(User).where(User.id == user_id)
+        )
+        return result.scalar_one_or_none()
+    
+    async def get_by_email(self, email: str) -> Optional[User]:
         """
         Get a user by email address.
 
@@ -25,12 +44,30 @@ class UserService:
             email: Email address to search for
 
         Returns:
-            Optional[dict]: User object if found, None otherwise
+            Optional[User]: User object if found, None otherwise
         """
-        # TODO: Implement database query
-        return None
+        result = await self.db.execute(
+            select(User).where(User.email == email)
+        )
+        return result.scalar_one_or_none()
+    
+    async def get_by_auth_id(self, auth_id: str) -> Optional[User]:
+        """
+        Get a user by Supabase auth ID.
 
-    async def create(self, user_create: UserCreate) -> dict:
+        Args:
+            auth_id: Supabase auth ID
+
+        Returns:
+            Optional[User]: User object if found
+        """
+        result = await self.db.execute(
+            select(User).where(User.auth_id == auth_id)
+        )
+        return result.scalar_one_or_none()
+
+
+    async def create(self, user_create: UserCreate) -> User:
         """
         Create a new user.
 
@@ -38,23 +75,41 @@ class UserService:
             user_create: User creation data
 
         Returns:
-            dict: Created user object
+            User: Created user object
         """
-        # TODO: Implement user creation in database
+        # Create user in Supabase
+        try:
+            supabase_user = await SupabaseAuth.create_user(
+                email=user_create.email,
+                password=user_create.password,
+                metadata={"full_name": user_create.full_name}
+            )
+            auth_id = supabase_user["id"]
+        except Exception as e:
+            logger.error(f"Failed to create Supabase user: {e}")
+            # Fallback to local auth
+            auth_id = None
+
+        # Hash password for local storage (backup auth)
         hashed_password = get_password_hash(user_create.password)
 
-        logger.info(f"Creating user: {user_create.email}")
+        # Create user in database
+        user = User(
+            email=user_create.email,
+            full_name=user_create.full_name,
+            auth_id=auth_id,
+            hashed_password=hashed_password,
+            is_active=True,
+        )
 
-        return {
-            "id": "mock-user-id",
-            "email": user_create.email,
-            "full_name": user_create.full_name,
-            "is_active": True,
-            "created_at": "2024-01-01T00:00:00Z",
-            "updated_at": "2024-01-01T00:00:00Z",
-        }
+        self.db.add(user)
+        await self.db.commit()
+        await self.db.refresh(user)
 
-    async def authenticate(self, email: str, password: str) -> Optional[dict]:
+        logger.info(f"Created user: {user.email}")
+        return user
+
+    async def authenticate(self, email: str, password: str) -> Optional[User]:
         """
         Authenticate a user by email and password.
 
@@ -63,15 +118,28 @@ class UserService:
             password: Plain text password
 
         Returns:
-            Optional[dict]: User object if authentication successful
+            Optional[User]: User object if authentication successful
         """
-        # TODO: Implement authentication
-        # For now, return a mock user for testing
-        if email == "test@example.com" and password == "testpassword":
-            return {
-                "id": "mock-user-id",
-                "email": email,
-                "full_name": "Test User",
-                "is_active": True,
-            }
-        return None
+        user = await self.get_by_email(email)
+        if not user:
+            return None
+
+        # Verify password
+        if not verify_password(password, user.hashed_password):
+            return None
+
+        return user
+    
+    async def update_last_login(self, user_id: UUID) -> None:
+        """
+        Update user's last login timestamp.
+
+        Args:
+            user_id: User UUID
+        """
+        from datetime import datetime
+
+        user = await self.get(user_id)
+        if user:
+            user.last_login_at = datetime.utcnow()
+            await self.db.commit()

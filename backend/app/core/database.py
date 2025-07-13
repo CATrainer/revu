@@ -138,20 +138,23 @@ async def create_db_and_tables() -> None:
     in development. In production, use Alembic migrations.
     """
     if settings.is_development:
-        logger.info("Skipping table creation (models not implemented yet)")
-        # TODO: Uncomment when models are ready
-        # logger.info("Creating database tables...")
-        # async with engine.begin() as conn:
-        #     # Import all models here to ensure they're registered
-        #     from app.models import (  # noqa: F401
-        #         user,
-        #         organization,
-        #         location,
-        #         review,
-        #     )
-        #
-        #     await conn.run_sync(Base.metadata.create_all)
-        #     logger.info("Database tables created successfully")
+        logger.info("Creating database tables...")
+        async with engine.begin() as conn:
+            # Import all models here to ensure they're registered
+            from app.models import (  # noqa: F401
+                user,
+                organization,
+                location,
+                review,
+                platform,
+                automation,
+                template,
+                competitor,
+                analytics,
+            )
+
+            await conn.run_sync(Base.metadata.create_all)
+            logger.info("Database tables created successfully")
     else:
         logger.info("Skipping table creation (not in development mode)")
 
