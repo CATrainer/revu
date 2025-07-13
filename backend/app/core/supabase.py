@@ -7,47 +7,75 @@ and real-time features.
 
 from typing import Optional
 
-from supabase import Client, create_client
-from supabase.lib.client_options import ClientOptions
+from loguru import logger
 
 from app.core.config import settings
 
+# Delay imports to avoid initialization issues
+supabase: Optional["Client"] = None
+supabase_admin: Optional["Client"] = None
 
-def get_supabase_client() -> Client:
+
+def get_supabase_client() -> Optional["Client"]:
     """
     Get Supabase client instance.
     
     Returns:
-        Client: Configured Supabase client
+        Optional[Client]: Configured Supabase client or None if not configured
     """
-    options = ClientOptions(
-        auto_refresh_token=True,
-        persist_session=False,  # We handle sessions ourselves
-    )
+    global supabase
     
-    return create_client(
-        supabase_url=settings.SUPABASE_URL,
-        supabase_key=settings.SUPABASE_ANON_KEY,
-        options=options,
-    )
+    if supabase is not None:
+        return supabase
+    
+    if not settings.SUPABASE_URL or not settings.SUPABASE_ANON_KEY:
+        logger.warning("Supabase credentials not configured")
+        return None
+    
+    try:
+        from supabase import Client, create_client
+        
+        # Create client without any options to avoid compatibility issues
+        supabase = create_client(
+            supabase_url=settings.SUPABASE_URL,
+            supabase_key=settings.SUPABASE_ANON_KEY,
+        )
+        
+        return supabase
+    except Exception as e:
+        logger.error(f"Failed to create Supabase client: {e}")
+        return None
 
 
-def get_supabase_admin_client() -> Client:
+def get_supabase_admin_client() -> Optional["Client"]:
     """
     Get Supabase admin client with service role key.
     
     Returns:
-        Client: Admin Supabase client
+        Optional[Client]: Admin Supabase client or None if not configured
     """
-    return create_client(
-        supabase_url=settings.SUPABASE_URL,
-        supabase_key=settings.SUPABASE_SERVICE_ROLE_KEY,
-    )
-
-
-# Create singleton clients
-supabase = get_supabase_client()
-supabase_admin = get_supabase_admin_client()
+    global supabase_admin
+    
+    if supabase_admin is not None:
+        return supabase_admin
+    
+    if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_ROLE_KEY:
+        logger.warning("Supabase admin credentials not configured")
+        return None
+    
+    try:
+        from supabase import create_client
+        
+        # Create client without any options to avoid compatibility issues
+        supabase_admin = create_client(
+            supabase_url=settings.SUPABASE_URL,
+            supabase_key=settings.SUPABASE_SERVICE_ROLE_KEY,
+        )
+        
+        return supabase_admin
+    except Exception as e:
+        logger.error(f"Failed to create Supabase admin client: {e}")
+        return None
 
 
 class SupabaseAuth:
@@ -64,9 +92,13 @@ class SupabaseAuth:
         Returns:
             dict: User data if valid, None otherwise
         """
+        client = get_supabase_client()
+        if not client:
+            return None
+            
         try:
             # Get user from token
-            response = supabase.auth.get_user(access_token)
+            response = client.auth.get_user(access_token)
             if response and response.user:
                 return {
                     "id": response.user.id,
@@ -93,8 +125,12 @@ class SupabaseAuth:
         Raises:
             Exception: If user creation fails
         """
+        admin_client = get_supabase_admin_client()
+        if not admin_client:
+            raise Exception("Supabase admin client not configured")
+            
         try:
-            response = supabase_admin.auth.admin.create_user({
+            response = admin_client.auth.admin.create_user({
                 "email": email,
                 "password": password,
                 "email_confirm": True,  # Auto-confirm for now
@@ -124,8 +160,12 @@ class SupabaseAuth:
         Returns:
             bool: Success status
         """
+        admin_client = get_supabase_admin_client()
+        if not admin_client:
+            return False
+            
         try:
-            response = supabase_admin.auth.admin.update_user_by_id(
+            response = admin_client.auth.admin.update_user_by_id(
                 user_id,
                 {"user_metadata": metadata}
             )
@@ -144,8 +184,12 @@ class SupabaseAuth:
         Returns:
             bool: Success status
         """
+        admin_client = get_supabase_admin_client()
+        if not admin_client:
+            return False
+            
         try:
-            supabase_admin.auth.admin.delete_user(user_id)
+            admin_client.auth.admin.delete_user(user_id)
             return True
         except Exception:
             return False
@@ -161,8 +205,12 @@ class SupabaseAuth:
         Returns:
             bool: Success status
         """
+        client = get_supabase_client()
+        if not client:
+            return False
+            
         try:
-            supabase.auth.reset_password_for_email(
+            client.auth.reset_password_for_email(
                 email,
                 {
                     "redirect_to": f"{settings.FRONTEND_URL}/auth/reset-password",

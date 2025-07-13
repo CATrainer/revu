@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
+    FRONTEND_URL: str = "http://localhost:3000"
 
     # API Configuration
     API_V1_PREFIX: str = "/api/v1"

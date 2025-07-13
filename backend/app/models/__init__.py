@@ -1,5 +1,3 @@
-"""Database models package."""
-
 from app.models.organization import Organization
 from app.models.location import Location
 from app.models.user import User, UserMembership

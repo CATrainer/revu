@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_password_hash, verify_password
-from app.core.supabase import SupabaseAuth
+from app.core.supabase_minimal import supabase_auth
 from app.models.user import User
 from app.schemas.user import UserCreate
 
@@ -35,7 +35,7 @@ class UserService:
             select(User).where(User.id == user_id)
         )
         return result.scalar_one_or_none()
-    
+
     async def get_by_email(self, email: str) -> Optional[User]:
         """
         Get a user by email address.
@@ -50,7 +50,7 @@ class UserService:
             select(User).where(User.email == email)
         )
         return result.scalar_one_or_none()
-    
+
     async def get_by_auth_id(self, auth_id: str) -> Optional[User]:
         """
         Get a user by Supabase auth ID.
@@ -66,7 +66,6 @@ class UserService:
         )
         return result.scalar_one_or_none()
 
-
     async def create(self, user_create: UserCreate) -> User:
         """
         Create a new user.
@@ -79,7 +78,7 @@ class UserService:
         """
         # Create user in Supabase
         try:
-            supabase_user = await SupabaseAuth.create_user(
+            supabase_user = await supabase_auth.create_user(
                 email=user_create.email,
                 password=user_create.password,
                 metadata={"full_name": user_create.full_name}
@@ -129,7 +128,7 @@ class UserService:
             return None
 
         return user
-    
+
     async def update_last_login(self, user_id: UUID) -> None:
         """
         Update user's last login timestamp.

@@ -130,6 +130,7 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
+
 async def create_db_and_tables() -> None:
     """
     Create all database tables.
