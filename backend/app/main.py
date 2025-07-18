@@ -34,6 +34,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # Startup
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
+    logger.info(f"CORS Origins: {settings.BACKEND_CORS_ORIGINS}")
 
     # Initialize database
     await create_db_and_tables()
@@ -89,21 +90,38 @@ async def root():
         "health": "/health",
     }
 
-# Add middlewares
+# Configure CORS
+origins = settings.BACKEND_CORS_ORIGINS
+
+# If CORS origins are not properly set, use a default that includes your Vercel app
+if not origins or origins == [""]:
+    logger.warning("CORS origins not properly configured, using defaults")
+    origins = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://revu-one.vercel.app",
+        "https://revu.vercel.app",
+    ]
+
+logger.info(f"CORS configured for origins: {origins}")
+
+# Add CORS middleware - must be added before other middlewares
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
+# Add other middlewares
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 if settings.is_production:
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=["*.revu.ai", "revu.ai", "*.railway.app"],
+        allowed_hosts=["*.revu.ai", "revu.ai", "*.railway.app", "*.vercel.app"],
     )
 
 # Add custom exception handlers
@@ -146,6 +164,7 @@ if settings.DEBUG:
     @app.middleware("http")
     async def log_requests(request: Request, call_next):
         logger.debug(f"Incoming request: {request.method} {request.url.path}")
+        logger.debug(f"Origin header: {request.headers.get('origin', 'None')}")
         response = await call_next(request)
         logger.debug(f"Response status: {response.status_code}")
         return response
