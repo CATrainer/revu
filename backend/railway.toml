@@ -1,0 +1,12 @@
+[build]
+builder = "NIXPACKS"
+
+[build.nixpacksPlan.phases.setup]
+nixPkgs = ["...", "gcc", "libffi", "python311Packages.cffi"]
+
+[deploy]
+startCommand = "python run.py"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
