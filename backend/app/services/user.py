@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_password_hash, verify_password
-from app.core.supabase_minimal import supabase_auth
+from app.core.supabase import supabase_auth  # Changed from supabase_minimal
 from app.models.user import User
 from app.schemas.user import UserCreate
 
@@ -123,11 +123,22 @@ class UserService:
         if not user:
             return None
 
-        # Verify password
-        if not verify_password(password, user.hashed_password):
-            return None
+        # Try Supabase authentication first
+        try:
+            session = await supabase_auth.sign_in_with_password(email, password)
+            if session and session.get("user"):
+                # Update last login
+                await self.update_last_login(user.id)
+                return user
+        except Exception as e:
+            logger.warning(f"Supabase auth failed, falling back to local: {e}")
 
-        return user
+        # Fallback to local password verification
+        if verify_password(password, user.hashed_password):
+            await self.update_last_login(user.id)
+            return user
+
+        return None
 
     async def update_last_login(self, user_id: UUID) -> None:
         """

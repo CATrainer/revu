@@ -25,7 +25,17 @@ class User(Base):
 
     # Relationships
     memberships = relationship("UserMembership", back_populates="user", cascade="all, delete-orphan")
-    review_responses = relationship("ReviewResponse", back_populates="created_by")
+    # Fix: Specify foreign_keys as a list [column_object]
+    review_responses_created = relationship(
+        "ReviewResponse", 
+        foreign_keys="[ReviewResponse.created_by_id]",
+        back_populates="created_by"
+    )
+    review_responses_approved = relationship(
+        "ReviewResponse",
+        foreign_keys="[ReviewResponse.approval_by_id]",
+        back_populates="approval_by"
+    )
     response_templates = relationship("ResponseTemplate", back_populates="created_by")
     automation_rules = relationship("AutomationRule", back_populates="created_by")
 

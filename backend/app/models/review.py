@@ -76,8 +76,8 @@ class ReviewResponse(Base):
 
     # Relationships
     review = relationship("Review", back_populates="responses")
-    created_by = relationship("User", foreign_keys=[created_by_id], back_populates="review_responses")
-    approval_by = relationship("User", foreign_keys=[approval_by_id])
+    created_by = relationship("User", foreign_keys=[created_by_id], back_populates="review_responses_created")
+    approval_by = relationship("User", foreign_keys=[approval_by_id], back_populates="review_responses_approved")
 
     def __repr__(self) -> str:
         return f"<ReviewResponse(review_id='{self.review_id}', status='{self.status}')>"

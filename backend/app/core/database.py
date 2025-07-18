@@ -18,20 +18,28 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase, declared_attr
-from sqlalchemy.pool import NullPool
+from sqlalchemy.pool import NullPool, QueuePool
 
 from app.core.config import settings
 
-# Create async engine
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DATABASE_ECHO,
-    pool_size=settings.DATABASE_POOL_SIZE,
-    max_overflow=settings.DATABASE_MAX_OVERFLOW,
-    pool_pre_ping=True,  # Verify connections before using
-    # Use NullPool for serverless environments
-    poolclass=NullPool if settings.ENVIRONMENT == "production" else None,
-)
+# Create async engine with conditional pooling
+if settings.ENVIRONMENT == "production":
+    # Use NullPool for production/serverless environments
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        echo=settings.DATABASE_ECHO,
+        poolclass=NullPool,
+        pool_pre_ping=True,
+    )
+else:
+    # Use QueuePool for development with connection pooling
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        echo=settings.DATABASE_ECHO,
+        pool_size=settings.DATABASE_POOL_SIZE,
+        max_overflow=settings.DATABASE_MAX_OVERFLOW,
+        pool_pre_ping=True,
+    )
 
 # Create async session factory
 async_session_maker = async_sessionmaker(
@@ -128,7 +136,6 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
             raise
         finally:
             await session.close()
-
 
 
 async def create_db_and_tables() -> None:
