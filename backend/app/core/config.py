@@ -36,12 +36,22 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
+        elif isinstance(v, str) and v.startswith("["):
+            # Parse JSON string
+            import json
+            try:
+                origins = json.loads(v)
+                # Ensure they're strings without trailing slashes
+                return [origin.rstrip('/') for origin in origins]
+            except:
+                return []
+        elif isinstance(v, list):
+            # Ensure they're strings without trailing slashes
+            return [str(origin).rstrip('/') for origin in v]
+        return []
 
     # Security
     SECRET_KEY: str
