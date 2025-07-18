@@ -80,6 +80,7 @@ def get_supabase_admin_client():
         return None
 
 
+
 class SupabaseAuth:
     """Supabase authentication utilities using the official client."""
     
