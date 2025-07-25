@@ -7,6 +7,8 @@ from app.models.automation import AutomationRule
 from app.models.template import ResponseTemplate
 from app.models.competitor import Competitor
 from app.models.analytics import AnalyticsSnapshot
+from app.models.ai_training import AITrainingData  # Add this
+from app.models.audit import AuditLog  # Add this
 
 __all__ = [
     "Organization",
@@ -20,4 +22,6 @@ __all__ = [
     "ResponseTemplate",
     "Competitor",
     "AnalyticsSnapshot",
+    "AITrainingData",  # Add this
+    "AuditLog",  # Add this
 ]

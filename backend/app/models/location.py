@@ -33,6 +33,7 @@ class Location(Base):
     competitors = relationship("Competitor", back_populates="location", cascade="all, delete-orphan")
     analytics_snapshots = relationship("AnalyticsSnapshot", back_populates="location", cascade="all, delete-orphan")
     memberships = relationship("UserMembership", back_populates="location")
+    ai_training_data = relationship("AITrainingData", back_populates="location", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Location(name='{self.name}', org_id='{self.organization_id}')>"
