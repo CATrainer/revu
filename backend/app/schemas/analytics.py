@@ -3,10 +3,11 @@ Analytics schemas for dashboard and reporting.
 """
 
 from datetime import date
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any  # Add 'Any' to imports
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
 
 
 class DashboardMetrics(BaseModel):
@@ -38,7 +39,7 @@ class SentimentBreakdown(BaseModel):
     positive_percentage: float
     negative_percentage: float
     neutral_percentage: float
-    trending_topics: List[Dict[str, any]]
+    trending_topics: List[Dict[str, Any]]
 
 
 class CompetitorComparison(BaseModel):
