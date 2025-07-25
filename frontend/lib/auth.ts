@@ -72,7 +72,7 @@ export const useAuth = create<AuthState>((set) => ({
   logout: async () => {
     try {
       await api.post('/auth/logout');
-    } catch (error) {
+    } catch {
       // Ignore logout errors
     }
 
@@ -93,7 +93,7 @@ export const useAuth = create<AuthState>((set) => ({
     try {
       const response = await api.get('/auth/me');
       set({ user: response.data, isAuthenticated: true, isLoading: false });
-    } catch (error) {
+    } catch {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       set({ user: null, isAuthenticated: false, isLoading: false });
