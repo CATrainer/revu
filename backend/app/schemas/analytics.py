@@ -45,6 +45,6 @@ class SentimentBreakdown(BaseModel):
 class CompetitorComparison(BaseModel):
     """Competitor comparison data."""
     location_id: UUID
-    competitors: List[Dict[str, any]]
+    competitors: List[Dict[str, Any]]
     ranking: Dict[str, int]  # {"rating": 1, "reviews": 3, "response_rate": 1}
     insights: List[str]
