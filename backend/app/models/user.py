@@ -71,6 +71,7 @@ class UserMembership(Base):
     user = relationship("User", back_populates="memberships")
     organization = relationship("Organization", back_populates="memberships")
     location = relationship("Location", back_populates="memberships")
+    
     #audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
