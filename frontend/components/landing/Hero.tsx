@@ -32,28 +32,29 @@ export function Hero() {
         <div className="mt-16 relative">
           <div className="relative mx-auto max-w-6xl">
             {/* Floating metric cards */}
-            <div className="hidden lg:block absolute -left-4 top-20 bg-white rounded-lg shadow-lg p-4 animate-float">
+            {/* Floating metric cards - add z-10 to each */}
+            <div className="hidden lg:block absolute -left-4 top-20 bg-white rounded-lg shadow-lg p-4 animate-float z-10">
               <div className="flex items-center space-x-2">
                 <Star className="h-5 w-5 text-yellow-500" />
                 <span className="font-semibold">4.8 Rating</span>
               </div>
             </div>
-            
-            <div className="hidden lg:block absolute -right-4 top-32 bg-white rounded-lg shadow-lg p-4 animate-float-delayed">
+
+            <div className="hidden lg:block absolute -right-4 top-32 bg-white rounded-lg shadow-lg p-4 animate-float-delayed z-10">
               <div className="flex items-center space-x-2">
                 <TrendingUp className="h-5 w-5 text-green-500" />
                 <span className="font-semibold">+23% Growth</span>
               </div>
             </div>
-            
-            <div className="hidden lg:block absolute left-8 -bottom-4 bg-white rounded-lg shadow-lg p-4 animate-float">
+
+            <div className="hidden lg:block absolute left-8 -bottom-4 bg-white rounded-lg shadow-lg p-4 animate-float z-10">
               <div className="flex items-center space-x-2">
                 <MessageSquare className="h-5 w-5 text-indigo-600" />
                 <span className="font-semibold">142 Reviews</span>
               </div>
             </div>
-            
-            {/* Main screenshot */}
+
+            {/* Main screenshot - keep it at default z-index or add relative */}
             <div className="relative rounded-lg shadow-2xl overflow-hidden transform transition-transform hover:scale-[1.01]">
               <Image
                 src="/images/dashboard-screenshot.png"
