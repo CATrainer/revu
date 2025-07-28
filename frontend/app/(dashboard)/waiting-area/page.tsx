@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Clock, Users, Zap, Check, MessageSquare } from 'lucide-react';
+import { Calendar, Users, Zap, Check, MessageSquare } from 'lucide-react';
+import { AccountDropdown } from '@/components/layout/AccountDropdown';
 import Link from 'next/link';
 
 interface UserStatus {
@@ -70,15 +71,19 @@ export default function WaitingAreaPage() {
       <div className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Welcome to Revu!</h1>
-              <p className="mt-2 text-gray-600">
-                You&apos;re on our exclusive waiting list. Here&apos;s what&apos;s coming...
-              </p>
+            <div className="flex items-center gap-6">
+              <Link href="/" className="flex items-center">
+                <span className="text-2xl font-bold text-indigo-600">Revu</span>
+              </Link>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Welcome to Revu!</h1>
+                <p className="mt-2 text-gray-600">
+                  You&apos;re on our exclusive waiting list. Here&apos;s what&apos;s coming...
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full">
-              <Clock className="h-4 w-4" />
-              <span className="text-sm font-medium">Waiting List Member</span>
+              <AccountDropdown variant="waiting" />
             </div>
           </div>
         </div>

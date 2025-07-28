@@ -2,10 +2,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Footer } from './Footer';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth';
+import { AccountDropdown } from './AccountDropdown';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -17,6 +19,11 @@ import {
 
 export function LandingLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isAuthenticated, isLoading, checkAuth } = useAuth();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -124,12 +131,20 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
             
             {/* Desktop Auth Buttons */}
             <div className="hidden md:flex md:items-center md:space-x-4">
-              <Button variant="ghost" asChild>
-                <Link href="/login">Login</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/signup">Sign Up</Link>
-              </Button>
+              {!isLoading && (
+                isAuthenticated ? (
+                  <AccountDropdown variant="landing" />
+                ) : (
+                  <>
+                    <Button variant="ghost" asChild>
+                      <Link href="/login">Login</Link>
+                    </Button>
+                    <Button asChild>
+                      <Link href="/signup">Sign Up</Link>
+                    </Button>
+                  </>
+                )
+              )}
             </div>
             
             {/* Mobile menu button */}
@@ -185,12 +200,22 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="pt-4 pb-3 border-t border-gray-200">
               <div className="flex items-center px-4 space-x-3">
-                <Button variant="ghost" className="w-full" asChild>
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button className="w-full" asChild>
-                  <Link href="/signup">Sign Up</Link>
-                </Button>
+                {!isLoading && (
+                  isAuthenticated ? (
+                    <div className="w-full flex justify-center">
+                      <AccountDropdown variant="landing" />
+                    </div>
+                  ) : (
+                    <>
+                      <Button variant="ghost" className="w-full" asChild>
+                        <Link href="/login">Login</Link>
+                      </Button>
+                      <Button className="w-full" asChild>
+                        <Link href="/signup">Sign Up</Link>
+                      </Button>
+                    </>
+                  )
+                )}
               </div>
             </div>
           </div>

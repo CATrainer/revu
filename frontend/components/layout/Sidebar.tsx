@@ -40,7 +40,7 @@ export function Sidebar() {
     >
       <div className="flex items-center justify-between px-4 mb-8">
         {!collapsed && (
-          <Link href="/dashboard" className="flex items-center">
+          <Link href="/" className="flex items-center">
             <span className="text-2xl font-bold text-indigo-600">Revu</span>
           </Link>
         )}
