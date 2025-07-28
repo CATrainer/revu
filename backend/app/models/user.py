@@ -22,6 +22,18 @@ class User(Base):
     hashed_password = Column(String(255))  # For local auth fallback
     last_login_at = Column(DateTime(timezone=True))
     is_active = Column(Boolean, default=True, nullable=False)
+    
+    # Access control fields
+    access_status = Column(
+        String(20), 
+        nullable=False, 
+        default="waiting_list",
+        comment="Access level: waiting_list, early_access, full_access"
+    )
+    joined_waiting_list_at = Column(DateTime(timezone=True))
+    early_access_granted_at = Column(DateTime(timezone=True))
+    demo_requested = Column(Boolean, default=False, nullable=False)
+    demo_requested_at = Column(DateTime(timezone=True))
 
     # Relationships
     memberships = relationship("UserMembership", back_populates="user", cascade="all, delete-orphan")
@@ -42,6 +54,38 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"<User(email='{self.email}')>"
+    
+    @property
+    def is_waiting_list(self) -> bool:
+        """Check if user is on waiting list."""
+        return self.access_status == "waiting_list"
+    
+    @property
+    def has_early_access(self) -> bool:
+        """Check if user has early access."""
+        return self.access_status == "early_access"
+    
+    @property
+    def has_full_access(self) -> bool:
+        """Check if user has full access."""
+        return self.access_status == "full_access"
+    
+    @property
+    def can_access_dashboard(self) -> bool:
+        """Check if user can access the main dashboard."""
+        return self.access_status in ["early_access", "full_access"]
+    
+    def grant_early_access(self) -> None:
+        """Grant early access to user."""
+        self.access_status = "early_access"
+        if not self.early_access_granted_at:
+            self.early_access_granted_at = datetime.utcnow()
+    
+    def request_demo(self) -> None:
+        """Mark user as having requested a demo."""
+        self.demo_requested = True
+        if not self.demo_requested_at:
+            self.demo_requested_at = datetime.utcnow()
 
 
 class UserMembership(Base):

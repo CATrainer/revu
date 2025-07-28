@@ -28,7 +28,7 @@ from app.schemas.auth import (
     TokenRefresh,
     UserSignup,
 )
-from app.schemas.user import User, UserCreate
+from app.schemas.user import User, UserCreate, DemoRequest
 from app.services.auth import AuthService
 from app.services.user import UserService
 
@@ -72,8 +72,14 @@ async def signup(
             full_name=user_in.full_name,
         )
     )
+    
+    # Set user to waiting list and mark join time
+    from datetime import datetime
+    user.access_status = "waiting_list"
+    user.joined_waiting_list_at = datetime.utcnow()
+    await user_service.update(user_id=user.id, user_update={})
 
-    logger.info(f"New user signed up: {user.email}")
+    logger.info(f"New user joined waiting list: {user.email}")
     return user
 
 
@@ -280,3 +286,69 @@ async def reset_password(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired reset token",
         )
+
+
+@router.post("/request-demo")
+async def request_demo(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+    demo_request: DemoRequest,
+) -> Any:
+    """
+    Request a demo call.
+
+    Args:
+        db: Database session
+        current_user: Current authenticated user
+        demo_request: Demo request data
+
+    Returns:
+        dict: Success message
+
+    Raises:
+        HTTPException: If demo already requested
+    """
+    if current_user.demo_requested:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Demo already requested",
+        )
+    
+    user_service = UserService(db)
+    
+    # Mark user as having requested demo
+    from datetime import datetime
+    current_user.demo_requested = True
+    current_user.demo_requested_at = datetime.utcnow()
+    await user_service.update(user_id=current_user.id, user_update={})
+    
+    logger.info(f"Demo requested by user: {current_user.email}")
+    
+    # Here you could also send a notification to your team
+    # or integrate with a calendar booking system
+    
+    return {"message": "Demo request received successfully"}
+
+
+@router.get("/me/access-status")
+async def get_my_access_status(
+    current_user: User = Depends(get_current_user),
+) -> Any:
+    """
+    Get current user's access status.
+
+    Args:
+        current_user: Current authenticated user
+
+    Returns:
+        dict: User access status info
+    """
+    return {
+        "access_status": current_user.access_status,
+        "can_access_dashboard": current_user.access_status in ["early_access", "full_access"],
+        "joined_waiting_list_at": current_user.joined_waiting_list_at,
+        "early_access_granted_at": current_user.early_access_granted_at,
+        "demo_requested": current_user.demo_requested,
+        "demo_requested_at": current_user.demo_requested_at,
+    }

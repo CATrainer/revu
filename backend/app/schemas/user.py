@@ -3,10 +3,13 @@ User schemas for request/response validation.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
+
+# Type alias for access status
+AccessStatus = Literal["waiting_list", "early_access", "full_access"]
 
 
 class UserBase(BaseModel):
@@ -30,6 +33,19 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = Field(None, min_length=1, max_length=255)
     password: Optional[str] = Field(None, min_length=8, max_length=128)
     is_active: Optional[bool] = None
+    access_status: Optional[AccessStatus] = None
+
+
+class UserAccessUpdate(BaseModel):
+    """Schema for updating user access status."""
+    
+    access_status: AccessStatus
+    
+    
+class DemoRequest(BaseModel):
+    """Schema for demo request."""
+    
+    message: Optional[str] = Field(None, max_length=500, description="Optional message from user")
 
 
 class User(UserBase):
@@ -39,6 +55,11 @@ class User(UserBase):
     created_at: datetime
     updated_at: datetime
     last_login_at: Optional[datetime] = None
+    access_status: AccessStatus = "waiting_list"
+    joined_waiting_list_at: Optional[datetime] = None
+    early_access_granted_at: Optional[datetime] = None
+    demo_requested: bool = False
+    demo_requested_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
