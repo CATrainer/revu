@@ -18,6 +18,10 @@ class User(Base):
 
     email = Column(String(255), unique=True, nullable=False, index=True)
     full_name = Column(String(255))
+    phone = Column(String(50), nullable=True, comment="Phone number for contact")
+    company_name = Column(String(255), nullable=True, comment="Company/Organization name")
+    industry = Column(String(100), nullable=True, comment="Industry/Business type")
+    has_account = Column(Boolean, default=True, nullable=False, comment="Whether user completed full account creation")
     auth_id = Column(String(255), unique=True, comment="Supabase Auth ID")
     hashed_password = Column(String(255))  # For local auth fallback
     last_login_at = Column(DateTime(timezone=True))

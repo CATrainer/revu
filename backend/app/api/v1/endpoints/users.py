@@ -6,6 +6,7 @@ User profile and membership management.
 
 from typing import List
 from uuid import UUID
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,10 +16,96 @@ from sqlalchemy.orm import selectinload
 from app.core.database import get_async_session
 from app.core.security import get_current_active_user, get_password_hash
 from app.models.user import User, UserMembership
-from app.schemas.user import UserUpdate, User as UserSchema, UserAccessUpdate
+from app.schemas.user import UserUpdate, User as UserSchema, UserAccessUpdate, WaitlistJoin, WaitlistAccountCreate
 from app.schemas.membership import MembershipResponse
 
 router = APIRouter()
+
+
+@router.post("/waitlist/join", response_model=dict)
+async def join_waitlist(
+    waitlist_data: WaitlistJoin,
+    db: AsyncSession = Depends(get_async_session),
+):
+    """
+    Add user to waiting list without creating a full account.
+    If user already exists, update their contact info.
+    """
+    # Check if user already exists
+    result = await db.execute(select(User).where(User.email == waitlist_data.email))
+    existing_user = result.scalar_one_or_none()
+    
+    if existing_user:
+        # Update existing user's contact info
+        for field, value in waitlist_data.model_dump(exclude_unset=True).items():
+            if field != "email":  # Don't update email
+                setattr(existing_user, field, value)
+        
+        # Set joined_waiting_list_at if not already set
+        if not existing_user.joined_waiting_list_at:
+            existing_user.joined_waiting_list_at = datetime.now(timezone.utc)
+            
+        await db.commit()
+        await db.refresh(existing_user)
+        
+        return {
+            "message": "Contact information updated successfully",
+            "user_id": str(existing_user.id),
+            "has_account": existing_user.has_account
+        }
+    else:
+        # Create new waitlist entry
+        new_user = User(
+            **waitlist_data.model_dump(),
+            has_account=False,
+            access_status="waiting_list",
+            joined_waiting_list_at=datetime.now(timezone.utc),
+            hashed_password=None  # No password yet
+        )
+        
+        db.add(new_user)
+        await db.commit()
+        await db.refresh(new_user)
+        
+        return {
+            "message": "Successfully joined the waiting list",
+            "user_id": str(new_user.id),
+            "has_account": False
+        }
+
+
+@router.post("/waitlist/create-account", response_model=UserSchema)
+async def create_account_from_waitlist(
+    account_data: WaitlistAccountCreate,
+    db: AsyncSession = Depends(get_async_session),
+):
+    """
+    Upgrade a waitlist user to a full account with password.
+    """
+    # Find the waitlist user
+    result = await db.execute(select(User).where(User.email == account_data.email))
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Email not found in waiting list"
+        )
+    
+    if user.has_account:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User already has an account"
+        )
+    
+    # Upgrade to full account
+    user.hashed_password = get_password_hash(account_data.password)
+    user.has_account = True
+    
+    await db.commit()
+    await db.refresh(user)
+    
+    return user
 
 
 @router.get("/me", response_model=UserSchema)

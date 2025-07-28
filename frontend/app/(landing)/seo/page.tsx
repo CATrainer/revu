@@ -15,7 +15,7 @@ export default function SEOPage() {
         </p>
         <div className="flex justify-center gap-4">
           <Button size="lg" asChild>
-            <Link href="/signup">Start Free Trial</Link>
+            <Link href="/join-waitlist">Join Waiting List</Link>
           </Button>
           <Button size="lg" variant="outline" asChild>
             <Link href="/demo">See How It Works</Link>
@@ -131,7 +131,7 @@ export default function SEOPage() {
             Join businesses seeing 40%+ increases in local search visibility
           </p>
           <Button size="lg" asChild>
-            <Link href="/signup">Start Free Trial</Link>
+            <Link href="/join-waitlist">Join Waiting List</Link>
           </Button>
         </div>
       </section>

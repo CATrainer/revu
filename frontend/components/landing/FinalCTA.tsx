@@ -14,14 +14,14 @@ export function FinalCTA() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" variant="secondary" asChild>
-            <Link href="/signup">Start Your Free Trial</Link>
+            <Link href="/join-waitlist">Join Waiting List</Link>
           </Button>
           <Button size="lg" variant="outline" className="bg-transparent text-white border-white hover:bg-white hover:text-indigo-600" asChild>
             <Link href="/demo">Schedule a Demo</Link>
           </Button>
         </div>
         <p className="mt-4 text-indigo-100">
-          No credit card required • 30-day free trial • Cancel anytime
+          Get early access • Join the waiting list • Be first to know
         </p>
       </div>
     </section>

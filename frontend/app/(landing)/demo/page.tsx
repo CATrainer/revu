@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Clock, CheckCircle } from 'lucide-react';
 
 export default function DemoPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -17,8 +19,12 @@ export default function DemoPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
+    
+    // Simulate booking demo (in real app, this would integrate with Calendly)
     console.log('Demo request:', formData);
+    
+    // Redirect to demo booked page
+    router.push('/demo-booked');
   };
 
   return (

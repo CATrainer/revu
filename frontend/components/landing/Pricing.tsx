@@ -1,4 +1,5 @@
 // frontend/components/landing/Pricing.tsx
+import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -86,8 +87,8 @@ export function Pricing() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button className="w-full" variant={plan.popular ? 'default' : 'outline'}>
-                  Start Free Trial
+                <Button className="w-full" variant={plan.popular ? 'default' : 'outline'} asChild>
+                  <Link href="/join-waitlist">Join Waiting List</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -96,7 +97,7 @@ export function Pricing() {
         
         <div className="mt-12 text-center">
           <p className="text-gray-600">
-            All plans include a 30-day free trial. No credit card required.
+            Join our waiting list to be first to access these plans when we launch.
           </p>
         </div>
       </div>

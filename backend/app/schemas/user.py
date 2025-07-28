@@ -17,7 +17,20 @@ class UserBase(BaseModel):
 
     email: EmailStr
     full_name: str = Field(..., min_length=1, max_length=255)
+    phone: Optional[str] = Field(None, max_length=50)
+    company_name: Optional[str] = Field(None, max_length=255)
+    industry: Optional[str] = Field(None, max_length=100)
     is_active: bool = True
+
+
+class WaitlistJoin(BaseModel):
+    """Schema for joining the waitlist without creating an account."""
+    
+    email: EmailStr
+    full_name: str = Field(..., min_length=1, max_length=255)
+    phone: Optional[str] = Field(None, max_length=50)
+    company_name: Optional[str] = Field(None, max_length=255)
+    industry: Optional[str] = Field(None, max_length=100)
 
 
 class UserCreate(UserBase):
@@ -31,15 +44,26 @@ class UserUpdate(BaseModel):
 
     email: Optional[EmailStr] = None
     full_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    phone: Optional[str] = Field(None, max_length=50)
+    company_name: Optional[str] = Field(None, max_length=255)
+    industry: Optional[str] = Field(None, max_length=100)
     password: Optional[str] = Field(None, min_length=8, max_length=128)
     is_active: Optional[bool] = None
     access_status: Optional[AccessStatus] = None
+    has_account: Optional[bool] = None
 
 
 class UserAccessUpdate(BaseModel):
     """Schema for updating user access status."""
     
     access_status: AccessStatus
+
+
+class WaitlistAccountCreate(BaseModel):
+    """Schema for creating account from waitlist."""
+    
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=128)
     
     
 class DemoRequest(BaseModel):
@@ -53,6 +77,7 @@ class User(UserBase):
 
     id: UUID
     is_admin: bool = False
+    has_account: bool = True
     created_at: datetime
     updated_at: datetime
     last_login_at: Optional[datetime] = None

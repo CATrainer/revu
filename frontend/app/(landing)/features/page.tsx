@@ -217,7 +217,7 @@ export default function FeaturesPage() {
           </p>
           <div className="flex justify-center gap-4">
             <Button size="lg" asChild>
-              <Link href="/signup">Start Free Trial</Link>
+              <Link href="/join-waitlist">Join Waiting List</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
               <Link href="/demo">Request Demo</Link>

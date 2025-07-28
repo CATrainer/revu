@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Brain, Sparkles, Clock, TrendingUp } from 'lucide-react';
+import { Brain, Sparkles, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function AIPage() {
@@ -181,7 +181,7 @@ export default function AIPage() {
             Let AI handle the heavy lifting while you focus on your business
           </p>
           <Button size="lg" variant="secondary" asChild>
-            <Link href="/signup">Start Free Trial</Link>
+            <Link href="/join-waitlist">Join Waiting List</Link>
           </Button>
         </div>
       </section>
