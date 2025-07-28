@@ -9,6 +9,7 @@ interface User {
   updated_at: string;
   last_login_at: string | null;
   is_active: boolean;
+  is_admin: boolean;
   access_status: 'waiting_list' | 'early_access' | 'full_access';
   joined_waiting_list_at: string | null;
   early_access_granted_at: string | null;
@@ -34,6 +35,7 @@ interface AuthState {
     demo_requested_at: string | null;
   }>;
   canAccessDashboard: () => boolean;
+  getRedirectPath: () => string;
 }
 
 export const useAuth = create<AuthState>((set, get) => ({
@@ -43,32 +45,25 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   login: async (email: string, password: string) => {
     try {
-      console.log('Starting login process...');
-      
       const formData = new FormData();
       formData.append('username', email); // OAuth2 spec uses username
       formData.append('password', password);
 
-      console.log('Sending login request...');
       const response = await api.post('/auth/login', formData, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
 
-      console.log('Login response received:', response.data);
-
-      localStorage.setItem('access_token', response.data.access_token);
-      localStorage.setItem('refresh_token', response.data.refresh_token);
-
-      console.log('Tokens stored, fetching user data...');
+      // Only store in localStorage in browser environment
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('access_token', response.data.access_token);
+        localStorage.setItem('refresh_token', response.data.refresh_token);
+      }
       
       // Get user data
       const userResponse = await api.get('/auth/me');
-      console.log('User data received:', userResponse.data);
-      
       set({ user: userResponse.data, isAuthenticated: true });
-      console.log('Auth state updated successfully');
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -77,18 +72,13 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   signup: async (email: string, password: string, fullName: string) => {
     try {
-      console.log('Starting signup process...');
-      
       const response = await api.post('/auth/signup', {
         email,
         password,
         full_name: fullName,
       });
 
-      console.log('Signup response received:', response.data);
-
       // Auto-login after signup
-      console.log('Auto-logging in after signup...');
       const formData = new FormData();
       formData.append('username', email);
       formData.append('password', password);
@@ -99,15 +89,14 @@ export const useAuth = create<AuthState>((set, get) => ({
         },
       });
 
-      console.log('Auto-login response:', loginResponse.data);
-
-      localStorage.setItem('access_token', loginResponse.data.access_token);
-      localStorage.setItem('refresh_token', loginResponse.data.refresh_token);
+      // Only store in localStorage in browser environment
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('access_token', loginResponse.data.access_token);
+        localStorage.setItem('refresh_token', loginResponse.data.refresh_token);
+      }
 
       // Use the signup response data which should have the updated user info
-      console.log('Setting user data from signup response');
       set({ user: response.data, isAuthenticated: true });
-      console.log('Signup completed successfully');
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
@@ -121,13 +110,23 @@ export const useAuth = create<AuthState>((set, get) => ({
       // Ignore logout errors
     }
 
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    // Only clear localStorage in browser environment
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+    }
     set({ user: null, isAuthenticated: false });
   },
 
   checkAuth: async () => {
     set({ isLoading: true });
+    
+    // Only access localStorage in the browser environment
+    if (typeof window === 'undefined') {
+      set({ isLoading: false });
+      return;
+    }
+    
     const token = localStorage.getItem('access_token');
     
     if (!token) {
@@ -138,9 +137,13 @@ export const useAuth = create<AuthState>((set, get) => ({
     try {
       const response = await api.get('/auth/me');
       set({ user: response.data, isAuthenticated: true, isLoading: false });
-    } catch {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      // Only clear localStorage in browser environment
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+      }
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
@@ -160,5 +163,20 @@ export const useAuth = create<AuthState>((set, get) => ({
   canAccessDashboard: (): boolean => {
     const { user } = get();
     return user?.access_status === 'early_access' || user?.access_status === 'full_access';
+  },
+
+  getRedirectPath: (): string => {
+    const { user } = get();
+    if (!user) return '/auth/login';
+    
+    // Admin users go to admin dashboard
+    if (user.is_admin) return '/admin';
+    
+    // Regular users based on access status
+    if (user.access_status === 'waiting_list') return '/waiting-area';
+    if (user.access_status === 'early_access' || user.access_status === 'full_access') return '/dashboard';
+    
+    // Fallback
+    return '/waiting-area';
   },
 }));

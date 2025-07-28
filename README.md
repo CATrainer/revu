@@ -91,6 +91,20 @@ Key variables:
 - `OPENAI_API_KEY` - OpenAI API key for AI features
 - `SUPABASE_URL` & `SUPABASE_ANON_KEY` - Supabase configuration
 
+## 👨‍💻 Admin Access
+
+For development and testing purposes, a shared admin account is available:
+
+- **Email**: `admin@revu.dev`
+- **Password**: `DevAdmin2025!`
+
+This admin account has full access to:
+- User management (view all users, grant/revoke access)
+- System administration features
+- Dashboard analytics and insights
+
+⚠️ **Security Note**: Change these credentials in production environments.
+
 ## 🧪 Testing
 
 ### Backend Tests

@@ -27,16 +27,10 @@ export default function LoginPage() {
     try {
       await login(email, password);
       
-      // Check user's access status to determine where to redirect
-      const { user } = useAuth.getState();
-      if (user?.access_status === 'waiting_list') {
-        router.push('/waiting-area');
-      } else if (user?.access_status === 'early_access' || user?.access_status === 'full_access') {
-        router.push('/dashboard');
-      } else {
-        // Fallback - redirect to waiting area
-        router.push('/waiting-area');
-      }
+      // Get appropriate redirect path based on user role and access status
+      const { getRedirectPath } = useAuth.getState();
+      const redirectPath = getRedirectPath();
+      router.push(redirectPath);
     } catch (err) {
       console.error('Login error:', err);
       const axiosError = err as AxiosError<ErrorResponse>;

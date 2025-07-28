@@ -52,6 +52,7 @@ class User(UserBase):
     """User response schema."""
 
     id: UUID
+    is_admin: bool = False
     created_at: datetime
     updated_at: datetime
     last_login_at: Optional[datetime] = None

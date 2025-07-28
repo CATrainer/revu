@@ -29,6 +29,7 @@ from app.schemas.auth import (
     UserSignup,
 )
 from app.schemas.user import User, UserCreate, DemoRequest
+from app.models.user import User as UserModel
 from app.services.auth import AuthService
 from app.services.user import UserService
 
@@ -194,7 +195,7 @@ async def refresh_token(
 
 @router.get("/me", response_model=User)
 async def get_current_user_info(
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_user),
 ) -> Any:
     """
     Get current user information.
@@ -205,7 +206,22 @@ async def get_current_user_info(
     Returns:
         User: Current user object
     """
-    return current_user
+    # Manually convert SQLAlchemy model to Pydantic schema
+    return User(
+        id=current_user.id,
+        email=current_user.email,
+        full_name=current_user.full_name,
+        is_active=current_user.is_active,
+        is_admin=current_user.is_admin,
+        created_at=current_user.created_at,
+        updated_at=current_user.updated_at,
+        last_login_at=current_user.last_login_at,
+        access_status=current_user.access_status,
+        joined_waiting_list_at=current_user.joined_waiting_list_at,
+        early_access_granted_at=current_user.early_access_granted_at,
+        demo_requested=current_user.demo_requested,
+        demo_requested_at=current_user.demo_requested_at,
+    )
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

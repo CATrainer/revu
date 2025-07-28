@@ -22,6 +22,7 @@ class User(Base):
     hashed_password = Column(String(255))  # For local auth fallback
     last_login_at = Column(DateTime(timezone=True))
     is_active = Column(Boolean, default=True, nullable=False)
+    is_admin = Column(Boolean, default=False, nullable=False, comment="Admin user flag")
     
     # Access control fields
     access_status = Column(
