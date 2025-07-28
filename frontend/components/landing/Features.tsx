@@ -1,76 +1,104 @@
-// frontend/components/landing/Features.tsx
-import { 
-  BarChart3, 
-  Brain, 
-  Trophy, 
-  Smartphone, 
-  FileText, 
-  Users 
-} from 'lucide-react';
+'use client';
 
-const features = [
+import React from 'react';
+import { motion, LazyMotion, domAnimation, useInView } from "framer-motion";
+import { 
+  FaStar,
+  FaBrain,         // Changed from FaRobot to FaBrain for AI
+  FaBinoculars,
+  FaHashtag,
+  FaChartBar,
+  FaUsers
+} from "react-icons/fa";
+import { IconType } from "react-icons";
+
+interface Feature {
+  icon: IconType;
+  iconColor: string;
+  title: string;
+  description: string;
+}
+
+const features: Feature[] = [
   {
-    icon: BarChart3,
+    icon: FaStar,
+    iconColor: "text-amber-500", // Brighter gold for review stars
     title: 'Review Management',
-    description: 'Centralize all your reviews from Google, TripAdvisor, and more in one intelligent inbox',
+    description: 'Centralize all reviews from Google, TrustPilot, Social Media platforms and more into one intelligent inbox.',
   },
   {
-    icon: Brain,
+    icon: FaBrain,
+    iconColor: "text-indigo-600", // Deep purple/blue for AI/technology
     title: 'AI Responses',
-    description: 'Generate personalized responses in your brand voice with our advanced AI assistant',
+    description: 'Generate personalized responses in your brand voice using AI.',
   },
   {
-    icon: Trophy,
+    icon: FaBinoculars,
+    iconColor: "text-sky-600", // Professional blue for business insights
     title: 'Competitor Tracking',
-    description: 'Monitor and benchmark against local competitors to stay ahead of the competition',
+    description: 'Monitor and benchmark against local competitors to stay ahead of the competition.',
   },
   {
-    icon: Smartphone,
+    icon: FaHashtag,
+    iconColor: "text-pink-500", // Social media pink (common in social platforms)
     title: 'Social Monitoring',
-    description: 'Track mentions and sentiment across social platforms in real-time',
+    description: 'Track mentions and feedback across social media platforms.',
   },
   {
-    icon: FileText,
+    icon: FaChartBar,
+    iconColor: "text-green-600", // Success/growth green for analytics
     title: 'Analytics & Reports',
-    description: 'Get actionable insights with comprehensive reporting and analytics',
+    description: 'Get actionable insights with comprehensive reporting and analytics derived from your review data.',
   },
   {
-    icon: Users,
+    icon: FaUsers,
+    iconColor: "text-purple-600", // Rich purple for collaboration/community
     title: 'Team Collaboration',
-    description: 'Work together with role-based permissions and task assignments',
+    description: 'Work collaboratively with task assignments, role-based permissions and automation workflows.',
   },
 ];
 
 export function Features() {
+  const ref = React.useRef(null);
+  const isInView = useInView(ref, { once: false, amount: 0.2 });
+
   return (
-    <section className="py-24 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Everything You Need to Manage Your Online Reputation
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Powerful features designed to save you time and grow your business
-          </p>
+    <LazyMotion features={domAnimation}>
+      <section ref={ref} className="py-24 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Everything You Need to Manage Your Online Reputation
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Powerful features designed to save you time and grow your business
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 40 }}
+                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+                transition={{ delay: index * 0.15, duration: 0.6 }}
+                className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              >
+                <div className="flex items-center justify-center mb-6">
+                  <feature.icon 
+                    className={`${feature.iconColor} transition-transform hover:scale-110`} 
+                    size={48} 
+                  />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-            >
-              <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
-                <feature.icon className="h-6 w-6 text-indigo-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-gray-600">{feature.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+      </section>
+    </LazyMotion>
   );
 }
