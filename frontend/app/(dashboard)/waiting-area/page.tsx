@@ -1,0 +1,326 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar, Clock, Users, Zap, Check, MessageSquare } from 'lucide-react';
+import Link from 'next/link';
+
+interface UserStatus {
+  access_status: string;
+  can_access_dashboard: boolean;
+  joined_waiting_list_at: string | null;
+  early_access_granted_at: string | null;
+  demo_requested: boolean;
+  demo_requested_at: string | null;
+}
+
+export default function WaitingAreaPage() {
+  const [userStatus, setUserStatus] = useState<UserStatus | null>(null);
+  const [demoRequested, setDemoRequested] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch user's access status
+    const fetchUserStatus = async () => {
+      try {
+        const response = await fetch('/api/auth/me/access-status');
+        const data = await response.json();
+        setUserStatus(data);
+        setDemoRequested(data.demo_requested);
+      } catch (error) {
+        console.error('Failed to fetch user status:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserStatus();
+  }, []);
+
+  const handleRequestDemo = async () => {
+    try {
+      const response = await fetch('/api/auth/request-demo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: '' }),
+      });
+
+      if (response.ok) {
+        setDemoRequested(true);
+      }
+    } catch (error) {
+      console.error('Failed to request demo:', error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Welcome to Revu!</h1>
+              <p className="mt-2 text-gray-600">
+                You&apos;re on our exclusive waiting list. Here&apos;s what&apos;s coming...
+              </p>
+            </div>
+            <div className="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm font-medium">Waiting List Member</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Status Card */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-indigo-600" />
+              Your Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-medium text-gray-900 mb-2">Position in Queue</h3>
+                <p className="text-2xl font-bold text-indigo-600">#42</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Joined on {userStatus?.joined_waiting_list_at ? 
+                    new Date(userStatus.joined_waiting_list_at).toLocaleDateString() : 
+                    'Today'
+                  }
+                </p>
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900 mb-2">Estimated Launch</h3>
+                <p className="text-2xl font-bold text-green-600">Q4 2025</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  We&apos;re working hard to get you early access!
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Demo Request */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-indigo-600" />
+              Book a Demo
+            </CardTitle>
+            <CardDescription>
+              Want to see Revu in action? Book a personalized demo with our team.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!demoRequested ? (
+              <Button onClick={handleRequestDemo} className="w-full sm:w-auto">
+                <Calendar className="h-4 w-4 mr-2" />
+                Request Demo Call
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2 text-green-600">
+                <Check className="h-5 w-5" />
+                <span>Demo requested! We&apos;ll contact you soon.</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Pricing Preview */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Pricing Plans</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Starter Plan */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Starter</CardTitle>
+                <div className="text-3xl font-bold">$29<span className="text-lg font-normal text-gray-600">/month</span></div>
+                <CardDescription>Perfect for small businesses</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">Up to 100 reviews/month</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">AI response generation</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">2 platform connections</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">Basic analytics</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Professional Plan */}
+            <Card className="border-indigo-200 relative">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                  Most Popular
+                </span>
+              </div>
+              <CardHeader>
+                <CardTitle>Professional</CardTitle>
+                <div className="text-3xl font-bold">$79<span className="text-lg font-normal text-gray-600">/month</span></div>
+                <CardDescription>For growing businesses</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">Up to 500 reviews/month</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">Advanced AI responses</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">5 platform connections</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">Competitor tracking</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">Advanced analytics</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Enterprise Plan */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Enterprise</CardTitle>
+                <div className="text-3xl font-bold">$199<span className="text-lg font-normal text-gray-600">/month</span></div>
+                <CardDescription>For large organizations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">Unlimited reviews</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">Custom AI training</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">Unlimited connections</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">Priority support</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">Custom integrations</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Development Updates */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-indigo-600" />
+              Latest Updates
+            </CardTitle>
+            <CardDescription>
+              Stay up to date with our development progress
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="border-l-4 border-indigo-500 pl-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-medium">Week of July 28, 2025</span>
+                  <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Complete</span>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  ✅ AI response engine optimization completed<br/>
+                  ✅ Google My Business integration testing<br/>
+                  ✅ Security audit and penetration testing
+                </p>
+              </div>
+              
+              <div className="border-l-4 border-yellow-500 pl-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-medium">Week of August 4, 2025</span>
+                  <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">In Progress</span>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  🔄 Dashboard UI/UX improvements<br/>
+                  🔄 Multi-location management features<br/>
+                  🔄 Advanced analytics dashboard
+                </p>
+              </div>
+              
+              <div className="border-l-4 border-gray-300 pl-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-medium">Week of August 11, 2025</span>
+                  <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">Planned</span>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  📋 Yelp integration development<br/>
+                  📋 Email notification system<br/>
+                  📋 Mobile app MVP development
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Contact Section */}
+        <div className="mt-8 text-center">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Questions?</h3>
+          <p className="text-gray-600 mb-4">
+            We&apos;re here to help! Reach out to us anytime.
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button variant="outline" asChild>
+              <Link href="mailto:support@revu.com">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Contact Support
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/help">
+                View FAQ
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

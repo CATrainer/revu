@@ -9,6 +9,11 @@ interface User {
   updated_at: string;
   last_login_at: string | null;
   is_active: boolean;
+  access_status: 'waiting_list' | 'early_access' | 'full_access';
+  joined_waiting_list_at: string | null;
+  early_access_granted_at: string | null;
+  demo_requested: boolean;
+  demo_requested_at: string | null;
 }
 
 interface AuthState {
@@ -19,9 +24,19 @@ interface AuthState {
   signup: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  requestDemo: () => Promise<void>;
+  getAccessStatus: () => Promise<{
+    access_status: string;
+    can_access_dashboard: boolean;
+    joined_waiting_list_at: string | null;
+    early_access_granted_at: string | null;
+    demo_requested: boolean;
+    demo_requested_at: string | null;
+  }>;
+  canAccessDashboard: () => boolean;
 }
 
-export const useAuth = create<AuthState>((set) => ({
+export const useAuth = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
@@ -98,5 +113,22 @@ export const useAuth = create<AuthState>((set) => ({
       localStorage.removeItem('refresh_token');
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
+  },
+
+  requestDemo: async () => {
+    await api.post('/auth/request-demo', {});
+    // Refresh user data to update demo_requested status
+    const response = await api.get('/auth/me');
+    set(state => ({ ...state, user: response.data }));
+  },
+
+  getAccessStatus: async () => {
+    const response = await api.get('/auth/me/access-status');
+    return response.data;
+  },
+
+  canAccessDashboard: (): boolean => {
+    const { user } = get();
+    return user?.access_status === 'early_access' || user?.access_status === 'full_access';
   },
 }));
