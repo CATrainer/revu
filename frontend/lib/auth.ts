@@ -42,46 +42,76 @@ export const useAuth = create<AuthState>((set, get) => ({
   isLoading: true,
 
   login: async (email: string, password: string) => {
-    const formData = new FormData();
-    formData.append('username', email); // OAuth2 spec uses username
-    formData.append('password', password);
+    try {
+      console.log('Starting login process...');
+      
+      const formData = new FormData();
+      formData.append('username', email); // OAuth2 spec uses username
+      formData.append('password', password);
 
-    const response = await api.post('/auth/login', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
+      console.log('Sending login request...');
+      const response = await api.post('/auth/login', formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
 
-    localStorage.setItem('access_token', response.data.access_token);
-    localStorage.setItem('refresh_token', response.data.refresh_token);
+      console.log('Login response received:', response.data);
 
-    // Get user data
-    const userResponse = await api.get('/auth/me');
-    set({ user: userResponse.data, isAuthenticated: true });
+      localStorage.setItem('access_token', response.data.access_token);
+      localStorage.setItem('refresh_token', response.data.refresh_token);
+
+      console.log('Tokens stored, fetching user data...');
+      
+      // Get user data
+      const userResponse = await api.get('/auth/me');
+      console.log('User data received:', userResponse.data);
+      
+      set({ user: userResponse.data, isAuthenticated: true });
+      console.log('Auth state updated successfully');
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   },
 
   signup: async (email: string, password: string, fullName: string) => {
-    const response = await api.post('/auth/signup', {
-      email,
-      password,
-      full_name: fullName,
-    });
+    try {
+      console.log('Starting signup process...');
+      
+      const response = await api.post('/auth/signup', {
+        email,
+        password,
+        full_name: fullName,
+      });
 
-    // Auto-login after signup
-    const formData = new FormData();
-    formData.append('username', email);
-    formData.append('password', password);
+      console.log('Signup response received:', response.data);
 
-    const loginResponse = await api.post('/auth/login', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
+      // Auto-login after signup
+      console.log('Auto-logging in after signup...');
+      const formData = new FormData();
+      formData.append('username', email);
+      formData.append('password', password);
 
-    localStorage.setItem('access_token', loginResponse.data.access_token);
-    localStorage.setItem('refresh_token', loginResponse.data.refresh_token);
+      const loginResponse = await api.post('/auth/login', formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
 
-    set({ user: response.data, isAuthenticated: true });
+      console.log('Auto-login response:', loginResponse.data);
+
+      localStorage.setItem('access_token', loginResponse.data.access_token);
+      localStorage.setItem('refresh_token', loginResponse.data.refresh_token);
+
+      // Use the signup response data which should have the updated user info
+      console.log('Setting user data from signup response');
+      set({ user: response.data, isAuthenticated: true });
+      console.log('Signup completed successfully');
+    } catch (error) {
+      console.error('Signup error:', error);
+      throw error;
+    }
   },
 
   logout: async () => {
