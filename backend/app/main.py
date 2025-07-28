@@ -37,7 +37,32 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     logger.info(f"CORS Origins: {settings.BACKEND_CORS_ORIGINS}")
 
     # Initialize database
-    await create_db_and_tables()
+    try:
+        await create_db_and_tables()
+        logger.info("✅ Database initialization completed")
+        
+        # Verify critical tables and columns exist
+        from app.core.database import get_async_session
+        from sqlalchemy import text
+        
+        async for session in get_async_session():
+            # Check if the users table has the new columns
+            result = await session.execute(
+                text("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name IN ('access_status', 'demo_requested')")
+            )
+            columns = [row[0] for row in result.fetchall()]
+            
+            if 'access_status' not in columns or 'demo_requested' not in columns:
+                logger.error("❌ Database schema appears to be missing recent migration columns")
+                logger.error("This may cause application errors. Please check migration status.")
+            else:
+                logger.info("✅ Database schema verification passed")
+            break
+            
+    except Exception as e:
+        logger.error(f"❌ Database initialization failed: {e}")
+        # Don't exit here, let the app try to start anyway
+        # The health check endpoint will catch any issues
 
     # Initialize other services here (Redis, etc.)
 
@@ -70,13 +95,49 @@ app = FastAPI(
 # HEALTH CHECK ENDPOINT - MUST BE FIRST
 @app.get("/health", tags=["health"])
 async def health_check():
-    """Health check endpoint for Railway."""
-    return {
+    """Enhanced health check endpoint for Railway with database verification."""
+    health_status = {
         "status": "healthy",
         "service": settings.APP_NAME,
         "version": settings.APP_VERSION,
         "environment": settings.ENVIRONMENT,
+        "checks": {}
     }
+    
+    # Database connectivity check
+    try:
+        from app.core.database import get_async_session
+        from sqlalchemy import text
+        
+        async for session in get_async_session():
+            await session.execute(text("SELECT 1"))
+            health_status["checks"]["database"] = "healthy"
+            
+            # Check if critical columns exist
+            result = await session.execute(
+                text("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'access_status'")
+            )
+            if result.fetchone():
+                health_status["checks"]["schema"] = "healthy"
+            else:
+                health_status["checks"]["schema"] = "missing_columns"
+                health_status["status"] = "degraded"
+            break
+            
+    except Exception as e:
+        health_status["checks"]["database"] = f"unhealthy: {str(e)}"
+        health_status["status"] = "unhealthy"
+    
+    # Import checks
+    try:
+        from app.models.user import User
+        from app.schemas.user import User as UserSchema
+        health_status["checks"]["imports"] = "healthy"
+    except Exception as e:
+        health_status["checks"]["imports"] = f"unhealthy: {str(e)}"
+        health_status["status"] = "unhealthy"
+    
+    return health_status
 
 # Root endpoint
 @app.get("/", tags=["root"])
@@ -156,7 +217,17 @@ async def value_error_handler(request: Request, exc: ValueError):
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    import traceback
+    
+    # Log the full traceback for debugging
+    logger.error(f"Unhandled exception on {request.method} {request.url.path}")
+    logger.error(f"Exception type: {type(exc).__name__}")
+    logger.error(f"Exception message: {str(exc)}")
+    logger.error(f"Full traceback:\n{traceback.format_exc()}")
+    
+    # Also log request details that might be relevant
+    logger.error(f"Request headers: {dict(request.headers)}")
+    
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
@@ -168,6 +239,7 @@ async def general_exception_handler(request: Request, exc: Exception):
                     if settings.is_production
                     else str(exc)
                 ),
+                "type": type(exc).__name__ if not settings.is_production else None,
             },
         },
     )

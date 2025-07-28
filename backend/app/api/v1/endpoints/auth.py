@@ -77,7 +77,8 @@ async def signup(
     from datetime import datetime
     user.access_status = "waiting_list"
     user.joined_waiting_list_at = datetime.utcnow()
-    await user_service.update(user_id=user.id, user_update={})
+    await db.commit()
+    await db.refresh(user)
 
     logger.info(f"New user joined waiting list: {user.email}")
     return user
@@ -321,7 +322,8 @@ async def request_demo(
     from datetime import datetime
     current_user.demo_requested = True
     current_user.demo_requested_at = datetime.utcnow()
-    await user_service.update(user_id=current_user.id, user_update={})
+    await db.commit()
+    await db.refresh(current_user)
     
     logger.info(f"Demo requested by user: {current_user.email}")
     
