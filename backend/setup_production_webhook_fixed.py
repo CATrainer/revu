@@ -1,8 +1,5 @@
-#!/usr/bin/env # Your Calendly access token - UPDATE THIS WITH YOUR NEW TOKEN
-CALENDLY_ACCESS_TOKEN = os.getenv("CALENDLY_ACCESS_TOKEN") or "PASTE_YOUR_NEW_TOKEN_HERE"
-
-# Production webhook URL
-WEBHOOK_URL = "https://revu-backend-production.up.railway.app/webhooks/calendly""
+#!/usr/bin/env python3
+"""
 Production Calendly Webhook Setup
 
 Run this to create the production webhook pointing to Railway.
@@ -16,14 +13,8 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Your Calendly access token - UPDATE THIS WITH YOUR NEW TOKEN
-CALENDLY_ACCESS_TOKEN = os.getenv("CALENDLY_ACCESS_TOKEN") or "PASTE_YOUR_NEW_TOKEN_HERE"
-
-import requests
-import json
-
 # Your Calendly access token
-CALENDLY_ACCESS_TOKEN = "eyJraWQiOiIxY2UxZTEzNjE3ZGNmNzY2YjNjZWJjY2Y4ZGM1YmFmYThhNjVlNjg0MDIzZjdjMzJiZTgzNDliMjM4MDEzNWI0IiwidHlwIjoiUEFUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJodHRwczovL2F1dGguY2FsZW5kbHkuY29tIiwiaWF0IjoxNzUzNzkzNDY0LCJqdGkiOiI4YWM2YTQ5OC0xNWIyLTQzNjktOTc5YS00NTgzYTU3NjFmYmQiLCJ1c2VyX3V1aWQiOiJjN2MwOTUwNS01YTZjLTQwMzgtOWU4MS05NmFlMDQwMTg0ZjkifQ.wlIkDMyroxdC6Ojedn4lrB7p3z8bOj3m-RlYGtIswhER7Acqm9Zk84z5hMtT-yqE_sQ0_WT3nZS-NtWLM19b12g"
+CALENDLY_ACCESS_TOKEN = os.getenv("CALENDLY_ACCESS_TOKEN")
 
 # Production webhook URL
 WEBHOOK_URL = "https://revu-backend-production.up.railway.app/webhooks/calendly"
@@ -33,7 +24,7 @@ def setup_production_webhook():
     print("=" * 50)
     
     # Debug: Check if token is loaded
-    if CALENDLY_ACCESS_TOKEN == "PASTE_YOUR_NEW_TOKEN_HERE":
+    if not CALENDLY_ACCESS_TOKEN:
         print("❌ Error: Token not loaded from .env file!")
         print("Make sure your .env file is in the same directory as this script.")
         return
@@ -76,16 +67,34 @@ def setup_production_webhook():
     # Create webhook
     print(f"\n3. Creating webhook for {WEBHOOK_URL}...")
     
+    # Try organization scope first (more common)
     data = {
         "url": WEBHOOK_URL,
         "events": ["invitee.created", "invitee.canceled"],
         "organization": user_uri.replace('/users/', '/organizations/'),
-        "scope": "user"
+        "scope": "organization"
     }
     
+    print("   Attempting organization scope webhook...")
     response = requests.post('https://api.calendly.com/webhook_subscriptions', 
                            headers=headers, 
                            json=data)
+    
+    if response.status_code != 201:
+        print(f"   Organization scope failed ({response.status_code}), trying user scope...")
+        
+        # Fallback to user scope
+        data = {
+            "url": WEBHOOK_URL,
+            "events": ["invitee.created", "invitee.canceled"],
+            "organization": user_uri.replace('/users/', '/organizations/'),
+            "user": user_uri,
+            "scope": "user"
+        }
+        
+        response = requests.post('https://api.calendly.com/webhook_subscriptions', 
+                               headers=headers, 
+                               json=data)
     
     if response.status_code == 201:
         webhook_data = response.json()
