@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import Link from 'next/link';
 import {
@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { LogOut, Settings } from 'lucide-react';
+import { LogOut, Settings, Users, Calendar } from 'lucide-react';
 
 // Simple loading spinner component
 const LoadingSpinner = ({ className = "" }: { className?: string }) => (
@@ -28,6 +28,7 @@ export default function AdminLayout({
 }) {
   const { user, isLoading, checkAuth, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     checkAuth();
@@ -62,6 +63,21 @@ export default function AdminLayout({
   if (!user || !user.is_admin) {
     return null; // Will redirect in useEffect
   }
+
+  const navigationItems = [
+    {
+      name: 'User Management',
+      href: '/admin',
+      icon: Users,
+      current: pathname === '/admin'
+    },
+    {
+      name: 'Demo Management',
+      href: '/admin/demos',
+      icon: Calendar,
+      current: pathname === '/admin/demos'
+    }
+  ];
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b border-gray-200">
@@ -115,6 +131,34 @@ export default function AdminLayout({
               </DropdownMenu>
             </div>
           </div>
+        </div>
+        
+        {/* Navigation Tabs */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex space-x-8" aria-label="Tabs">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`${
+                    item.current
+                      ? 'border-indigo-500 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm`}
+                >
+                  <Icon
+                    className={`${
+                      item.current ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-500'
+                    } -ml-0.5 mr-2 h-5 w-5`}
+                    aria-hidden="true"
+                  />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
         </div>
       </div>
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
