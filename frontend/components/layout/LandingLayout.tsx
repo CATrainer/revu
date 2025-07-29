@@ -29,12 +29,12 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navigation */}
-      <nav className="bg-white/95 dark:bg-[hsl(222,84%,5%)]/95 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-200 dark:border-[hsl(222,47%,16%)]">
+      <nav className="nav-background shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/" className="flex items-center">
-                <span className="text-2xl font-bold text-indigo-600 dark:text-[hsl(263,70%,68%)]">Revu</span>
+                <span className="text-2xl font-bold brand-text">Revu</span>
               </Link>
               
               {/* Desktop Navigation */}
@@ -153,7 +153,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center md:hidden">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+                className="inline-flex items-center justify-center p-2 rounded-md text-secondary-dark hover:text-primary-dark hover-background focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[hsl(263,70%,68%)]"
               >
                 {mobileMenuOpen ? (
                   <X className="block h-6 w-6" />
@@ -167,40 +167,40 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
         
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+          <div className="md:hidden nav-mobile-background">
             <div className="pt-2 pb-3 space-y-1">
               <Link
                 href="/features"
-                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 hover:text-gray-800 dark:hover:text-gray-200"
+                className="nav-mobile-link"
               >
                 Features
               </Link>
               <Link
                 href="/seo"
-                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 hover:text-gray-800 dark:hover:text-gray-200"
+                className="nav-mobile-link"
               >
                 SEO
               </Link>
               <Link
                 href="/ai"
-                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 hover:text-gray-800 dark:hover:text-gray-200"
+                className="nav-mobile-link"
               >
                 AI
               </Link>
               <Link
                 href="/pricing"
-                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 hover:text-gray-800 dark:hover:text-gray-200"
+                className="nav-mobile-link"
               >
                 Pricing
               </Link>
               <Link
                 href="/demo"
-                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 hover:text-gray-800 dark:hover:text-gray-200"
+                className="nav-mobile-link"
               >
                 Request Demo
               </Link>
             </div>
-            <div className="pt-4 pb-3 border-t border-gray-200">
+            <div className="pt-4 pb-3 border-t border-gray-200 dark:border-[hsl(222,47%,16%)]">
               <div className="flex items-center justify-center px-4 mb-3">
                 <ThemeToggle />
               </div>

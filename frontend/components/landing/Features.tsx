@@ -29,7 +29,7 @@ const features: Feature[] = [
   },
   {
     icon: FaBrain,
-    iconColor: "text-indigo-600", // Deep purple/blue for AI/technology
+    iconColor: "brand-text", // Deep purple/blue for AI/technology
     title: 'AI Responses',
     description: 'Generate personalized responses in your brand voice using AI.',
   },
@@ -65,13 +65,13 @@ export function Features() {
 
   return (
     <LazyMotion features={domAnimation}>
-      <section ref={ref} className="py-24 bg-gray-50 dark:bg-[hsl(222,84%,4%)]">
+      <section ref={ref} className="py-24 section-background-alt">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-[hsl(215,20%,85%)] mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-primary-dark mb-4">
               Everything You Need to Manage Your Online Reputation
             </h2>
-            <p className="text-lg text-gray-600 dark:text-[hsl(215,20%,65%)] max-w-2xl mx-auto">
+            <p className="text-lg text-secondary-dark max-w-2xl mx-auto">
               Powerful features designed to save you time and grow your business
             </p>
           </div>
@@ -83,7 +83,7 @@ export function Features() {
                 initial={{ opacity: 0, y: 40 }}
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
                 transition={{ delay: index * 0.15, duration: 0.6 }}
-                className="bg-white dark:bg-[hsl(222,84%,8%)] p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer border dark:border-[hsl(222,47%,16%)]"
+                className="card-background p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer"
               >
                 <Link href={`/features#${feature.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')}`} className="block">
                   <div className="flex items-center justify-center mb-6">
@@ -92,10 +92,10 @@ export function Features() {
                       size={48} 
                     />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-[hsl(215,20%,85%)] mb-2">
+                  <h3 className="text-xl font-semibold text-primary-dark mb-2">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-600 dark:text-[hsl(215,20%,65%)]">{feature.description}</p>
+                  <p className="text-secondary-dark">{feature.description}</p>
                 </Link>
               </motion.div>
             ))}

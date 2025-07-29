@@ -100,19 +100,19 @@ export default function SEOPage() {
                 </li>
               </ul>
             </div>
-            <div className="bg-white p-8 rounded-lg shadow-lg">
-              <h3 className="text-xl font-semibold mb-4">SEO Impact Example</h3>
+            <div className="card-background p-8 rounded-lg shadow-lg">
+              <h3 className="text-xl font-semibold mb-4 text-primary-dark">SEO Impact Example</h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Local Search Visibility</span>
+                  <span className="text-secondary-dark">Local Search Visibility</span>
                   <span className="text-2xl font-bold text-green-600">+47%</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Click-Through Rate</span>
+                  <span className="text-secondary-dark">Click-Through Rate</span>
                   <span className="text-2xl font-bold text-green-600">+32%</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Map Pack Position</span>
+                  <span className="text-secondary-dark">Map Pack Position</span>
                   <span className="text-2xl font-bold text-green-600">#3 → #1</span>
                 </div>
               </div>

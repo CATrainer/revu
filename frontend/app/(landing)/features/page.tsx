@@ -205,76 +205,76 @@ export default function FeaturesPage() {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <div className="h-12 w-12 bg-green-100 dark:bg-green-500/10 rounded-lg flex items-center justify-center">
                 <FaChartBar className="h-6 w-6 text-green-600" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900">Analytics & Reports</h2>
+              <h2 className="text-3xl font-bold text-primary-dark">Analytics & Reports</h2>
             </div>
-            <p className="text-lg text-gray-600 mb-6">
+            <p className="text-lg text-secondary-dark mb-6">
               Get actionable insights with comprehensive reporting and analytics derived from your review data.
             </p>
             <ul className="space-y-3">
               <li className="flex items-start">
                 <span className="text-green-500 mr-3 mt-1">✓</span>
-                <span>Performance metrics and KPIs</span>
+                <span className="text-body-dark">Performance metrics and KPIs</span>
               </li>
               <li className="flex items-start">
                 <span className="text-green-500 mr-3 mt-1">✓</span>
-                <span>Sentiment trend analysis</span>
+                <span className="text-body-dark">Sentiment trend analysis</span>
               </li>
               <li className="flex items-start">
                 <span className="text-green-500 mr-3 mt-1">✓</span>
-                <span>Custom reporting dashboards</span>
+                <span className="text-body-dark">Custom reporting dashboards</span>
               </li>
               <li className="flex items-start">
                 <span className="text-green-500 mr-3 mt-1">✓</span>
-                <span>Automated report generation</span>
+                <span className="text-body-dark">Automated report generation</span>
               </li>
               <li className="flex items-start">
                 <span className="text-green-500 mr-3 mt-1">✓</span>
-                <span>Export data in multiple formats</span>
+                <span className="text-body-dark">Export data in multiple formats</span>
               </li>
             </ul>
           </div>
-          <div className="bg-gray-100 rounded-lg p-8 h-96 flex items-center justify-center">
-            <p className="text-gray-500">[Analytics Dashboard]</p>
+          <div className="card-background-light rounded-lg p-8 h-96 flex items-center justify-center">
+            <p className="text-muted-dark">[Analytics Dashboard]</p>
           </div>
         </div>
       </section>
 
       {/* Team Collaboration Section */}
-      <section id="team-collaboration" className="bg-gray-50 py-24">
+      <section id="team-collaboration" className="section-background-alt py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="order-2 md:order-1 bg-white rounded-lg p-8 h-96 flex items-center justify-center shadow-sm">
-              <p className="text-gray-500">[Team Collaboration Interface]</p>
+            <div className="order-2 md:order-1 card-background rounded-lg p-8 h-96 flex items-center justify-center shadow-sm">
+              <p className="text-muted-dark">[Team Collaboration Interface]</p>
             </div>
             <div className="order-1 md:order-2">
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <div className="h-12 w-12 bg-purple-100 dark:bg-purple-500/10 rounded-lg flex items-center justify-center">
                   <FaUsers className="h-6 w-6 text-purple-600" />
                 </div>
-                <h2 className="text-3xl font-bold text-gray-900">Team Collaboration</h2>
+                <h2 className="text-3xl font-bold text-primary-dark">Team Collaboration</h2>
               </div>
-              <p className="text-lg text-gray-600 mb-6">
+              <p className="text-lg text-secondary-dark mb-6">
                 Work collaboratively with task assignments, role-based permissions and automation workflows.
               </p>
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <span className="text-green-500 mr-3 mt-1">✓</span>
-                  <span>Role-based access control</span>
+                  <span className="text-body-dark">Role-based access control</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-green-500 mr-3 mt-1">✓</span>
-                  <span>Task assignments and notifications</span>
+                  <span className="text-body-dark">Task assignments and notifications</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-green-500 mr-3 mt-1">✓</span>
-                  <span>Internal notes and comments</span>
+                  <span className="text-body-dark">Internal notes and comments</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-green-500 mr-3 mt-1">✓</span>
-                  <span>Approval workflows</span>
+                  <span className="text-body-dark">Approval workflows</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-green-500 mr-3 mt-1">✓</span>

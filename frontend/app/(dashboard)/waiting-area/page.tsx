@@ -59,24 +59,24 @@ export default function WaitingAreaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[hsl(222,84%,5%)]">
+    <div className="min-h-screen dashboard-background">
       {/* Header */}
-      <div className="bg-white dark:bg-[hsl(222,84%,7%)] shadow-sm border-b border-gray-200 dark:border-[hsl(222,47%,16%)]">
+      <div className="nav-background shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <Link href="/" className="flex items-center">
-                <span className="text-2xl font-bold text-indigo-600 dark:text-[hsl(263,70%,68%)]">Revu</span>
+                <span className="text-2xl font-bold brand-text">Revu</span>
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome to Revu!</h1>
-                <p className="mt-2 text-gray-600 dark:text-[hsl(215,20%,65%)]">
+                <h1 className="text-3xl font-bold text-primary-dark">Welcome to Revu!</h1>
+                <p className="mt-2 text-secondary-dark">
                   You&apos;re on our exclusive waiting list. Here&apos;s what&apos;s coming...
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="bg-indigo-50 dark:bg-[hsl(263,70%,68%)]/10 text-indigo-700 dark:text-[hsl(263,70%,68%)] px-4 py-2 rounded-full">
+              <div className="brand-background text-[hsl(263,70%,68%)] px-4 py-2 rounded-full">
                 <AccountDropdown variant="waiting" />
               </div>
               <ThemeToggle />
@@ -87,19 +87,19 @@ export default function WaitingAreaPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Status Card */}
-        <Card className="mb-8 bg-white dark:bg-[hsl(222,84%,7%)] border-gray-200 dark:border-[hsl(222,47%,16%)]">
+        <Card className="mb-8 dashboard-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-              <Users className="h-5 w-5 text-indigo-600 dark:text-[hsl(263,70%,68%)]" />
+            <CardTitle className="flex items-center gap-2 text-primary-dark">
+              <Users className="h-5 w-5 brand-text" />
               Your Status
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <h3 className="font-medium text-gray-900 dark:text-white mb-2">Position in Queue</h3>
-                <p className="text-2xl font-bold text-indigo-600 dark:text-[hsl(263,70%,68%)]">#42</p>
-                <p className="text-sm text-gray-600 dark:text-[hsl(215,20%,65%)] mt-1">
+                <h3 className="font-medium text-primary-dark mb-2">Position in Queue</h3>
+                <p className="text-2xl font-bold brand-text">#42</p>
+                <p className="text-sm text-secondary-dark mt-1">
                   Joined on {userStatus?.joined_waiting_list_at ? 
                     new Date(userStatus.joined_waiting_list_at).toLocaleDateString() : 
                     'Today'
@@ -107,9 +107,9 @@ export default function WaitingAreaPage() {
                 </p>
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 dark:text-white mb-2">Estimated Launch</h3>
-                <p className="text-2xl font-bold text-green-600 dark:text-[hsl(142,76%,36%)]">Q4 2025</p>
-                <p className="text-sm text-gray-600 dark:text-[hsl(215,20%,65%)] mt-1">
+                <h3 className="font-medium text-primary-dark mb-2">Estimated Launch</h3>
+                <p className="text-2xl font-bold text-green-600">Q4 2025</p>
+                <p className="text-sm text-secondary-dark mt-1">
                   We&apos;re working hard to get you early access!
                 </p>
               </div>

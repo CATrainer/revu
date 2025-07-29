@@ -222,4 +222,44 @@
   .button-secondary {
     @apply bg-white dark:bg-[hsl(222,84%,8%)] border border-gray-300 dark:border-[hsl(222,47%,16%)] text-gray-700 dark:text-[hsl(210,40%,98%)] hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)];
   }
+
+  /* Navigation specific */
+  .nav-background {
+    @apply bg-white/95 dark:bg-[hsl(222,84%,5%)]/95 backdrop-blur-md border-b border-gray-200 dark:border-[hsl(222,47%,16%)];
+  }
+  
+  .nav-link {
+    @apply text-gray-700 dark:text-[hsl(215,20%,65%)] hover:text-gray-900 dark:hover:text-[hsl(210,40%,98%)];
+  }
+  
+  .nav-mobile-background {
+    @apply bg-white dark:bg-[hsl(222,84%,6%)] border-t border-gray-200 dark:border-[hsl(222,47%,16%)];
+  }
+  
+  .nav-mobile-link {
+    @apply block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 dark:text-[hsl(215,20%,65%)] hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)] hover:border-gray-300 hover:text-gray-800 dark:hover:text-[hsl(210,40%,98%)];
+  }
+  
+  /* Brand colors */
+  .brand-text {
+    @apply text-[hsl(263,70%,68%)];
+  }
+  
+  .brand-background {
+    @apply bg-[hsl(263,70%,68%)]/10;
+  }
+  
+  /* Status backgrounds */
+  .status-background {
+    @apply bg-gray-100 dark:bg-[hsl(222,84%,12%)];
+  }
+  
+  /* Dashboard specific */
+  .dashboard-background {
+    @apply bg-gray-50 dark:bg-[hsl(222,84%,5%)];
+  }
+  
+  .dashboard-card {
+    @apply bg-white dark:bg-[hsl(222,84%,7%)] border border-gray-200 dark:border-[hsl(222,47%,16%)];
+  }
 }

@@ -30,7 +30,7 @@ export default function AIPage() {
 
       {/* How It Works */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
-        <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
+        <h2 className="text-3xl font-bold text-primary-dark mb-12 text-center">
           How Our AI Works
         </h2>
         <div className="grid md:grid-cols-3 gap-8">
