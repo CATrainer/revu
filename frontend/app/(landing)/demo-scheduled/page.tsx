@@ -109,7 +109,7 @@ const DemoScheduledPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen section-background">
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -117,22 +117,22 @@ const DemoScheduledPage = () => {
             <div className="flex items-center justify-center mb-4">
               <CheckCircle className="h-16 w-16 text-green-500" />
             </div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            <h1 className="text-4xl font-bold text-primary-dark mb-2">
               Demo Request Submitted Successfully!
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-secondary-dark max-w-2xl mx-auto">
               Thank you for your interest in Revu. We&apos;re excited to show you how our platform can transform your review management strategy.
             </p>
           </div>
 
           {/* Calendly Widget */}
-          <Card className="mb-8">
+          <Card className="card-background mb-8">
             <CardHeader className="text-center">
-              <CardTitle className="flex items-center justify-center gap-2">
-                <Calendar className="h-6 w-6 text-indigo-600" />
+              <CardTitle className="flex items-center justify-center gap-2 text-primary-dark">
+                <Calendar className="h-6 w-6 icon-color" />
                 Schedule Your Personalized Demo
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-secondary-dark">
                 Choose a time that works best for you. Our team will be ready with a customized demonstration based on your specific needs and industry.
               </CardDescription>
             </CardHeader>
@@ -151,20 +151,20 @@ const DemoScheduledPage = () => {
           {/* Signup Prompt Modal - Shows after meeting is scheduled */}
           {showSignupPrompt && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <Card className="w-full max-w-md">
+              <Card className="w-full max-w-md card-background">
                 <CardHeader className="text-center">
                   <div className="flex items-center justify-center mb-4">
                     <Sparkles className="h-12 w-12 text-yellow-500" />
                   </div>
-                  <CardTitle className="text-2xl">Meeting Scheduled! 🎉</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-2xl text-primary-dark">Meeting Scheduled! 🎉</CardTitle>
+                  <CardDescription className="text-secondary-dark">
                     Perfect! While you wait for your demo, why not create your Revu account to get early access to our platform?
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSignup} className="space-y-4">
                     <div>
-                      <Label htmlFor="full_name" className="flex items-center gap-2">
+                      <Label htmlFor="full_name" className="flex items-center gap-2 text-primary-dark">
                         <User className="h-4 w-4" />
                         Full Name
                       </Label>
@@ -175,12 +175,13 @@ const DemoScheduledPage = () => {
                         value={signupData.full_name}
                         onChange={handleInputChange}
                         placeholder="Enter your full name"
+                        className="card-background"
                         required
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="email" className="flex items-center gap-2">
+                      <Label htmlFor="email" className="flex items-center gap-2 text-primary-dark">
                         <Mail className="h-4 w-4" />
                         Email
                       </Label>
@@ -191,12 +192,13 @@ const DemoScheduledPage = () => {
                         value={signupData.email}
                         onChange={handleInputChange}
                         placeholder="Enter your email"
+                        className="card-background"
                         required
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="password" className="flex items-center gap-2">
+                      <Label htmlFor="password" className="flex items-center gap-2 text-primary-dark">
                         <Lock className="h-4 w-4" />
                         Password
                       </Label>
@@ -207,12 +209,13 @@ const DemoScheduledPage = () => {
                         value={signupData.password}
                         onChange={handleInputChange}
                         placeholder="Create a password (8+ characters)"
+                        className="card-background"
                         required
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      <Label htmlFor="confirmPassword" className="text-primary-dark">Confirm Password</Label>
                       <Input
                         id="confirmPassword"
                         name="confirmPassword"
@@ -220,12 +223,13 @@ const DemoScheduledPage = () => {
                         value={signupData.confirmPassword}
                         onChange={handleInputChange}
                         placeholder="Confirm your password"
+                        className="card-background"
                         required
                       />
                     </div>
 
                     {error && (
-                      <div className="text-red-600 text-sm bg-red-50 p-3 rounded">
+                      <div className="text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded">
                         {error}
                       </div>
                     )}
@@ -234,14 +238,14 @@ const DemoScheduledPage = () => {
                       <Button
                         type="button"
                         variant="outline"
-                        className="flex-1"
+                        className="flex-1 button-secondary"
                         onClick={() => setShowSignupPrompt(false)}
                       >
                         Maybe Later
                       </Button>
                       <Button
                         type="submit"
-                        className="flex-1"
+                        className="flex-1 button-primary"
                         disabled={isSigningUp}
                       >
                         {isSigningUp ? 'Creating Account...' : 'Create Account'}
@@ -249,8 +253,8 @@ const DemoScheduledPage = () => {
                     </div>
                   </form>
                   
-                  <div className="mt-4 p-3 bg-indigo-50 rounded-lg">
-                    <p className="text-sm text-indigo-700">
+                  <div className="mt-4 p-3 brand-background rounded-lg">
+                    <p className="text-sm text-primary-dark">
                       <strong>Get early access:</strong> Join our platform before your demo to explore features and prepare better questions!
                     </p>
                   </div>
@@ -261,61 +265,61 @@ const DemoScheduledPage = () => {
 
           {/* What to Expect */}
           <div className="grid md:grid-cols-2 gap-8 mb-8">
-            <Card>
+            <Card className="card-background">
               <CardHeader>
-                <CardTitle>What to Expect</CardTitle>
+                <CardTitle className="text-primary-dark">What to Expect</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
                   <li className="flex items-start">
                     <span className="text-green-500 mr-2 mt-0.5">✓</span>
-                    <span>30-minute personalized walkthrough</span>
+                    <span className="text-body-dark">30-minute personalized walkthrough</span>
                   </li>
                   <li className="flex items-start">
                     <span className="text-green-500 mr-2 mt-0.5">✓</span>
-                    <span>Live demonstration of AI-powered responses</span>
+                    <span className="text-body-dark">Live demonstration of AI-powered responses</span>
                   </li>
                   <li className="flex items-start">
                     <span className="text-green-500 mr-2 mt-0.5">✓</span>
-                    <span>Custom dashboard overview for your industry</span>
+                    <span className="text-body-dark">Custom dashboard overview for your industry</span>
                   </li>
                   <li className="flex items-start">
                     <span className="text-green-500 mr-2 mt-0.5">✓</span>
-                    <span>ROI calculation specific to your business</span>
+                    <span className="text-body-dark">ROI calculation specific to your business</span>
                   </li>
                   <li className="flex items-start">
                     <span className="text-green-500 mr-2 mt-0.5">✓</span>
-                    <span>Q&A session tailored to your needs</span>
+                    <span className="text-body-dark">Q&A session tailored to your needs</span>
                   </li>
                 </ul>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="card-background">
               <CardHeader>
-                <CardTitle>Preparation Tips</CardTitle>
+                <CardTitle className="text-primary-dark">Preparation Tips</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
                   <li className="flex items-start">
-                    <span className="text-blue-500 mr-2 mt-0.5">→</span>
-                    <span>Have your current review platforms ready to discuss</span>
+                    <span className="icon-color mr-2 mt-0.5">→</span>
+                    <span className="text-body-dark">Have your current review platforms ready to discuss</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-blue-500 mr-2 mt-0.5">→</span>
-                    <span>Think about your biggest review management challenges</span>
+                    <span className="icon-color mr-2 mt-0.5">→</span>
+                    <span className="text-body-dark">Think about your biggest review management challenges</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-blue-500 mr-2 mt-0.5">→</span>
-                    <span>Consider your team size and workflow needs</span>
+                    <span className="icon-color mr-2 mt-0.5">→</span>
+                    <span className="text-body-dark">Consider your team size and workflow needs</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-blue-500 mr-2 mt-0.5">→</span>
-                    <span>Prepare any specific questions about features</span>
+                    <span className="icon-color mr-2 mt-0.5">→</span>
+                    <span className="text-body-dark">Prepare any specific questions about features</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-blue-500 mr-2 mt-0.5">→</span>
-                    <span>Have stakeholders join if decision-making is collaborative</span>
+                    <span className="icon-color mr-2 mt-0.5">→</span>
+                    <span className="text-body-dark">Have stakeholders join if decision-making is collaborative</span>
                   </li>
                 </ul>
               </CardContent>
@@ -323,28 +327,28 @@ const DemoScheduledPage = () => {
           </div>
 
           {/* Early Access CTA */}
-          <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white mb-8">
+          <Card className="button-primary mb-8">
             <CardContent className="pt-6">
               <div className="text-center">
-                <h3 className="text-xl font-bold mb-2 flex items-center justify-center gap-2">
+                <h3 className="text-xl font-bold mb-2 flex items-center justify-center gap-2 text-white">
                   <Sparkles className="h-6 w-6" />
                   Get Early Access While You Wait
                 </h3>
-                <p className="mb-4 opacity-90">
+                <p className="mb-4 text-white/90">
                   Don&apos;t wait for the demo! Create your Revu account now and start exploring our platform. 
                   You&apos;ll be better prepared for the demonstration and can begin optimizing your review strategy immediately.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button 
                     variant="secondary" 
-                    className="bg-white text-indigo-600 hover:bg-gray-100"
+                    className="bg-white text-[hsl(263,70%,68%)] hover:bg-gray-100"
                     onClick={() => setShowSignupPrompt(true)}
                   >
                     Create Account Now
                   </Button>
                   <Button 
                     variant="secondary" 
-                    className="bg-white/10 text-white border-white/30 hover:bg-white hover:text-indigo-600"
+                    className="bg-white/10 text-white border-white/30 hover:bg-white hover:text-[hsl(263,70%,68%)]"
                     onClick={() => router.push('/login')}
                   >
                     Already Have an Account?
@@ -355,18 +359,18 @@ const DemoScheduledPage = () => {
           </Card>
 
           {/* Alternative Options */}
-          <Card className="bg-gray-50 border-gray-200">
+          <Card className="card-background-light">
             <CardContent className="pt-6">
               <div className="text-center">
-                <h3 className="text-lg font-semibold mb-2">Can&apos;t find a suitable time right now?</h3>
-                <p className="text-gray-600 mb-4">
+                <h3 className="text-lg font-semibold mb-2 text-primary-dark">Can&apos;t find a suitable time right now?</h3>
+                <p className="text-secondary-dark mb-4">
                   No worries! You can always schedule your demo later or reach out to us directly.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button variant="outline" onClick={() => window.location.href = 'mailto:demo@revu.com'}>
+                  <Button variant="outline" className="button-secondary" onClick={() => window.location.href = 'mailto:demo@revu.com'}>
                     Email Us Instead
                   </Button>
-                  <Button variant="outline" onClick={() => window.location.href = '/'}>
+                  <Button variant="outline" className="button-secondary" onClick={() => window.location.href = '/'}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Return to Homepage
                   </Button>
@@ -377,11 +381,11 @@ const DemoScheduledPage = () => {
 
           {/* Footer Note */}
           <div className="text-center mt-8">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-dark">
               You&apos;ll receive a confirmation email with meeting details once you schedule your demo.
               <br />
               Have questions? Contact us at{" "}
-              <a href="mailto:support@revu.com" className="text-indigo-600 hover:underline">
+              <a href="mailto:support@revu.com" className="brand-text hover:underline">
                 support@revu.com
               </a>
             </p>

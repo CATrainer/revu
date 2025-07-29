@@ -294,42 +294,54 @@ export default function FeaturesPage() {
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="card-background p-6 rounded-lg shadow-sm">
-              <FaMobileAlt className="h-10 w-10 text-pink-500 mb-4" />
+              <div className="flex items-center justify-center mb-4">
+                <FaMobileAlt className="h-10 w-10 text-pink-500" />
+              </div>
               <h3 className="text-xl font-semibold mb-2 text-primary-dark">Social Monitoring</h3>
               <p className="text-secondary-dark">
                 Track mentions and sentiment across social platforms in real-time.
               </p>
             </div>
             <div className="card-background p-6 rounded-lg shadow-sm">
-              <FaChartBar className="h-10 w-10 text-green-600 mb-4" />
+              <div className="flex items-center justify-center mb-4">
+                <FaChartBar className="h-10 w-10 text-green-600" />
+              </div>
               <h3 className="text-xl font-semibold mb-2 text-primary-dark">Advanced Analytics</h3>
               <p className="text-secondary-dark">
                 Comprehensive reporting with actionable insights and trend analysis.
               </p>
             </div>
             <div className="card-background p-6 rounded-lg shadow-sm">
-              <FaUsers className="h-10 w-10 text-purple-600 mb-4" />
+              <div className="flex items-center justify-center mb-4">
+                <FaUsers className="h-10 w-10 text-purple-600" />
+              </div>
               <h3 className="text-xl font-semibold mb-2 text-primary-dark">Team Collaboration</h3>
               <p className="text-secondary-dark">
                 Role-based permissions, assignments, and internal notes.
               </p>
             </div>
             <div className="card-background p-6 rounded-lg shadow-sm">
-              <FaBolt className="h-10 w-10 text-amber-500 mb-4" />
+              <div className="flex items-center justify-center mb-4">
+                <FaBolt className="h-10 w-10 text-amber-500" />
+              </div>
               <h3 className="text-xl font-semibold mb-2 text-primary-dark">Automation Rules</h3>
               <p className="text-secondary-dark">
                 Set up intelligent workflows to handle reviews automatically.
               </p>
             </div>
             <div className="card-background p-6 rounded-lg shadow-sm">
-              <FaClock className="h-10 w-10 text-sky-600 mb-4" />
+              <div className="flex items-center justify-center mb-4">
+                <FaClock className="h-10 w-10 text-sky-600" />
+              </div>
               <h3 className="text-xl font-semibold mb-2 text-primary-dark">Response Templates</h3>
               <p className="text-secondary-dark">
                 Save time with customizable templates for common scenarios.
               </p>
             </div>
             <div className="card-background p-6 rounded-lg shadow-sm">
-              <FaShieldAlt className="h-10 w-10 text-indigo-600 mb-4" />
+              <div className="flex items-center justify-center mb-4">
+                <FaShieldAlt className="h-10 w-10 text-indigo-600" />
+              </div>
               <h3 className="text-xl font-semibold mb-2 text-primary-dark">Enterprise Security</h3>
               <p className="text-secondary-dark">
                 Bank-level encryption, GDPR compliance, and regular backups.

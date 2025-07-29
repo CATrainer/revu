@@ -7,11 +7,11 @@ import { Mail, MessageCircle, ArrowLeft } from "lucide-react";
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen section-background py-12">
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Back to Home Navigation */}
         <div className="mb-6">
-          <Button variant="ghost" asChild className="text-gray-600 hover:text-gray-900">
+          <Button variant="ghost" asChild className="nav-link">
             <Link href="/" className="flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back to Home
@@ -19,44 +19,44 @@ export default function ContactPage() {
           </Button>
         </div>
         
-        <Card>
+        <Card className="card-background">
           <CardHeader>
-            <CardTitle className="text-3xl">Contact Us</CardTitle>
+            <CardTitle className="text-3xl text-primary-dark">Contact Us</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 gap-8">
               <div>
-                <h3 className="text-xl font-semibold mb-4">Get in Touch</h3>
-                <p className="text-gray-600 mb-6">
+                <h3 className="text-xl font-semibold mb-4 text-primary-dark">Get in Touch</h3>
+                <p className="text-secondary-dark mb-6">
                   We&apos;d love to hear from you! Whether you have questions about Revu, 
                   need support, or want to discuss your review management needs.
                 </p>
                 
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <Mail className="h-5 w-5 text-indigo-600" />
-                    <a href="mailto:support@revu.com" className="text-indigo-600 hover:underline">
+                    <Mail className="h-5 w-5 icon-color" />
+                    <a href="mailto:support@revu.com" className="brand-text hover:underline">
                       support@revu.com
                     </a>
                   </div>
                   
                   <div className="flex items-center gap-3">
-                    <MessageCircle className="h-5 w-5 text-indigo-600" />
-                    <span className="text-gray-600">Live chat support coming soon</span>
+                    <MessageCircle className="h-5 w-5 icon-color" />
+                    <span className="text-secondary-dark">Live chat support coming soon</span>
                   </div>
                 </div>
               </div>
               
               <div>
-                <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
+                <h3 className="text-xl font-semibold mb-4 text-primary-dark">Quick Actions</h3>
                 <div className="space-y-3">
-                  <Button asChild className="w-full">
+                  <Button asChild className="w-full button-primary">
                     <Link href="/demo">Schedule a Demo</Link>
                   </Button>
-                  <Button variant="outline" asChild className="w-full">
+                  <Button variant="outline" asChild className="w-full button-secondary">
                     <Link href="/join-waitlist">Join Waitlist</Link>
                   </Button>
-                  <Button variant="outline" asChild className="w-full">
+                  <Button variant="outline" asChild className="w-full button-secondary">
                     <a href="mailto:support@revu.com">Email Support</a>
                   </Button>
                 </div>

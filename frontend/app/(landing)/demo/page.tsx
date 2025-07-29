@@ -52,7 +52,7 @@ export default function DemoPage() {
   };
 
   return (
-    <div className="py-24">
+    <div className="py-24 section-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-2 gap-12">
           {/* Left Column - Info */}
@@ -121,79 +121,79 @@ export default function DemoPage() {
 
           {/* Right Column - Form */}
           <div>
-            <Card>
+            <Card className="card-background">
               <CardHeader>
-                <CardTitle>Book Your Demo</CardTitle>
+                <CardTitle className="text-primary-dark">Book Your Demo</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="name" className="block text-sm font-medium text-primary-dark mb-1">
                       Full Name *
                     </label>
                     <input
                       type="text"
                       id="name"
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-[hsl(222,47%,16%)] rounded-md focus:outline-none focus:ring-2 focus:ring-[hsl(263,70%,68%)] card-background text-primary-dark"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="email" className="block text-sm font-medium text-primary-dark mb-1">
                       Work Email *
                     </label>
                     <input
                       type="email"
                       id="email"
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-[hsl(222,47%,16%)] rounded-md focus:outline-none focus:ring-2 focus:ring-[hsl(263,70%,68%)] card-background text-primary-dark"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="company" className="block text-sm font-medium text-primary-dark mb-1">
                       Company Name *
                     </label>
                     <input
                       type="text"
                       id="company"
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-[hsl(222,47%,16%)] rounded-md focus:outline-none focus:ring-2 focus:ring-[hsl(263,70%,68%)] card-background text-primary-dark"
                       value={formData.company}
                       onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="phone" className="block text-sm font-medium text-primary-dark mb-1">
                       Phone Number
                     </label>
                     <input
                       type="tel"
                       id="phone"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-[hsl(222,47%,16%)] rounded-md focus:outline-none focus:ring-2 focus:ring-[hsl(263,70%,68%)] card-background text-primary-dark"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="company_size" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="company_size" className="block text-sm font-medium text-primary-dark mb-1">
                       Company Size *
                     </label>
                     <Select
                       value={formData.company_size}
                       onValueChange={(value) => setFormData({ ...formData, company_size: value })}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full card-background">
                         <SelectValue placeholder="Select company size" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="card-background">
                         <SelectItem value="1-10">1-10 employees</SelectItem>
                         <SelectItem value="11-50">11-50 employees</SelectItem>
                         <SelectItem value="51-200">51-200 employees</SelectItem>
@@ -205,17 +205,17 @@ export default function DemoPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="current_solution" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="current_solution" className="block text-sm font-medium text-primary-dark mb-1">
                       Current Review Management Solution *
                     </label>
                     <Select
                       value={formData.current_solution}
                       onValueChange={(value) => setFormData({ ...formData, current_solution: value })}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full card-background">
                         <SelectValue placeholder="Select your current solution" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="card-background">
                         <SelectItem value="none">No current solution</SelectItem>
                         <SelectItem value="manual">Manual tracking (spreadsheets, etc.)</SelectItem>
                         <SelectItem value="google">Google My Business only</SelectItem>
@@ -230,23 +230,23 @@ export default function DemoPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="message" className="block text-sm font-medium text-primary-dark mb-1">
                       Anything specific you&apos;d like to see?
                     </label>
                     <textarea
                       id="message"
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-[hsl(222,47%,16%)] rounded-md focus:outline-none focus:ring-2 focus:ring-[hsl(263,70%,68%)] card-background text-primary-dark"
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     />
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  <Button type="submit" className="w-full button-primary" disabled={isSubmitting}>
                     {isSubmitting ? 'Submitting...' : 'Request Demo'}
                   </Button>
 
-                  <p className="text-xs text-gray-500 text-center">
+                  <p className="text-xs text-muted-dark text-center">
                     By requesting a demo, you agree to our privacy policy and to receive communications from Revu.
                   </p>
                 </form>
