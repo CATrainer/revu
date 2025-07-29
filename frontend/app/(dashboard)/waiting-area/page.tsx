@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Calendar, Users, Zap, Check, MessageSquare } from 'lucide-react';
 import { AccountDropdown } from '@/components/layout/AccountDropdown';
 import Link from 'next/link';
+import { api } from '@/lib/api';
 
 interface UserStatus {
   access_status: string;
@@ -41,17 +42,8 @@ export default function WaitingAreaPage() {
 
   const handleRequestDemo = async () => {
     try {
-      const response = await fetch('/api/auth/request-demo', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: '' }),
-      });
-
-      if (response.ok) {
-        setDemoRequested(true);
-      }
+      await api.post('/auth/request-demo', { message: '' });
+      setDemoRequested(true);
     } catch (error) {
       console.error('Failed to request demo:', error);
     }

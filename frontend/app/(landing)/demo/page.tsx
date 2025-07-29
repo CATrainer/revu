@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,40 +20,28 @@ export default function DemoPage() {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/v1/users/request-demo', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          company: formData.company,
-          company_size: formData.company_size,
-          current_solution: formData.current_solution,
-          message: formData.message
-        })
+      await api.post('/users/request-demo', {
+        name: formData.name,
+        email: formData.email,
+        company: formData.company,
+        company_size: formData.company_size,
+        current_solution: formData.current_solution,
+        message: formData.message
       });
 
-      if (response.ok) {
-        setIsSubmitted(true);
-        // Save user info for Calendly prefill
-        localStorage.setItem('demoUserInfo', JSON.stringify({
-          name: formData.name,
-          email: formData.email
-        }));
-        // Redirect to success page with Calendly
-        router.push('/demo-scheduled');
-      } else {
-        throw new Error('Failed to submit demo request');
-      }
+      // Save user info for Calendly prefill
+      localStorage.setItem('demoUserInfo', JSON.stringify({
+        name: formData.name,
+        email: formData.email
+      }));
+      // Redirect to success page with Calendly
+      router.push('/demo-scheduled');
     } catch (error) {
       console.error('Error submitting demo request:', error);
       alert('There was an error submitting your demo request. Please try again.');
