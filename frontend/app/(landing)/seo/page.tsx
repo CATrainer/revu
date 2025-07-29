@@ -83,8 +83,8 @@ export default function SEOPage() {
                 <li className="flex items-start">
                   <Check className="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-semibold mb-1">Review Velocity Tracking</h4>
-                    <p className="text-gray-600">
+                    <h4 className="font-semibold mb-1 text-primary-dark">Review Velocity Tracking</h4>
+                    <p className="text-secondary-dark">
                       Monitor and improve your review acquisition rate
                     </p>
                   </div>
@@ -92,8 +92,8 @@ export default function SEOPage() {
                 <li className="flex items-start">
                   <Check className="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-semibold mb-1">Rich Snippet Optimization</h4>
-                    <p className="text-gray-600">
+                    <h4 className="font-semibold mb-1 text-primary-dark">Rich Snippet Optimization</h4>
+                    <p className="text-secondary-dark">
                       Structured data helps your reviews appear in search results
                     </p>
                   </div>
@@ -124,10 +124,10 @@ export default function SEOPage() {
       {/* CTA Section */}
       <section className="py-24">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-primary-dark mb-4">
             Ready to Dominate Local Search?
           </h2>
-          <p className="text-xl text-gray-600 mb-8">
+          <p className="text-xl text-secondary-dark mb-8">
             Join businesses seeing 40%+ increases in local search visibility
           </p>
           <Button size="lg" asChild>
