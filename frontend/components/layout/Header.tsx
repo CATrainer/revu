@@ -13,9 +13,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/lib/auth';
 import { LocationSelector } from '@/components/dashboard/LocationSelector';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -44,129 +45,144 @@ export function Header({ onMenuClick }: HeaderProps) {
   ];
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
+    <header className="bg-white dark:bg-[hsl(222,84%,6%)] shadow-sm border-b border-gray-200 dark:border-[hsl(222,47%,16%)]">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Button
               variant="ghost"
-              size="icon"
-              className="md:hidden"
+              size="sm"
               onClick={onMenuClick}
+              className="lg:hidden hover:bg-gray-100 dark:hover:bg-[hsl(222,84%,12%)]"
             >
               <Menu className="h-5 w-5" />
             </Button>
             
-            <div className="hidden md:block">
+            <div className="hidden sm:block ml-4 lg:ml-0">
               <LocationSelector />
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             {/* Search */}
             {searchOpen ? (
               <form onSubmit={handleSearch} className="flex items-center space-x-2">
                 <Input
-                  type="text"
+                  type="search"
                   placeholder="Search reviews, customers..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-64"
+                  className="w-64 bg-white dark:bg-[hsl(222,84%,8%)] border-gray-300 dark:border-[hsl(222,47%,16%)]"
                   autoFocus
                 />
-                <Button type="submit" size="sm">
-                  Search
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="icon"
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
                     setSearchOpen(false);
                     setSearchQuery('');
                   }}
+                  className="hover:bg-gray-100 dark:hover:bg-[hsl(222,84%,12%)]"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </form>
             ) : (
-              <Button 
-                variant="ghost" 
-                size="icon"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setSearchOpen(true)}
+                className="hover:bg-gray-100 dark:hover:bg-[hsl(222,84%,12%)]"
               >
-                <Search className="h-5 w-5 text-gray-400" />
+                <Search className="h-5 w-5" />
               </Button>
             )}
-            
+
             {/* Notifications */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5 text-gray-400" />
+                <Button variant="ghost" size="sm" className="relative hover:bg-gray-100 dark:hover:bg-[hsl(222,84%,12%)]">
+                  <Bell className="h-5 w-5" />
                   {mockNotifications.some(n => n.unread) && (
-                    <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white" />
+                    <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-80" align="end">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                <DropdownMenuSeparator />
+              <DropdownMenuContent 
+                align="end" 
+                className="w-80 bg-white dark:bg-[hsl(222,84%,8%)] border-gray-200 dark:border-[hsl(222,47%,16%)]"
+              >
+                <DropdownMenuLabel className="text-gray-900 dark:text-[hsl(215,20%,85%)]">Notifications</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-gray-200 dark:bg-[hsl(222,47%,16%)]" />
                 {mockNotifications.map((notification) => (
-                  <DropdownMenuItem key={notification.id} className="flex flex-col items-start p-4 cursor-pointer">
-                    <div className="flex items-start justify-between w-full">
-                      <div className="flex-1">
-                        <p className={`text-sm font-medium ${notification.unread ? 'text-gray-900' : 'text-gray-600'}`}>
-                          {notification.title}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {notification.time}
-                        </p>
-                      </div>
+                  <DropdownMenuItem 
+                    key={notification.id} 
+                    className="flex flex-col items-start p-4 hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)]"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <h4 className={`text-sm font-medium ${notification.unread ? 'text-gray-900 dark:text-[hsl(215,20%,85%)]' : 'text-gray-600 dark:text-[hsl(215,20%,65%)]'}`}>
+                        {notification.title}
+                      </h4>
                       {notification.unread && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full ml-2 mt-1"></div>
+                        <span className="h-2 w-2 bg-blue-500 rounded-full"></span>
                       )}
                     </div>
+                    <p className="text-sm text-gray-500 dark:text-[hsl(215,20%,65%)] mt-1">
+                      {notification.message}
+                    </p>
+                    <span className="text-xs text-gray-400 dark:text-[hsl(215,20%,55%)] mt-2">
+                      {notification.time}
+                    </span>
                   </DropdownMenuItem>
                 ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-center text-sm text-blue-600 cursor-pointer">
-                  View all notifications
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            
+
+            <ThemeToggle />
+
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-[hsl(222,84%,12%)]">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="/avatars/01.png" alt={user?.full_name} />
-                    <AvatarFallback>
-                      {user?.full_name?.split(' ').map(n => n[0]).join('')}
+                    <AvatarFallback className="bg-[hsl(263,70%,68%)] text-white">
+                      {user?.full_name?.charAt(0) || 'U'}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
+              <DropdownMenuContent 
+                className="w-56 bg-white dark:bg-[hsl(222,84%,8%)] border-gray-200 dark:border-[hsl(222,47%,16%)]" 
+                align="end" 
+                forceMount
+              >
+                <DropdownMenuLabel className="font-normal text-gray-900 dark:text-[hsl(215,20%,85%)]">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.full_name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
+                    <p className="text-sm font-medium leading-none">
+                      {user?.full_name || 'User'}
+                    </p>
+                    <p className="text-xs leading-none text-gray-500 dark:text-[hsl(215,20%,65%)]">
                       {user?.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Billing</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>
-                  Log out
+                <DropdownMenuSeparator className="bg-gray-200 dark:bg-[hsl(222,47%,16%)]" />
+                <DropdownMenuItem className="hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)]">
+                  <span className="text-gray-900 dark:text-[hsl(215,20%,85%)]">Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)]">
+                  <span className="text-gray-900 dark:text-[hsl(215,20%,85%)]">Billing</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)]">
+                  <span className="text-gray-900 dark:text-[hsl(215,20%,85%)]">Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-gray-200 dark:bg-[hsl(222,47%,16%)]" />
+                <DropdownMenuItem 
+                  onClick={logout}
+                  className="hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)]"
+                >
+                  <span className="text-gray-900 dark:text-[hsl(215,20%,85%)]">Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

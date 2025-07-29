@@ -57,46 +57,46 @@ export default function DemoPage() {
         <div className="grid md:grid-cols-2 gap-12">
           {/* Left Column - Info */}
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-6">
+            <h1 className="text-4xl font-bold text-primary-dark mb-6">
               See Revu in Action
             </h1>
-            <p className="text-xl text-gray-600 mb-8">
+            <p className="text-xl text-secondary-dark mb-8">
               Get a personalized demo from our team and discover how Revu can transform your review management
             </p>
 
             <div className="space-y-6 mb-8">
               <div className="flex items-start">
-                <Calendar className="h-6 w-6 text-indigo-600 mr-3 flex-shrink-0 mt-0.5" />
+                <Calendar className="h-6 w-6 icon-color mr-3 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold mb-1">30-Minute Demo</h3>
-                  <p className="text-gray-600">Quick but comprehensive walkthrough of all features</p>
+                  <h3 className="font-semibold mb-1 text-primary-dark">30-Minute Demo</h3>
+                  <p className="text-secondary-dark">Quick but comprehensive walkthrough of all features</p>
                 </div>
               </div>
               <div className="flex items-start">
-                <Clock className="h-6 w-6 text-indigo-600 mr-3 flex-shrink-0 mt-0.5" />
+                <Clock className="h-6 w-6 icon-color mr-3 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold mb-1">Tailored to Your Business</h3>
-                  <p className="text-gray-600">We&apos;ll focus on features most relevant to you</p>
+                  <h3 className="font-semibold mb-1 text-primary-dark">Tailored to Your Business</h3>
+                  <p className="text-secondary-dark">We&apos;ll focus on features most relevant to you</p>
                 </div>
               </div>
               <div className="flex items-start">
-                <CheckCircle className="h-6 w-6 text-indigo-600 mr-3 flex-shrink-0 mt-0.5" />
+                <CheckCircle className="h-6 w-6 icon-color mr-3 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold mb-1">No Obligation</h3>
-                  <p className="text-gray-600">Just a friendly conversation about your needs</p>
+                  <h3 className="font-semibold mb-1 text-primary-dark">No Obligation</h3>
+                  <p className="text-secondary-dark">Just a friendly conversation about your needs</p>
                 </div>
               </div>
             </div>
 
-            <Card className="bg-gray-50 border-gray-200">
+            <Card className="card-background-light">
               <CardHeader>
-                <CardTitle>What We&apos;ll Cover</CardTitle>
+                <CardTitle className="text-primary-dark">What We&apos;ll Cover</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
                   <li className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
-                    Live dashboard walkthrough
+                    <span className="text-body-dark">Live dashboard walkthrough</span>
                   </li>
                   <li className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>

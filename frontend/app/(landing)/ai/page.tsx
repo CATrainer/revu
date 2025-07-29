@@ -5,24 +5,24 @@ import { FaBrain, FaMagic, FaChartLine } from 'react-icons/fa';
 
 export default function AIPage() {
   return (
-    <div className="py-24">
+    <div className="py-24 bg-white dark:bg-[hsl(222,84%,5%)]">
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
+        <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-[hsl(263,70%,68%)]/10 text-indigo-700 dark:text-[hsl(263,70%,68%)] px-4 py-2 rounded-full text-sm font-medium mb-6">
           <FaMagic className="h-4 w-4" />
           Powered by Advanced AI
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
           AI That Speaks Your Brand&apos;s Language
         </h1>
-        <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+        <p className="text-xl text-gray-600 dark:text-[hsl(215,20%,65%)] mb-8 max-w-3xl mx-auto">
           Generate personalized responses that maintain your unique voice while saving 80% of response time
         </p>
         <div className="flex justify-center gap-4">
-          <Button size="lg" asChild>
+          <Button size="lg" className="bg-[hsl(263,70%,68%)] hover:bg-[hsl(263,70%,60%)] text-white border-0" asChild>
             <Link href="/join-waitlist">Try AI Response Generator</Link>
           </Button>
-          <Button size="lg" variant="outline" asChild>
+          <Button size="lg" variant="outline" className="border-gray-300 dark:border-[hsl(222,47%,16%)] text-gray-700 dark:text-[hsl(215,20%,65%)] hover:bg-gray-50 dark:hover:bg-[hsl(222,47%,11%)]" asChild>
             <Link href="/demo">Watch Demo</Link>
           </Button>
         </div>
@@ -79,35 +79,35 @@ export default function AIPage() {
       </section>
 
       {/* AI Features */}
-      <section className="bg-gray-50 py-24 mt-24">
+      <section className="section-background-alt py-24 mt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
+          <h2 className="text-3xl font-bold text-primary-dark mb-12 text-center">
             Advanced AI Features
           </h2>
           <div className="grid md:grid-cols-2 gap-12">
             <div>
-              <h3 className="text-2xl font-semibold mb-6">Smart Response Generation</h3>
+              <h3 className="text-2xl font-semibold mb-6 text-primary-dark">Smart Response Generation</h3>
               <ul className="space-y-4">
                 <li className="flex items-start">
-                  <span className="text-indigo-600 mr-3">✓</span>
-                  <div>
+                  <span className="text-[hsl(263,70%,68%)] mr-3">✓</span>
+                  <div className="text-body-dark">
                     <strong>Context-Aware</strong> - Understands review sentiment and responds appropriately
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-indigo-600 mr-3">✓</span>
-                  <div>
+                  <span className="text-[hsl(263,70%,68%)] mr-3">✓</span>
+                  <div className="text-body-dark">
                     <strong>Brand Consistent</strong> - Maintains your tone whether professional, friendly, or casual
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-indigo-600 mr-3">✓</span>
-                  <div>
+                  <span className="text-[hsl(263,70%,68%)] mr-3">✓</span>
+                  <div className="text-body-dark">
                     <strong>Personalized</strong> - References specific details mentioned in reviews
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-indigo-600 mr-3">✓</span>
+                  <span className="text-[hsl(263,70%,68%)] mr-3">✓</span>
                   <div>
                     <strong>Multi-language</strong> - Coming soon: respond in the reviewer&apos;s language
                   </div>

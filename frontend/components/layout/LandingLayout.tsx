@@ -29,12 +29,12 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navigation */}
-      <nav className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700">
+      <nav className="bg-white/95 dark:bg-[hsl(222,84%,5%)]/95 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-200 dark:border-[hsl(222,47%,16%)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/" className="flex items-center">
-                <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Revu</span>
+                <span className="text-2xl font-bold text-indigo-600 dark:text-[hsl(263,70%,68%)]">Revu</span>
               </Link>
               
               {/* Desktop Navigation */}

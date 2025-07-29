@@ -20,15 +20,19 @@ export function LocationSelector() {
 
   return (
     <Select defaultValue="1">
-      <SelectTrigger className="w-[200px]">
+      <SelectTrigger className="w-[200px] bg-white dark:bg-[hsl(222,84%,8%)] border-gray-300 dark:border-[hsl(222,47%,16%)] text-gray-900 dark:text-[hsl(215,20%,85%)]">
         <div className="flex items-center">
-          <MapPin className="h-4 w-4 mr-2" />
+          <MapPin className="h-4 w-4 mr-2 text-gray-500 dark:text-[hsl(215,20%,65%)]" />
           <SelectValue placeholder="Select location" />
         </div>
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="bg-white dark:bg-[hsl(222,84%,8%)] border-gray-200 dark:border-[hsl(222,47%,16%)]">
         {locations.map((location) => (
-          <SelectItem key={location.id} value={location.id}>
+          <SelectItem 
+            key={location.id} 
+            value={location.id}
+            className="text-gray-900 dark:text-[hsl(215,20%,85%)] hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)]"
+          >
             {location.name}
           </SelectItem>
         ))}

@@ -15,8 +15,8 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-        <p className="mt-2 text-gray-600">Welcome back! Here&apos;s what&apos;s happening with your reviews.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-[hsl(215,20%,85%)]">Dashboard Overview</h1>
+        <p className="mt-2 text-gray-600 dark:text-[hsl(215,20%,65%)]">Welcome back! Here&apos;s what&apos;s happening with your reviews.</p>
       </div>
       
       {/* Metrics Grid */}
@@ -65,31 +65,31 @@ export default function DashboardPage() {
       
       {/* Recent Activity and Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card>
+        <Card className="bg-white dark:bg-[hsl(222,84%,8%)] border-gray-200 dark:border-[hsl(222,47%,16%)]">
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle className="text-gray-900 dark:text-[hsl(215,20%,85%)]">Recent Activity</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-start space-x-4">
                 <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">New 5-star review</p>
-                  <p className="text-sm text-gray-500">2 minutes ago • Google</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-[hsl(215,20%,85%)]">New 5-star review</p>
+                  <p className="text-sm text-gray-500 dark:text-[hsl(215,20%,55%)]">2 minutes ago • Google</p>
                 </div>
               </div>
               <div className="flex items-start space-x-4">
                 <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">Negative review needs response</p>
-                  <p className="text-sm text-gray-500">15 minutes ago • TripAdvisor</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-[hsl(215,20%,85%)]">Negative review needs response</p>
+                  <p className="text-sm text-gray-500 dark:text-[hsl(215,20%,55%)]">15 minutes ago • TripAdvisor</p>
                 </div>
               </div>
               <div className="flex items-start space-x-4">
                 <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">Competitor alert</p>
-                  <p className="text-sm text-gray-500">1 hour ago • Rating increased</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-[hsl(215,20%,85%)]">Competitor alert</p>
+                  <p className="text-sm text-gray-500 dark:text-[hsl(215,20%,55%)]">1 hour ago • Rating increased</p>
                 </div>
               </div>
             </div>

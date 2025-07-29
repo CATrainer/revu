@@ -34,24 +34,24 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto transition-all duration-300',
+        'bg-white dark:bg-[hsl(222,84%,6%)] border-r border-gray-200 dark:border-[hsl(222,47%,16%)] pt-5 pb-4 overflow-y-auto transition-all duration-300',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
       <div className="flex items-center justify-between px-4 mb-8">
         {!collapsed && (
           <Link href="/" className="flex items-center">
-            <span className="text-2xl font-bold text-indigo-600">Revu</span>
+            <span className="text-2xl font-bold text-indigo-600 dark:text-[hsl(263,70%,68%)]">Revu</span>
           </Link>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded-md hover:bg-gray-100"
+          className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-[hsl(222,47%,11%)]"
         >
           {collapsed ? (
-            <ChevronRight className="h-5 w-5 text-gray-500" />
+            <ChevronRight className="h-5 w-5 text-gray-500 dark:text-[hsl(215,20%,65%)]" />
           ) : (
-            <ChevronLeft className="h-5 w-5 text-gray-500" />
+            <ChevronLeft className="h-5 w-5 text-gray-500 dark:text-[hsl(215,20%,65%)]" />
           )}
         </button>
       </div>

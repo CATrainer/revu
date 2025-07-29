@@ -3,21 +3,21 @@ import { Badge } from '@/components/ui/badge';
 
 export default function PricingPage() {
   return (
-    <div className="py-24">
+    <div className="py-24 bg-white dark:bg-[hsl(222,84%,5%)]">
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16">
-        <Badge className="mb-4">Launch Special</Badge>
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+        <Badge className="mb-4 bg-[hsl(263,70%,68%)] hover:bg-[hsl(263,70%,60%)] text-white border-0">Launch Special</Badge>
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
           Simple, Transparent Pricing
         </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+        <p className="text-xl text-gray-600 dark:text-[hsl(215,20%,65%)] max-w-2xl mx-auto">
           Choose the plan that grows with your business. All plans include a 30-day free trial.
         </p>
       </section>
 
       {/* Special Offer Banner */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg p-6 text-white text-center">
+        <div className="bg-gradient-to-r from-[hsl(263,70%,68%)] to-[hsl(280,65%,60%)] dark:from-[hsl(263,70%,55%)] dark:to-[hsl(280,65%,50%)] rounded-lg p-6 text-white text-center">
           <h2 className="text-2xl font-bold mb-2">
             🎉 Launch Special: Professional Tier for £100
           </h2>
@@ -32,19 +32,19 @@ export default function PricingPage() {
 
       {/* FAQ Section */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
-        <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-12 text-center">
           Frequently Asked Questions
         </h2>
         <div className="space-y-8">
           <div>
-            <h3 className="text-xl font-semibold mb-2">Can I change plans anytime?</h3>
-            <p className="text-gray-600">
+            <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Can I change plans anytime?</h3>
+            <p className="text-gray-600 dark:text-[hsl(215,20%,65%)]">
               Yes! You can upgrade or downgrade your plan at any time. Changes take effect at your next billing cycle.
             </p>
           </div>
           <div>
-            <h3 className="text-xl font-semibold mb-2">What happens after my free trial?</h3>
-            <p className="text-gray-600">
+            <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">What happens after my free trial?</h3>
+            <p className="text-gray-600 dark:text-[hsl(215,20%,65%)]">
               After your 30-day trial, you&apos;ll be automatically enrolled in your selected plan. You can cancel anytime before the trial ends.
             </p>
           </div>

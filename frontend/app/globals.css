@@ -79,37 +79,59 @@
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  /* Modern dark mode inspired by Linear, GitHub, Vercel */
+  --background: hsl(222, 84%, 5%);        /* Deep, rich dark background */
+  --foreground: hsl(210, 40%, 98%);       /* Pure white text */
+  
+  /* Cards and surfaces */
+  --card: hsl(222, 84%, 7%);              /* Slightly lighter than background */
+  --card-foreground: hsl(210, 40%, 98%);
+  --popover: hsl(222, 84%, 8%);
+  --popover-foreground: hsl(210, 40%, 98%);
+  
+  /* Brand colors - modern purple/violet theme */
+  --primary: hsl(263, 70%, 68%);          /* Bright purple for CTAs */
+  --primary-foreground: hsl(222, 84%, 5%);
+  
+  /* Secondary surfaces */
+  --secondary: hsl(222, 47%, 11%);        /* Subtle background variant */
+  --secondary-foreground: hsl(210, 40%, 95%);
+  
+  /* Muted elements */
+  --muted: hsl(222, 47%, 11%);            
+  --muted-foreground: hsl(215, 20%, 65%); /* Muted text */
+  
+  /* Accent colors */
+  --accent: hsl(222, 47%, 14%);           /* Hover states */
+  --accent-foreground: hsl(210, 40%, 98%);
+  
+  /* Status colors */
+  --destructive: hsl(0, 84%, 60%);        /* Modern red */
+  --success: hsl(142, 76%, 36%);          /* Modern green */
+  --warning: hsl(38, 92%, 50%);           /* Modern amber */
+  --info: hsl(200, 98%, 39%);             /* Modern blue */
+  
+  /* Borders and inputs */
+  --border: hsl(222, 47%, 16%);           /* Subtle borders */
+  --input: hsl(222, 47%, 16%);
+  --ring: hsl(263, 70%, 68%);             /* Focus rings match primary */
+  
+  /* Chart colors - cohesive with dark theme */
+  --chart-1: hsl(263, 70%, 68%);          /* Primary purple */
+  --chart-2: hsl(200, 98%, 39%);          /* Blue */
+  --chart-3: hsl(142, 76%, 36%);          /* Green */
+  --chart-4: hsl(38, 92%, 50%);           /* Amber */
+  --chart-5: hsl(0, 84%, 60%);            /* Red */
+  
+  /* Sidebar (dashboard) */
+  --sidebar: hsl(222, 84%, 6%);
+  --sidebar-foreground: hsl(210, 40%, 98%);
+  --sidebar-primary: hsl(263, 70%, 68%);
+  --sidebar-primary-foreground: hsl(222, 84%, 5%);
+  --sidebar-accent: hsl(222, 47%, 11%);
+  --sidebar-accent-foreground: hsl(210, 40%, 98%);
+  --sidebar-border: hsl(222, 47%, 16%);
+  --sidebar-ring: hsl(263, 70%, 68%);
 }
 
 @layer base {
@@ -145,4 +167,59 @@
 
 .animate-float-delayed {
   animation: float-delayed 3s ease-in-out 0.5s infinite;
+}
+
+/* Custom semantic classes for consistent dark mode */
+@layer components {
+  .section-background {
+    @apply bg-white dark:bg-[hsl(222,84%,5%)];
+  }
+  
+  .section-background-alt {
+    @apply bg-gray-50 dark:bg-[hsl(222,84%,4%)];
+  }
+  
+  .card-background {
+    @apply bg-white dark:bg-[hsl(222,84%,8%)] border border-gray-200 dark:border-[hsl(222,47%,16%)];
+  }
+  
+  .card-background-light {
+    @apply bg-gray-50 dark:bg-[hsl(222,84%,12%)] border border-gray-100 dark:border-[hsl(222,47%,18%)];
+  }
+  
+  .text-primary-dark {
+    @apply text-gray-900 dark:text-[hsl(210,40%,98%)];
+  }
+  
+  .text-secondary-dark {
+    @apply text-gray-600 dark:text-[hsl(215,20%,65%)];
+  }
+  
+  .text-muted-dark {
+    @apply text-gray-500 dark:text-[hsl(215,20%,55%)];
+  }
+  
+  .text-body-dark {
+    @apply text-gray-700 dark:text-[hsl(215,20%,75%)];
+  }
+  
+  .icon-background {
+    @apply bg-gray-100 dark:bg-[hsl(263,70%,68%)]/10;
+  }
+  
+  .icon-color {
+    @apply text-gray-600 dark:text-[hsl(263,70%,68%)];
+  }
+  
+  .hover-background {
+    @apply hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)];
+  }
+  
+  .button-primary {
+    @apply bg-[hsl(263,70%,68%)] hover:bg-[hsl(263,70%,65%)] text-white;
+  }
+  
+  .button-secondary {
+    @apply bg-white dark:bg-[hsl(222,84%,8%)] border border-gray-300 dark:border-[hsl(222,47%,16%)] text-gray-700 dark:text-[hsl(210,40%,98%)] hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)];
+  }
 }

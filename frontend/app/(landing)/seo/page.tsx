@@ -4,20 +4,20 @@ import { Check, TrendingUp, Search, BarChart3 } from 'lucide-react';
 
 export default function SEOPage() {
   return (
-    <div className="py-24">
+    <div className="py-24 section-background">
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+        <h1 className="text-4xl md:text-5xl font-bold text-primary-dark mb-6">
           Reviews That Boost Your Local SEO
         </h1>
-        <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+        <p className="text-xl text-secondary-dark mb-8 max-w-3xl mx-auto">
           Turn customer feedback into search engine gold with our SEO-optimized review management
         </p>
         <div className="flex justify-center gap-4">
-          <Button size="lg" asChild>
+          <Button size="lg" className="button-primary border-0" asChild>
             <Link href="/join-waitlist">Join Waiting List</Link>
           </Button>
-          <Button size="lg" variant="outline" asChild>
+          <Button size="lg" variant="outline" className="button-secondary" asChild>
             <Link href="/demo">See How It Works</Link>
           </Button>
         </div>
@@ -25,28 +25,28 @@ export default function SEOPage() {
 
       {/* Why Reviews Matter for SEO */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
-        <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
+        <h2 className="text-3xl font-bold text-primary-dark mb-12 text-center">
           Why Reviews Matter for SEO
         </h2>
         <div className="grid md:grid-cols-3 gap-8">
-          <div className="bg-white p-8 rounded-lg shadow-sm">
-            <Search className="h-12 w-12 text-indigo-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Fresh Content</h3>
-            <p className="text-gray-600">
+          <div className="card-background p-8 rounded-lg shadow-sm">
+            <Search className="h-12 w-12 icon-color mb-4" />
+            <h3 className="text-xl font-semibold mb-2 text-primary-dark">Fresh Content</h3>
+            <p className="text-secondary-dark">
               Google values fresh, relevant content. Regular reviews keep your profile active and engaging.
             </p>
           </div>
-          <div className="bg-white p-8 rounded-lg shadow-sm">
-            <TrendingUp className="h-12 w-12 text-indigo-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Local Pack Rankings</h3>
-            <p className="text-gray-600">
+          <div className="card-background p-8 rounded-lg shadow-sm">
+            <TrendingUp className="h-12 w-12 icon-color mb-4" />
+            <h3 className="text-xl font-semibold mb-2 text-primary-dark">Local Pack Rankings</h3>
+            <p className="text-secondary-dark">
               Review signals directly impact your position in Googles local 3-pack results.
             </p>
           </div>
-          <div className="bg-white p-8 rounded-lg shadow-sm">
-            <BarChart3 className="h-12 w-12 text-indigo-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Increased Visibility</h3>
-            <p className="text-gray-600">
+          <div className="card-background p-8 rounded-lg shadow-sm">
+            <BarChart3 className="h-12 w-12 icon-color mb-4" />
+            <h3 className="text-xl font-semibold mb-2 text-primary-dark">Increased Visibility</h3>
+            <p className="text-secondary-dark">
               More reviews mean more keywords and long-tail search opportunities.
             </p>
           </div>
@@ -54,9 +54,9 @@ export default function SEOPage() {
       </section>
 
       {/* How Revu Helps */}
-      <section className="bg-gray-50 py-24 mt-24">
+      <section className="section-background-alt py-24 mt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
+          <h2 className="text-3xl font-bold text-primary-dark mb-12 text-center">
             How Revu Supercharges Your SEO
           </h2>
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -65,8 +65,8 @@ export default function SEOPage() {
                 <li className="flex items-start">
                   <Check className="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-semibold mb-1">Automated Response Publishing</h4>
-                    <p className="text-gray-600">
+                    <h4 className="font-semibold mb-1 text-primary-dark">Automated Response Publishing</h4>
+                    <p className="text-secondary-dark">
                       Every response adds fresh, keyword-rich content to your profile
                     </p>
                   </div>
@@ -74,8 +74,8 @@ export default function SEOPage() {
                 <li className="flex items-start">
                   <Check className="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-semibold mb-1">Keyword Optimization</h4>
-                    <p className="text-gray-600">
+                    <h4 className="font-semibold mb-1 text-primary-dark">Keyword Optimization</h4>
+                    <p className="text-secondary-dark">
                       AI naturally includes local keywords and service terms in responses
                     </p>
                   </div>

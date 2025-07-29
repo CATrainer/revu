@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { LogOut, Settings, Users, Calendar } from 'lucide-react';
 
 // Simple loading spinner component
@@ -92,6 +93,7 @@ export default function AdminLayout({
               </h1>
             </div>
             <div className="flex items-center space-x-4">
+              <ThemeToggle />
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                 Admin
               </span>
