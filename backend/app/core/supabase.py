@@ -128,6 +128,80 @@ class SupabaseAuth:
             
             return response.status_code == 200
     
+    async def send_password_reset_email(self, email: str) -> bool:
+        """
+        Send password reset email using Supabase Auth.
+        
+        Args:
+            email: Email address to send reset link to
+            
+        Returns:
+            bool: Success status
+        """
+        if not self.base_url or not self.anon_key:
+            logger.warning("Supabase credentials not configured")
+            return False
+            
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(
+                    f"{self.base_url}/auth/v1/recover",
+                    headers={
+                        "apikey": self.anon_key,
+                        "Content-Type": "application/json",
+                    },
+                    json={"email": email}
+                )
+                
+                if response.status_code == 200:
+                    logger.info(f"Password reset email sent to: {email}")
+                    return True
+                else:
+                    logger.error(f"Failed to send password reset email: {response.status_code} - {response.text}")
+                    return False
+                    
+            except Exception as e:
+                logger.error(f"Error sending password reset email: {e}")
+                return False
+    
+    async def reset_password_with_token(self, access_token: str, new_password: str) -> bool:
+        """
+        Reset user password using Supabase access token.
+        
+        Args:
+            access_token: Supabase access token from reset email
+            new_password: New password to set
+            
+        Returns:
+            bool: Success status
+        """
+        if not self.base_url or not self.anon_key:
+            logger.warning("Supabase credentials not configured")
+            return False
+            
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.put(
+                    f"{self.base_url}/auth/v1/user",
+                    headers={
+                        "apikey": self.anon_key,
+                        "Authorization": f"Bearer {access_token}",
+                        "Content-Type": "application/json",
+                    },
+                    json={"password": new_password}
+                )
+                
+                if response.status_code == 200:
+                    logger.info("Password reset successful")
+                    return True
+                else:
+                    logger.error(f"Failed to reset password: {response.status_code} - {response.text}")
+                    return False
+                    
+            except Exception as e:
+                logger.error(f"Error resetting password: {e}")
+                return False
+
     async def delete_user(self, user_id: str) -> bool:
         """
         Delete a user from Supabase.
