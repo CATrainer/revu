@@ -1,21 +1,105 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { InlineWidget } from "react-calendly";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Calendar, ArrowLeft } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { CheckCircle, Calendar, ArrowLeft, User, Mail, Lock, Sparkles } from "lucide-react";
+import { api } from "@/lib/api";
 
 const DemoScheduledPage = () => {
+  const router = useRouter();
   const [userInfo, setUserInfo] = useState<{name?: string; email?: string}>({});
+  const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
+  const [signupData, setSignupData] = useState({
+    full_name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [error, setError] = useState('');
 
   useEffect(() => {
     // Get user info from localStorage or URL params if available
     const savedUserInfo = localStorage.getItem('demoUserInfo');
     if (savedUserInfo) {
-      setUserInfo(JSON.parse(savedUserInfo));
+      const info = JSON.parse(savedUserInfo);
+      setUserInfo(info);
+      setSignupData(prev => ({
+        ...prev,
+        full_name: info.name || '',
+        email: info.email || ''
+      }));
     }
+
+    // Listen for Calendly events
+    const handleCalendlyEvent = (e: MessageEvent) => {
+      if (e.data.event && e.data.event === 'calendly.event_scheduled') {
+        // Meeting was scheduled! Show signup prompt
+        setTimeout(() => {
+          setShowSignupPrompt(true);
+        }, 2000); // Small delay to let success animation play
+      }
+    };
+
+    window.addEventListener('message', handleCalendlyEvent);
+    return () => window.removeEventListener('message', handleCalendlyEvent);
   }, []);
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (signupData.password !== signupData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (signupData.password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    setIsSigningUp(true);
+    setError('');
+
+    try {
+      // Create account
+      await api.post('/auth/signup', {
+        email: signupData.email,
+        password: signupData.password,
+        full_name: signupData.full_name
+      });
+
+      // Auto-login after signup
+      const loginData = new FormData();
+      loginData.append('username', signupData.email);
+      loginData.append('password', signupData.password);
+      
+      await api.post('/auth/login', loginData, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
+
+      // Mark demo as requested for this user
+      await api.post('/auth/request-demo', {});
+
+      // Redirect to waiting area
+      router.push('/waiting-area');
+    } catch (err: any) {
+      console.error('Signup error:', err);
+      setError(err.response?.data?.detail || 'Failed to create account. Please try again.');
+    } finally {
+      setIsSigningUp(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSignupData({
+      ...signupData,
+      [e.target.name]: e.target.value
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -56,6 +140,117 @@ const DemoScheduledPage = () => {
               />
             </CardContent>
           </Card>
+
+          {/* Signup Prompt Modal - Shows after meeting is scheduled */}
+          {showSignupPrompt && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <Card className="w-full max-w-md">
+                <CardHeader className="text-center">
+                  <div className="flex items-center justify-center mb-4">
+                    <Sparkles className="h-12 w-12 text-yellow-500" />
+                  </div>
+                  <CardTitle className="text-2xl">Meeting Scheduled! 🎉</CardTitle>
+                  <CardDescription>
+                    Perfect! While you wait for your demo, why not create your Revu account to get early access to our platform?
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSignup} className="space-y-4">
+                    <div>
+                      <Label htmlFor="full_name" className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Full Name
+                      </Label>
+                      <Input
+                        id="full_name"
+                        name="full_name"
+                        type="text"
+                        value={signupData.full_name}
+                        onChange={handleInputChange}
+                        placeholder="Enter your full name"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="email" className="flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        Email
+                      </Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={signupData.email}
+                        onChange={handleInputChange}
+                        placeholder="Enter your email"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="password" className="flex items-center gap-2">
+                        <Lock className="h-4 w-4" />
+                        Password
+                      </Label>
+                      <Input
+                        id="password"
+                        name="password"
+                        type="password"
+                        value={signupData.password}
+                        onChange={handleInputChange}
+                        placeholder="Create a password (8+ characters)"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type="password"
+                        value={signupData.confirmPassword}
+                        onChange={handleInputChange}
+                        placeholder="Confirm your password"
+                        required
+                      />
+                    </div>
+
+                    {error && (
+                      <div className="text-red-600 text-sm bg-red-50 p-3 rounded">
+                        {error}
+                      </div>
+                    )}
+
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => setShowSignupPrompt(false)}
+                      >
+                        Maybe Later
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="flex-1"
+                        disabled={isSigningUp}
+                      >
+                        {isSigningUp ? 'Creating Account...' : 'Create Account'}
+                      </Button>
+                    </div>
+                  </form>
+                  
+                  <div className="mt-4 p-3 bg-indigo-50 rounded-lg">
+                    <p className="text-sm text-indigo-700">
+                      <strong>Get early access:</strong> Join our platform before your demo to explore features and prepare better questions!
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* What to Expect */}
           <div className="grid md:grid-cols-2 gap-8 mb-8">
@@ -119,6 +314,38 @@ const DemoScheduledPage = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Early Access CTA */}
+          <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white mb-8">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <h3 className="text-xl font-bold mb-2 flex items-center justify-center gap-2">
+                  <Sparkles className="h-6 w-6" />
+                  Get Early Access While You Wait
+                </h3>
+                <p className="mb-4 opacity-90">
+                  Don&apos;t wait for the demo! Create your Revu account now and start exploring our platform. 
+                  You&apos;ll be better prepared for the demonstration and can begin optimizing your review strategy immediately.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button 
+                    variant="secondary" 
+                    className="bg-white text-indigo-600 hover:bg-gray-100"
+                    onClick={() => setShowSignupPrompt(true)}
+                  >
+                    Create Account Now
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="border-white text-white hover:bg-white hover:text-indigo-600"
+                    onClick={() => router.push('/auth/login')}
+                  >
+                    Already Have an Account?
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Alternative Options */}
           <Card className="bg-gray-50 border-gray-200">
