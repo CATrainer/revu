@@ -30,21 +30,27 @@ export default function SEOPage() {
         </h2>
         <div className="grid md:grid-cols-3 gap-8">
           <div className="card-background p-8 rounded-lg shadow-sm">
-            <Search className="h-12 w-12 icon-color mb-4" />
+            <div className="h-12 w-12 icon-background rounded-lg flex items-center justify-center mb-4">
+              <Search className="h-6 w-6 text-blue-600" />
+            </div>
             <h3 className="text-xl font-semibold mb-2 text-primary-dark">Fresh Content</h3>
             <p className="text-secondary-dark">
               Google values fresh, relevant content. Regular reviews keep your profile active and engaging.
             </p>
           </div>
           <div className="card-background p-8 rounded-lg shadow-sm">
-            <TrendingUp className="h-12 w-12 icon-color mb-4" />
+            <div className="h-12 w-12 icon-background rounded-lg flex items-center justify-center mb-4">
+              <TrendingUp className="h-6 w-6 text-green-600" />
+            </div>
             <h3 className="text-xl font-semibold mb-2 text-primary-dark">Local Pack Rankings</h3>
             <p className="text-secondary-dark">
               Review signals directly impact your position in Googles local 3-pack results.
             </p>
           </div>
           <div className="card-background p-8 rounded-lg shadow-sm">
-            <BarChart3 className="h-12 w-12 icon-color mb-4" />
+            <div className="h-12 w-12 icon-background rounded-lg flex items-center justify-center mb-4">
+              <BarChart3 className="h-6 w-6 text-purple-600" />
+            </div>
             <h3 className="text-xl font-semibold mb-2 text-primary-dark">Increased Visibility</h3>
             <p className="text-secondary-dark">
               More reviews mean more keywords and long-tail search opportunities.
