@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import relationship
 
@@ -39,6 +39,18 @@ class User(Base):
     early_access_granted_at = Column(DateTime(timezone=True))
     demo_requested = Column(Boolean, default=False, nullable=False)
     demo_requested_at = Column(DateTime(timezone=True))
+    demo_scheduled_at = Column(DateTime(timezone=True))
+    demo_completed = Column(Boolean, default=False, nullable=False)
+    demo_completed_at = Column(DateTime(timezone=True))
+    
+    # Demo-specific information
+    company_size = Column(String(50))
+    current_solution = Column(String(255))
+    
+    # Admin notes for demo preparation
+    demo_prep_notes = Column(Text)
+    follow_up_reminders = Column(Text)
+    user_qualification_notes = Column(Text)
 
     # Relationships
     memberships = relationship("UserMembership", back_populates="user", cascade="all, delete-orphan")

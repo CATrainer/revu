@@ -16,7 +16,7 @@ from sqlalchemy.orm import selectinload
 from app.core.database import get_async_session
 from app.core.security import get_current_active_user, get_password_hash
 from app.models.user import User, UserMembership
-from app.schemas.user import UserUpdate, User as UserSchema, UserAccessUpdate, WaitlistJoin, WaitlistAccountCreate
+from app.schemas.user import UserUpdate, User as UserSchema, UserAccessUpdate, WaitlistJoin, WaitlistAccountCreate, DemoRequest, AdminNotes
 from app.schemas.membership import MembershipResponse
 
 router = APIRouter()
@@ -334,6 +334,166 @@ async def update_user_access_status(
     if access_update.access_status == "early_access" and old_status != "early_access":
         if not user.early_access_granted_at:
             user.early_access_granted_at = datetime.utcnow()
+    
+    await db.commit()
+    await db.refresh(user)
+    
+    return user
+
+
+@router.post("/request-demo", response_model=dict)
+async def request_demo(
+    demo_data: DemoRequest,
+    db: AsyncSession = Depends(get_async_session),
+):
+    """
+    Handle demo request. Creates user if doesn't exist, or updates existing user.
+    """
+    # Check if user already exists
+    result = await db.execute(select(User).where(User.email == demo_data.email))
+    existing_user = result.scalar_one_or_none()
+    
+    if existing_user:
+        # Update existing user with demo info
+        for field, value in demo_data.model_dump(exclude_unset=True).items():
+            if field != "email" and field != "message":  # Don't update email, ignore message for now
+                setattr(existing_user, field, value)
+        
+        # Mark as demo requested
+        existing_user.demo_requested = True
+        if not existing_user.demo_requested_at:
+            existing_user.demo_requested_at = datetime.now(timezone.utc)
+            
+        await db.commit()
+        await db.refresh(existing_user)
+        
+        return {
+            "message": "Demo request updated successfully",
+            "user_id": str(existing_user.id),
+            "existing_user": True
+        }
+    else:
+        # Create new user for demo
+        user_data = demo_data.model_dump(exclude={"message"})  # Exclude message from user data
+        new_user = User(
+            **user_data,
+            has_account=False,
+            access_status="waiting_list",
+            demo_requested=True,
+            demo_requested_at=datetime.now(timezone.utc),
+            hashed_password=None
+        )
+        
+        db.add(new_user)
+        await db.commit()
+        await db.refresh(new_user)
+        
+        return {
+            "message": "Demo request submitted successfully",
+            "user_id": str(new_user.id),
+            "existing_user": False
+        }
+
+
+@router.put("/{user_id}/admin-notes", response_model=UserSchema)
+async def update_admin_notes(
+    user_id: UUID,
+    notes: AdminNotes,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Update admin notes for a user. Admin only.
+    """
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    
+    # Get user
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Update notes
+    notes_data = notes.model_dump(exclude_unset=True)
+    for field, value in notes_data.items():
+        setattr(user, field, value)
+    
+    await db.commit()
+    await db.refresh(user)
+    
+    return user
+
+
+@router.put("/{user_id}/demo-scheduled", response_model=UserSchema)
+async def mark_demo_scheduled(
+    user_id: UUID,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Mark demo as scheduled. Admin only.
+    """
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    
+    # Get user
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Mark demo as scheduled
+    user.demo_scheduled_at = datetime.now(timezone.utc)
+    
+    await db.commit()
+    await db.refresh(user)
+    
+    return user
+
+
+@router.put("/{user_id}/demo-completed", response_model=UserSchema)
+async def mark_demo_completed(
+    user_id: UUID,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Mark demo as completed. Admin only.
+    """
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    
+    # Get user
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Mark demo as completed
+    user.demo_completed = True
+    user.demo_completed_at = datetime.now(timezone.utc)
     
     await db.commit()
     await db.refresh(user)

@@ -247,6 +247,10 @@ async def general_exception_handler(request: Request, exc: Exception):
 # Include API routers
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 
+# Include webhook routes (without API prefix)
+from app.api.webhooks import calendly
+app.include_router(calendly.router, prefix="/webhooks", tags=["webhooks"])
+
 # Optional: Add request logging for debugging
 if settings.DEBUG:
     @app.middleware("http")

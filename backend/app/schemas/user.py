@@ -69,7 +69,22 @@ class WaitlistAccountCreate(BaseModel):
 class DemoRequest(BaseModel):
     """Schema for demo request."""
     
+    email: EmailStr
+    full_name: str = Field(..., min_length=1, max_length=255)
+    phone: Optional[str] = Field(None, max_length=50)
+    company_name: Optional[str] = Field(None, max_length=255)
+    industry: Optional[str] = Field(None, max_length=100)
+    company_size: Optional[str] = Field(None, max_length=50)
+    current_solution: Optional[str] = Field(None, max_length=255)
     message: Optional[str] = Field(None, max_length=500, description="Optional message from user")
+
+
+class AdminNotes(BaseModel):
+    """Schema for admin notes update."""
+    
+    demo_prep_notes: Optional[str] = Field(None, max_length=1000)
+    follow_up_reminders: Optional[str] = Field(None, max_length=1000)
+    user_qualification_notes: Optional[str] = Field(None, max_length=1000)
 
 
 class User(UserBase):
@@ -86,6 +101,14 @@ class User(UserBase):
     early_access_granted_at: Optional[datetime] = None
     demo_requested: bool = False
     demo_requested_at: Optional[datetime] = None
+    demo_scheduled_at: Optional[datetime] = None
+    demo_completed: bool = False
+    demo_completed_at: Optional[datetime] = None
+    company_size: Optional[str] = None
+    current_solution: Optional[str] = None
+    demo_prep_notes: Optional[str] = None
+    follow_up_reminders: Optional[str] = None
+    user_qualification_notes: Optional[str] = None
 
     class Config:
         from_attributes = True
