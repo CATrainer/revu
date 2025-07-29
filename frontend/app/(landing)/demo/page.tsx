@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Clock, CheckCircle } from 'lucide-react';
 
 export default function DemoPage() {
@@ -13,18 +14,51 @@ export default function DemoPage() {
     email: '',
     company: '',
     phone: '',
-    businessType: '',
+    company_size: '',
+    current_solution: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
-    // Simulate booking demo (in real app, this would integrate with Calendly)
-    console.log('Demo request:', formData);
-    
-    // Redirect to demo booked page
-    router.push('/demo-booked');
+    try {
+      const response = await fetch('/api/v1/users/request-demo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          company: formData.company,
+          company_size: formData.company_size,
+          current_solution: formData.current_solution,
+          message: formData.message
+        })
+      });
+
+      if (response.ok) {
+        setIsSubmitted(true);
+        // Save user info for Calendly prefill
+        localStorage.setItem('demoUserInfo', JSON.stringify({
+          name: formData.name,
+          email: formData.email
+        }));
+        // Redirect to success page with Calendly
+        router.push('/demo-scheduled');
+      } else {
+        throw new Error('Failed to submit demo request');
+      }
+    } catch (error) {
+      console.error('Error submitting demo request:', error);
+      alert('There was an error submitting your demo request. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -159,24 +193,50 @@ export default function DemoPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="businessType" className="block text-sm font-medium text-gray-700 mb-1">
-                      Business Type *
+                    <label htmlFor="company_size" className="block text-sm font-medium text-gray-700 mb-1">
+                      Company Size *
                     </label>
-                    <select
-                      id="businessType"
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      value={formData.businessType}
-                      onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
+                    <Select
+                      value={formData.company_size}
+                      onValueChange={(value) => setFormData({ ...formData, company_size: value })}
                     >
-                      <option value="">Select your industry</option>
-                      <option value="restaurant">Restaurant</option>
-                      <option value="hotel">Hotel / Hospitality</option>
-                      <option value="retail">Retail</option>
-                      <option value="healthcare">Healthcare</option>
-                      <option value="agency">Marketing Agency</option>
-                      <option value="other">Other</option>
-                    </select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select company size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1-10">1-10 employees</SelectItem>
+                        <SelectItem value="11-50">11-50 employees</SelectItem>
+                        <SelectItem value="51-200">51-200 employees</SelectItem>
+                        <SelectItem value="201-500">201-500 employees</SelectItem>
+                        <SelectItem value="501-1000">501-1000 employees</SelectItem>
+                        <SelectItem value="1000+">1000+ employees</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="current_solution" className="block text-sm font-medium text-gray-700 mb-1">
+                      Current Review Management Solution *
+                    </label>
+                    <Select
+                      value={formData.current_solution}
+                      onValueChange={(value) => setFormData({ ...formData, current_solution: value })}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select your current solution" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No current solution</SelectItem>
+                        <SelectItem value="manual">Manual tracking (spreadsheets, etc.)</SelectItem>
+                        <SelectItem value="google">Google My Business only</SelectItem>
+                        <SelectItem value="reputation">Reputation.com</SelectItem>
+                        <SelectItem value="birdeye">BirdEye</SelectItem>
+                        <SelectItem value="podium">Podium</SelectItem>
+                        <SelectItem value="reviewtrackers">ReviewTrackers</SelectItem>
+                        <SelectItem value="grade.us">Grade.us</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>
@@ -192,8 +252,8 @@ export default function DemoPage() {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full">
-                    Request Demo
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? 'Submitting...' : 'Request Demo'}
                   </Button>
 
                   <p className="text-xs text-gray-500 text-center">
