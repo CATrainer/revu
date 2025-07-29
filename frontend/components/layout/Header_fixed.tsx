@@ -45,7 +45,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   ];
 
   return (
-    <header className="bg-white dark:bg-[hsl(222,84%,6%)] shadow-sm border-b border-gray-200 dark:border-[hsl(222,47%,16%)]">
+    <header className="nav-background shadow-sm">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
@@ -53,7 +53,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               variant="ghost"
               size="sm"
               onClick={onMenuClick}
-              className="lg:hidden hover:bg-gray-100 dark:hover:bg-[hsl(222,84%,12%)]"
+              className="lg:hidden hover-background"
             >
               <Menu className="h-5 w-5" />
             </Button>
@@ -72,7 +72,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                   placeholder="Search reviews, customers..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-64 bg-white dark:bg-[hsl(222,84%,8%)] border-gray-300 dark:border-[hsl(222,47%,16%)]"
+                  className="w-64 card-background"
                   autoFocus
                 />
                 <Button
@@ -111,27 +111,27 @@ export function Header({ onMenuClick }: HeaderProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 align="end" 
-                className="w-80 bg-white dark:bg-[hsl(222,84%,8%)] border-gray-200 dark:border-[hsl(222,47%,16%)]"
+                className="w-80 card-background"
               >
-                <DropdownMenuLabel className="text-gray-900 dark:text-[hsl(215,20%,85%)]">Notifications</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-gray-200 dark:bg-[hsl(222,47%,16%)]" />
+                <DropdownMenuLabel className="text-primary-dark">Notifications</DropdownMenuLabel>
+                <DropdownMenuSeparator />
                 {mockNotifications.map((notification) => (
                   <DropdownMenuItem 
                     key={notification.id} 
-                    className="flex flex-col items-start p-4 hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)]"
+                    className="flex flex-col items-start p-4 hover-background"
                   >
                     <div className="flex items-center justify-between w-full">
-                      <h4 className={`text-sm font-medium ${notification.unread ? 'text-gray-900 dark:text-[hsl(215,20%,85%)]' : 'text-gray-600 dark:text-[hsl(215,20%,65%)]'}`}>
+                      <h4 className={`text-sm font-medium ${notification.unread ? 'text-primary-dark' : 'text-secondary-dark'}`}>
                         {notification.title}
                       </h4>
                       {notification.unread && (
                         <span className="h-2 w-2 bg-blue-500 rounded-full"></span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-[hsl(215,20%,65%)] mt-1">
+                    <p className="text-sm text-secondary-dark mt-1">
                       {notification.message}
                     </p>
-                    <span className="text-xs text-gray-400 dark:text-[hsl(215,20%,55%)] mt-2">
+                    <span className="text-xs text-muted-dark mt-2">
                       {notification.time}
                     </span>
                   </DropdownMenuItem>
@@ -144,46 +144,46 @@ export function Header({ onMenuClick }: HeaderProps) {
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-[hsl(222,84%,12%)]">
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full hover-background">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.avatar_url || ''} alt={user?.full_name || ''} />
-                    <AvatarFallback className="bg-[hsl(263,70%,68%)] text-white">
+                    <AvatarImage src="" alt={user?.full_name || ''} />
+                    <AvatarFallback className="button-primary">
                       {user?.full_name?.charAt(0) || 'U'}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
-                className="w-56 bg-white dark:bg-[hsl(222,84%,8%)] border-gray-200 dark:border-[hsl(222,47%,16%)]" 
+                className="w-56 card-background" 
                 align="end" 
                 forceMount
               >
-                <DropdownMenuLabel className="font-normal text-gray-900 dark:text-[hsl(215,20%,85%)]">
+                <DropdownMenuLabel className="font-normal text-primary-dark">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
                       {user?.full_name || 'User'}
                     </p>
-                    <p className="text-xs leading-none text-gray-500 dark:text-[hsl(215,20%,65%)]">
+                    <p className="text-xs leading-none text-secondary-dark">
                       {user?.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-gray-200 dark:bg-[hsl(222,47%,16%)]" />
-                <DropdownMenuItem className="hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)]">
-                  <span className="text-gray-900 dark:text-[hsl(215,20%,85%)]">Profile</span>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="hover-background">
+                  <span className="text-primary-dark">Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)]">
-                  <span className="text-gray-900 dark:text-[hsl(215,20%,85%)]">Billing</span>
+                <DropdownMenuItem className="hover-background">
+                  <span className="text-primary-dark">Billing</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)]">
-                  <span className="text-gray-900 dark:text-[hsl(215,20%,85%)]">Settings</span>
+                <DropdownMenuItem className="hover-background">
+                  <span className="text-primary-dark">Settings</span>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-gray-200 dark:bg-[hsl(222,47%,16%)]" />
+                <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={logout}
-                  className="hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)]"
+                  className="hover-background"
                 >
-                  <span className="text-gray-900 dark:text-[hsl(215,20%,85%)]">Log out</span>
+                  <span className="text-primary-dark">Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
