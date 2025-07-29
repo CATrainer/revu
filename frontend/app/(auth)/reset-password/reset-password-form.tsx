@@ -57,21 +57,28 @@ export function ResetPasswordForm() {
     const error = params.get('error');
     const errorDescription = params.get('error_description');
 
+    console.log('URL hash:', hash);
+    console.log('Extracted access_token:', accessToken ? 'present (length: ' + accessToken.length + ')' : 'missing');
+
     if (error) {
+      console.error('Supabase error in URL:', error, errorDescription);
       setServerError(errorDescription || 'Invalid or expired reset link');
       return;
     }
 
     if (accessToken) {
+      console.log('Setting token from URL hash');
       setToken(accessToken);
       setValue('token', accessToken);
     } else {
       // Also check query params as fallback
       const tokenParam = searchParams.get('token');
+      console.log('Checking query params for token:', tokenParam ? 'present' : 'missing');
       if (tokenParam) {
         setToken(tokenParam);
         setValue('token', tokenParam);
       } else {
+        console.log('No token found, redirecting to forgot-password');
         // Redirect to forgot password if no token
         router.push('/forgot-password');
       }
@@ -83,11 +90,17 @@ export function ResetPasswordForm() {
 
     try {
       console.log('Submitting password reset with token:', data.token ? 'present' : 'missing');
+      console.log('Token length:', data.token?.length || 0);
+      console.log('Password length:', data.password?.length || 0);
       
-      const response = await api.post('/auth/reset-password', {
+      const requestData = {
         token: data.token,
         new_password: data.password,
-      });
+      };
+      
+      console.log('Request payload:', requestData);
+      
+      const response = await api.post('/auth/reset-password', requestData);
       
       console.log('Password reset successful:', response.data);
       setSuccess(true);
@@ -99,9 +112,14 @@ export function ResetPasswordForm() {
       if (axiosError.response) {
         console.error('Error response:', {
           status: axiosError.response.status,
+          statusText: axiosError.response.statusText,
           data: axiosError.response.data,
           headers: axiosError.response.headers
         });
+      } else if (axiosError.request) {
+        console.error('Request error:', axiosError.request);
+      } else {
+        console.error('Error:', axiosError.message);
       }
       
       setServerError(
