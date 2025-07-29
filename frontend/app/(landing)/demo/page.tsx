@@ -27,9 +27,10 @@ export default function DemoPage() {
     
     try {
       await api.post('/users/request-demo', {
-        name: formData.name,
+        full_name: formData.name,
         email: formData.email,
-        company: formData.company,
+        phone: formData.phone,
+        company_name: formData.company,
         company_size: formData.company_size,
         current_solution: formData.current_solution,
         message: formData.message
