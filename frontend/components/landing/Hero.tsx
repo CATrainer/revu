@@ -6,15 +6,15 @@ import { Star, TrendingUp, MessageSquare } from 'lucide-react';
 
 export function Hero() {
   return (
-    <section className="relative bg-gradient-to-b from-gray-50 to-white py-24 overflow-hidden">
+    <section className="relative bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 py-24 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6">
             All-in-One Dashboard to
             <br />
-            <span className="text-indigo-600">Supercharge Your Business</span>
+            <span className="text-indigo-600 dark:text-indigo-400">Supercharge Your Business</span>
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
             Manage reviews, monitor competitors, and grow your reputation with 
             AI-powered insights that save you hours every week
           </p>

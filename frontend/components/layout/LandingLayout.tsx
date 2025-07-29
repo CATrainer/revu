@@ -8,6 +8,7 @@ import { Footer } from './Footer';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
 import { AccountDropdown } from './AccountDropdown';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -28,12 +29,12 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm sticky top-0 z-50">
+      <nav className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/" className="flex items-center">
-                <span className="text-2xl font-bold text-indigo-600">Revu</span>
+                <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Revu</span>
               </Link>
               
               {/* Desktop Navigation */}
@@ -131,6 +132,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
             
             {/* Desktop Auth Buttons */}
             <div className="hidden md:flex md:items-center md:space-x-4">
+              <ThemeToggle />
               {!isLoading && (
                 isAuthenticated ? (
                   <AccountDropdown variant="landing" />
@@ -165,40 +167,43 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
         
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden">
+          <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
             <div className="pt-2 pb-3 space-y-1">
               <Link
                 href="/features"
-                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 hover:text-gray-800 dark:hover:text-gray-200"
               >
                 Features
               </Link>
               <Link
                 href="/seo"
-                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 hover:text-gray-800 dark:hover:text-gray-200"
               >
                 SEO
               </Link>
               <Link
                 href="/ai"
-                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 hover:text-gray-800 dark:hover:text-gray-200"
               >
                 AI
               </Link>
               <Link
                 href="/pricing"
-                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 hover:text-gray-800 dark:hover:text-gray-200"
               >
                 Pricing
               </Link>
               <Link
                 href="/demo"
-                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 hover:text-gray-800 dark:hover:text-gray-200"
               >
                 Request Demo
               </Link>
             </div>
             <div className="pt-4 pb-3 border-t border-gray-200">
+              <div className="flex items-center justify-center px-4 mb-3">
+                <ThemeToggle />
+              </div>
               <div className="flex items-center px-4 space-x-3">
                 {!isLoading && (
                   isAuthenticated ? (
