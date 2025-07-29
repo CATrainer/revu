@@ -125,7 +125,7 @@ export function ResetPasswordForm() {
       setServerError(
         axiosError.response?.data?.detail || 
         axiosError.response?.data?.message || 
-        'Failed to reset password. Please try again.'
+        `Failed to reset password. Status: ${axiosError.response?.status || 'Unknown'}`
       );
     }
   };

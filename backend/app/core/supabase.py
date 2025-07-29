@@ -179,24 +179,51 @@ class SupabaseAuth:
             logger.warning("Supabase credentials not configured")
             return False
             
+        logger.info(f"Attempting to reset password with token length: {len(access_token)}")
+        logger.info(f"Supabase base URL: {self.base_url}")
+            
         async with httpx.AsyncClient() as client:
             try:
-                response = await client.put(
-                    f"{self.base_url}/auth/v1/user",
-                    headers={
-                        "apikey": self.anon_key,
-                        "Authorization": f"Bearer {access_token}",
-                        "Content-Type": "application/json",
-                    },
-                    json={"password": new_password}
-                )
+                # First, let's try the standard user update endpoint
+                url = f"{self.base_url}/auth/v1/user"
+                headers = {
+                    "apikey": self.anon_key,
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                }
+                payload = {"password": new_password}
+                
+                logger.info(f"Making PUT request to: {url}")
+                logger.info(f"Payload: {payload}")
+                
+                response = await client.put(url, headers=headers, json=payload)
+                
+                logger.info(f"Supabase response status: {response.status_code}")
+                logger.info(f"Supabase response text: {response.text}")
                 
                 if response.status_code == 200:
                     logger.info("Password reset successful")
                     return True
-                else:
-                    logger.error(f"Failed to reset password: {response.status_code} - {response.text}")
-                    return False
+                elif response.status_code == 422:
+                    # Try alternative approach - password recovery completion
+                    logger.info("Trying alternative password recovery approach...")
+                    recovery_url = f"{self.base_url}/auth/v1/recover"
+                    recovery_payload = {
+                        "token": access_token,
+                        "password": new_password,
+                        "type": "recovery"
+                    }
+                    
+                    recovery_response = await client.post(recovery_url, headers=headers, json=recovery_payload)
+                    logger.info(f"Recovery response status: {recovery_response.status_code}")
+                    logger.info(f"Recovery response text: {recovery_response.text}")
+                    
+                    if recovery_response.status_code in [200, 201]:
+                        logger.info("Password reset successful via recovery endpoint")
+                        return True
+                
+                logger.error(f"Failed to reset password: {response.status_code} - {response.text}")
+                return False
                     
             except Exception as e:
                 logger.error(f"Error resetting password: {e}")

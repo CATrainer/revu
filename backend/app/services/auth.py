@@ -84,22 +84,31 @@ class AuthService:
         Raises:
             Exception: If token is invalid or password reset fails
         """
+        logger.info(f"Starting password reset process with token length: {len(token)}")
+        
         # Use the token as an access token to reset password via Supabase
         success = await self.supabase_auth.reset_password_with_token(token, new_password)
         
         if not success:
+            logger.error("Supabase password reset failed")
             raise Exception("Invalid or expired reset token")
+        
+        logger.info("Supabase password reset successful, verifying token...")
         
         # Verify the token to get user data
         user_data = await self.supabase_auth.verify_token(token)
         if not user_data:
+            logger.error("Token verification failed after password reset")
             raise Exception("Invalid reset token")
+        
+        logger.info(f"Token verified for user: {user_data.get('email', 'unknown')}")
         
         # Get our local user record
         user_service = UserService(self.db)
         user = await user_service.get_by_email(user_data["email"])
         
         if not user:
+            logger.error(f"User not found in local database: {user_data.get('email', 'unknown')}")
             raise Exception("User not found in local database")
         
         logger.info(f"Password reset successful for: {user.email}")
