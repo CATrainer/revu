@@ -24,6 +24,7 @@ class UserResponse(BaseModel):
     full_name: str
     is_active: bool
     is_admin: bool
+    has_account: bool
     access_status: str
     joined_waiting_list_at: str | None
     early_access_granted_at: str | None
@@ -103,10 +104,14 @@ async def get_waiting_list(
             id=str(user.id),
             email=user.email,
             full_name=user.full_name,
+            is_active=user.is_active,
+            is_admin=user.is_admin,
+            has_account=user.has_account,
             access_status=user.access_status,
             joined_waiting_list_at=user.joined_waiting_list_at.isoformat() if user.joined_waiting_list_at else None,
             early_access_granted_at=user.early_access_granted_at.isoformat() if user.early_access_granted_at else None,
-            demo_requested=user.demo_requested
+            demo_requested=user.demo_requested,
+            created_at=user.created_at.isoformat() if user.created_at else ""
         )
         for user in waiting_users
     ]
@@ -135,6 +140,7 @@ async def get_all_users(
             full_name=user.full_name,
             is_active=user.is_active,
             is_admin=user.is_admin,
+            has_account=user.has_account,
             access_status=user.access_status,
             joined_waiting_list_at=user.joined_waiting_list_at.isoformat() if user.joined_waiting_list_at else None,
             early_access_granted_at=user.early_access_granted_at.isoformat() if user.early_access_granted_at else None,
