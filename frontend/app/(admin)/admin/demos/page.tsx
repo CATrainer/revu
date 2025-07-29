@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Calendar, Clock, CheckCircle, User, Building2, MessageSquare } from "lucide-react";
+import { Calendar, Clock, CheckCircle, User, Building2, MessageSquare, RefreshCw, AlertCircle } from "lucide-react";
+import { api } from '@/lib/api';
 
 interface DemoUser {
   id: string;
-  name: string;
+  full_name: string;
   email: string;
   company: string;
   company_size: string;
@@ -41,6 +42,7 @@ const AdminDemoPage = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch demo users
   useEffect(() => {
@@ -74,18 +76,13 @@ const AdminDemoPage = () => {
 
   const fetchDemoUsers = async () => {
     try {
-      const response = await fetch('/api/v1/users/demo-requests', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data);
-      }
+      setIsLoading(true);
+      setError(null);
+      const response = await api.get('/users/demo-requests');
+      setUsers(response.data);
     } catch (error) {
       console.error('Error fetching demo users:', error);
+      setError('Failed to load demo requests. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -94,25 +91,16 @@ const AdminDemoPage = () => {
   const updateAdminNotes = async (userId: string) => {
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/v1/users/${userId}/admin-notes`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(adminNotes)
-      });
-
-      if (response.ok) {
-        // Refresh users list
-        await fetchDemoUsers();
-        // Close dialog
-        setSelectedUser(null);
-        // Reset form
-        setAdminNotes({ admin_notes: "", prep_notes: "", follow_up_notes: "" });
-      }
+      await api.put(`/users/${userId}/admin-notes`, adminNotes);
+      // Refresh users list
+      await fetchDemoUsers();
+      // Close dialog
+      setSelectedUser(null);
+      // Reset form
+      setAdminNotes({ admin_notes: "", prep_notes: "", follow_up_notes: "" });
     } catch (error) {
       console.error('Error updating admin notes:', error);
+      setError('Failed to update notes. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -120,35 +108,21 @@ const AdminDemoPage = () => {
 
   const markDemoScheduled = async (userId: string) => {
     try {
-      const response = await fetch(`/api/v1/users/${userId}/demo-scheduled`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        await fetchDemoUsers();
-      }
+      await api.put(`/users/${userId}/demo-scheduled`);
+      await fetchDemoUsers();
     } catch (error) {
       console.error('Error marking demo as scheduled:', error);
+      setError('Failed to mark demo as scheduled. Please try again.');
     }
   };
 
   const markDemoCompleted = async (userId: string) => {
     try {
-      const response = await fetch(`/api/v1/users/${userId}/demo-completed`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        await fetchDemoUsers();
-      }
+      await api.put(`/users/${userId}/demo-completed`);
+      await fetchDemoUsers();
     } catch (error) {
       console.error('Error marking demo as completed:', error);
+      setError('Failed to mark demo as completed. Please try again.');
     }
   };
 
@@ -163,6 +137,20 @@ const AdminDemoPage = () => {
     return <Badge variant="outline">Unknown</Badge>;
   };
 
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return 'Invalid date';
+    }
+  };
+
   const openNotesDialog = (user: DemoUser) => {
     setSelectedUser(user);
     setAdminNotes({
@@ -175,7 +163,12 @@ const AdminDemoPage = () => {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="text-center">Loading demo requests...</div>
+        <div className="flex items-center justify-center min-h-64">
+          <div className="text-center">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-400" />
+            <div className="text-gray-600">Loading demo requests...</div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -183,8 +176,29 @@ const AdminDemoPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Demo Management</h1>
-        <p className="text-gray-600">Manage demo requests and track progress</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Demo Management</h1>
+            <p className="text-gray-600">Manage demo requests and track progress</p>
+          </div>
+          <Button 
+            onClick={fetchDemoUsers}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
+        
+        {error && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+              <p className="text-red-700">{error}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -277,7 +291,7 @@ const AdminDemoPage = () => {
                 <TableRow key={user.id}>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{user.name}</div>
+                      <div className="font-medium">{user.full_name || 'N/A'}</div>
                       <div className="text-sm text-gray-500">{user.email}</div>
                     </div>
                   </TableCell>
@@ -291,7 +305,9 @@ const AdminDemoPage = () => {
                   <TableCell>{user.current_solution}</TableCell>
                   <TableCell>{getStatusBadge(user)}</TableCell>
                   <TableCell>
-                    {new Date(user.demo_requested_at).toLocaleDateString()}
+                    <div className="text-sm">
+                      {formatDate(user.demo_requested_at)}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
@@ -308,7 +324,7 @@ const AdminDemoPage = () => {
                         </DialogTrigger>
                         <DialogContent className="max-w-2xl">
                           <DialogHeader>
-                            <DialogTitle>Demo Notes - {selectedUser?.name}</DialogTitle>
+                            <DialogTitle>Demo Notes - {selectedUser?.full_name || 'User'}</DialogTitle>
                             <DialogDescription>
                               Add preparation notes and follow-up information
                             </DialogDescription>
@@ -390,9 +406,25 @@ const AdminDemoPage = () => {
             </TableBody>
           </Table>
           
-          {filteredUsers.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No demo requests found for the selected filter
+          {filteredUsers.length === 0 && !isLoading && (
+            <div className="text-center py-12 text-gray-500">
+              <User className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <div className="mb-4">
+                {users.length === 0 
+                  ? "No demo requests found. Demo requests will appear here when users request demos from your landing page."
+                  : "No demo requests found for the selected filter"
+                }
+              </div>
+              {users.length === 0 && (
+                <div className="text-sm text-gray-400">
+                  <p>Demo requests are typically created when:</p>
+                  <ul className="mt-2 space-y-1">
+                    <li>• Users fill out demo request forms on your website</li>
+                    <li>• Users are granted early access and request demos</li>
+                    <li>• Sales team manually creates demo requests</li>
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
