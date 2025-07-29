@@ -345,7 +345,7 @@ const DemoScheduledPage = () => {
                   <Button 
                     variant="secondary" 
                     className="bg-white/10 text-white border-white/30 hover:bg-white hover:text-indigo-600"
-                    onClick={() => router.push('/auth/login')}
+                    onClick={() => router.push('/login')}
                   >
                     Already Have an Account?
                   </Button>
