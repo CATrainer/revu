@@ -86,9 +86,16 @@ const DemoScheduledPage = () => {
 
       // Redirect to waiting area
       router.push('/waiting-area');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Signup error:', err);
-      setError(err.response?.data?.detail || 'Failed to create account. Please try again.');
+      let errorMessage = 'Failed to create account. Please try again.';
+      
+      if (err && typeof err === 'object' && 'response' in err) {
+        const errorResponse = err as { response?: { data?: { detail?: string } } };
+        errorMessage = errorResponse.response?.data?.detail || errorMessage;
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsSigningUp(false);
     }
