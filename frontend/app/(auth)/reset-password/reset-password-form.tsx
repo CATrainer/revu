@@ -82,15 +82,28 @@ export function ResetPasswordForm() {
     setServerError('');
 
     try {
-      await api.post('/auth/reset-password', {
+      console.log('Submitting password reset with token:', data.token ? 'present' : 'missing');
+      
+      const response = await api.post('/auth/reset-password', {
         token: data.token,
-        password: data.password,
+        new_password: data.password,
       });
       
+      console.log('Password reset successful:', response.data);
       setSuccess(true);
     } catch (err) {
       console.error('Reset password error:', err);
       const axiosError = err as AxiosError<ErrorResponse>;
+      
+      // More detailed error logging
+      if (axiosError.response) {
+        console.error('Error response:', {
+          status: axiosError.response.status,
+          data: axiosError.response.data,
+          headers: axiosError.response.headers
+        });
+      }
+      
       setServerError(
         axiosError.response?.data?.detail || 
         axiosError.response?.data?.message || 
