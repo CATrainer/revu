@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { motion, LazyMotion, domAnimation, useInView } from "framer-motion";
 import { 
   FaStar,
@@ -84,16 +85,18 @@ export function Features() {
                 transition={{ delay: index * 0.15, duration: 0.6 }}
                 className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer"
               >
-                <div className="flex items-center justify-center mb-6">
-                  <feature.icon 
-                    className={`${feature.iconColor} transition-transform hover:scale-110`} 
-                    size={48} 
-                  />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <Link href={`/features#${feature.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')}`} className="block">
+                  <div className="flex items-center justify-center mb-6">
+                    <feature.icon 
+                      className={`${feature.iconColor} transition-transform hover:scale-110`} 
+                      size={48} 
+                    />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600">{feature.description}</p>
+                </Link>
               </motion.div>
             ))}
           </div>

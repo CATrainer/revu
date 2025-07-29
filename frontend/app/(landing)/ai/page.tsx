@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Brain, Sparkles, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FaBrain, FaMagic, FaChartLine } from 'react-icons/fa';
 
 export default function AIPage() {
   return (
@@ -9,7 +9,7 @@ export default function AIPage() {
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
-          <Sparkles className="h-4 w-4" />
+          <FaMagic className="h-4 w-4" />
           Powered by Advanced AI
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
@@ -20,7 +20,7 @@ export default function AIPage() {
         </p>
         <div className="flex justify-center gap-4">
           <Button size="lg" asChild>
-            <Link href="/signup">Try AI Response Generator</Link>
+            <Link href="/join-waitlist">Try AI Response Generator</Link>
           </Button>
           <Button size="lg" variant="outline" asChild>
             <Link href="/demo">Watch Demo</Link>
@@ -36,8 +36,8 @@ export default function AIPage() {
         <div className="grid md:grid-cols-3 gap-8">
           <Card>
             <CardHeader>
-              <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
-                <Brain className="h-6 w-6 text-indigo-600" />
+              <div className="flex items-center justify-center mb-4">
+                <FaBrain className="h-12 w-12 text-indigo-600" />
               </div>
               <CardTitle>1. Learn Your Voice</CardTitle>
             </CardHeader>
@@ -50,8 +50,8 @@ export default function AIPage() {
           
           <Card>
             <CardHeader>
-              <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
-                <Sparkles className="h-6 w-6 text-indigo-600" />
+              <div className="flex items-center justify-center mb-4">
+                <FaMagic className="h-12 w-12 text-purple-600" />
               </div>
               <CardTitle>2. Generate Responses</CardTitle>
             </CardHeader>
@@ -64,8 +64,8 @@ export default function AIPage() {
           
           <Card>
             <CardHeader>
-              <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
-                <TrendingUp className="h-6 w-6 text-indigo-600" />
+              <div className="flex items-center justify-center mb-4">
+                <FaChartLine className="h-12 w-12 text-green-600" />
               </div>
               <CardTitle>3. Improve Over Time</CardTitle>
             </CardHeader>

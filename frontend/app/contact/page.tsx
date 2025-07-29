@@ -2,12 +2,23 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, MessageCircle } from "lucide-react";
+import Link from "next/link";
+import { Mail, MessageCircle, ArrowLeft } from "lucide-react";
 
 export default function ContactPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-4 max-w-4xl">
+        {/* Back to Home Navigation */}
+        <div className="mb-6">
+          <Button variant="ghost" asChild className="text-gray-600 hover:text-gray-900">
+            <Link href="/" className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </Link>
+          </Button>
+        </div>
+        
         <Card>
           <CardHeader>
             <CardTitle className="text-3xl">Contact Us</CardTitle>
@@ -39,11 +50,14 @@ export default function ContactPage() {
               <div>
                 <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
                 <div className="space-y-3">
-                  <Button className="w-full" onClick={() => window.location.href = '/demo'}>
-                    Schedule a Demo
+                  <Button asChild className="w-full">
+                    <Link href="/demo">Schedule a Demo</Link>
                   </Button>
-                  <Button variant="outline" className="w-full" onClick={() => window.location.href = 'mailto:support@revu.com'}>
-                    Email Support
+                  <Button variant="outline" asChild className="w-full">
+                    <Link href="/join-waitlist">Join Waitlist</Link>
+                  </Button>
+                  <Button variant="outline" asChild className="w-full">
+                    <a href="mailto:support@revu.com">Email Support</a>
                   </Button>
                 </div>
               </div>

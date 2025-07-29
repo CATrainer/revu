@@ -4,13 +4,16 @@ import {
   MessageSquare, 
   Brain, 
   Trophy, 
-  Smartphone, 
-  BarChart3, 
-  Users,
-  Clock,
-  Shield,
-  Zap
 } from 'lucide-react';
+import { 
+  FaMobileAlt, 
+  FaChartBar, 
+  FaUsers,
+  FaBolt,
+  FaClock,
+  FaShieldAlt,
+  FaHashtag
+} from 'react-icons/fa';
 
 export default function FeaturesPage() {
   return (
@@ -153,6 +156,136 @@ export default function FeaturesPage() {
         </div>
       </section>
 
+      {/* Social Monitoring Section */}
+      <section id="social-monitoring" className="bg-gray-50 py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="order-2 md:order-1 bg-white rounded-lg p-8 h-96 flex items-center justify-center shadow-sm">
+              <p className="text-gray-500">[Social Monitoring Dashboard]</p>
+            </div>
+            <div className="order-1 md:order-2">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-12 w-12 bg-pink-100 rounded-lg flex items-center justify-center">
+                  <FaHashtag className="h-6 w-6 text-pink-500" />
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900">Social Monitoring</h2>
+              </div>
+              <p className="text-lg text-gray-600 mb-6">
+                Track mentions and feedback across all social media platforms in real-time.
+              </p>
+              <ul className="space-y-3">
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span>Monitor Facebook, Instagram, Twitter, and more</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span>Real-time sentiment analysis</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span>Automated alert notifications</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span>Hashtag and keyword tracking</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span>Influencer mention identification</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Analytics and Reports Section */}
+      <section id="analytics-and-reports" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <FaChartBar className="h-6 w-6 text-green-600" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900">Analytics & Reports</h2>
+            </div>
+            <p className="text-lg text-gray-600 mb-6">
+              Get actionable insights with comprehensive reporting and analytics derived from your review data.
+            </p>
+            <ul className="space-y-3">
+              <li className="flex items-start">
+                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span>Performance metrics and KPIs</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span>Sentiment trend analysis</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span>Custom reporting dashboards</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span>Automated report generation</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span>Export data in multiple formats</span>
+              </li>
+            </ul>
+          </div>
+          <div className="bg-gray-100 rounded-lg p-8 h-96 flex items-center justify-center">
+            <p className="text-gray-500">[Analytics Dashboard]</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Team Collaboration Section */}
+      <section id="team-collaboration" className="bg-gray-50 py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="order-2 md:order-1 bg-white rounded-lg p-8 h-96 flex items-center justify-center shadow-sm">
+              <p className="text-gray-500">[Team Collaboration Interface]</p>
+            </div>
+            <div className="order-1 md:order-2">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <FaUsers className="h-6 w-6 text-purple-600" />
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900">Team Collaboration</h2>
+              </div>
+              <p className="text-lg text-gray-600 mb-6">
+                Work collaboratively with task assignments, role-based permissions and automation workflows.
+              </p>
+              <ul className="space-y-3">
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span>Role-based access control</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span>Task assignments and notifications</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span>Internal notes and comments</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span>Approval workflows</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span>Team performance analytics</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* More Features Grid */}
       <section className="bg-gray-50 py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -161,42 +294,42 @@ export default function FeaturesPage() {
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <Smartphone className="h-10 w-10 text-indigo-600 mb-4" />
+              <FaMobileAlt className="h-10 w-10 text-pink-500 mb-4" />
               <h3 className="text-xl font-semibold mb-2">Social Monitoring</h3>
               <p className="text-gray-600">
                 Track mentions and sentiment across social platforms in real-time.
               </p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <BarChart3 className="h-10 w-10 text-indigo-600 mb-4" />
+              <FaChartBar className="h-10 w-10 text-green-600 mb-4" />
               <h3 className="text-xl font-semibold mb-2">Advanced Analytics</h3>
               <p className="text-gray-600">
                 Comprehensive reporting with actionable insights and trend analysis.
               </p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <Users className="h-10 w-10 text-indigo-600 mb-4" />
+              <FaUsers className="h-10 w-10 text-purple-600 mb-4" />
               <h3 className="text-xl font-semibold mb-2">Team Collaboration</h3>
               <p className="text-gray-600">
                 Role-based permissions, assignments, and internal notes.
               </p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <Zap className="h-10 w-10 text-indigo-600 mb-4" />
+              <FaBolt className="h-10 w-10 text-amber-500 mb-4" />
               <h3 className="text-xl font-semibold mb-2">Automation Rules</h3>
               <p className="text-gray-600">
                 Set up intelligent workflows to handle reviews automatically.
               </p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <Clock className="h-10 w-10 text-indigo-600 mb-4" />
+              <FaClock className="h-10 w-10 text-sky-600 mb-4" />
               <h3 className="text-xl font-semibold mb-2">Response Templates</h3>
               <p className="text-gray-600">
                 Save time with customizable templates for common scenarios.
               </p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <Shield className="h-10 w-10 text-indigo-600 mb-4" />
+              <FaShieldAlt className="h-10 w-10 text-indigo-600 mb-4" />
               <h3 className="text-xl font-semibold mb-2">Enterprise Security</h3>
               <p className="text-gray-600">
                 Bank-level encryption, GDPR compliance, and regular backups.

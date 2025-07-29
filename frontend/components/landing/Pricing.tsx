@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 
 const plans = [
   {
@@ -22,7 +21,6 @@ const plans = [
     name: 'Professional',
     price: '£179',
     description: 'Ideal for growing businesses',
-    popular: true,
     features: [
       'Up to 3 locations',
       'Google + Social monitoring',
@@ -62,12 +60,7 @@ export function Pricing() {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {plans.map((plan) => (
-            <Card key={plan.name} className={plan.popular ? 'border-indigo-600 shadow-lg' : ''}>
-              {plan.popular && (
-                <div className="px-6 pt-6">
-                  <Badge className="bg-indigo-600">Most Popular</Badge>
-                </div>
-              )}
+            <Card key={plan.name}>
               <CardHeader>
                 <CardTitle>{plan.name}</CardTitle>
                 <CardDescription>{plan.description}</CardDescription>
@@ -87,7 +80,7 @@ export function Pricing() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button className="w-full" variant={plan.popular ? 'default' : 'outline'} asChild>
+                <Button className="w-full" variant="outline" asChild>
                   <Link href="/join-waitlist">Join Waiting List</Link>
                 </Button>
               </CardFooter>

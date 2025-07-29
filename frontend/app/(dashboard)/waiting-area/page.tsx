@@ -174,11 +174,6 @@ export default function WaitingAreaPage() {
 
             {/* Professional Plan */}
             <Card className="border-indigo-200 relative">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                  Most Popular
-                </span>
-              </div>
               <CardHeader>
                 <CardTitle>Professional</CardTitle>
                 <div className="text-3xl font-bold">$79<span className="text-lg font-normal text-gray-600">/month</span></div>

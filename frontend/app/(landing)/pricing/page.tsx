@@ -22,7 +22,7 @@ export default function PricingPage() {
             🎉 Launch Special: Professional Tier for £100
           </h2>
           <p className="text-lg opacity-90">
-            Get our most popular plan for £100/month for your first 100 days (normally £179/month)
+            Get the Professional plan for £100/month for your first 100 days (normally £179/month)
           </p>
         </div>
       </section>
