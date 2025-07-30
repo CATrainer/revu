@@ -5,7 +5,6 @@ This module creates and configures the FastAPI application instance,
 including middleware, routers, and event handlers.
 """
 
-import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -155,50 +154,27 @@ async def root():
 # Configure CORS
 origins = settings.BACKEND_CORS_ORIGINS
 
-# Railway deployment safety: ensure CORS is configured even if env vars are missing
-railway_env = os.getenv("RAILWAY_ENVIRONMENT_NAME")
-if railway_env:
-    logger.info(f"Running in Railway environment: {railway_env}")
-    # For Railway, ensure we always include the production URLs
-    required_origins = [
-        "https://revu-one.vercel.app",
-        "https://revu.vercel.app", 
-        "http://localhost:3000"
-    ]
-    origins_str = [str(o).rstrip('/') for o in origins] if origins else []
-    for required in required_origins:
-        if required not in origins_str:
-            origins.append(required)
-            logger.info(f"Added required origin for Railway: {required}")
-
 # If CORS origins are not properly set, use a default that includes your Vercel app
 if not origins or origins == [""]:
     logger.warning("CORS origins not properly configured, using defaults")
     origins = [
         "http://localhost:3000",
-        "http://localhost:3001", 
+        "http://localhost:3001",
         "https://revu-one.vercel.app",
         "https://revu.vercel.app",
     ]
 
-# Always ensure the Vercel app is included (for Railway deployment safety)
-vercel_urls = ["https://revu-one.vercel.app", "https://revu-one.vercel.app/"]
-for url in vercel_urls:
-    if url not in [str(o).rstrip('/') for o in origins]:
-        origins.append(url)
-
 logger.info(f"CORS configured for origins: {origins}")
-logger.info(f"Origins type: {type(origins)}, First origin type: {type(origins[0]) if origins else 'None'}")
 
 @app.middleware("http")
 async def manual_cors_middleware(request: Request, call_next):
     # Handle preflight requests
     if request.method == "OPTIONS":
         headers = {
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin": request.headers.get("origin", "*"),
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
-            "Access-Control-Allow-Credentials": "false",
+            "Access-Control-Allow-Credentials": "true",
             "Access-Control-Max-Age": "3600",
         }
         return JSONResponse(content={"message": "OK"}, headers=headers)
@@ -206,18 +182,11 @@ async def manual_cors_middleware(request: Request, call_next):
     # Process the request
     response = await call_next(request)
     
-    # TEMPORARY: Allow all origins for debugging
+    # Add CORS headers to all responses
     origin = request.headers.get("origin")
-    if origin:
+    if origin in ["http://localhost:3000", "https://revu-one.vercel.app"]:
         response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
-        # Note: credentials set to false when allowing all origins
-        if origin.startswith("https://revu-one.vercel.app") or origin.startswith("http://localhost"):
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-    else:
-        # Fallback: allow everything
-        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
     
