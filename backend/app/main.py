@@ -5,6 +5,7 @@ This module creates and configures the FastAPI application instance,
 including middleware, routers, and event handlers.
 """
 
+import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -154,6 +155,22 @@ async def root():
 # Configure CORS
 origins = settings.BACKEND_CORS_ORIGINS
 
+# Railway deployment safety: ensure CORS is configured even if env vars are missing
+railway_env = os.getenv("RAILWAY_ENVIRONMENT_NAME")
+if railway_env:
+    logger.info(f"Running in Railway environment: {railway_env}")
+    # For Railway, ensure we always include the production URLs
+    required_origins = [
+        "https://revu-one.vercel.app",
+        "https://revu.vercel.app", 
+        "http://localhost:3000"
+    ]
+    origins_str = [str(o).rstrip('/') for o in origins] if origins else []
+    for required in required_origins:
+        if required not in origins_str:
+            origins.append(required)
+            logger.info(f"Added required origin for Railway: {required}")
+
 # If CORS origins are not properly set, use a default that includes your Vercel app
 if not origins or origins == [""]:
     logger.warning("CORS origins not properly configured, using defaults")
@@ -191,8 +208,21 @@ async def manual_cors_middleware(request: Request, call_next):
     
     # Add CORS headers to all responses
     origin = request.headers.get("origin")
-    # Check if origin is in allowed list (handle both with and without trailing slash)
-    if origin:
+    
+    # More permissive CORS for debugging - allow all Vercel and localhost origins
+    if origin and (
+        origin.startswith("https://revu-one.vercel.app") or
+        origin.startswith("https://revu.vercel.app") or
+        origin.startswith("http://localhost") or
+        origin.startswith("https://localhost")
+    ):
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+    
+    # Fallback: check configured origins
+    elif origin:
         origin_without_slash = origin.rstrip('/')
         # Convert origins to strings and remove trailing slashes for comparison
         origins_without_slash = [str(o).rstrip('/') for o in origins]
