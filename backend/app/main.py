@@ -159,12 +159,19 @@ if not origins or origins == [""]:
     logger.warning("CORS origins not properly configured, using defaults")
     origins = [
         "http://localhost:3000",
-        "http://localhost:3001",
+        "http://localhost:3001", 
         "https://revu-one.vercel.app",
         "https://revu.vercel.app",
     ]
 
+# Always ensure the Vercel app is included (for Railway deployment safety)
+vercel_urls = ["https://revu-one.vercel.app", "https://revu-one.vercel.app/"]
+for url in vercel_urls:
+    if url not in [str(o).rstrip('/') for o in origins]:
+        origins.append(url)
+
 logger.info(f"CORS configured for origins: {origins}")
+logger.info(f"Origins type: {type(origins)}, First origin type: {type(origins[0]) if origins else 'None'}")
 
 @app.middleware("http")
 async def manual_cors_middleware(request: Request, call_next):
@@ -184,11 +191,16 @@ async def manual_cors_middleware(request: Request, call_next):
     
     # Add CORS headers to all responses
     origin = request.headers.get("origin")
-    if origin in ["http://localhost:3000", "https://revu-one.vercel.app"]:
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+    # Check if origin is in allowed list (handle both with and without trailing slash)
+    if origin:
+        origin_without_slash = origin.rstrip('/')
+        # Convert origins to strings and remove trailing slashes for comparison
+        origins_without_slash = [str(o).rstrip('/') for o in origins]
+        if origin_without_slash in origins_without_slash:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
     
     return response
 
