@@ -8,6 +8,7 @@ database operations, and real-time features.
 from typing import Optional, Dict, Any
 import httpx
 from loguru import logger
+from supabase import create_client, Client
 
 from app.core.config import settings
 
@@ -19,6 +20,10 @@ class SupabaseAuth:
         self.base_url = settings.SUPABASE_URL
         self.anon_key = settings.SUPABASE_ANON_KEY
         self.service_key = settings.SUPABASE_SERVICE_ROLE_KEY
+        
+        # Create Supabase client for operations that work better with official client
+        if self.base_url and self.anon_key:
+            self.client: Client = create_client(self.base_url, self.anon_key)
     
     async def verify_token(self, access_token: str) -> Optional[Dict[str, Any]]:
         """
@@ -181,49 +186,94 @@ class SupabaseAuth:
             
         logger.info(f"Attempting to reset password with token length: {len(access_token)}")
         logger.info(f"Supabase base URL: {self.base_url}")
+        
+        try:
+            # Use the official Supabase client with the session token
+            # Set the session using the access token
+            logger.info("Setting session with access token...")
             
+            # Create a new client instance for this specific session
+            temp_client = create_client(self.base_url, self.anon_key)
+            
+            # Set the session manually
+            # The access token from password reset should allow us to update the user
+            session_data = {
+                'access_token': access_token,
+                'refresh_token': '',  # This might not be needed for password reset
+                'user': None,
+                'expires_in': 3600,
+                'token_type': 'bearer'
+            }
+            
+            # Set the session on the client
+            temp_client.auth.set_session(access_token, refresh_token='')
+            
+            logger.info("Session set, attempting to update password...")
+            
+            # Now try to update the password
+            response = temp_client.auth.update({'password': new_password})
+            
+            if response.user:
+                logger.info(f"Password reset successful for user: {response.user.email}")
+                return True
+            else:
+                logger.error("No user returned from password update")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Failed to reset password using Supabase client: {str(e)}")
+            logger.error(f"Error type: {type(e).__name__}")
+            
+            # Fall back to the HTTP approach
+            logger.info("Falling back to HTTP approach...")
+            return await self._reset_password_http(access_token, new_password)
+    
+    async def _reset_password_http(self, access_token: str, new_password: str) -> bool:
+        """
+        Fallback HTTP method for password reset.
+        """
         async with httpx.AsyncClient() as client:
             try:
-                # First, let's try the standard user update endpoint
+                # For Supabase password reset, we need to make the request with the user's session
                 url = f"{self.base_url}/auth/v1/user"
                 headers = {
                     "apikey": self.anon_key,
                     "Authorization": f"Bearer {access_token}",
                     "Content-Type": "application/json",
                 }
-                payload = {"password": new_password}
                 
-                logger.info(f"Making PUT request to: {url}")
-                logger.info(f"Payload: {payload}")
+                # First verify the token by getting user info
+                logger.info(f"Verifying token by getting user info from: {url}")
+                get_response = await client.get(url, headers=headers)
+                logger.info(f"Get user response status: {get_response.status_code}")
+                logger.info(f"Get user response text: {get_response.text}")
                 
-                response = await client.put(url, headers=headers, json=payload)
-                
-                logger.info(f"Supabase response status: {response.status_code}")
-                logger.info(f"Supabase response text: {response.text}")
-                
-                if response.status_code == 200:
-                    logger.info("Password reset successful")
-                    return True
-                elif response.status_code == 422:
-                    # Try alternative approach - password recovery completion
-                    logger.info("Trying alternative password recovery approach...")
-                    recovery_url = f"{self.base_url}/auth/v1/recover"
-                    recovery_payload = {
-                        "token": access_token,
-                        "password": new_password,
-                        "type": "recovery"
-                    }
+                if get_response.status_code == 200:
+                    # Token is valid, now update the password
+                    logger.info("Token verified, updating password...")
+                    update_payload = {"password": new_password}
                     
-                    recovery_response = await client.post(recovery_url, headers=headers, json=recovery_payload)
-                    logger.info(f"Recovery response status: {recovery_response.status_code}")
-                    logger.info(f"Recovery response text: {recovery_response.text}")
+                    update_response = await client.put(url, headers=headers, json=update_payload)
+                    logger.info(f"Update password response status: {update_response.status_code}")
+                    logger.info(f"Update password response text: {update_response.text}")
                     
-                    if recovery_response.status_code in [200, 201]:
-                        logger.info("Password reset successful via recovery endpoint")
+                    if update_response.status_code == 200:
+                        logger.info("Password reset successful")
                         return True
-                
-                logger.error(f"Failed to reset password: {response.status_code} - {response.text}")
-                return False
+                    else:
+                        logger.error(f"Failed to update password: {update_response.status_code} - {update_response.text}")
+                        return False
+                else:
+                    logger.error(f"Token verification failed: {get_response.status_code} - {get_response.text}")
+                    
+                    # The token might be expired or invalid
+                    # Let's check if we can get more details about the error
+                    if get_response.status_code == 401:
+                        logger.error("Token appears to be expired or invalid (401 Unauthorized)")
+                    elif get_response.status_code == 403:
+                        logger.error("Token appears to be forbidden (403 Forbidden)")
+                    
+                    return False
                     
             except Exception as e:
                 logger.error(f"Error resetting password: {e}")
