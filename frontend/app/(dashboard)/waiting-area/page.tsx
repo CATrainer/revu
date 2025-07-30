@@ -68,12 +68,6 @@ export default function WaitingAreaPage() {
               <Link href="/" className="flex items-center">
                 <span className="text-2xl font-bold brand-text">Revu</span>
               </Link>
-              <div>
-                <h1 className="text-3xl font-bold text-primary-dark">Welcome to Revu!</h1>
-                <p className="mt-2 text-secondary-dark">
-                  You&apos;re on our exclusive waiting list. Here&apos;s what&apos;s coming...
-                </p>
-              </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="brand-background text-[hsl(263,70%,68%)] px-4 py-2 rounded-full">
@@ -82,6 +76,16 @@ export default function WaitingAreaPage() {
               <ThemeToggle />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Welcome Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-4">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-primary-dark mb-4">Welcome to Revu!</h1>
+          <p className="text-lg text-secondary-dark">
+            You&apos;re on our exclusive waiting list. Here&apos;s what&apos;s coming...
+          </p>
         </div>
       </div>
 
