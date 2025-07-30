@@ -85,6 +85,9 @@ class Settings(BaseSettings):
     OPENAI_MAX_TOKENS: int = 500
     OPENAI_TEMPERATURE: float = 0.7
 
+    # Calendly
+    CALENDLY_ACCESS_TOKEN: str
+
     # Email
     RESEND_API_KEY: str
     EMAIL_FROM_ADDRESS: EmailStr

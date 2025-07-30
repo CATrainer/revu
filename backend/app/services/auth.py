@@ -6,7 +6,7 @@ from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_token
-from app.core.supabase import SupabaseAuth
+from app.core.supabase import get_supabase_auth
 from app.services.user import UserService
 
 
@@ -15,7 +15,7 @@ class AuthService:
 
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.supabase_auth = SupabaseAuth()
+        self.supabase_auth = get_supabase_auth()
 
     async def verify_refresh_token(self, refresh_token: str) -> str:
         """

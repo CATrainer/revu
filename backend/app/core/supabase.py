@@ -381,8 +381,16 @@ class SupabaseAuth:
                 return None
 
 
-# Create global instance for backward compatibility
-supabase_auth = SupabaseAuth()
+# Global instance - lazy loaded to avoid import-time issues
+_supabase_auth_instance = None
+
+
+def get_supabase_auth():
+    """Get or create the global SupabaseAuth instance"""
+    global _supabase_auth_instance
+    if _supabase_auth_instance is None:
+        _supabase_auth_instance = SupabaseAuth()
+    return _supabase_auth_instance
 
 
 # Stub functions that used to return Supabase client
