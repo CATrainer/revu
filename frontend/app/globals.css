@@ -262,4 +262,69 @@
   .dashboard-card {
     @apply bg-white dark:bg-[hsl(222,84%,7%)] border border-gray-200 dark:border-[hsl(222,47%,16%)];
   }
+  
+  /* Status & indicator colors */
+  .status-success {
+    @apply text-green-600 dark:text-green-400;
+  }
+  
+  .status-success-bg {
+    @apply bg-green-500 dark:bg-green-400;
+  }
+  
+  .status-danger {
+    @apply text-red-600 dark:text-red-400;
+  }
+  
+  .status-danger-bg {
+    @apply bg-red-500 dark:bg-red-400;
+  }
+  
+  .status-info {
+    @apply text-blue-600 dark:text-blue-400;
+  }
+  
+  .status-info-bg {
+    @apply bg-blue-500 dark:bg-blue-400;
+  }
+  
+  .status-warning {
+    @apply text-yellow-600 dark:text-yellow-400;
+  }
+  
+  .status-warning-bg {
+    @apply bg-yellow-500 dark:bg-yellow-400;
+  }
+  
+  /* Loading spinners */
+  .spinner-border {
+    @apply border-brand-text;
+  }
+  
+  /* Form elements */
+  .form-input {
+    @apply border-gray-300 dark:border-[hsl(222,47%,16%)] card-background text-primary-dark;
+  }
+  
+  .form-input-error {
+    @apply border-red-500 focus:ring-red-500;
+  }
+  
+  /* Gradients */
+  .gradient-brand {
+    @apply bg-gradient-to-r from-[hsl(263,70%,68%)] to-[hsl(280,65%,60%)] dark:from-[hsl(263,70%,55%)] dark:to-[hsl(280,65%,50%)];
+  }
+  
+  .gradient-light {
+    @apply bg-gradient-to-b from-gray-50 to-white dark:from-[hsl(222,84%,4%)] dark:to-[hsl(222,84%,5%)];
+  }
+  
+  /* Border styles */
+  .border-brand {
+    @apply border-[hsl(263,70%,68%)] dark:border-[hsl(263,70%,55%)];
+  }
+  
+  .border-muted {
+    @apply border-gray-200 dark:border-[hsl(222,47%,16%)];
+  }
 }

@@ -34,24 +34,24 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'bg-white dark:bg-[hsl(222,84%,6%)] border-r border-gray-200 dark:border-[hsl(222,47%,16%)] pt-5 pb-4 overflow-y-auto transition-all duration-300',
+        'dashboard-card border-r pt-5 pb-4 overflow-y-auto transition-all duration-300',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
       <div className="flex items-center justify-between px-4 mb-8">
         {!collapsed && (
           <Link href="/" className="flex items-center">
-            <span className="text-2xl font-bold text-indigo-600 dark:text-[hsl(263,70%,68%)]">Revu</span>
+            <span className="text-2xl font-bold brand-text">Revu</span>
           </Link>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-[hsl(222,47%,11%)]"
+          className="p-1 rounded-md hover-background"
         >
           {collapsed ? (
-            <ChevronRight className="h-5 w-5 text-gray-500 dark:text-[hsl(215,20%,65%)]" />
+            <ChevronRight className="h-5 w-5 text-secondary-dark" />
           ) : (
-            <ChevronLeft className="h-5 w-5 text-gray-500 dark:text-[hsl(215,20%,65%)]" />
+            <ChevronLeft className="h-5 w-5 text-secondary-dark" />
           )}
         </button>
       </div>
@@ -67,8 +67,8 @@ export function Sidebar() {
                 className={cn(
                   'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors',
                   isActive
-                    ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'brand-background brand-text'
+                    : 'nav-link hover-background'
                 )}
               >
                 <item.icon
@@ -76,8 +76,8 @@ export function Sidebar() {
                     'flex-shrink-0 h-5 w-5 transition-colors',
                     collapsed ? 'mr-0' : 'mr-3',
                     isActive
-                      ? 'text-indigo-700'
-                      : 'text-gray-400 group-hover:text-gray-500'
+                      ? 'brand-text'
+                      : 'text-secondary-dark group-hover:text-primary-dark'
                   )}
                 />
                 {!collapsed && item.name}

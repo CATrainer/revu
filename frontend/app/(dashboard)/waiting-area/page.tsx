@@ -53,7 +53,7 @@ export default function WaitingAreaPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 spinner-border"></div>
       </div>
     );
   }
@@ -112,7 +112,7 @@ export default function WaitingAreaPage() {
               </div>
               <div>
                 <h3 className="font-medium text-primary-dark mb-2">Estimated Launch</h3>
-                <p className="text-2xl font-bold text-green-600">Q4 2025</p>
+                <p className="text-2xl font-bold status-success">Q4 2025</p>
                 <p className="text-sm text-secondary-dark mt-1">
                   We&apos;re working hard to get you early access!
                 </p>
@@ -125,7 +125,7 @@ export default function WaitingAreaPage() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-indigo-600" />
+              <Calendar className="h-5 w-5 brand-text" />
               Book a Demo
             </CardTitle>
             <CardDescription>
@@ -139,7 +139,7 @@ export default function WaitingAreaPage() {
                 Request Demo Call
               </Button>
             ) : (
-              <div className="flex items-center gap-2 text-green-600">
+              <div className="flex items-center gap-2 status-success">
                 <Check className="h-5 w-5" />
                 <span>Demo requested! We&apos;ll contact you soon.</span>
               </div>
@@ -149,31 +149,31 @@ export default function WaitingAreaPage() {
 
         {/* Pricing Preview */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Pricing Plans</h2>
+          <h2 className="text-2xl font-bold text-primary-dark mb-6">Pricing Plans</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {/* Starter Plan */}
             <Card>
               <CardHeader>
                 <CardTitle>Starter</CardTitle>
-                <div className="text-3xl font-bold">$29<span className="text-lg font-normal text-gray-600">/month</span></div>
+                <div className="text-3xl font-bold">$29<span className="text-lg font-normal text-secondary-dark">/month</span></div>
                 <CardDescription>Perfect for small businesses</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 status-success" />
                     <span className="text-sm">Up to 100 reviews/month</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 status-success" />
                     <span className="text-sm">AI response generation</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 status-success" />
                     <span className="text-sm">2 platform connections</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 status-success" />
                     <span className="text-sm">Basic analytics</span>
                   </li>
                 </ul>
@@ -181,32 +181,32 @@ export default function WaitingAreaPage() {
             </Card>
 
             {/* Professional Plan */}
-            <Card className="border-indigo-200 relative">
+            <Card className="border-brand relative">
               <CardHeader>
                 <CardTitle>Professional</CardTitle>
-                <div className="text-3xl font-bold">$79<span className="text-lg font-normal text-gray-600">/month</span></div>
+                                <div className="text-3xl font-bold">$79<span className="text-lg font-normal text-secondary-dark">/month</span></div>
                 <CardDescription>For growing businesses</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 status-success" />
                     <span className="text-sm">Up to 500 reviews/month</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 status-success" />
                     <span className="text-sm">Advanced AI responses</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 status-success" />
                     <span className="text-sm">5 platform connections</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 status-success" />
                     <span className="text-sm">Competitor tracking</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 status-success" />
                     <span className="text-sm">Advanced analytics</span>
                   </li>
                 </ul>
@@ -217,29 +217,29 @@ export default function WaitingAreaPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Enterprise</CardTitle>
-                <div className="text-3xl font-bold">$199<span className="text-lg font-normal text-gray-600">/month</span></div>
+                                <div className="text-3xl font-bold">$199<span className="text-lg font-normal text-secondary-dark">/month</span></div>
                 <CardDescription>For large organizations</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 status-success" />
                     <span className="text-sm">Unlimited reviews</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 status-success" />
                     <span className="text-sm">Custom AI training</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 status-success" />
                     <span className="text-sm">Unlimited connections</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 status-success" />
                     <span className="text-sm">Priority support</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 status-success" />
                     <span className="text-sm">Custom integrations</span>
                   </li>
                 </ul>
@@ -261,7 +261,7 @@ export default function WaitingAreaPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="border-l-4 border-indigo-500 pl-4">
+              <div className="border-l-4 border-brand pl-4">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium">Week of July 28, 2025</span>
                   <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Complete</span>
@@ -285,7 +285,7 @@ export default function WaitingAreaPage() {
                 </p>
               </div>
               
-              <div className="border-l-4 border-gray-300 pl-4">
+              <div className="border-l-4 border-muted pl-4">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium">Week of August 11, 2025</span>
                   <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">Planned</span>
