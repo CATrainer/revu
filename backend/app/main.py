@@ -195,10 +195,10 @@ async def manual_cors_middleware(request: Request, call_next):
     # Handle preflight requests
     if request.method == "OPTIONS":
         headers = {
-            "Access-Control-Allow-Origin": request.headers.get("origin", "*"),
+            "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
-            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Credentials": "false",
             "Access-Control-Max-Age": "3600",
         }
         return JSONResponse(content={"message": "OK"}, headers=headers)
@@ -206,31 +206,20 @@ async def manual_cors_middleware(request: Request, call_next):
     # Process the request
     response = await call_next(request)
     
-    # Add CORS headers to all responses
+    # TEMPORARY: Allow all origins for debugging
     origin = request.headers.get("origin")
-    
-    # More permissive CORS for debugging - allow all Vercel and localhost origins
-    if origin and (
-        origin.startswith("https://revu-one.vercel.app") or
-        origin.startswith("https://revu.vercel.app") or
-        origin.startswith("http://localhost") or
-        origin.startswith("https://localhost")
-    ):
+    if origin:
         response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
-    
-    # Fallback: check configured origins
-    elif origin:
-        origin_without_slash = origin.rstrip('/')
-        # Convert origins to strings and remove trailing slashes for comparison
-        origins_without_slash = [str(o).rstrip('/') for o in origins]
-        if origin_without_slash in origins_without_slash:
-            response.headers["Access-Control-Allow-Origin"] = origin
+        # Note: credentials set to false when allowing all origins
+        if origin.startswith("https://revu-one.vercel.app") or origin.startswith("http://localhost"):
             response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+    else:
+        # Fallback: allow everything
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
     
     return response
 
