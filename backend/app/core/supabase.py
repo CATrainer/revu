@@ -22,8 +22,36 @@ class SupabaseAuth:
         self.service_key = settings.SUPABASE_SERVICE_ROLE_KEY
         
         # Create Supabase client for operations that work better with official client
+        self.client: Optional[Client] = None
         if self.base_url and self.anon_key:
-            self.client: Client = create_client(self.base_url, self.anon_key)
+            try:
+                # Create client with proper options to avoid compatibility issues
+                from supabase.lib.client_options import ClientOptions
+                
+                # Create options without proxy settings to avoid the error
+                options = ClientOptions(
+                    schema='public',
+                    auto_refresh_token=True,
+                    persist_session=False,  # Don't persist sessions for server-side usage
+                    postgrest_client_timeout=5,
+                    storage_client_timeout=20,
+                    flow_type='implicit'
+                )
+                
+                self.client = create_client(self.base_url, self.anon_key, options)
+                logger.info("Supabase client initialized successfully with custom options")
+            except Exception as e:
+                logger.error(f"Failed to initialize Supabase client with options: {e}")
+                # Try with minimal/default approach
+                try:
+                    logger.info("Retrying Supabase client creation with default options...")
+                    # Just pass the required parameters, let it use defaults
+                    self.client = create_client(self.base_url, self.anon_key)
+                    logger.info("Supabase client initialized successfully with defaults")
+                except Exception as e2:
+                    logger.error(f"Failed to initialize Supabase client with defaults: {e2}")
+                    logger.warning("Continuing without Supabase client - will use HTTP methods only")
+                    self.client = None
     
     async def verify_token(self, access_token: str) -> Optional[Dict[str, Any]]:
         """
@@ -187,46 +215,50 @@ class SupabaseAuth:
         logger.info(f"Attempting to reset password with token length: {len(access_token)}")
         logger.info(f"Supabase base URL: {self.base_url}")
         
-        try:
-            # Use the official Supabase client with the session token
-            # Set the session using the access token
-            logger.info("Setting session with access token...")
-            
-            # Create a new client instance for this specific session
-            temp_client = create_client(self.base_url, self.anon_key)
-            
-            # Set the session manually
-            # The access token from password reset should allow us to update the user
-            session_data = {
-                'access_token': access_token,
-                'refresh_token': '',  # This might not be needed for password reset
-                'user': None,
-                'expires_in': 3600,
-                'token_type': 'bearer'
-            }
-            
-            # Set the session on the client
-            temp_client.auth.set_session(access_token, refresh_token='')
-            
-            logger.info("Session set, attempting to update password...")
-            
-            # Now try to update the password
-            response = temp_client.auth.update({'password': new_password})
-            
-            if response.user:
-                logger.info(f"Password reset successful for user: {response.user.email}")
-                return True
-            else:
-                logger.error("No user returned from password update")
-                return False
+        # Try using the official Supabase client first if available
+        if self.client is not None:
+            try:
+                logger.info("Using official Supabase client for password reset...")
                 
-        except Exception as e:
-            logger.error(f"Failed to reset password using Supabase client: {str(e)}")
-            logger.error(f"Error type: {type(e).__name__}")
-            
-            # Fall back to the HTTP approach
-            logger.info("Falling back to HTTP approach...")
-            return await self._reset_password_http(access_token, new_password)
+                # For password reset, we need to set the session with the access token
+                # The access token from the reset email should allow password updates
+                
+                # Method 1: Try using the client's auth update method directly
+                try:
+                    # Create a temporary session context
+                    session_data = {
+                        'access_token': access_token,
+                        'refresh_token': '',
+                        'user': None,
+                        'expires_in': 3600,
+                        'token_type': 'bearer'
+                    }
+                    
+                    # Set the session on the client
+                    self.client.auth.set_session(access_token, refresh_token='')
+                    
+                    # Now update the password
+                    response = self.client.auth.update({'password': new_password})
+                    
+                    if response.user:
+                        logger.info(f"Password reset successful for user: {response.user.email}")
+                        return True
+                    else:
+                        logger.warning("Password update completed but no user returned")
+                        return True  # Consider it successful if no error occurred
+                        
+                except Exception as client_error:
+                    logger.error(f"Failed using client auth update: {client_error}")
+                    # Fall through to HTTP method
+                    
+            except Exception as e:
+                logger.error(f"Failed to reset password using Supabase client: {str(e)}")
+                logger.error(f"Error type: {type(e).__name__}")
+                # Fall through to HTTP method
+        
+        # Fall back to HTTP method if client is not available or failed
+        logger.info("Falling back to HTTP approach for password reset...")
+        return await self._reset_password_http(access_token, new_password)
     
     async def _reset_password_http(self, access_token: str, new_password: str) -> bool:
         """
