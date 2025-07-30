@@ -2,12 +2,23 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { HelpCircle, Mail, MessageCircle, Book } from "lucide-react";
+import { HelpCircle, Mail, MessageCircle, Book, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function HelpPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-4 max-w-4xl">
+        {/* Back navigation */}
+        <div className="mb-6">
+          <Button variant="ghost" asChild>
+            <Link href="/waiting-area" className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Waiting Area
+            </Link>
+          </Button>
+        </div>
+        
         <Card>
           <CardHeader>
             <CardTitle className="text-3xl flex items-center gap-2">
@@ -72,6 +83,12 @@ export default function HelpPage() {
                 </div>
                 
                 <div className="mt-6 space-y-3">
+                  <Button asChild className="w-full">
+                    <Link href="/waiting-area" className="flex items-center justify-center gap-2">
+                      <ArrowLeft className="h-4 w-4" />
+                      Back to Waiting Area
+                    </Link>
+                  </Button>
                   <Button className="w-full" onClick={() => window.location.href = 'mailto:support@revu.com'}>
                     Contact Support
                   </Button>
