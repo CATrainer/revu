@@ -1,8 +1,7 @@
 // frontend/components/landing/Hero.tsx
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Star, TrendingUp, MessageSquare } from 'lucide-react';
+import { DashboardPreview } from '@/components/landing/DashboardPreview';
 
 export function Hero() {
   return (
@@ -28,43 +27,11 @@ export function Hero() {
           </div>
         </div>
         
-        {/* Dashboard Screenshot with floating elements */}
+        {/* Static dashboard preview */}
         <div className="mt-16 relative">
           <div className="relative mx-auto max-w-6xl">
-            {/* Floating metric cards */}
-            {/* Floating metric cards - add z-10 to each */}
-            <div className="hidden lg:block absolute -left-4 top-20 card-background rounded-lg shadow-lg p-4 animate-float z-10">
-              <div className="flex items-center space-x-2">
-                <Star className="h-5 w-5 text-yellow-500" />
-                <span className="font-semibold text-primary-dark">4.8 Rating</span>
-              </div>
-            </div>
-
-            <div className="hidden lg:block absolute -right-4 top-32 card-background rounded-lg shadow-lg p-4 animate-float-delayed z-10">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5 text-green-500" />
-                <span className="font-semibold text-primary-dark">+23% Growth</span>
-              </div>
-            </div>
-
-            <div className="hidden lg:block absolute left-8 -bottom-4 card-background rounded-lg shadow-lg p-4 animate-float z-10">
-              <div className="flex items-center space-x-2">
-                <MessageSquare className="h-5 w-5 brand-text" />
-                <span className="font-semibold text-primary-dark">142 Reviews</span>
-              </div>
-            </div>
-
-            {/* Main screenshot - keep it at default z-index or add relative */}
             <div className="relative rounded-lg shadow-2xl overflow-hidden transform transition-transform hover:scale-[1.01]">
-              <Image
-                src="/images/dashboard-screenshot.png"
-                alt="Revu Dashboard showing review analytics"
-                width={1200}
-                height={675}
-                className="w-full"
-                priority
-                quality={95}
-              />
+              <DashboardPreview />
             </div>
             
             {/* Subtle gradient overlay */}
