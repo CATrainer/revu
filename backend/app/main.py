@@ -171,8 +171,11 @@ if "https://www.repruv.co.uk" not in origins:
 if "https://repruv.co.uk" not in origins:
     origins.append("https://repruv.co.uk")
 
-# Normalize (strip trailing slashes)
-origins = [o.rstrip('/') for o in origins]
+# Normalize (strip trailing slashes) and coerce to plain strings
+origins = [str(o).rstrip('/') for o in origins if o]
+# De-duplicate while preserving order
+_seen = set()
+origins = [o for o in origins if not (o in _seen or _seen.add(o))]
 
 logger.info(f"CORS configured for origins: {origins}")
 
