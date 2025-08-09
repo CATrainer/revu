@@ -20,7 +20,7 @@ import { useState } from 'react';
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
   { name: 'Review Hub', href: '/reviews', icon: MessageSquare },
-  { name: 'Ask RevU AI', href: '/ai-assistant', icon: Brain },
+  { name: 'Ask Repruv AI', href: '/ai-assistant', icon: Brain },
   { name: 'Competitors', href: '/competitors', icon: Trophy },
   { name: 'Automation', href: '/automation', icon: Zap },
   { name: 'Reports', href: '/reports', icon: FileText },
@@ -41,7 +41,7 @@ export function Sidebar() {
       <div className="flex items-center justify-between px-4 mb-8">
         {!collapsed && (
           <Link href="/" className="flex items-center">
-            <span className="text-2xl font-bold text-indigo-600 dark:text-[hsl(263,70%,68%)]">Revu</span>
+            <span className="text-2xl font-bold text-indigo-600 dark:text-[hsl(263,70%,68%)]">Repruv</span>
           </Link>
         )}
         <button

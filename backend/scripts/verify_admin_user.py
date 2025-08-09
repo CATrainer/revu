@@ -18,7 +18,7 @@ from app.models.user import User
 async def verify_admin_user():
     """Verify the admin user exists and has correct admin permissions."""
     
-    admin_email = "admin@revu.dev"
+    admin_email = "admin@Repruve.dev"
     
     async with async_session_maker() as session:
         try:

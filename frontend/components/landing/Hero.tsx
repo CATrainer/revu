@@ -58,7 +58,7 @@ export function Hero() {
             <div className="relative rounded-lg shadow-2xl overflow-hidden transform transition-transform hover:scale-[1.01]">
               <Image
                 src="/images/dashboard-screenshot.png"
-                alt="Revu Dashboard showing review analytics"
+                alt="Repruv Dashboard showing review analytics"
                 width={1200}
                 height={675}
                 className="w-full"

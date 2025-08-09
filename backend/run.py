@@ -36,7 +36,7 @@ if __name__ == "__main__":
     import uvicorn
     
     port = int(os.environ.get("PORT", 8000))
-    print(f"Starting Revu API on port {port}")
+    print(f"Starting Repruve API on port {port}")
     
     uvicorn.run(
         "app.main:app",

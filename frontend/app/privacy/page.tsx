@@ -1,7 +1,10 @@
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
+import { downloadPrivacyAsPDF } from "@/lib/pdf-utils";
 
 export default function PrivacyPage() {
   return (
@@ -17,24 +20,77 @@ export default function PrivacyPage() {
           </Button>
         </div>
         
-        <Card className="card-background">
-          <CardHeader>
-            <CardTitle className="text-3xl text-primary-dark">Privacy Policy</CardTitle>
-          </CardHeader>
-          <CardContent className="prose max-w-none">
-            <p className="text-secondary-dark mb-6">
-              This privacy policy page is under construction. We are committed to protecting your privacy 
-              and will have our comprehensive privacy policy available soon.
-            </p>
-            
-            <p className="text-secondary-dark">
-              For any privacy-related questions, please contact us at{" "}
-              <a href="mailto:privacy@revu.com" className="brand-text hover:underline">
-                privacy@revu.com
-              </a>
-            </p>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <Card className="card-background">
+            <CardHeader>
+              <CardTitle className="text-3xl text-primary-dark">Privacy Policy</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-secondary-dark mb-6">
+                Download our comprehensive Privacy Policy document to understand how we collect, use, 
+                and protect your personal information. This document outlines our data practices, 
+                your privacy rights, security measures, and our commitment to protecting your data.
+              </p>
+              <Button 
+                onClick={downloadPrivacyAsPDF}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download Privacy Policy (PDF)
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="card-background">
+            <CardHeader>
+              <CardTitle className="text-2xl text-primary-dark">What's Included</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold text-primary-dark mb-2">Information Collection</h4>
+                  <p className="text-secondary-dark text-sm mb-4">Detailed explanation of what personal and business data we collect and why.</p>
+                  
+                  <h4 className="font-semibold text-primary-dark mb-2">Data Usage</h4>
+                  <p className="text-secondary-dark text-sm mb-4">How we use your information to provide reputation management services.</p>
+                  
+                  <h4 className="font-semibold text-primary-dark mb-2">Data Sharing</h4>
+                  <p className="text-secondary-dark text-sm">Our policies on sharing data with third parties and service providers.</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-primary-dark mb-2">Your Rights</h4>
+                  <p className="text-secondary-dark text-sm mb-4">Complete overview of your data rights under GDPR, CCPA, and other regulations.</p>
+                  
+                  <h4 className="font-semibold text-primary-dark mb-2">Data Security</h4>
+                  <p className="text-secondary-dark text-sm mb-4">Security measures we implement to protect your personal information.</p>
+                  
+                  <h4 className="font-semibold text-primary-dark mb-2">International Transfers</h4>
+                  <p className="text-secondary-dark text-sm">Information about data storage and processing across different jurisdictions.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-background">
+            <CardHeader>
+              <CardTitle className="text-2xl text-primary-dark">Contact Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-secondary-dark mb-4">
+                If you have any questions about our privacy practices or need to exercise your data rights, 
+                please don't hesitate to contact us:
+              </p>
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-700 p-4 rounded-lg">
+                <p className="font-semibold text-blue-600 dark:text-blue-400">
+                  Email: info@repruv.co.uk
+                </p>
+                <p className="text-secondary-dark mt-2">
+                  We aim to respond to all privacy inquiries within 24 hours.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

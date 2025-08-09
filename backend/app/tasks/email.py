@@ -62,13 +62,13 @@ def send_welcome_email(user_email: str, user_name: str) -> bool:
     Returns:
         bool: Success status
     """
-    subject = "Welcome to Revu! Let's supercharge your reviews 🚀"
+    subject = "Welcome to Repruv! Let's supercharge your reviews 🚀"
     
     html_content = f"""
     <html>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h1 style="color: #6366F1;">Welcome to Revu, {user_name}!</h1>
+                <h1 style="color: #6366F1;">Welcome to Repruv, {user_name}!</h1>
                 
                 <p>You're about to save hours every week while building a stronger online reputation.</p>
                 
@@ -93,7 +93,7 @@ def send_welcome_email(user_email: str, user_name: str) -> bool:
                 
                 <p style="color: #666; font-size: 14px;">
                     Best regards,<br>
-                    The Revu Team
+                    The Repruv Team
                 </p>
             </div>
         </body>

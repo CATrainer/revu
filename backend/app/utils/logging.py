@@ -37,7 +37,7 @@ def setup_logging() -> None:
         log_path.mkdir(exist_ok=True)
 
         logger.add(
-            log_path / "revu_{time:YYYY-MM-DD}.log",
+            log_path / "Repruv_{time:YYYY-MM-DD}.log",
             rotation="1 day",
             retention="30 days",
             compression="gz",

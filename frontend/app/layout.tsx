@@ -6,7 +6,7 @@ import { ThemeProvider } from '@/lib/theme';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Revu - AI-Powered Review Management',
+  title: 'Repruv - AI-Powered Review Management',
   description: 'Manage reviews, monitor competitors, and grow your reputation with AI-powered insights',
 };
 

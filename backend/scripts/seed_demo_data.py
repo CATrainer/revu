@@ -45,7 +45,7 @@ async def seed_demo_data():
             
             # Create demo user
             user = User(
-                email="demo@revu.ai",
+                email="demo@Repruve.ai",
                 full_name="Demo User",
                 hashed_password=get_password_hash("demo123"),
                 is_active=True
@@ -166,7 +166,7 @@ async def seed_demo_data():
             # Print access credentials
             print("\n" + "="*50)
             print("Demo Account Created:")
-            print(f"Email: demo@revu.ai")
+            print(f"Email: demo@Repruve.ai")
             print(f"Password: demo123")
             print(f"Organization: {org.name}")
             print(f"Locations: {len(locations)}")

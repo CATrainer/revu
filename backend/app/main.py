@@ -146,7 +146,7 @@ async def root():
     return {
         "name": settings.APP_NAME,
         "version": settings.APP_VERSION,
-        "message": "Welcome to Revu API",
+        "message": "Welcome to Repruv API",
         "docs": f"{settings.API_V1_PREFIX}/docs" if not settings.is_production else "Disabled in production",
         "health": "/health",
     }
@@ -160,8 +160,8 @@ if not origins or origins == [""]:
     origins = [
         "http://localhost:3000",
         "http://localhost:3001",
-        "https://revu-one.vercel.app",
-        "https://revu.vercel.app",
+        "https://Repruv-one.vercel.app",
+        "https://Repruv.vercel.app",
     ]
 
 logger.info(f"CORS configured for origins: {origins}")
@@ -184,7 +184,7 @@ async def manual_cors_middleware(request: Request, call_next):
     
     # Add CORS headers to all responses
     origin = request.headers.get("origin")
-    if origin in ["http://localhost:3000", "https://revu-one.vercel.app"]:
+    if origin in ["http://localhost:3000", "https://Repruv-one.vercel.app"]:
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
@@ -198,7 +198,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 if settings.is_production:
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=["*.revu.ai", "revu.ai", "*.railway.app", "*.vercel.app"],
+        allowed_hosts=["*.Repruv.ai", "Repruv.ai", "*.railway.app", "*.vercel.app"],
     )
 
 # Add custom exception handlers

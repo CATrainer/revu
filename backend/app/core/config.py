@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     )
 
     # Application
-    APP_NAME: str = "Revu"
+    APP_NAME: str = "Repruv"
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
@@ -88,13 +88,13 @@ class Settings(BaseSettings):
     # Email
     RESEND_API_KEY: str
     EMAIL_FROM_ADDRESS: EmailStr
-    EMAIL_FROM_NAME: str = "Revu"
+    EMAIL_FROM_NAME: str = "Repruv"
 
     # File Storage
     S3_ENDPOINT_URL: Optional[str] = None
     S3_ACCESS_KEY_ID: Optional[str] = None
     S3_SECRET_ACCESS_KEY: Optional[str] = None
-    S3_BUCKET_NAME: str = "revu-files"
+    S3_BUCKET_NAME: str = "Repruv-files"
     S3_REGION: str = "auto"
 
     # External APIs

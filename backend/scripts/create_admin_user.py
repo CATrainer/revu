@@ -21,7 +21,7 @@ async def create_admin_user():
     """Create the shared admin account for developers."""
     
     # Admin credentials
-    admin_email = "admin@revu.dev"
+    admin_email = "admin@Repruve.dev"
     admin_password = "DevAdmin2025!"
     admin_name = "Developer Admin"
     
