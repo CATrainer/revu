@@ -10,6 +10,9 @@
 .env
 .env.*
 !.env.example
+client_secret_841821611052-0196ofudrrll8b17sv0vfdvkhm1ag9jc.apps.googleusercontent.com.json
+google_api_keys.txt
+
 
 # Dependencies
 node_modules/

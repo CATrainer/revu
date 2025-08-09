@@ -79,51 +79,32 @@
 }
 
 .dark {
-  /* Modern dark mode inspired by Linear, GitHub, Vercel */
-  --background: hsl(222, 84%, 5%);        /* Deep, rich dark background */
-  --foreground: hsl(210, 40%, 98%);       /* Pure white text */
-  
-  /* Cards and surfaces */
-  --card: hsl(222, 84%, 7%);              /* Slightly lighter than background */
+  --background: hsl(222, 84%, 5%);
+  --foreground: hsl(210, 40%, 98%);
+  --card: hsl(222, 84%, 7%);
   --card-foreground: hsl(210, 40%, 98%);
   --popover: hsl(222, 84%, 8%);
   --popover-foreground: hsl(210, 40%, 98%);
-  
-  /* Brand colors - modern purple/violet theme */
-  --primary: hsl(263, 70%, 68%);          /* Bright purple for CTAs */
+  --primary: hsl(263, 70%, 68%);
   --primary-foreground: hsl(222, 84%, 5%);
-  
-  /* Secondary surfaces */
-  --secondary: hsl(222, 47%, 11%);        /* Subtle background variant */
+  --secondary: hsl(222, 47%, 11%);
   --secondary-foreground: hsl(210, 40%, 95%);
-  
-  /* Muted elements */
-  --muted: hsl(222, 47%, 11%);            
-  --muted-foreground: hsl(215, 20%, 65%); /* Muted text */
-  
-  /* Accent colors */
-  --accent: hsl(222, 47%, 14%);           /* Hover states */
+  --muted: hsl(222, 47%, 11%);
+  --muted-foreground: hsl(215, 20%, 65%);
+  --accent: hsl(222, 47%, 14%);
   --accent-foreground: hsl(210, 40%, 98%);
-  
-  /* Status colors */
-  --destructive: hsl(0, 84%, 60%);        /* Modern red */
-  --success: hsl(142, 76%, 36%);          /* Modern green */
-  --warning: hsl(38, 92%, 50%);           /* Modern amber */
-  --info: hsl(200, 98%, 39%);             /* Modern blue */
-  
-  /* Borders and inputs */
-  --border: hsl(222, 47%, 16%);           /* Subtle borders */
+  --destructive: hsl(0, 84%, 60%);
+  --success: hsl(142, 76%, 36%);
+  --warning: hsl(38, 92%, 50%);
+  --info: hsl(200, 98%, 39%);
+  --border: hsl(222, 47%, 16%);
   --input: hsl(222, 47%, 16%);
-  --ring: hsl(263, 70%, 68%);             /* Focus rings match primary */
-  
-  /* Chart colors - cohesive with dark theme */
-  --chart-1: hsl(263, 70%, 68%);          /* Primary purple */
-  --chart-2: hsl(200, 98%, 39%);          /* Blue */
-  --chart-3: hsl(142, 76%, 36%);          /* Green */
-  --chart-4: hsl(38, 92%, 50%);           /* Amber */
-  --chart-5: hsl(0, 84%, 60%);            /* Red */
-  
-  /* Sidebar (dashboard) */
+  --ring: hsl(263, 70%, 68%);
+  --chart-1: hsl(263, 70%, 68%);
+  --chart-2: hsl(200, 98%, 39%);
+  --chart-3: hsl(142, 76%, 36%);
+  --chart-4: hsl(38, 92%, 50%);
+  --chart-5: hsl(0, 84%, 60%);
   --sidebar: hsl(222, 84%, 6%);
   --sidebar-foreground: hsl(210, 40%, 98%);
   --sidebar-primary: hsl(263, 70%, 68%);
@@ -135,196 +116,108 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground; }
 }
 
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
+@keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-10px) } }
+@keyframes float-delayed { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-15px) } }
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-float-delayed { animation: float-delayed 3s ease-in-out 0.5s infinite; }
 
-@keyframes float-delayed {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-15px);
-  }
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-float-delayed {
-  animation: float-delayed 3s ease-in-out 0.5s infinite;
-}
-
-/* Custom semantic classes for consistent dark mode */
+/* Semantic classes */
 @layer components {
-  .section-background {
-    @apply bg-white dark:bg-[hsl(222,84%,5%)];
-  }
-  
-  .section-background-alt {
-    @apply bg-gray-50 dark:bg-[hsl(222,84%,4%)];
-  }
-  
-  .card-background {
-    @apply bg-white dark:bg-[hsl(222,84%,8%)] border border-gray-200 dark:border-[hsl(222,47%,16%)];
-  }
-  
-  .card-background-light {
-    @apply bg-gray-50 dark:bg-[hsl(222,84%,12%)] border border-gray-100 dark:border-[hsl(222,47%,18%)];
-  }
-  
-  .text-primary-dark {
-    @apply text-gray-900 dark:text-[hsl(210,40%,98%)];
-  }
-  
-  .text-secondary-dark {
-    @apply text-gray-600 dark:text-[hsl(215,20%,65%)];
-  }
-  
-  .text-muted-dark {
-    @apply text-gray-500 dark:text-[hsl(215,20%,55%)];
-  }
-  
-  .text-body-dark {
-    @apply text-gray-700 dark:text-[hsl(215,20%,75%)];
-  }
-  
-  .icon-background {
-    @apply bg-gray-100 dark:bg-[hsl(263,70%,68%)]/10;
-  }
-  
-  .icon-color {
-    @apply text-gray-600 dark:text-[hsl(263,70%,68%)];
-  }
-  
-  .hover-background {
-    @apply hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)];
-  }
-  
-  .button-primary {
-    @apply bg-[hsl(263,70%,68%)] hover:bg-[hsl(263,70%,65%)] text-white;
-  }
-  
-  .button-secondary {
-    @apply bg-white dark:bg-[hsl(222,84%,8%)] border border-gray-300 dark:border-[hsl(222,47%,16%)] text-gray-700 dark:text-[hsl(210,40%,98%)] hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)];
-  }
+  .section-background { @apply bg-white; }
+  .dark .section-background { @apply bg-[hsl(222,84%,5%)]; }
+  .section-background-alt { @apply bg-gray-50; }
+  .dark .section-background-alt { @apply bg-[hsl(222,84%,4%)]; }
 
-  /* Navigation specific */
-  .nav-background {
-    @apply bg-white/95 dark:bg-[hsl(222,84%,5%)]/95 backdrop-blur-md border-b border-gray-200 dark:border-[hsl(222,47%,16%)];
-  }
-  
-  .nav-link {
-    @apply text-gray-700 dark:text-[hsl(215,20%,65%)] hover:text-gray-900 dark:hover:text-[hsl(210,40%,98%)];
-  }
-  
-  .nav-mobile-background {
-    @apply bg-white dark:bg-[hsl(222,84%,6%)] border-t border-gray-200 dark:border-[hsl(222,47%,16%)];
-  }
-  
-  .nav-mobile-link {
-    @apply block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700 dark:text-[hsl(215,20%,65%)] hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)] hover:border-gray-300 hover:text-gray-800 dark:hover:text-[hsl(210,40%,98%)];
-  }
-  
-  /* Brand colors */
-  .brand-text {
-    @apply text-[hsl(263,70%,68%)];
-  }
-  
-  .brand-background {
-    @apply bg-[hsl(263,70%,68%)]/10;
-  }
-  
-  /* Status backgrounds */
-  .status-background {
-    @apply bg-gray-100 dark:bg-[hsl(222,84%,12%)];
-  }
-  
-  /* Dashboard specific */
-  .dashboard-background {
-    @apply bg-gray-50 dark:bg-[hsl(222,84%,5%)];
-  }
-  
-  .dashboard-card {
-    @apply bg-white dark:bg-[hsl(222,84%,7%)] border border-gray-200 dark:border-[hsl(222,47%,16%)];
-  }
-  
-  /* Status & indicator colors */
-  .status-success {
-    @apply text-green-600 dark:text-green-400;
-  }
-  
-  .status-success-bg {
-    @apply bg-green-500 dark:bg-green-400;
-  }
-  
-  .status-danger {
-    @apply text-red-600 dark:text-red-400;
-  }
-  
-  .status-danger-bg {
-    @apply bg-red-500 dark:bg-red-400;
-  }
-  
-  .status-info {
-    @apply text-blue-600 dark:text-blue-400;
-  }
-  
-  .status-info-bg {
-    @apply bg-blue-500 dark:bg-blue-400;
-  }
-  
-  .status-warning {
-    @apply text-yellow-600 dark:text-yellow-400;
-  }
-  
-  .status-warning-bg {
-    @apply bg-yellow-500 dark:bg-yellow-400;
-  }
-  
-  /* Loading spinners */
-  .spinner-border {
-    @apply border-brand-text;
-  }
-  
-  /* Form elements */
-  .form-input {
-    @apply border-gray-300 dark:border-[hsl(222,47%,16%)] card-background text-primary-dark;
-  }
-  
-  .form-input-error {
-    @apply border-red-500 focus:ring-red-500;
-  }
-  
-  /* Gradients */
-  .gradient-brand {
-    @apply bg-gradient-to-r from-[hsl(263,70%,68%)] to-[hsl(280,65%,60%)] dark:from-[hsl(263,70%,55%)] dark:to-[hsl(280,65%,50%)];
-  }
-  
-  .gradient-light {
-    @apply bg-gradient-to-b from-gray-50 to-white dark:from-[hsl(222,84%,4%)] dark:to-[hsl(222,84%,5%)];
-  }
-  
-  /* Border styles */
-  .border-brand {
-    @apply border-[hsl(263,70%,68%)] dark:border-[hsl(263,70%,55%)];
-  }
-  
-  .border-muted {
-    @apply border-gray-200 dark:border-[hsl(222,47%,16%)];
-  }
+  .card-background { @apply bg-white border border-gray-200; }
+  .dark .card-background { @apply bg-[hsl(222,84%,8%)] border-[hsl(222,47%,16%)]; }
+  .card-background-light { @apply bg-gray-50 border border-gray-100; }
+  .dark .card-background-light { @apply bg-[hsl(222,84%,12%)] border-[hsl(222,47%,18%)]; }
+
+  .text-primary-dark { @apply text-gray-900; }
+  .dark .text-primary-dark { @apply text-[hsl(210,40%,98%)]; }
+  .text-secondary-dark { @apply text-gray-600; }
+  .dark .text-secondary-dark { @apply text-[hsl(215,20%,65%)]; }
+  .text-muted-dark { @apply text-gray-500; }
+  .dark .text-muted-dark { @apply text-[hsl(215,20%,55%)]; }
+  .text-body-dark { @apply text-gray-700; }
+  .dark .text-body-dark { @apply text-[hsl(215,20%,75%)]; }
+
+  .icon-background { @apply bg-gray-100; }
+  .dark .icon-background { @apply bg-[hsl(263,70%,68%)]/10; }
+  .icon-color { @apply text-gray-600; }
+  .dark .icon-color { @apply text-[hsl(263,70%,68%)]; }
+
+  .hover-background {}
+  .hover-background:hover { @apply bg-gray-50; }
+  .dark .hover-background:hover { @apply bg-[hsl(222,84%,12%)]; }
+
+  .button-primary { @apply bg-[hsl(263,70%,68%)] text-white; }
+  .button-primary:hover { @apply bg-[hsl(263,70%,65%)]; }
+
+  .button-secondary { @apply bg-white border border-gray-300 text-gray-700; }
+  .dark .button-secondary { @apply bg-[hsl(222,84%,8%)] border-[hsl(222,47%,16%)] text-[hsl(210,40%,98%)]; }
+  .button-secondary:hover { @apply bg-gray-50; }
+  .dark .button-secondary:hover { @apply bg-[hsl(222,84%,12%)]; }
+
+  .nav-background { @apply bg-white/95 backdrop-blur-md border-b border-gray-200; }
+  .dark .nav-background { @apply bg-[hsl(222,84%,5%)]/95 border-[hsl(222,47%,16%)]; }
+  .nav-link { @apply text-gray-700; }
+  .nav-link:hover { @apply text-gray-900; }
+  .dark .nav-link { @apply text-[hsl(215,20%,65%)]; }
+  .dark .nav-link:hover { @apply text-[hsl(210,40%,98%)]; }
+  .nav-mobile-background { @apply bg-white border-t border-gray-200; }
+  .dark .nav-mobile-background { @apply bg-[hsl(222,84%,6%)] border-[hsl(222,47%,16%)]; }
+  .nav-mobile-link { @apply block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-700; }
+  .nav-mobile-link:hover { @apply bg-gray-50 border-gray-300 text-gray-800; }
+  .dark .nav-mobile-link { @apply text-[hsl(215,20%,65%)]; }
+  .dark .nav-mobile-link:hover { @apply bg-[hsl(222,84%,12%)] text-[hsl(210,40%,98%)]; }
+
+  .brand-text { @apply text-[hsl(263,70%,68%)]; }
+  .brand-background { @apply bg-[hsl(263,70%,68%)]/10; }
+
+  .status-background { @apply bg-gray-100; }
+  .dark .status-background { @apply bg-[hsl(222,84%,12%)]; }
+
+  .dashboard-background { @apply bg-gray-50; }
+  .dark .dashboard-background { @apply bg-[hsl(222,84%,5%)]; }
+  .dashboard-card { @apply bg-white border border-gray-200; }
+  .dark .dashboard-card { @apply bg-[hsl(222,84%,7%)] border-[hsl(222,47%,16%)]; }
+
+  .status-success { @apply text-green-600; }
+  .dark .status-success { @apply text-green-400; }
+  .status-success-bg { @apply bg-green-500; }
+  .dark .status-success-bg { @apply bg-green-400; }
+  .status-danger { @apply text-red-600; }
+  .dark .status-danger { @apply text-red-400; }
+  .status-danger-bg { @apply bg-red-500; }
+  .dark .status-danger-bg { @apply bg-red-400; }
+  .status-info { @apply text-blue-600; }
+  .dark .status-info { @apply text-blue-400; }
+  .status-info-bg { @apply bg-blue-500; }
+  .dark .status-info-bg { @apply bg-blue-400; }
+  .status-warning { @apply text-yellow-600; }
+  .dark .status-warning { @apply text-yellow-400; }
+  .status-warning-bg { @apply bg-yellow-500; }
+  .dark .status-warning-bg { @apply bg-yellow-400; }
+
+  .spinner-border { @apply border-[hsl(263,70%,68%)]; }
+
+  .form-input { @apply bg-white border border-gray-300 text-gray-900; }
+  .dark .form-input { @apply bg-[hsl(222,84%,8%)] border-[hsl(222,47%,16%)] text-[hsl(210,40%,98%)]; }
+  .form-input-error { @apply border-red-500; }
+  .form-input-error:focus { @apply ring-red-500; }
+
+  .gradient-brand { @apply bg-gradient-to-r from-[hsl(263,70%,68%)] to-[hsl(280,65%,60%)]; }
+  .dark .gradient-brand { @apply from-[hsl(263,70%,55%)] to-[hsl(280,65%,50%)]; }
+  .gradient-light { @apply bg-gradient-to-b from-gray-50 to-white; }
+  .dark .gradient-light { @apply from-[hsl(222,84%,4%)] to-[hsl(222,84%,5%)]; }
+
+  .border-brand { @apply border-[hsl(263,70%,68%)]; }
+  .dark .border-brand { @apply border-[hsl(263,70%,55%)]; }
+  .border-muted { @apply border-gray-200; }
+  .dark .border-muted { @apply border-[hsl(222,47%,16%)]; }
 }
