@@ -160,9 +160,22 @@ if not origins or origins == [""]:
     origins = [
         "http://localhost:3000",
         "http://localhost:3001",
-        "https://Repruv-one.vercel.app",
-        "https://Repruv.vercel.app",
+        "https://revu-one.vercel.app",
+        "https://revu.vercel.app",
+        "https://www.repruv.co.uk",
     ]
+
+# Ensure new production domain is present (idempotent)
+if "https://www.repruv.co.uk" not in origins:
+    origins.append("https://www.repruv.co.uk")
+if "https://repruv.co.uk" not in origins:
+    origins.append("https://repruv.co.uk")
+
+# Normalize (strip trailing slashes) and coerce to plain strings
+origins = [str(o).rstrip('/') for o in origins if o]
+# De-duplicate while preserving order
+_seen = set()
+origins = [o for o in origins if not (o in _seen or _seen.add(o))]
 
 logger.info(f"CORS configured for origins: {origins}")
 
@@ -179,17 +192,15 @@ async def manual_cors_middleware(request: Request, call_next):
         }
         return JSONResponse(content={"message": "OK"}, headers=headers)
     
-    # Process the request
     response = await call_next(request)
-    
-    # Add CORS headers to all responses
-    origin = request.headers.get("origin")
-    if origin in ["http://localhost:3000", "https://Repruv-one.vercel.app"]:
+
+    origin = request.headers.get("origin", "").rstrip('/')
+    if origin in origins:
+
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
-    
     return response
 
 # Add other middlewares

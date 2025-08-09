@@ -2,6 +2,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   BarChart3,
@@ -34,28 +35,60 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'bg-white dark:bg-[hsl(222,84%,6%)] border-r border-gray-200 dark:border-[hsl(222,47%,16%)] pt-5 pb-4 overflow-y-auto transition-all duration-300',
+        'dashboard-card border-r pt-5 pb-4 overflow-y-auto transition-all duration-300',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
       <div className="flex items-center justify-between px-4 mb-8">
-        {!collapsed && (
-          <Link href="/" className="flex items-center">
-            <span className="text-2xl font-bold text-indigo-600 dark:text-[hsl(263,70%,68%)]">Repruv</span>
-          </Link>
-        )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-[hsl(222,47%,11%)]"
+
+        <Link
+          href="/"
+          aria-label="Repruv home"
+          className="flex items-center justify-center w-full"
         >
           {collapsed ? (
-            <ChevronRight className="h-5 w-5 text-gray-500 dark:text-[hsl(215,20%,65%)]" />
+            <Image
+              src="/logo/mark.png"
+              alt="Repruv"
+              width={32}
+              height={32}
+              className="h-8 w-8"
+              priority
+            />
           ) : (
-            <ChevronLeft className="h-5 w-5 text-gray-500 dark:text-[hsl(215,20%,65%)]" />
+            <>
+              <Image
+                src="/logo/text_light.png"
+                alt="Repruv"
+                width={140}
+                height={36}
+                className="h-9 w-auto dark:hidden"
+                priority
+              />
+              <Image
+                src="/logo/text_dark.png"
+                alt="Repruv"
+                width={140}
+                height={36}
+                className="h-9 w-auto hidden dark:inline"
+                priority
+              />
+            </>
+          )}
+        </Link>
+
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="p-1 rounded-md hover-background ml-2 flex-shrink-0"
+        >
+          {collapsed ? (
+            <ChevronRight className="h-5 w-5 text-secondary-dark" />
+          ) : (
+            <ChevronLeft className="h-5 w-5 text-secondary-dark" />
           )}
         </button>
       </div>
-      
+
       <nav className="mt-5 px-2">
         <div className="space-y-1">
           {navigation.map((item) => {
@@ -67,8 +100,8 @@ export function Sidebar() {
                 className={cn(
                   'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors',
                   isActive
-                    ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'brand-background brand-text'
+                    : 'nav-link hover-background'
                 )}
               >
                 <item.icon
@@ -76,8 +109,8 @@ export function Sidebar() {
                     'flex-shrink-0 h-5 w-5 transition-colors',
                     collapsed ? 'mr-0' : 'mr-3',
                     isActive
-                      ? 'text-indigo-700'
-                      : 'text-gray-400 group-hover:text-gray-500'
+                      ? 'brand-text'
+                      : 'text-secondary-dark group-hover:text-primary-dark'
                   )}
                 />
                 {!collapsed && item.name}

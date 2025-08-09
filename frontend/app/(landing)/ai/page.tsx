@@ -8,7 +8,7 @@ export default function AIPage() {
     <div className="py-24 bg-white dark:bg-[hsl(222,84%,5%)]">
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-[hsl(263,70%,68%)]/10 text-indigo-700 dark:text-[hsl(263,70%,68%)] px-4 py-2 rounded-full text-sm font-medium mb-6">
+        <div className="inline-flex items-center gap-2 brand-background text-[var(--brand-primary)] px-4 py-2 rounded-full text-sm font-medium mb-6">
           <FaMagic className="h-4 w-4" />
           Powered by Advanced AI
         </div>
@@ -19,7 +19,7 @@ export default function AIPage() {
           Generate personalized responses that maintain your unique voice while saving 80% of response time
         </p>
         <div className="flex justify-center gap-4">
-          <Button size="lg" className="bg-[hsl(263,70%,68%)] hover:bg-[hsl(263,70%,60%)] text-white border-0" asChild>
+          <Button size="lg" className="button-primary" asChild>
             <Link href="/join-waitlist">Try AI Response Generator</Link>
           </Button>
           <Button size="lg" variant="outline" className="border-gray-300 dark:border-[hsl(222,47%,16%)] text-gray-700 dark:text-[hsl(215,20%,65%)] hover:bg-gray-50 dark:hover:bg-[hsl(222,47%,11%)]" asChild>
@@ -37,7 +37,7 @@ export default function AIPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-center mb-4">
-                <FaBrain className="h-12 w-12 text-indigo-600" />
+                <FaBrain className="h-12 w-12 brand-text" />
               </div>
               <CardTitle>1. Learn Your Voice</CardTitle>
             </CardHeader>
@@ -51,7 +51,7 @@ export default function AIPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-center mb-4">
-                <FaMagic className="h-12 w-12 text-purple-600" />
+                <FaMagic className="h-12 w-12 brand-text" />
               </div>
               <CardTitle>2. Generate Responses</CardTitle>
             </CardHeader>
@@ -65,7 +65,7 @@ export default function AIPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-center mb-4">
-                <FaChartLine className="h-12 w-12 text-green-600" />
+                <FaChartLine className="h-12 w-12 brand-text" />
               </div>
               <CardTitle>3. Improve Over Time</CardTitle>
             </CardHeader>
@@ -89,25 +89,25 @@ export default function AIPage() {
               <h3 className="text-2xl font-semibold mb-6 text-primary-dark">Smart Response Generation</h3>
               <ul className="space-y-4">
                 <li className="flex items-start">
-                  <span className="text-[hsl(263,70%,68%)] mr-3">✓</span>
+                  <span className="text-[var(--brand-primary)] mr-3">✓</span>
                   <div className="text-body-dark">
                     <strong>Context-Aware</strong> - Understands review sentiment and responds appropriately
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-[hsl(263,70%,68%)] mr-3">✓</span>
+                  <span className="text-[var(--brand-primary)] mr-3">✓</span>
                   <div className="text-body-dark">
                     <strong>Brand Consistent</strong> - Maintains your tone whether professional, friendly, or casual
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-[hsl(263,70%,68%)] mr-3">✓</span>
+                  <span className="text-[var(--brand-primary)] mr-3">✓</span>
                   <div className="text-body-dark">
                     <strong>Personalized</strong> - References specific details mentioned in reviews
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-[hsl(263,70%,68%)] mr-3">✓</span>
+                  <span className="text-[var(--brand-primary)] mr-3">✓</span>
                   <div>
                     <strong>Multi-language</strong> - Coming soon: respond in the reviewer&apos;s language
                   </div>
@@ -118,25 +118,25 @@ export default function AIPage() {
               <h3 className="text-2xl font-semibold mb-6">Natural Language Insights</h3>
               <ul className="space-y-4">
                 <li className="flex items-start">
-                  <span className="text-indigo-600 mr-3">✓</span>
+                  <span className="text-[var(--brand-primary)] mr-3">✓</span>
                   <div>
                     <strong>Ask Anything</strong> - Query your reviews in plain English
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-indigo-600 mr-3">✓</span>
+                  <span className="text-[var(--brand-primary)] mr-3">✓</span>
                   <div>
                     <strong>Trend Detection</strong> - Automatically identifies emerging issues
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-indigo-600 mr-3">✓</span>
+                  <span className="text-[var(--brand-primary)] mr-3">✓</span>
                   <div>
                     <strong>Sentiment Analysis</strong> - Understand customer emotions at scale
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-indigo-600 mr-3">✓</span>
+                  <span className="text-[var(--brand-primary)] mr-3">✓</span>
                   <div>
                     <strong>Actionable Recommendations</strong> - Get specific improvement suggestions
                   </div>
@@ -152,19 +152,19 @@ export default function AIPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-4xl font-bold text-indigo-600 mb-2">92%</div>
+              <div className="text-4xl font-bold status-info mb-2">92%</div>
               <p className="text-gray-600">Response Acceptance Rate</p>
             </div>
             <div>
-              <div className="text-4xl font-bold text-indigo-600 mb-2">10min</div>
+              <div className="text-4xl font-bold status-info mb-2">10min</div>
               <p className="text-gray-600">Average Response Time</p>
             </div>
             <div>
-              <div className="text-4xl font-bold text-indigo-600 mb-2">4.8/5</div>
+              <div className="text-4xl font-bold status-info mb-2">4.8/5</div>
               <p className="text-gray-600">Customer Satisfaction</p>
             </div>
             <div>
-              <div className="text-4xl font-bold text-indigo-600 mb-2">80%</div>
+              <div className="text-4xl font-bold status-info mb-2">80%</div>
               <p className="text-gray-600">Time Saved</p>
             </div>
           </div>
@@ -172,12 +172,12 @@ export default function AIPage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-indigo-600 py-16">
+      <section className="gradient-brand py-16">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-white mb-4">
             Experience the Future of Review Management
           </h2>
-          <p className="text-xl text-indigo-100 mb-8">
+          <p className="text-xl text-white/80 mb-8">
             Let AI handle the heavy lifting while you focus on your business
           </p>
           <Button size="lg" variant="secondary" asChild>

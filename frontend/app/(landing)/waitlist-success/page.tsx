@@ -87,7 +87,7 @@ function WaitlistSuccessContent() {
             </div>
             <CardTitle className="text-2xl font-bold">You&apos;re on the List!</CardTitle>
             <CardDescription>
-              Thank you for joining our waiting list. We&apos;ll notify you as soon as Revu is ready for early access.
+              Thank you for joining our waiting list. We&apos;ll notify you as soon as Repruv is ready for early access.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

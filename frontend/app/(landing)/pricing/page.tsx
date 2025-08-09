@@ -6,7 +6,7 @@ export default function PricingPage() {
     <div className="py-24 bg-white dark:bg-[hsl(222,84%,5%)]">
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16">
-        <Badge className="mb-4 bg-[hsl(263,70%,68%)] hover:bg-[hsl(263,70%,60%)] text-white border-0">Launch Special</Badge>
+        <Badge className="mb-4 bg-[var(--brand-primary-solid)] hover:bg-[var(--brand-primary-solid-hover)] text-[var(--brand-primary-solid-foreground)] border-0">Launch Special</Badge>
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
           Simple, Transparent Pricing
         </h1>
@@ -17,7 +17,7 @@ export default function PricingPage() {
 
       {/* Special Offer Banner */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-        <div className="bg-gradient-to-r from-[hsl(263,70%,68%)] to-[hsl(280,65%,60%)] dark:from-[hsl(263,70%,55%)] dark:to-[hsl(280,65%,50%)] rounded-lg p-6 text-white text-center">
+        <div className="gradient-brand rounded-lg p-6 text-white text-center">
           <h2 className="text-2xl font-bold mb-2">
             🎉 Launch Special: Professional Tier for £100
           </h2>

@@ -121,7 +121,7 @@ const DemoScheduledPage = () => {
               Demo Request Submitted Successfully!
             </h1>
             <p className="text-xl text-secondary-dark max-w-2xl mx-auto">
-              Thank you for your interest in Revu. We&apos;re excited to show you how our platform can transform your review management strategy.
+              Thank you for your interest in Repruv. We&apos;re excited to show you how our platform can transform your review management strategy.
             </p>
           </div>
 
@@ -158,7 +158,7 @@ const DemoScheduledPage = () => {
                   </div>
                   <CardTitle className="text-2xl text-primary-dark">Meeting Scheduled! 🎉</CardTitle>
                   <CardDescription className="text-secondary-dark">
-                    Perfect! While you wait for your demo, why not create your Revu account to get early access to our platform?
+                    Perfect! While you wait for your demo, why not create your Repruv account to get early access to our platform?
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -335,20 +335,20 @@ const DemoScheduledPage = () => {
                   Get Early Access While You Wait
                 </h3>
                 <p className="mb-4 text-white/90">
-                  Don&apos;t wait for the demo! Create your Revu account now and start exploring our platform. 
+                  Don&apos;t wait for the demo! Create your Repruv account now and start exploring our platform. 
                   You&apos;ll be better prepared for the demonstration and can begin optimizing your review strategy immediately.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button 
                     variant="secondary" 
-                    className="bg-white text-[hsl(263,70%,68%)] hover:bg-gray-100"
+                    className="bg-white text-[var(--brand-primary-solid)] hover:bg-[var(--muted)]"
                     onClick={() => setShowSignupPrompt(true)}
                   >
                     Create Account Now
                   </Button>
                   <Button 
                     variant="secondary" 
-                    className="bg-white/10 text-white border-white/30 hover:bg-white hover:text-[hsl(263,70%,68%)]"
+                    className="bg-white/10 text-white border-white/30 hover:bg-white hover:text-[var(--brand-primary-solid)]"
                     onClick={() => router.push('/login')}
                   >
                     Already Have an Account?
@@ -367,7 +367,7 @@ const DemoScheduledPage = () => {
                   No worries! You can always schedule your demo later or reach out to us directly.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button variant="outline" className="button-secondary" onClick={() => window.location.href = 'mailto:demo@revu.com'}>
+                  <Button variant="outline" className="button-secondary" onClick={() => window.location.href = 'mailto:demo@repruv.co.uk'}>
                     Email Us Instead
                   </Button>
                   <Button variant="outline" className="button-secondary" onClick={() => window.location.href = '/'}>
@@ -385,8 +385,8 @@ const DemoScheduledPage = () => {
               You&apos;ll receive a confirmation email with meeting details once you schedule your demo.
               <br />
               Have questions? Contact us at{" "}
-              <a href="mailto:support@revu.com" className="brand-text hover:underline">
-                support@revu.com
+              <a href="mailto:support@repruv.co.uk" className="brand-text hover:underline">
+                support@repruv.co.uk
               </a>
             </p>
           </div>

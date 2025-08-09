@@ -20,7 +20,7 @@ from app.core.security import (
     create_refresh_token,
     get_current_user,
 )
-from app.core.supabase import SupabaseAuth
+from app.core.supabase import get_supabase_auth
 from app.schemas.auth import (
     PasswordReset,
     PasswordResetRequest,
@@ -288,6 +288,9 @@ async def reset_password(
     Raises:
         HTTPException: If token is invalid or expired
     """
+    logger.info(f"Password reset attempt with token length: {len(reset_data.token)}")
+    logger.info(f"Password length: {len(reset_data.new_password)}")
+    
     auth_service = AuthService(db)
 
     try:
@@ -298,10 +301,13 @@ async def reset_password(
         logger.info(f"Password reset successful for: {user.email}")
         return user
     except Exception as e:
-        logger.error(f"Password reset failed: {e}")
+        logger.error(f"Password reset failed with error: {str(e)}")
+        logger.error(f"Error type: {type(e).__name__}")
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset token",
+            detail=f"Password reset failed: {str(e)}",
         )
 
 

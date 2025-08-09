@@ -38,8 +38,8 @@ export function MetricsCard({ title, value, change, icon: Icon, trend }: Metrics
               </div>
             )}
           </div>
-          <div className="h-12 w-12 bg-[hsl(263,70%,68%)]/10 dark:bg-[hsl(263,70%,68%)]/20 rounded-lg flex items-center justify-center">
-            <Icon className="h-6 w-6 text-[hsl(263,70%,68%)]" />
+          <div className="h-12 w-12 brand-background rounded-lg flex items-center justify-center">
+            <Icon className="h-6 w-6 brand-text" />
           </div>
         </div>
       </CardContent>

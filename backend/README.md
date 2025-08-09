@@ -1,6 +1,7 @@
-# Repruve Backend API
+# Repruv Backend API
 
-FastAPI-based backend for the Repruve review management platform.
+FastAPI-based backend for the Repruv review management platform.
+
 
 ## 🚀 Quick Start
 

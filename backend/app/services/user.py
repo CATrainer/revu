@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_password_hash, verify_password
-from app.core.supabase import supabase_auth  # Changed from supabase_minimal
+from app.core.supabase import get_supabase_auth
 from app.models.user import User
 from app.schemas.user import UserCreate
 
@@ -20,6 +20,7 @@ class UserService:
 
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.supabase_auth = get_supabase_auth()
 
     async def get(self, user_id: UUID) -> Optional[User]:
         """
@@ -78,7 +79,7 @@ class UserService:
         """
         # Create user in Supabase
         try:
-            supabase_user = await supabase_auth.create_user(
+            supabase_user = await self.supabase_auth.create_user(
                 email=user_create.email,
                 password=user_create.password,
                 metadata={"full_name": user_create.full_name}
@@ -125,7 +126,7 @@ class UserService:
 
         # Try Supabase authentication first
         try:
-            session = await supabase_auth.sign_in_with_password(email, password)
+            session = await self.supabase_auth.sign_in_with_password(email, password)
             if session and session.get("user"):
                 # Update last login
                 await self.update_last_login(user.id)

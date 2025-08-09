@@ -24,7 +24,7 @@ export default function FeaturesPage() {
           Everything You Need to Manage Reviews Like a Pro
         </h1>
         <p className="text-xl text-secondary-dark mb-8 max-w-3xl mx-auto">
-          From centralized management to AI-powered insights, discover all the features that make Revu the ultimate review management platform
+          From centralized management to AI-powered insights, discover all the features that make Repruv the ultimate review management platform
         </p>
       </section>
 
@@ -251,8 +251,8 @@ export default function FeaturesPage() {
             </div>
             <div className="order-1 md:order-2">
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-12 w-12 bg-purple-100 dark:bg-purple-500/10 rounded-lg flex items-center justify-center">
-                  <FaUsers className="h-6 w-6 text-purple-600" />
+                <div className="h-12 w-12 brand-background rounded-lg flex items-center justify-center">
+                  <FaUsers className="h-6 w-6 brand-text" />
                 </div>
                 <h2 className="text-3xl font-bold text-primary-dark">Team Collaboration</h2>
               </div>
@@ -313,7 +313,7 @@ export default function FeaturesPage() {
             </div>
             <div className="card-background p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-center mb-4">
-                <FaUsers className="h-10 w-10 text-purple-600" />
+                <FaUsers className="h-10 w-10 brand-text" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-primary-dark">Team Collaboration</h3>
               <p className="text-secondary-dark">
@@ -340,7 +340,7 @@ export default function FeaturesPage() {
             </div>
             <div className="card-background p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-center mb-4">
-                <FaShieldAlt className="h-10 w-10 text-indigo-600" />
+                <FaShieldAlt className="h-10 w-10 brand-text" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-primary-dark">Enterprise Security</h3>
               <p className="text-secondary-dark">
@@ -352,19 +352,19 @@ export default function FeaturesPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-24 bg-gradient-to-r from-[hsl(263,70%,68%)] to-[hsl(280,65%,60%)] dark:from-[hsl(263,70%,50%)] dark:to-[hsl(280,65%,45%)]">
+      <section className="py-24 gradient-brand">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-white mb-4">
             Ready to Transform Your Review Management?
           </h2>
           <p className="text-xl text-white/90 mb-8">
-            Join hundreds of businesses already using Revu to save time and grow
+            Join hundreds of businesses already using Repruv to save time and grow
           </p>
           <div className="flex justify-center gap-4">
-            <Button size="lg" className="bg-white text-[hsl(263,70%,68%)] hover:bg-gray-100 hover:text-[hsl(263,70%,60%)] border-0" asChild>
+            <Button size="lg" className="bg-white text-[var(--brand-primary-solid)] hover:bg-[var(--muted)] hover:text-[var(--brand-primary-solid-hover)] border-0" asChild>
               <Link href="/join-waitlist">Join Waiting List</Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[hsl(263,70%,68%)] bg-transparent" asChild>
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[var(--brand-primary-solid)] bg-transparent" asChild>
               <Link href="/demo">Request Demo</Link>
             </Button>
           </div>

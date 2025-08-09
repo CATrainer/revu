@@ -1,10 +1,19 @@
 'use client';
 
-import { useState, FormEvent, ChangeEvent } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/lib/auth';
+import { signupSchema, type SignupFormData } from '@/lib/validations/auth';
+import { FormInput } from '@/components/ui/form-input';
+import { LoadingButton } from '@/components/ui/loading-button';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { AxiosError } from 'axios';
+import Image from 'next/image';
 
 interface ErrorResponse {
   detail?: string;
@@ -14,42 +23,26 @@ interface ErrorResponse {
 export default function SignupPage() {
   const router = useRouter();
   const { signup } = useAuth();
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [serverError, setServerError] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
   });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
+  const password = watch('password');
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError('');
-
-    // Validate passwords match
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    // Validate password length
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long');
-      return;
-    }
-
-    setLoading(true);
+  const onSubmit = async (data: SignupFormData) => {
+    setServerError('');
 
     try {
-      await signup(formData.email, formData.password, formData.fullName);
+      await signup(data.email, data.password, data.fullName);
       
       // Get appropriate redirect path based on user role and access status
       const { getRedirectPath } = useAuth.getState();
@@ -58,134 +51,239 @@ export default function SignupPage() {
     } catch (err) {
       console.error('Signup error:', err);
       const axiosError = err as AxiosError<ErrorResponse>;
-      setError(axiosError.response?.data?.detail || axiosError.response?.data?.message || 'Failed to create account');
-    } finally {
-      setLoading(false);
+      setServerError(
+        axiosError.response?.data?.detail || 
+        axiosError.response?.data?.message || 
+        'Failed to create account. Please try again.'
+      );
     }
   };
 
+  // Password strength indicators
+  const getPasswordStrength = (password: string) => {
+    if (!password) return { score: 0, text: '', color: '' };
+    
+    let score = 0;
+    const checks = [
+      password.length >= 8,
+      /[a-z]/.test(password),
+      /[A-Z]/.test(password),
+      /\d/.test(password),
+      /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    ];
+    
+    score = checks.filter(Boolean).length;
+    
+    if (score < 3) return { score, text: 'Weak', color: 'text-red-500' };
+    if (score < 4) return { score, text: 'Fair', color: 'text-yellow-500' };
+    if (score < 5) return { score, text: 'Good', color: 'text-blue-500' };
+    return { score, text: 'Strong', color: 'text-green-500' };
+  };
+
+  const passwordStrength = getPasswordStrength(password || '');
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen section-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <Link href="/" className="flex justify-center">
-            <h1 className="text-3xl font-bold text-indigo-600">Revu</h1>
+        {/* Header */}
+        <div className="text-center">
+          <Link href="/" className="inline-block" aria-label="Repruv home">
+            <div className="flex items-center justify-center">
+              <Image src="/logo/text_light.png" alt="Repruv" width={150} height={40} className="h-10 w-auto dark:hidden" priority />
+              <Image src="/logo/text_dark.png" alt="Repruv" width={150} height={40} className="h-10 w-auto hidden dark:inline" priority />
+            </div>
           </Link>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Start your free trial
+          <h2 className="mt-6 text-3xl font-extrabold text-primary-dark">
+            Create your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-sm text-secondary-dark">
             Already have an account?{' '}
-            <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Sign in
+            <Link 
+              href="/login" 
+              className="font-medium brand-text hover:underline"
+            >
+              Sign in here
             </Link>
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                Full Name
-              </label>
-              <input
-                id="fullName"
-                name="fullName"
-                type="text"
-                autoComplete="name"
-                required
-                value={formData.fullName}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="John Doe"
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email Address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="john@example.com"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="At least 8 characters"
-              />
-            </div>
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Confirm your password"
-              />
-            </div>
-          </div>
 
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">{error}</h3>
+        {/* Signup Form */}
+        <Card className="card-background">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center text-primary-dark">
+              Get started
+            </CardTitle>
+            <CardDescription className="text-center text-secondary-dark">
+              Join thousands of businesses improving their online reputation
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              {/* Server Error */}
+              {serverError && (
+                <div className="flex items-center space-x-2 text-red-600 bg-red-50 dark:bg-red-900/20 p-3 rounded-md">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm">{serverError}</span>
                 </div>
+              )}
+
+              {/* Full Name Field */}
+              <FormInput
+                {...register('fullName')}
+                id="fullName"
+                type="text"
+                label="Full name"
+                placeholder="Enter your full name"
+                error={errors.fullName?.message}
+                autoComplete="name"
+              />
+
+              {/* Email Field */}
+              <FormInput
+                {...register('email')}
+                id="email"
+                type="email"
+                label="Email address"
+                placeholder="Enter your email"
+                error={errors.email?.message}
+                autoComplete="email"
+              />
+
+              {/* Password Field with Strength Indicator */}
+              <div className="space-y-2">
+                <div className="relative">
+                  <FormInput
+                    {...register('password')}
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    label="Password"
+                    placeholder="Create a password"
+                    error={errors.password?.message}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-9 text-secondary-dark hover:text-primary-dark"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                
+                {/* Password Strength Indicator */}
+                {password && (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            passwordStrength.score < 3 ? 'bg-red-500' :
+                            passwordStrength.score < 4 ? 'bg-yellow-500' :
+                            passwordStrength.score < 5 ? 'bg-blue-500' : 'bg-green-500'
+                          }`}
+                          style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                        />
+                      </div>
+                      <span className={`text-xs font-medium ${passwordStrength.color}`}>
+                        {passwordStrength.text}
+                      </span>
+                    </div>
+                    <ul className="text-xs text-secondary-dark space-y-1">
+                      <li className="flex items-center space-x-2">
+                        <CheckCircle className={`h-3 w-3 ${password.length >= 8 ? 'text-green-500' : 'text-gray-400'}`} />
+                        <span>At least 8 characters</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <CheckCircle className={`h-3 w-3 ${/[a-z]/.test(password) ? 'text-green-500' : 'text-gray-400'}`} />
+                        <span>One lowercase letter</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <CheckCircle className={`h-3 w-3 ${/[A-Z]/.test(password) ? 'text-green-500' : 'text-gray-400'}`} />
+                        <span>One uppercase letter</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <CheckCircle className={`h-3 w-3 ${/\d/.test(password) ? 'text-green-500' : 'text-gray-400'}`} />
+                        <span>One number</span>
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Confirm Password Field */}
+              <div className="relative">
+                <FormInput
+                  {...register('confirmPassword')}
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  label="Confirm password"
+                  placeholder="Confirm your password"
+                  error={errors.confirmPassword?.message}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-9 text-secondary-dark hover:text-primary-dark"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+
+              {/* Terms Agreement */}
+              <div className="text-xs text-secondary-dark">
+                By creating an account, you agree to our{' '}
+                <Link href="/terms" className="brand-text hover:underline">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link href="/privacy" className="brand-text hover:underline">
+                  Privacy Policy
+                </Link>
+                .
+              </div>
+
+              {/* Submit Button */}
+              <LoadingButton
+                type="submit"
+                loading={isSubmitting}
+                className="w-full"
+                variant="default"
+              >
+                {isSubmitting ? 'Creating account...' : 'Create account'}
+              </LoadingButton>
+            </form>
+
+            {/* Demo CTA */}
+            <div className="mt-6 p-4 brand-background rounded-lg">
+              <p className="text-sm text-center text-primary-dark">
+                <strong>Want to see Repruv first?</strong> No commitment required.
+              </p>
+              <div className="mt-2 text-center">
+                <Link
+                  href="/demo"
+                  className="text-sm brand-text hover:underline font-medium"
+                >
+                  Schedule a free demo →
+                </Link>
               </div>
             </div>
-          )}
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Creating account...' : 'Start free trial'}
-            </button>
-          </div>
-
-          <div className="text-xs text-center text-gray-600">
-            By signing up, you agree to our{' '}
-            <Link href="/terms" className="text-indigo-600 hover:text-indigo-500">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link href="/privacy" className="text-indigo-600 hover:text-indigo-500">
-              Privacy Policy
-            </Link>
-          </div>
-
-          <div className="text-center">
-            <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-500">
-              Back to home
-            </Link>
-          </div>
-        </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

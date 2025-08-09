@@ -35,8 +35,10 @@ export default function ContactPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Mail className="h-5 w-5 icon-color" />
-                    <a href="mailto:support@repruv.com" className="brand-text hover:underline">
-                      support@repruv.com
+
+                    <a href="mailto:support@repruv.co.uk" className="brand-text hover:underline">
+                      support@repruv.co.uk
+
                     </a>
                   </div>
                   
@@ -57,7 +59,9 @@ export default function ContactPage() {
                     <Link href="/join-waitlist">Join Waitlist</Link>
                   </Button>
                   <Button variant="outline" asChild className="w-full button-secondary">
-                    <a href="mailto:support@repruv.com">Email Support</a>
+
+                    <a href="mailto:support@repruv.co.uk">Email Support</a>
+
                   </Button>
                 </div>
               </div>

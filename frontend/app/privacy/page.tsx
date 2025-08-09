@@ -20,6 +20,7 @@ export default function PrivacyPage() {
           </Button>
         </div>
         
+
         <div className="space-y-6">
           <Card className="card-background">
             <CardHeader>
@@ -91,6 +92,7 @@ export default function PrivacyPage() {
             </CardContent>
           </Card>
         </div>
+
       </div>
     </div>
   );

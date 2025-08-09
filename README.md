@@ -1,4 +1,4 @@
-# Repruve - AI-Powered Review Management Platform
+# Repruv - AI-Powered Review Management Platform
 
 All-in-one dashboard to supercharge your business through intelligent review management, competitor tracking, and AI-powered insights.
 

@@ -46,15 +46,12 @@ export function SocialProof() {
               className="text-xl font-medium text-primary-dark"
             >
               &ldquo;Technology should amplify your humanity, not replace it.&rdquo;
-            </motion.p>
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
-              className="text-sm text-muted-dark italic"
-            >
+
+            </p>
+            <p className="text-sm text-muted-dark italic">
               — The Repruv Team
-            </motion.p>
+            </p>
+
           </div>
         </div>
       </div>

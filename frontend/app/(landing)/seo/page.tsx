@@ -59,11 +59,11 @@ export default function SEOPage() {
         </div>
       </section>
 
-      {/* How Revu Helps */}
+      {/* How Repruv Helps */}
       <section className="section-background-alt py-24 mt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-primary-dark mb-12 text-center">
-            How Revu Supercharges Your SEO
+            How Repruv Supercharges Your SEO
           </h2>
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>

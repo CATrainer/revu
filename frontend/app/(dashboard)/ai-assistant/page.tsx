@@ -7,7 +7,7 @@ export default function AIAssistantPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Ask RevU AI Anything About Your Reviews</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Ask Repruv AI Anything About Your Reviews</h1>
         <p className="text-gray-600">Get instant insights from your review data using natural language</p>
       </div>
       
@@ -18,7 +18,7 @@ export default function AIAssistantPage() {
               <input
                 type="text"
                 placeholder="e.g., 'Why are ratings dropping in Leeds?' or 'Show me reviews mentioning delivery times'"
-                className="w-full px-4 py-3 pr-12 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-3 pr-12 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent"
               />
               <Button
                 size="icon"

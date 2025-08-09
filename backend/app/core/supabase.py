@@ -8,6 +8,7 @@ database operations, and real-time features.
 from typing import Optional, Dict, Any
 import httpx
 from loguru import logger
+from supabase import create_client, Client
 
 from app.core.config import settings
 
@@ -19,6 +20,38 @@ class SupabaseAuth:
         self.base_url = settings.SUPABASE_URL
         self.anon_key = settings.SUPABASE_ANON_KEY
         self.service_key = settings.SUPABASE_SERVICE_ROLE_KEY
+        
+        # Create Supabase client for operations that work better with official client
+        self.client: Optional[Client] = None
+        if self.base_url and self.anon_key:
+            try:
+                # Create client with proper options to avoid compatibility issues
+                from supabase.lib.client_options import ClientOptions
+                
+                # Create options without proxy settings to avoid the error
+                options = ClientOptions(
+                    schema='public',
+                    auto_refresh_token=True,
+                    persist_session=False,  # Don't persist sessions for server-side usage
+                    postgrest_client_timeout=5,
+                    storage_client_timeout=20,
+                    flow_type='implicit'
+                )
+                
+                self.client = create_client(self.base_url, self.anon_key, options)
+                logger.info("Supabase client initialized successfully with custom options")
+            except Exception as e:
+                logger.error(f"Failed to initialize Supabase client with options: {e}")
+                # Try with minimal/default approach
+                try:
+                    logger.info("Retrying Supabase client creation with default options...")
+                    # Just pass the required parameters, let it use defaults
+                    self.client = create_client(self.base_url, self.anon_key)
+                    logger.info("Supabase client initialized successfully with defaults")
+                except Exception as e2:
+                    logger.error(f"Failed to initialize Supabase client with defaults: {e2}")
+                    logger.warning("Continuing without Supabase client - will use HTTP methods only")
+                    self.client = None
     
     async def verify_token(self, access_token: str) -> Optional[Dict[str, Any]]:
         """
@@ -128,6 +161,156 @@ class SupabaseAuth:
             
             return response.status_code == 200
     
+    async def send_password_reset_email(self, email: str) -> bool:
+        """
+        Send password reset email using Supabase Auth.
+        
+        Args:
+            email: Email address to send reset link to
+            
+        Returns:
+            bool: Success status
+        """
+        if not self.base_url or not self.anon_key:
+            logger.warning("Supabase credentials not configured")
+            return False
+            
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(
+                    f"{self.base_url}/auth/v1/recover",
+                    headers={
+                        "apikey": self.anon_key,
+                        "Content-Type": "application/json",
+                    },
+                    json={"email": email}
+                )
+                
+                if response.status_code == 200:
+                    logger.info(f"Password reset email sent to: {email}")
+                    return True
+                else:
+                    logger.error(f"Failed to send password reset email: {response.status_code} - {response.text}")
+                    return False
+                    
+            except Exception as e:
+                logger.error(f"Error sending password reset email: {e}")
+                return False
+    
+    async def reset_password_with_token(self, access_token: str, new_password: str) -> bool:
+        """
+        Reset user password using Supabase access token.
+        
+        Args:
+            access_token: Supabase access token from reset email
+            new_password: New password to set
+            
+        Returns:
+            bool: Success status
+        """
+        if not self.base_url or not self.anon_key:
+            logger.warning("Supabase credentials not configured")
+            return False
+            
+        logger.info(f"Attempting to reset password with token length: {len(access_token)}")
+        logger.info(f"Supabase base URL: {self.base_url}")
+        
+        # Try using the official Supabase client first if available
+        if self.client is not None:
+            try:
+                logger.info("Using official Supabase client for password reset...")
+                
+                # For password reset, we need to set the session with the access token
+                # The access token from the reset email should allow password updates
+                
+                # Method 1: Try using the client's auth update method directly
+                try:
+                    # Create a temporary session context
+                    session_data = {
+                        'access_token': access_token,
+                        'refresh_token': '',
+                        'user': None,
+                        'expires_in': 3600,
+                        'token_type': 'bearer'
+                    }
+                    
+                    # Set the session on the client
+                    self.client.auth.set_session(access_token, refresh_token='')
+                    
+                    # Now update the password
+                    response = self.client.auth.update({'password': new_password})
+                    
+                    if response.user:
+                        logger.info(f"Password reset successful for user: {response.user.email}")
+                        return True
+                    else:
+                        logger.warning("Password update completed but no user returned")
+                        return True  # Consider it successful if no error occurred
+                        
+                except Exception as client_error:
+                    logger.error(f"Failed using client auth update: {client_error}")
+                    # Fall through to HTTP method
+                    
+            except Exception as e:
+                logger.error(f"Failed to reset password using Supabase client: {str(e)}")
+                logger.error(f"Error type: {type(e).__name__}")
+                # Fall through to HTTP method
+        
+        # Fall back to HTTP method if client is not available or failed
+        logger.info("Falling back to HTTP approach for password reset...")
+        return await self._reset_password_http(access_token, new_password)
+    
+    async def _reset_password_http(self, access_token: str, new_password: str) -> bool:
+        """
+        Fallback HTTP method for password reset.
+        """
+        async with httpx.AsyncClient() as client:
+            try:
+                # For Supabase password reset, we need to make the request with the user's session
+                url = f"{self.base_url}/auth/v1/user"
+                headers = {
+                    "apikey": self.anon_key,
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                }
+                
+                # First verify the token by getting user info
+                logger.info(f"Verifying token by getting user info from: {url}")
+                get_response = await client.get(url, headers=headers)
+                logger.info(f"Get user response status: {get_response.status_code}")
+                logger.info(f"Get user response text: {get_response.text}")
+                
+                if get_response.status_code == 200:
+                    # Token is valid, now update the password
+                    logger.info("Token verified, updating password...")
+                    update_payload = {"password": new_password}
+                    
+                    update_response = await client.put(url, headers=headers, json=update_payload)
+                    logger.info(f"Update password response status: {update_response.status_code}")
+                    logger.info(f"Update password response text: {update_response.text}")
+                    
+                    if update_response.status_code == 200:
+                        logger.info("Password reset successful")
+                        return True
+                    else:
+                        logger.error(f"Failed to update password: {update_response.status_code} - {update_response.text}")
+                        return False
+                else:
+                    logger.error(f"Token verification failed: {get_response.status_code} - {get_response.text}")
+                    
+                    # The token might be expired or invalid
+                    # Let's check if we can get more details about the error
+                    if get_response.status_code == 401:
+                        logger.error("Token appears to be expired or invalid (401 Unauthorized)")
+                    elif get_response.status_code == 403:
+                        logger.error("Token appears to be forbidden (403 Forbidden)")
+                    
+                    return False
+                    
+            except Exception as e:
+                logger.error(f"Error resetting password: {e}")
+                return False
+
     async def delete_user(self, user_id: str) -> bool:
         """
         Delete a user from Supabase.
@@ -230,8 +413,16 @@ class SupabaseAuth:
                 return None
 
 
-# Create global instance for backward compatibility
-supabase_auth = SupabaseAuth()
+# Global instance - lazy loaded to avoid import-time issues
+_supabase_auth_instance = None
+
+
+def get_supabase_auth():
+    """Get or create the global SupabaseAuth instance"""
+    global _supabase_auth_instance
+    if _supabase_auth_instance is None:
+        _supabase_auth_instance = SupabaseAuth()
+    return _supabase_auth_instance
 
 
 # Stub functions that used to return Supabase client

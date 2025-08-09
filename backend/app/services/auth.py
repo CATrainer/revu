@@ -6,6 +6,8 @@ from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_token
+from app.core.supabase import get_supabase_auth
+from app.services.user import UserService
 
 
 class AuthService:
@@ -13,6 +15,7 @@ class AuthService:
 
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.supabase_auth = get_supabase_auth()
 
     async def verify_refresh_token(self, refresh_token: str) -> str:
         """
@@ -38,32 +41,75 @@ class AuthService:
 
         return user_id
 
-    async def send_password_reset_email(self, email: str) -> None:
+    async def send_password_reset_email(self, email: str) -> bool:
         """
-        Send a password reset email to the user.
+        Send a password reset email to the user using Supabase.
 
         Args:
             email: Email address to send reset link to
+            
+        Returns:
+            bool: Success status
         """
-        # TODO: Implement email sending
-        logger.info(f"Password reset email would be sent to: {email}")
-        pass
+        # Check if user exists in our database first
+        user_service = UserService(self.db)
+        user = await user_service.get_by_email(email)
+        
+        if not user:
+            # For security, we don't reveal if email exists
+            logger.info(f"Password reset requested for non-existent email: {email}")
+            return True  # Always return success to prevent email enumeration
+        
+        # Send reset email via Supabase
+        success = await self.supabase_auth.send_password_reset_email(email)
+        
+        if success:
+            logger.info(f"Password reset email sent successfully to: {email}")
+        else:
+            logger.error(f"Failed to send password reset email to: {email}")
+            
+        return success
 
     async def reset_password(self, token: str, new_password: str) -> dict:
         """
-        Reset user password using a reset token.
+        Reset user password using Supabase reset token.
 
         Args:
-            token: Password reset token
+            token: Password reset token from Supabase
             new_password: New password to set
 
         Returns:
             dict: Updated user object
+            
+        Raises:
+            Exception: If token is invalid or password reset fails
         """
-        # TODO: Implement password reset
-        logger.info("Password reset would be performed")
-        return {
-            "id": "mock-user-id",
-            "email": "user@example.com",
-            "full_name": "Test User",
-        }
+        logger.info(f"Starting password reset process with token length: {len(token)}")
+        
+        # Use the token as an access token to reset password via Supabase
+        success = await self.supabase_auth.reset_password_with_token(token, new_password)
+        
+        if not success:
+            logger.error("Supabase password reset failed")
+            raise Exception("Invalid or expired reset token")
+        
+        logger.info("Supabase password reset successful, verifying token...")
+        
+        # Verify the token to get user data
+        user_data = await self.supabase_auth.verify_token(token)
+        if not user_data:
+            logger.error("Token verification failed after password reset")
+            raise Exception("Invalid reset token")
+        
+        logger.info(f"Token verified for user: {user_data.get('email', 'unknown')}")
+        
+        # Get our local user record
+        user_service = UserService(self.db)
+        user = await user_service.get_by_email(user_data["email"])
+        
+        if not user:
+            logger.error(f"User not found in local database: {user_data.get('email', 'unknown')}")
+            raise Exception("User not found in local database")
+        
+        logger.info(f"Password reset successful for: {user.email}")
+        return user
