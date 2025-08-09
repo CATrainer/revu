@@ -47,7 +47,7 @@ export function SocialProof() {
             >
               &ldquo;Technology should amplify your humanity, not replace it.&rdquo;
 
-            </p>
+            </motion.p>
             <p className="text-sm text-muted-dark italic">
               — The Repruv Team
             </p>

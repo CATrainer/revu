@@ -5,7 +5,7 @@ const API_URL = (
   process.env.NEXT_PUBLIC_API_URL?.trim() ||
   (process.env.NODE_ENV === 'development'
     ? 'http://localhost:8000/api/v1'
-    : 'https://www.repruv.co.uk/api/v1')
+    : 'https://revu-backend-production.up.railway.app/api/v1')
 );
 
 if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_URL.startsWith('http://')) {
