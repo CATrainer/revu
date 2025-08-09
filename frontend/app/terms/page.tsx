@@ -43,7 +43,7 @@ export default function TermsPage() {
 
           <Card className="card-background">
             <CardHeader>
-              <CardTitle className="text-2xl text-primary-dark">What's Included</CardTitle>
+              <CardTitle className="text-2xl text-primary-dark">What&apos;s Included</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
@@ -59,7 +59,7 @@ export default function TermsPage() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-primary-dark mb-2">Intellectual Property</h4>
-                  <p className="text-secondary-dark text-sm mb-4">Protection of Repruv's intellectual property and your content ownership rights.</p>
+                  <p className="text-secondary-dark text-sm mb-4">Protection of Repruv&apos;s intellectual property and your content ownership rights.</p>
                   
                   <h4 className="font-semibold text-primary-dark mb-2">Data Privacy</h4>
                   <p className="text-secondary-dark text-sm mb-4">How we collect, use, and protect your personal and business data.</p>
@@ -78,7 +78,7 @@ export default function TermsPage() {
             <CardContent>
               <p className="text-secondary-dark mb-4">
                 If you have any questions about our Terms and Conditions or need legal clarification, 
-                please don't hesitate to contact us:
+                please don&apos;t hesitate to contact us:
               </p>
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-700 p-4 rounded-lg">
                 <p className="font-semibold text-blue-600 dark:text-blue-400">

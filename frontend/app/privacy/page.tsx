@@ -44,7 +44,7 @@ export default function PrivacyPage() {
 
           <Card className="card-background">
             <CardHeader>
-              <CardTitle className="text-2xl text-primary-dark">What's Included</CardTitle>
+              <CardTitle className="text-2xl text-primary-dark">What&apos;s Included</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
@@ -79,7 +79,7 @@ export default function PrivacyPage() {
             <CardContent>
               <p className="text-secondary-dark mb-4">
                 If you have any questions about our privacy practices or need to exercise your data rights, 
-                please don't hesitate to contact us:
+                please don&apos;t hesitate to contact us:
               </p>
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-700 p-4 rounded-lg">
                 <p className="font-semibold text-blue-600 dark:text-blue-400">
