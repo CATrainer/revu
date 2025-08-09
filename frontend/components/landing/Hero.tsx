@@ -31,7 +31,9 @@ export function Hero() {
         <div className="mt-16 relative">
           <div className="relative mx-auto max-w-6xl">
             <div className="relative rounded-lg shadow-2xl overflow-hidden transform transition-transform hover:scale-[1.01]">
+
               <DashboardPreview />
+
             </div>
             
             {/* Subtle gradient overlay */}

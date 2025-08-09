@@ -34,6 +34,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
+
               <Link href="/" className="flex items-center gap-2" aria-label="Repruv home">
                 <Image
                   src="/logo/text_light.png"
@@ -51,6 +52,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                   priority
                   className="h-8 w-auto hidden dark:inline"
                 />
+
               </Link>
               
               {/* Desktop Navigation */}

@@ -14,7 +14,7 @@ def clean_null_bytes_text_mode(file_path):
         print(f"Skipped (encoding issue): {file_path}")
 
 # Set your root directory here
-project_root = 'C:/Users/caleb/OneDrive/Desktop/Repos/Revu/backend/app'
+project_root = 'C:/Users/caleb/OneDrive/Desktop/Repos/Repruve/backend/app'
 
 for root, _, files in os.walk(project_root):
     for file in files:

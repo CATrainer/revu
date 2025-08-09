@@ -40,6 +40,7 @@ export function Sidebar() {
       )}
     >
       <div className="flex items-center justify-between px-4 mb-8">
+
         <Link
           href="/"
           aria-label="Repruv home"
@@ -75,6 +76,7 @@ export function Sidebar() {
             </>
           )}
         </Link>
+
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="p-1 rounded-md hover-background ml-2 flex-shrink-0"

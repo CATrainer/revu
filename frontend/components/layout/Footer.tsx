@@ -8,6 +8,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
+
             <Link href="/" aria-label="Repruv home" className="flex items-center gap-2 mb-4">
               <Image
                 src="/logo/text_light.png"
@@ -25,6 +26,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-sm text-[var(--muted-foreground)] max-w-xs">
+
               AI-powered review management for modern businesses.
             </p>
           </div>
@@ -50,14 +52,18 @@ export function Footer() {
           <div>
             <h4 className="text-sm font-semibold text-[var(--foreground)] mb-4">Legal</h4>
             <ul className="space-y-2">
+
               <li><Link href="/privacy" className="text-sm text-[var(--muted-foreground)] hover:text-[var(--brand-primary-solid)] dark:hover:text-[var(--brand-primary)]">Privacy Policy</Link></li>
               <li><Link href="/terms" className="text-sm text-[var(--muted-foreground)] hover:text-[var(--brand-primary-solid)] dark:hover:text-[var(--brand-primary)]">Terms of Service</Link></li>
+
             </ul>
           </div>
         </div>
         
+
         <div className="mt-8 pt-8 border-t border-[var(--border)]">
           <p className="text-center text-sm text-[var(--muted-foreground)]">
+
             © 2025 Repruv. All rights reserved.
           </p>
         </div>

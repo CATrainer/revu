@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Setup script for Revu backend development environment
+# Setup script for Repruve backend development environment
 
-echo "🚀 Setting up Revu backend development environment..."
+echo "🚀 Setting up Repruve backend development environment..."
 
 # Check Python version
 python_version=$(python3 --version 2>&1 | awk '{print $2}')

@@ -1,8 +1,12 @@
 // frontend/components/landing/Pricing.tsx
+'use client';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { motion } from 'framer-motion';
+import { useRef } from 'react';
+import { useInView } from 'framer-motion';
 
 const plans = [
 	{
@@ -46,6 +50,7 @@ const plans = [
 ];
 
 export function Pricing() {
+
 	return (
 		<section className="py-24 bg-gray-50 dark:bg-[hsl(222,84%,7%)]">
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -113,4 +118,5 @@ export function Pricing() {
 			</div>
 		</section>
 	);
+
 }

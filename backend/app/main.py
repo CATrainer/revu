@@ -146,7 +146,7 @@ async def root():
     return {
         "name": settings.APP_NAME,
         "version": settings.APP_VERSION,
-        "message": "Welcome to Revu API",
+        "message": "Welcome to Repruv API",
         "docs": f"{settings.API_V1_PREFIX}/docs" if not settings.is_production else "Disabled in production",
         "health": "/health",
     }
@@ -193,8 +193,10 @@ async def manual_cors_middleware(request: Request, call_next):
         return JSONResponse(content={"message": "OK"}, headers=headers)
     
     response = await call_next(request)
+
     origin = request.headers.get("origin", "").rstrip('/')
     if origin in origins:
+
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
@@ -207,7 +209,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 if settings.is_production:
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=["*.revu.ai", "revu.ai", "*.railway.app", "*.vercel.app"],
+        allowed_hosts=["*.Repruv.ai", "Repruv.ai", "*.railway.app", "*.vercel.app"],
     )
 
 # Add custom exception handlers

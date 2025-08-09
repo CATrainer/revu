@@ -140,7 +140,9 @@ Requirements:
 > "At £179/month, you're paying less than £6 per day to protect your online reputation. One saved customer covers the entire month's cost."
 
 **"I can do this myself"**
+
 > "Absolutely, and many do. Our average customer was spending 10+ hours monthly on reviews before Repruv. What's your time worth?"
+
 
 **"We don't get many reviews"**
 > "That's exactly why you need this. We'll help you get more reviews while ensuring you never miss responding to the ones you do get."

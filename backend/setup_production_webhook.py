@@ -2,7 +2,7 @@
 CALENDLY_ACCESS_TOKEN = os.getenv("CALENDLY_ACCESS_TOKEN") or "PASTE_YOUR_NEW_TOKEN_HERE"
 
 # Production webhook URL
-WEBHOOK_URL = "https://revu-backend-production.up.railway.app/webhooks/calendly""
+WEBHOOK_URL = "https://Repruve-backend-production.up.railway.app/webhooks/calendly""
 Production Calendly Webhook Setup
 
 Run this to create the production webhook pointing to Railway.
@@ -26,7 +26,7 @@ import json
 CALENDLY_ACCESS_TOKEN = "eyJraWQiOiIxY2UxZTEzNjE3ZGNmNzY2YjNjZWJjY2Y4ZGM1YmFmYThhNjVlNjg0MDIzZjdjMzJiZTgzNDliMjM4MDEzNWI0IiwidHlwIjoiUEFUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJodHRwczovL2F1dGguY2FsZW5kbHkuY29tIiwiaWF0IjoxNzUzNzkzNDY0LCJqdGkiOiI4YWM2YTQ5OC0xNWIyLTQzNjktOTc5YS00NTgzYTU3NjFmYmQiLCJ1c2VyX3V1aWQiOiJjN2MwOTUwNS01YTZjLTQwMzgtOWU4MS05NmFlMDQwMTg0ZjkifQ.wlIkDMyroxdC6Ojedn4lrB7p3z8bOj3m-RlYGtIswhER7Acqm9Zk84z5hMtT-yqE_sQ0_WT3nZS-NtWLM19b12g"
 
 # Production webhook URL
-WEBHOOK_URL = "https://revu-backend-production.up.railway.app/webhooks/calendly"
+WEBHOOK_URL = "https://Repruve-backend-production.up.railway.app/webhooks/calendly"
 
 def setup_production_webhook():
     print("🚀 Setting up Production Calendly Webhook")
