@@ -18,7 +18,7 @@ export default function AIAssistantPage() {
               <input
                 type="text"
                 placeholder="e.g., 'Why are ratings dropping in Leeds?' or 'Show me reviews mentioning delivery times'"
-                className="w-full px-4 py-3 pr-12 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-3 pr-12 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent"
               />
               <Button
                 size="icon"

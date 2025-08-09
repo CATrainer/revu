@@ -13,6 +13,7 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { AxiosError } from 'axios';
+import Image from 'next/image';
 
 interface ErrorResponse {
   detail?: string;
@@ -63,8 +64,11 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold brand-text">Repruv</h1>
+          <Link href="/" className="inline-block" aria-label="Repruv home">
+            <div className="flex items-center justify-center">
+              <Image src="/logo/text_light.png" alt="Repruv" width={150} height={40} className="h-10 w-auto dark:hidden" priority />
+              <Image src="/logo/text_dark.png" alt="Repruv" width={150} height={40} className="h-10 w-auto hidden dark:inline" priority />
+            </div>
           </Link>
           <h2 className="mt-6 text-3xl font-extrabold text-primary-dark">
             Welcome back

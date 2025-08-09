@@ -341,14 +341,14 @@ const DemoScheduledPage = () => {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button 
                     variant="secondary" 
-                    className="bg-white text-[hsl(263,70%,68%)] hover:bg-gray-100"
+                    className="bg-white text-[var(--brand-primary-solid)] hover:bg-[var(--muted)]"
                     onClick={() => setShowSignupPrompt(true)}
                   >
                     Create Account Now
                   </Button>
                   <Button 
                     variant="secondary" 
-                    className="bg-white/10 text-white border-white/30 hover:bg-white hover:text-[hsl(263,70%,68%)]"
+                    className="bg-white/10 text-white border-white/30 hover:bg-white hover:text-[var(--brand-primary-solid)]"
                     onClick={() => router.push('/login')}
                   >
                     Already Have an Account?

@@ -70,7 +70,7 @@ export default function WaitingAreaPage() {
               </Link>
             </div>
             <div className="flex items-center gap-4">
-              <div className="brand-background text-[hsl(263,70%,68%)] px-4 py-2 rounded-full">
+              <div className="brand-background text-[var(--brand-primary)] px-4 py-2 rounded-full">
                 <AccountDropdown variant="waiting" />
               </div>
               <ThemeToggle />
@@ -252,7 +252,7 @@ export default function WaitingAreaPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-indigo-600" />
+              <Zap className="h-5 w-5 brand-text" />
               Latest Updates
             </CardTitle>
             <CardDescription>

@@ -27,7 +27,7 @@ export function EmptyState({ icon: Icon, title, description, action }: EmptyStat
       {action && (
         <button
           onClick={action.onClick}
-          className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(263,70%,68%)]"
+          className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--ring)]"
         >
           {action.label}
         </button>

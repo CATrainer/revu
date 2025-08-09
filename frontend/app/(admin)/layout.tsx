@@ -86,7 +86,7 @@ export default function AdminLayout({
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-6">
               <Link href="/" className="flex items-center">
-                <span className="text-2xl font-bold text-indigo-600">Repruv</span>
+                <span className="text-2xl font-bold brand-text">Repruv</span>
               </Link>
               <h1 className="text-2xl font-bold text-gray-900">
                 Admin Dashboard
@@ -146,13 +146,13 @@ export default function AdminLayout({
                   href={item.href}
                   className={`${
                     item.current
-                      ? 'border-indigo-500 text-indigo-600'
+                      ? 'border-[var(--brand-primary)] text-[var(--brand-primary)]'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   } group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm`}
                 >
                   <Icon
                     className={`${
-                      item.current ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-500'
+                      item.current ? 'text-[var(--brand-primary)]' : 'text-gray-400 group-hover:text-gray-500'
                     } -ml-0.5 mr-2 h-5 w-5`}
                     aria-hidden="true"
                   />

@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Bell, Menu, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,8 +58,11 @@ export function Header({ onMenuClick }: HeaderProps) {
             >
               <Menu className="h-5 w-5" />
             </Button>
-            
-            <div className="hidden sm:block ml-4 lg:ml-0">
+            <div className="hidden lg:flex items-center gap-3 ml-2">
+              <Image src="/logo/mark.png" alt="Repruv" width={32} height={32} className="h-8 w-8" priority />
+              <LocationSelector />
+            </div>
+            <div className="hidden sm:block lg:hidden ml-4">
               <LocationSelector />
             </div>
           </div>
@@ -146,7 +150,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-[hsl(222,84%,12%)]">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-[hsl(263,70%,68%)] text-white">
+                    <AvatarFallback className="bg-[var(--brand-primary-solid)] text-[var(--brand-primary-solid-foreground)]">
                       {user?.full_name?.charAt(0) || 'U'}
                     </AvatarFallback>
                   </Avatar>

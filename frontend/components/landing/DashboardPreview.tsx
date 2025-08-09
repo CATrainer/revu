@@ -65,7 +65,7 @@ export function DashboardPreview() {
                 </div>
               </div>
               {/* Tiny sparkline placeholder */}
-              <div className="mt-3 h-8 w-full rounded bg-gradient-to-r from-[hsl(263,70%,68%)]/20 via-[hsl(263,70%,68%)]/10 to-transparent dark:from-[hsl(263,70%,68%)]/30 dark:via-[hsl(263,70%,68%)]/15" />
+              <div className="mt-3 h-8 w-full rounded bg-gradient-to-r from-[var(--brand-primary)]/25 via-[var(--brand-primary)]/10 to-transparent dark:from-[var(--brand-primary)]/35 dark:via-[var(--brand-primary)]/15" />
             </div>
           ))}
         </div>

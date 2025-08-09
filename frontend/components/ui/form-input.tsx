@@ -23,7 +23,7 @@ const FormInput = forwardRef<HTMLInputElement, InputProps>(
           type={type}
           id={id}
           className={cn(
-            "flex h-10 w-full rounded-md border border-gray-300 dark:border-[hsl(222,47%,16%)] card-background px-3 py-2 text-sm text-primary-dark placeholder:text-muted-dark focus:outline-none focus:ring-2 focus:ring-[hsl(263,70%,68%)] focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50",
+            "flex h-10 w-full rounded-md border border-gray-300 dark:border-[hsl(222,47%,16%)] card-background px-3 py-2 text-sm text-primary-dark placeholder:text-muted-dark focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50",
             error && "border-red-500 focus:ring-red-500",
             className
           )}

@@ -9,7 +9,7 @@ export function QuickActions() {
         <CardTitle className="text-gray-900 dark:text-[hsl(215,20%,85%)]">Quick Actions</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        <Button className="w-full bg-[hsl(263,70%,68%)] hover:bg-[hsl(263,70%,65%)] text-white" variant="default">
+        <Button className="w-full button-primary" variant="default">
           View New Reviews (5)
         </Button>
         <Button className="w-full border-gray-300 dark:border-[hsl(222,47%,16%)] text-gray-700 dark:text-[hsl(215,20%,65%)] hover:bg-gray-50 dark:hover:bg-[hsl(222,84%,12%)]" variant="outline">

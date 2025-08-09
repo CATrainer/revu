@@ -2,6 +2,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   BarChart3,
@@ -39,14 +40,44 @@ export function Sidebar() {
       )}
     >
       <div className="flex items-center justify-between px-4 mb-8">
-        {!collapsed && (
-          <Link href="/" className="flex items-center">
-            <span className="text-2xl font-bold brand-text">Repruv</span>
-          </Link>
-        )}
+        <Link
+          href="/"
+          aria-label="Repruv home"
+          className="flex items-center justify-center w-full"
+        >
+          {collapsed ? (
+            <Image
+              src="/logo/mark.png"
+              alt="Repruv"
+              width={32}
+              height={32}
+              className="h-8 w-8"
+              priority
+            />
+          ) : (
+            <>
+              <Image
+                src="/logo/text_light.png"
+                alt="Repruv"
+                width={140}
+                height={36}
+                className="h-9 w-auto dark:hidden"
+                priority
+              />
+              <Image
+                src="/logo/text_dark.png"
+                alt="Repruv"
+                width={140}
+                height={36}
+                className="h-9 w-auto hidden dark:inline"
+                priority
+              />
+            </>
+          )}
+        </Link>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded-md hover-background"
+          className="p-1 rounded-md hover-background ml-2 flex-shrink-0"
         >
           {collapsed ? (
             <ChevronRight className="h-5 w-5 text-secondary-dark" />
@@ -55,7 +86,7 @@ export function Sidebar() {
           )}
         </button>
       </div>
-      
+
       <nav className="mt-5 px-2">
         <div className="space-y-1">
           {navigation.map((item) => {

@@ -2,6 +2,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Footer } from './Footer';
@@ -33,8 +34,23 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link href="/" className="flex items-center">
-                <span className="text-2xl font-bold brand-text">Repruv</span>
+              <Link href="/" className="flex items-center gap-2" aria-label="Repruv home">
+                <Image
+                  src="/logo/text_light.png"
+                  alt="Repruv"
+                  width={120}
+                  height={32}
+                  priority
+                  className="h-8 w-auto dark:hidden"
+                />
+                <Image
+                  src="/logo/text_dark.png"
+                  alt="Repruv"
+                  width={120}
+                  height={32}
+                  priority
+                  className="h-8 w-auto hidden dark:inline"
+                />
               </Link>
               
               {/* Desktop Navigation */}
@@ -48,7 +64,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                           <li className="row-span-3">
                             <NavigationMenuLink asChild>
                               <Link
-                                className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-indigo-500 to-indigo-600 p-6 no-underline outline-none focus:shadow-md"
+                                className="flex h-full w-full select-none flex-col justify-end rounded-md gradient-brand p-6 no-underline outline-none focus:shadow-md"
                                 href="/features"
                               >
                                 <div className="mb-2 mt-4 text-lg font-medium text-white">
@@ -153,7 +169,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center md:hidden">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-secondary-dark hover:text-primary-dark hover-background focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[hsl(263,70%,68%)]"
+                className="inline-flex items-center justify-center p-2 rounded-md text-secondary-dark hover:text-primary-dark hover-background focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--ring)]"
               >
                 {mobileMenuOpen ? (
                   <X className="block h-6 w-6" />
