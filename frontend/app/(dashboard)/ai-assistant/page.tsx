@@ -7,7 +7,7 @@ export default function AIAssistantPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Ask RevU AI Anything About Your Reviews</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Ask Repruv AI Anything About Your Reviews</h1>
         <p className="text-gray-600">Get instant insights from your review data using natural language</p>
       </div>
       

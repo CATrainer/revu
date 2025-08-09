@@ -66,7 +66,7 @@ export default function WaitingAreaPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <Link href="/" className="flex items-center">
-                <span className="text-2xl font-bold brand-text">Revu</span>
+                <span className="text-2xl font-bold brand-text">Repruv</span>
               </Link>
             </div>
             <div className="flex items-center gap-4">
@@ -82,7 +82,7 @@ export default function WaitingAreaPage() {
       {/* Welcome Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-4">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-primary-dark mb-4">Welcome to Revu!</h1>
+          <h1 className="text-4xl font-bold text-primary-dark mb-4">Welcome to Repruv!</h1>
           <p className="text-lg text-secondary-dark">
             You&apos;re on our exclusive waiting list. Here&apos;s what&apos;s coming...
           </p>
@@ -129,7 +129,7 @@ export default function WaitingAreaPage() {
               Book a Demo
             </CardTitle>
             <CardDescription>
-              Want to see Revu in action? Book a personalized demo with our team.
+              Want to see Repruv in action? Book a personalized demo with our team.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -308,7 +308,7 @@ export default function WaitingAreaPage() {
           </p>
           <div className="flex justify-center gap-4">
             <Button variant="outline" asChild>
-              <Link href="mailto:support@revu.com">
+              <Link href="mailto:support@repruv.co.uk">
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Contact Support
               </Link>

@@ -1,8 +1,8 @@
-# Revu - Complete Technical Specification & Development Plan
+# Repruv - Complete Technical Specification & Development Plan
 
 ## Executive Summary
 
-Revu is a comprehensive review management platform designed for local businesses and agencies to monitor, analyze, and respond to customer feedback across multiple platforms. This document serves as the complete technical specification and development roadmap for building Revu from scratch to launch within 4 weeks.
+Repruv is a comprehensive review management platform designed for local businesses and agencies to monitor, analyze, and respond to customer feedback across multiple platforms. This document serves as the complete technical specification and development roadmap for building Repruv from scratch to launch within 4 weeks.
 
 ### Key Features
 - Unified review management dashboard
@@ -567,7 +567,7 @@ Homepage
 └── Final CTA Section
 
 Navigation Bar
-├── Revu (dropdown)
+├── Repruv (dropdown)
 │   ├── Review Management
 │   ├── AI Assistant
 │   ├── Analytics
@@ -611,7 +611,7 @@ Review Hub (/reviews)
 │       └── Flag
 └── Bulk Actions
 
-Ask RevU AI (/ai-assistant)
+Ask Repruv AI (/ai-assistant)
 ├── Query Input
 ├── Suggested Queries
 ├── Results Display
@@ -1188,7 +1188,7 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
    - Review signals impact local pack rankings
    - Response rate affects visibility
 
-2. **How Revu Helps**
+2. **How Repruv Helps**
    - Automated response publishing
    - Keyword optimization in responses
    - Review velocity tracking
@@ -1238,7 +1238,7 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 ### Email Templates
 
 #### Welcome Email
-**Subject:** "Welcome to Revu! Let's supercharge your reviews 🚀"
+**Subject:** "Welcome to Repruv! Let's supercharge your reviews 🚀"
 
 **Body:**
 Hi [Name],
@@ -1255,7 +1255,7 @@ You're about to save hours every week while building a stronger online reputatio
 Need help? Reply to this email or book a quick onboarding call.
 
 #### Trial Ending Email
-**Subject:** "Your Revu trial ends in 3 days ⏰"
+**Subject:** "Your Repruv trial ends in 3 days ⏰"
 
 **Body:**
 Hi [Name],
@@ -1270,7 +1270,7 @@ Don't lose momentum! Upgrade now and get:
 ✓ Advanced analytics
 ✓ Priority support
 
-[CTA: "Keep Growing with Revu"]
+[CTA: "Keep Growing with Repruv"]
 
 ---
 
@@ -1418,4 +1418,4 @@ The AI will then be able to:
 
 ---
 
-This technical specification serves as your complete blueprint for building Revu. Each section provides the detail needed for implementation while maintaining flexibility for iterative development. Follow the phases sequentially, but don't hesitate to adjust based on user feedback and technical discoveries during development.
+This technical specification serves as your complete blueprint for building Repruv. Each section provides the detail needed for implementation while maintaining flexibility for iterative development. Follow the phases sequentially, but don't hesitate to adjust based on user feedback and technical discoveries during development.

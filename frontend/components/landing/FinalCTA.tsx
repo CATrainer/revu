@@ -10,7 +10,7 @@ export function FinalCTA() {
           Ready to Transform Your Review Management?
         </h2>
         <p className="text-xl text-white/90 mb-8">
-          Join hundreds of businesses saving time and growing their reputation with Revu
+          Join hundreds of businesses saving time and growing their reputation with Repruv
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" className="bg-white text-[hsl(263,70%,68%)] hover:bg-gray-100 hover:text-[hsl(263,70%,60%)] border-0" asChild>

@@ -33,8 +33,8 @@ export function DashboardPreview() {
         <div className="flex items-center space-x-2">
           <div className="h-3 w-3 rounded-full bg-red-400" />
           <div className="h-3 w-3 rounded-full bg-yellow-400" />
-          <div className="h-3 w-3 rounded-full bg-green-400" />
-          <span className="ml-3 font-semibold text-sm">Revu Dashboard (Preview)</span>
+            <div className="h-3 w-3 rounded-full bg-green-400" />
+          <span className="ml-3 font-semibold text-sm">Repruv Dashboard (Preview)</span>
         </div>
         <div className="text-xs text-secondary-dark hidden sm:block">Static preview • Not live data</div>
       </div>

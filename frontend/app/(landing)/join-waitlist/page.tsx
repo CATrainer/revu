@@ -58,7 +58,7 @@ export default function JoinWaitlistPage() {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">Join Our Waiting List</CardTitle>
             <CardDescription>
-              Be the first to know when Revu launches and get early access to powerful review management tools.
+              Be the first to know when Repruv launches and get early access to powerful review management tools.
             </CardDescription>
           </CardHeader>
           <CardContent>

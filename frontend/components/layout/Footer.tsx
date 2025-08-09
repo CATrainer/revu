@@ -7,7 +7,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-lg font-bold text-indigo-600 dark:text-indigo-400 mb-4">Revu</h3>
+            <h3 className="text-lg font-bold text-indigo-600 dark:text-indigo-400 mb-4">Repruv</h3>
             <p className="text-sm text-gray-600 dark:text-gray-300">
               AI-powered review management for modern businesses.
             </p>
@@ -42,7 +42,7 @@ export function Footer() {
         
         <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
           <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-            © 2025 Revu. All rights reserved.
+            © 2025 Repruv. All rights reserved.
           </p>
         </div>
       </div>

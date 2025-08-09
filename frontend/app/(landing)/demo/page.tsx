@@ -58,10 +58,10 @@ export default function DemoPage() {
           {/* Left Column - Info */}
           <div>
             <h1 className="text-4xl font-bold text-primary-dark mb-6">
-              See Revu in Action
+              See Repruv in Action
             </h1>
             <p className="text-xl text-secondary-dark mb-8">
-              Get a personalized demo from our team and discover how Revu can transform your review management
+              Get a personalized demo from our team and discover how Repruv can transform your review management
             </p>
 
             <div className="space-y-6 mb-8">
@@ -247,7 +247,7 @@ export default function DemoPage() {
                   </Button>
 
                   <p className="text-xs text-muted-dark text-center">
-                    By requesting a demo, you agree to our privacy policy and to receive communications from Revu.
+                    By requesting a demo, you agree to our privacy policy and to receive communications from Repruv.
                   </p>
                 </form>
               </CardContent>

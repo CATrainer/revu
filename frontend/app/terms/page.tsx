@@ -29,8 +29,8 @@ export default function TermsPage() {
             
             <p className="text-secondary-dark">
               For any questions about our terms, please contact us at{" "}
-              <a href="mailto:legal@revu.com" className="brand-text hover:underline">
-                legal@revu.com
+              <a href="mailto:legal@repruv.co.uk" className="brand-text hover:underline">
+                legal@repruv.co.uk
               </a>
             </p>
           </CardContent>

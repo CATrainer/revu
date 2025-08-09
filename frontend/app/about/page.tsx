@@ -19,12 +19,12 @@ export default function AboutPage() {
         
         <Card className="card-background">
           <CardHeader>
-            <CardTitle className="text-3xl text-primary-dark">About Revu</CardTitle>
+            <CardTitle className="text-3xl text-primary-dark">About Repruv</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="prose max-w-none">
               <p className="text-lg text-body-dark mb-6">
-                Revu is revolutionizing how businesses manage their online reputation through 
+                Repruv is revolutionizing how businesses manage their online reputation through 
                 AI-powered review management and response automation.
               </p>
               
@@ -34,7 +34,7 @@ export default function AboutPage() {
                 review management effortless, intelligent, and impactful.
               </p>
               
-              <h3 className="text-xl font-semibold mb-3 text-primary-dark">Why Revu?</h3>
+              <h3 className="text-xl font-semibold mb-3 text-primary-dark">Why Repruv?</h3>
               <ul className="list-disc pl-6 text-secondary-dark space-y-2">
                 <li>AI-powered responses that sound authentic and personal</li>
                 <li>Multi-platform review monitoring and management</li>

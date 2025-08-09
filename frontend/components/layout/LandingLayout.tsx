@@ -34,7 +34,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/" className="flex items-center">
-                <span className="text-2xl font-bold brand-text">Revu</span>
+                <span className="text-2xl font-bold brand-text">Repruv</span>
               </Link>
               
               {/* Desktop Navigation */}
@@ -55,7 +55,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                                   All Features
                                 </div>
                                 <p className="text-sm leading-tight text-white/90">
-                                  Discover how Revu can transform your review management
+                                  Discover how Repruv can transform your review management
                                 </p>
                               </Link>
                             </NavigationMenuLink>

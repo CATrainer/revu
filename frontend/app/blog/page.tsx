@@ -21,7 +21,7 @@ export default function BlogPage() {
         
         <Card className="card-background">
           <CardHeader>
-            <CardTitle className="text-3xl text-primary-dark">Revu Blog</CardTitle>
+            <CardTitle className="text-3xl text-primary-dark">Repruv Blog</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center py-12">

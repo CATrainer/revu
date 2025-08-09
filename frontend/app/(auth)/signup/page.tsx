@@ -91,7 +91,7 @@ export default function SignupPage() {
         {/* Header */}
         <div className="text-center">
           <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold brand-text">Revu</h1>
+            <h1 className="text-3xl font-bold brand-text">Repruv</h1>
           </Link>
           <h2 className="mt-6 text-3xl font-extrabold text-primary-dark">
             Create your account
@@ -267,7 +267,7 @@ export default function SignupPage() {
             {/* Demo CTA */}
             <div className="mt-6 p-4 brand-background rounded-lg">
               <p className="text-sm text-center text-primary-dark">
-                <strong>Want to see Revu first?</strong> No commitment required.
+                <strong>Want to see Repruv first?</strong> No commitment required.
               </p>
               <div className="mt-2 text-center">
                 <Link

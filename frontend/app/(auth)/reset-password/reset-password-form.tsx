@@ -164,7 +164,7 @@ export function ResetPasswordForm() {
           {/* Header */}
           <div className="text-center">
             <Link href="/" className="inline-block">
-              <h1 className="text-3xl font-bold brand-text">Revu</h1>
+              <h1 className="text-3xl font-bold brand-text">Repruv</h1>
             </Link>
             <h2 className="mt-6 text-3xl font-extrabold text-primary-dark">
               Password reset successful
@@ -213,7 +213,7 @@ export function ResetPasswordForm() {
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <Link href="/" className="inline-block">
-              <h1 className="text-3xl font-bold brand-text">Revu</h1>
+              <h1 className="text-3xl font-bold brand-text">Repruv</h1>
             </Link>
             <h2 className="mt-6 text-3xl font-extrabold text-primary-dark">
               Loading...
@@ -234,7 +234,7 @@ export function ResetPasswordForm() {
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <Link href="/" className="inline-block">
-              <h1 className="text-3xl font-bold brand-text">Revu</h1>
+              <h1 className="text-3xl font-bold brand-text">Repruv</h1>
             </Link>
             <h2 className="mt-6 text-3xl font-extrabold text-primary-dark">
               Loading...
@@ -255,7 +255,7 @@ export function ResetPasswordForm() {
         {/* Header */}
         <div className="text-center">
           <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold brand-text">Revu</h1>
+            <h1 className="text-3xl font-bold brand-text">Repruv</h1>
           </Link>
           <h2 className="mt-6 text-3xl font-extrabold text-primary-dark">
             Reset your password

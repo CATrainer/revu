@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
           {/* Header */}
           <div className="text-center">
             <Link href="/" className="inline-block">
-              <h1 className="text-3xl font-bold brand-text">Revu</h1>
+              <h1 className="text-3xl font-bold brand-text">Repruv</h1>
             </Link>
             <h2 className="mt-6 text-3xl font-extrabold text-primary-dark">
               Check your email
@@ -125,7 +125,7 @@ export default function ForgotPasswordPage() {
         {/* Header */}
         <div className="text-center">
           <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold brand-text">Revu</h1>
+            <h1 className="text-3xl font-bold brand-text">Repruv</h1>
           </Link>
           <h2 className="mt-6 text-3xl font-extrabold text-primary-dark">
             Forgot your password?
@@ -193,8 +193,8 @@ export default function ForgotPasswordPage() {
             <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               <p className="text-xs text-secondary-dark text-center">
                 <strong>Need help?</strong> Contact our support team at{' '}
-                <a href="mailto:support@revu.com" className="brand-text hover:underline">
-                  support@revu.com
+                <a href="mailto:support@repruv.co.uk" className="brand-text hover:underline">
+                  support@repruv.co.uk
                 </a>
               </p>
             </div>

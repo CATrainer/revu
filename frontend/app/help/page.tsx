@@ -35,7 +35,7 @@ export default function HelpPage() {
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-medium mb-2 text-primary-dark">How do I get started with Revu?</h4>
+                    <h4 className="font-medium mb-2 text-primary-dark">How do I get started with Repruv?</h4>
                     <p className="text-secondary-dark text-sm">
                       After creating your account, you&apos;ll be placed in our waiting area where you can 
                       explore features and request a demo.
@@ -51,9 +51,9 @@ export default function HelpPage() {
                   </div>
                   
                   <div>
-                    <h4 className="font-medium mb-2 text-primary-dark">What platforms does Revu support?</h4>
+                    <h4 className="font-medium mb-2 text-primary-dark">What platforms does Repruv support?</h4>
                     <p className="text-secondary-dark text-sm">
-                      Revu integrates with all major review platforms including Google, Yelp, 
+                      Repruv integrates with all major review platforms including Google, Yelp, 
                       Facebook, TripAdvisor, and many more.
                     </p>
                   </div>
@@ -67,8 +67,8 @@ export default function HelpPage() {
                     <Mail className="h-5 w-5 brand-text" />
                     <div>
                       <p className="font-medium text-primary-dark">Email Support</p>
-                      <a href="mailto:support@revu.com" className="brand-text hover:underline text-sm">
-                        support@revu.com
+                      <a href="mailto:support@repruv.co.uk" className="brand-text hover:underline text-sm">
+                        support@repruv.co.uk
                       </a>
                     </div>
                   </div>
@@ -89,7 +89,7 @@ export default function HelpPage() {
                       Back to Waiting Area
                     </Link>
                   </Button>
-                  <Button className="w-full" onClick={() => window.location.href = 'mailto:support@revu.com'}>
+                  <Button className="w-full" onClick={() => window.location.href = 'mailto:support@repruv.co.uk'}>
                     Contact Support
                   </Button>
                   <Button variant="outline" className="w-full" onClick={() => window.location.href = '/demo'}>

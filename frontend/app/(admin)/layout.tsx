@@ -86,7 +86,7 @@ export default function AdminLayout({
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-6">
               <Link href="/" className="flex items-center">
-                <span className="text-2xl font-bold text-indigo-600">Revu</span>
+                <span className="text-2xl font-bold text-indigo-600">Repruv</span>
               </Link>
               <h1 className="text-2xl font-bold text-gray-900">
                 Admin Dashboard

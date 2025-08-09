@@ -1,6 +1,6 @@
-# Revu Backend API
+# Repruv Backend API
 
-FastAPI-based backend for the Revu review management platform.
+FastAPI-based backend for the Repruv review management platform.
 
 ## 🚀 Quick Start
 

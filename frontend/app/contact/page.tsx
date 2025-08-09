@@ -28,15 +28,15 @@ export default function ContactPage() {
               <div>
                 <h3 className="text-xl font-semibold mb-4 text-primary-dark">Get in Touch</h3>
                 <p className="text-secondary-dark mb-6">
-                  We&apos;d love to hear from you! Whether you have questions about Revu, 
+                  We&apos;d love to hear from you! Whether you have questions about Repruv, 
                   need support, or want to discuss your review management needs.
                 </p>
                 
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Mail className="h-5 w-5 icon-color" />
-                    <a href="mailto:support@revu.com" className="brand-text hover:underline">
-                      support@revu.com
+                    <a href="mailto:support@repruv.co.uk" className="brand-text hover:underline">
+                      support@repruv.co.uk
                     </a>
                   </div>
                   
@@ -57,7 +57,7 @@ export default function ContactPage() {
                     <Link href="/join-waitlist">Join Waitlist</Link>
                   </Button>
                   <Button variant="outline" asChild className="w-full button-secondary">
-                    <a href="mailto:support@revu.com">Email Support</a>
+                    <a href="mailto:support@repruv.co.uk">Email Support</a>
                   </Button>
                 </div>
               </div>

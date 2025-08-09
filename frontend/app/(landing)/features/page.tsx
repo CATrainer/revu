@@ -24,7 +24,7 @@ export default function FeaturesPage() {
           Everything You Need to Manage Reviews Like a Pro
         </h1>
         <p className="text-xl text-secondary-dark mb-8 max-w-3xl mx-auto">
-          From centralized management to AI-powered insights, discover all the features that make Revu the ultimate review management platform
+          From centralized management to AI-powered insights, discover all the features that make Repruv the ultimate review management platform
         </p>
       </section>
 
@@ -358,7 +358,7 @@ export default function FeaturesPage() {
             Ready to Transform Your Review Management?
           </h2>
           <p className="text-xl text-white/90 mb-8">
-            Join hundreds of businesses already using Revu to save time and grow
+            Join hundreds of businesses already using Repruv to save time and grow
           </p>
           <div className="flex justify-center gap-4">
             <Button size="lg" className="bg-white text-[hsl(263,70%,68%)] hover:bg-gray-100 hover:text-[hsl(263,70%,60%)] border-0" asChild>

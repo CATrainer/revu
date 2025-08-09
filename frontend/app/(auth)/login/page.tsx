@@ -64,7 +64,7 @@ export default function LoginPage() {
         {/* Header */}
         <div className="text-center">
           <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold brand-text">Revu</h1>
+            <h1 className="text-3xl font-bold brand-text">Repruv</h1>
           </Link>
           <h2 className="mt-6 text-3xl font-extrabold text-primary-dark">
             Welcome back
@@ -160,7 +160,7 @@ export default function LoginPage() {
             {/* Demo CTA */}
             <div className="mt-6 p-4 brand-background rounded-lg">
               <p className="text-sm text-center text-primary-dark">
-                <strong>New to Revu?</strong> See it in action first.
+                <strong>New to Repruv?</strong> See it in action first.
               </p>
               <div className="mt-2 text-center">
                 <Link

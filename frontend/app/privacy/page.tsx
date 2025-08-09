@@ -29,8 +29,8 @@ export default function PrivacyPage() {
             
             <p className="text-secondary-dark">
               For any privacy-related questions, please contact us at{" "}
-              <a href="mailto:privacy@revu.com" className="brand-text hover:underline">
-                privacy@revu.com
+              <a href="mailto:privacy@repruv.co.uk" className="brand-text hover:underline">
+                privacy@repruv.co.uk
               </a>
             </p>
           </CardContent>

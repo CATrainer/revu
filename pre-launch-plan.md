@@ -1,4 +1,4 @@
-# Revu Pre-Launch Strategy & Founder Pricing
+# Repruv Pre-Launch Strategy & Founder Pricing
 
 ## Timeline Overview
 - **Weeks 1-3**: Research, build waitlist, create content
@@ -87,7 +87,7 @@ For first 20 customers:
 
 ## Positioning & Messaging
 
-### Position Revu As:
+### Position Repruv As:
 - **Time-Saver**: "Get back 10 hours every month"
 - **Revenue-Protector**: "Never lose another customer to an unanswered review"
 - **Competitive Advantage**: "Respond faster than your competitors"
