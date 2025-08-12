@@ -4,9 +4,6 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { motion } from 'framer-motion';
-import { useRef } from 'react';
-import { useInView } from 'framer-motion';
 
 const plans = [
 	{
@@ -52,13 +49,13 @@ const plans = [
 export function Pricing() {
 
 	return (
-		<section className="py-24 bg-gray-50 dark:bg-[hsl(222,84%,7%)]">
+	<section className="py-24 section-background">
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div className="text-center mb-16">
-					<h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+		    <h2 className="text-3xl md:text-4xl font-bold text-primary-dark mb-4">
 						Simple, Transparent Pricing
 					</h2>
-					<p className="text-lg text-gray-600 dark:text-[hsl(215,20%,65%)]">
+		    <p className="text-lg text-secondary-dark">
 						Choose the plan that grows with your business
 					</p>
 				</div>
@@ -67,30 +64,30 @@ export function Pricing() {
 					{plans.map((plan) => (
 						<Card
 							key={plan.name}
-							className="dark:bg-[hsl(222,84%,7%)] dark:border-[hsl(222,47%,16%)] bg-white border-gray-200 shadow-lg hover:shadow-xl transition-shadow"
+			    className="card-background shadow-lg hover:shadow-xl transition-shadow"
 						>
 							<CardHeader>
-								<CardTitle className="dark:text-white text-gray-900">
+				<CardTitle className="text-primary-dark">
 									{plan.name}
 								</CardTitle>
-								<CardDescription className="dark:text-[hsl(215,20%,65%)] text-gray-600">
+				<CardDescription className="text-secondary-dark">
 									{plan.description}
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
 								<div className="mb-6">
-									<span className="text-4xl font-bold dark:text-white text-gray-900">
+				    <span className="text-4xl font-bold text-primary-dark">
 										{plan.price}
 									</span>
-									<span className="text-gray-600 dark:text-[hsl(215,20%,65%)]">
+				    <span className="text-secondary-dark">
 										/month
 									</span>
 								</div>
 								<ul className="space-y-3">
 									{plan.features.map((feature, index) => (
 										<li key={index} className="flex items-start">
-											<Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-											<span className="text-gray-600 dark:text-[hsl(215,20%,75%)]">
+					    <Check className="h-5 w-5 icon-color mr-2 flex-shrink-0" />
+					    <span className="text-secondary-dark">
 												{feature}
 											</span>
 										</li>
@@ -110,7 +107,7 @@ export function Pricing() {
 				</div>
 
 				<div className="mt-12 text-center">
-					<p className="text-gray-600 dark:text-[hsl(215,20%,65%)]">
+		    <p className="text-secondary-dark">
 						Join our waiting list to be first to access these plans when we
 						launch.
 					</p>

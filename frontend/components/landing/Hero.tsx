@@ -36,8 +36,8 @@ export function Hero() {
 
             </div>
             
-            {/* Subtle gradient overlay */}
-            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-white dark:from-[hsl(222,84%,5%)] via-white/20 dark:via-[hsl(222,84%,5%)]/20 to-transparent pointer-events-none"></div>
+            {/* Subtle gradient overlay using semantic backgrounds */}
+            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[var(--background)] via-[color-mix(in oklab,var(--background) 20%,transparent)] to-transparent pointer-events-none"></div>
           </div>
         </div>
       </div>

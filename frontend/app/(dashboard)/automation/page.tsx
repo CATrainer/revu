@@ -7,7 +7,7 @@ import { Zap } from 'lucide-react';
 export default function AutomationPage() {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Automation Rules</h1>
+  <h1 className="text-2xl font-bold text-primary-dark mb-8">Automation Rules</h1>
       <EmptyState
         icon={Zap}
         title="No automation rules"

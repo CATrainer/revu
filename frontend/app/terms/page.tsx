@@ -33,7 +33,7 @@ export default function TermsPage() {
               </p>
               <Button 
                 onClick={downloadTermsAsPDF}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                className="button-primary"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Download Terms and Conditions (PDF)
@@ -80,8 +80,8 @@ export default function TermsPage() {
                 If you have any questions about our Terms and Conditions or need legal clarification, 
                 please don&apos;t hesitate to contact us:
               </p>
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-700 p-4 rounded-lg">
-                <p className="font-semibold text-blue-600 dark:text-blue-400">
+              <div className="section-background-alt p-4 rounded-lg">
+                <p className="font-semibold brand-text">
                   Email: info@repruv.co.uk
                 </p>
                 <p className="text-secondary-dark mt-2">

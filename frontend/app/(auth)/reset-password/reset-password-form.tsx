@@ -323,12 +323,12 @@ export function ResetPasswordForm() {
                 {password && (
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
-                      <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div className="flex-1 section-background-alt rounded-full h-2">
                         <div
                           className={`h-2 rounded-full transition-all duration-300 ${
-                            passwordStrength.score < 3 ? 'bg-red-500' :
-                            passwordStrength.score < 4 ? 'bg-yellow-500' :
-                            passwordStrength.score < 5 ? 'bg-blue-500' : 'bg-green-500'
+            passwordStrength.score < 3 ? 'status-danger-bg' :
+            passwordStrength.score < 4 ? 'status-warning-bg' :
+            passwordStrength.score < 5 ? 'status-info-bg' : 'status-success-bg'
                           }`}
                           style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
                         />
@@ -339,19 +339,19 @@ export function ResetPasswordForm() {
                     </div>
                     <ul className="text-xs text-secondary-dark space-y-1">
                       <li className="flex items-center space-x-2">
-                        <CheckCircle className={`h-3 w-3 ${password.length >= 8 ? 'text-green-500' : 'text-gray-400'}`} />
+                        <CheckCircle className={`h-3 w-3 ${password.length >= 8 ? 'status-success' : 'text-muted-dark'}`} />
                         <span>At least 8 characters</span>
                       </li>
                       <li className="flex items-center space-x-2">
-                        <CheckCircle className={`h-3 w-3 ${/[a-z]/.test(password) ? 'text-green-500' : 'text-gray-400'}`} />
+                        <CheckCircle className={`h-3 w-3 ${/[a-z]/.test(password) ? 'status-success' : 'text-muted-dark'}`} />
                         <span>One lowercase letter</span>
                       </li>
                       <li className="flex items-center space-x-2">
-                        <CheckCircle className={`h-3 w-3 ${/[A-Z]/.test(password) ? 'text-green-500' : 'text-gray-400'}`} />
+                        <CheckCircle className={`h-3 w-3 ${/[A-Z]/.test(password) ? 'status-success' : 'text-muted-dark'}`} />
                         <span>One uppercase letter</span>
                       </li>
                       <li className="flex items-center space-x-2">
-                        <CheckCircle className={`h-3 w-3 ${/\d/.test(password) ? 'text-green-500' : 'text-gray-400'}`} />
+                        <CheckCircle className={`h-3 w-3 ${/\d/.test(password) ? 'status-success' : 'text-muted-dark'}`} />
                         <span>One number</span>
                       </li>
                     </ul>

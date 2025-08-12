@@ -135,7 +135,7 @@ export default function DemoPage() {
                       type="text"
                       id="name"
                       required
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-[hsl(222,47%,16%)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--ring)] card-background text-primary-dark"
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--ring)] card-background text-primary-dark"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
@@ -149,7 +149,7 @@ export default function DemoPage() {
                       type="email"
                       id="email"
                       required
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-[hsl(222,47%,16%)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--ring)] card-background text-primary-dark"
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--ring)] card-background text-primary-dark"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     />
@@ -163,7 +163,7 @@ export default function DemoPage() {
                       type="text"
                       id="company"
                       required
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-[hsl(222,47%,16%)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--ring)] card-background text-primary-dark"
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--ring)] card-background text-primary-dark"
                       value={formData.company}
                       onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                     />
@@ -176,7 +176,7 @@ export default function DemoPage() {
                     <input
                       type="tel"
                       id="phone"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-[hsl(222,47%,16%)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--ring)] card-background text-primary-dark"
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--ring)] card-background text-primary-dark"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     />
@@ -236,7 +236,7 @@ export default function DemoPage() {
                     <textarea
                       id="message"
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-[hsl(222,47%,16%)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--ring)] card-background text-primary-dark"
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--ring)] card-background text-primary-dark"
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     />

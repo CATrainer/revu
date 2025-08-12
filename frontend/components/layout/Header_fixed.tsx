@@ -83,7 +83,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                     setSearchOpen(false);
                     setSearchQuery('');
                   }}
-                  className="hover:bg-gray-100 dark:hover:bg-[hsl(222,84%,12%)]"
+                  className="hover-background"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -93,7 +93,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setSearchOpen(true)}
-                className="hover:bg-gray-100 dark:hover:bg-[hsl(222,84%,12%)]"
+                className="hover-background"
               >
                 <Search className="h-5 w-5" />
               </Button>
@@ -102,7 +102,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             {/* Notifications */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="relative hover:bg-gray-100 dark:hover:bg-[hsl(222,84%,12%)]">
+                <Button variant="ghost" size="sm" className="relative hover-background">
                   <Bell className="h-5 w-5" />
                   {mockNotifications.some(n => n.unread) && (
                     <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>

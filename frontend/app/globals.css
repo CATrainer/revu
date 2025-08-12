@@ -260,7 +260,8 @@
   .dark .status-danger { @apply text-[var(--danger)]; }
   .status-danger-bg { @apply bg-[var(--danger)]; }
   .dark .status-danger-bg { @apply bg-[var(--danger)]; }
-  .status-info { @apply text-[var(--info)]; }
+  /* On AI page: blue in dark mode is fine; switch to brand in light mode */
+  .status-info { @apply text-[var(--brand-primary)]; }
   .dark .status-info { @apply text-[var(--info)]; }
   .status-info-bg { @apply bg-[var(--info)]; }
   .dark .status-info-bg { @apply bg-[var(--info)]; }
@@ -276,9 +277,6 @@
   .form-input-error { @apply border-[var(--danger)]; }
   .form-input-error:focus { @apply ring-[var(--danger)]; }
 
-  /* Replace multi-via Tailwind gradient with explicit custom gradient */
-  .gradient-brand { background-image: linear-gradient(to right, var(--brand-gradient-start) 0%, var(--brand-gradient-mid1) 30%, var(--brand-gradient-mid2) 60%, var(--brand-gradient-end) 100%); }
-  .dark .gradient-brand { background-image: linear-gradient(to right, var(--brand-gradient-start) 0%, var(--brand-gradient-mid1) 30%, var(--brand-gradient-mid2) 60%, var(--brand-gradient-end) 100%); }
   .gradient-light { @apply bg-gradient-to-b from-[var(--muted)] to-[var(--background)]; }
   .dark .gradient-light { @apply from-[var(--secondary)] to-[var(--background)]; }
 

@@ -7,8 +7,8 @@ export default function AIAssistantPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Ask Repruv AI Anything About Your Reviews</h1>
-        <p className="text-gray-600">Get instant insights from your review data using natural language</p>
+  <h1 className="text-2xl font-bold text-primary-dark mb-2">Ask Repruv AI Anything About Your Reviews</h1>
+  <p className="text-secondary-dark">Get instant insights from your review data using natural language</p>
       </div>
       
       <Card>
@@ -18,7 +18,7 @@ export default function AIAssistantPage() {
               <input
                 type="text"
                 placeholder="e.g., 'Why are ratings dropping in Leeds?' or 'Show me reviews mentioning delivery times'"
-                className="w-full px-4 py-3 pr-12 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent"
+                className="w-full px-4 py-3 pr-12 text-primary-dark placeholder:text-muted-dark border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent card-background"
               />
               <Button
                 size="icon"
@@ -29,7 +29,7 @@ export default function AIAssistantPage() {
             </div>
             
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Suggested Queries:</h3>
+              <h3 className="text-sm font-medium text-secondary-dark mb-2">Suggested Queries:</h3>
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm">
                   What are customers saying about our new menu?

@@ -7,7 +7,7 @@ import { Trophy } from 'lucide-react';
 export default function CompetitorsPage() {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Competitor Tracking</h1>
+  <h1 className="text-2xl font-bold text-primary-dark mb-8">Competitor Tracking</h1>
       <EmptyState
         icon={Trophy}
         title="No competitors added"

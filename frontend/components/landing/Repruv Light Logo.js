@@ -18,7 +18,7 @@ export default function OurVision() {
         <h2 className="text-2xl font-bold mb-4">Our Vision</h2>
         <p>
           {/* ...your vision paragraph text here... */}
-          At Repruve, our vision is to empower businesses with intelligent tools for managing their online reputation, fostering trust, and driving growth in the digital age.
+          At Repruv, our vision is to empower businesses with intelligent tools for managing their online reputation, fostering trust, and driving growth in the digital age.
         </p>
       </div>
     </section>

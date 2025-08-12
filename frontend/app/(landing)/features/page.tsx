@@ -43,23 +43,23 @@ export default function FeaturesPage() {
             </p>
             <ul className="space-y-3">
               <li className="flex items-start">
-                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span className="text-emerald-600 dark:text-emerald-400 mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Real-time syncing from Google, TripAdvisor, Facebook & more</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span className="text-emerald-600 dark:text-emerald-400 mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Smart filters to prioritize what matters most</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span className="text-emerald-600 dark:text-emerald-400 mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Bulk actions for efficient management</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span className="text-emerald-600 dark:text-emerald-400 mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Team collaboration with assignments and notes</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span className="text-emerald-600 dark:text-emerald-400 mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Response tracking and analytics</span>
               </li>
             </ul>
@@ -89,23 +89,23 @@ export default function FeaturesPage() {
               </p>
               <ul className="space-y-3">
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Learns your brand voice and tone</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Context-aware responses for every situation</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">✓</span>
                   <span className="text-body-dark">One-click generation and sending</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Improves with every edit you make</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Multi-language support coming soon</span>
                 </li>
               </ul>
@@ -129,23 +129,23 @@ export default function FeaturesPage() {
             </p>
             <ul className="space-y-3">
               <li className="flex items-start">
-                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span className="text-amber-600 dark:text-amber-400 mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Monitor unlimited competitors</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span className="text-amber-600 dark:text-amber-400 mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Rating and review velocity comparisons</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span className="text-amber-600 dark:text-amber-400 mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Sentiment analysis benchmarking</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span className="text-amber-600 dark:text-amber-400 mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Alert when competitors make moves</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-3 mt-1">✓</span>
+                <span className="text-amber-600 dark:text-amber-400 mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Identify opportunities and threats</span>
               </li>
             </ul>
@@ -175,23 +175,23 @@ export default function FeaturesPage() {
               </p>
               <ul className="space-y-3">
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-pink-600 dark:text-pink-400 mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Monitor Facebook, Instagram, Twitter, and more</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-pink-600 dark:text-pink-400 mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Real-time sentiment analysis</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-pink-600 dark:text-pink-400 mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Automated alert notifications</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-pink-600 dark:text-pink-400 mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Hashtag and keyword tracking</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-pink-600 dark:text-pink-400 mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Influencer mention identification</span>
                 </li>
               </ul>
@@ -205,8 +205,8 @@ export default function FeaturesPage() {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="h-12 w-12 bg-green-100 dark:bg-green-500/10 rounded-lg flex items-center justify-center">
-                <FaChartBar className="h-6 w-6 text-green-600" />
+              <div className="h-12 w-12 brand-background rounded-lg flex items-center justify-center">
+                <FaChartBar className="h-6 w-6 brand-text" />
               </div>
               <h2 className="text-3xl font-bold text-primary-dark">Analytics & Reports</h2>
             </div>
@@ -242,8 +242,8 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* Team Collaboration Section */}
-      <section id="team-collaboration" className="section-background-alt py-24">
+  {/* Team Collaboration Section */}
+  <section id="team-collaboration" className="section-background py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1 card-background rounded-lg p-8 h-96 flex items-center justify-center shadow-sm">
@@ -261,19 +261,19 @@ export default function FeaturesPage() {
               </p>
               <ul className="space-y-3">
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-purple-600 dark:text-purple-400 mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Role-based access control</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-purple-600 dark:text-purple-400 mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Task assignments and notifications</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-purple-600 dark:text-purple-400 mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Internal notes and comments</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-purple-600 dark:text-purple-400 mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Approval workflows</span>
                 </li>
                 <li className="flex items-start">
@@ -286,16 +286,16 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* More Features Grid */}
-      <section className="section-background-alt py-24">
+  {/* More Features Grid */}
+  <section className="section-background-alt py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-primary-dark mb-12 text-center">
             And So Much More...
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="card-background p-6 rounded-lg shadow-sm">
+      <div className="card-background p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-center mb-4">
-                <FaMobileAlt className="h-10 w-10 text-pink-500" />
+        <FaMobileAlt className="h-10 w-10 text-purple-600 dark:text-purple-400" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-primary-dark">Social Monitoring</h3>
               <p className="text-secondary-dark">
@@ -304,7 +304,7 @@ export default function FeaturesPage() {
             </div>
             <div className="card-background p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-center mb-4">
-                <FaChartBar className="h-10 w-10 text-green-600" />
+        <FaChartBar className="h-10 w-10 text-amber-600 dark:text-amber-400" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-primary-dark">Advanced Analytics</h3>
               <p className="text-secondary-dark">
@@ -313,7 +313,7 @@ export default function FeaturesPage() {
             </div>
             <div className="card-background p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-center mb-4">
-                <FaUsers className="h-10 w-10 brand-text" />
+        <FaUsers className="h-10 w-10 text-sky-600 dark:text-sky-400" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-primary-dark">Team Collaboration</h3>
               <p className="text-secondary-dark">
@@ -331,7 +331,7 @@ export default function FeaturesPage() {
             </div>
             <div className="card-background p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-center mb-4">
-                <FaClock className="h-10 w-10 text-sky-600" />
+        <FaClock className="h-10 w-10 text-rose-600 dark:text-rose-400" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-primary-dark">Response Templates</h3>
               <p className="text-secondary-dark">
@@ -340,7 +340,7 @@ export default function FeaturesPage() {
             </div>
             <div className="card-background p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-center mb-4">
-                <FaShieldAlt className="h-10 w-10 brand-text" />
+        <FaShieldAlt className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-primary-dark">Enterprise Security</h3>
               <p className="text-secondary-dark">
@@ -352,19 +352,19 @@ export default function FeaturesPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-24 gradient-brand">
+      <section className="py-24 section-background-alt">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-white mb-4">
+          <h2 className="text-3xl font-bold text-primary-dark mb-4">
             Ready to Transform Your Review Management?
           </h2>
-          <p className="text-xl text-white/90 mb-8">
+          <p className="text-xl text-secondary-dark mb-8">
             Join hundreds of businesses already using Repruv to save time and grow
           </p>
           <div className="flex justify-center gap-4">
-            <Button size="lg" className="bg-white text-[var(--brand-primary-solid)] hover:bg-[var(--muted)] hover:text-[var(--brand-primary-solid-hover)] border-0" asChild>
+            <Button size="lg" className="button-primary" asChild>
               <Link href="/join-waitlist">Join Waiting List</Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[var(--brand-primary-solid)] bg-transparent" asChild>
+            <Button size="lg" className="button-secondary" asChild>
               <Link href="/demo">Request Demo</Link>
             </Button>
           </div>

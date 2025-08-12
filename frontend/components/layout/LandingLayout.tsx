@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { Footer } from './Footer';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ import {
 export function LandingLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isAuthenticated, isLoading, checkAuth } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     checkAuth();
@@ -60,19 +62,31 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
-                      <NavigationMenuTrigger>Features</NavigationMenuTrigger>
+                      {/* Make trigger navigate on click; dropdown still opens on hover/keyboard */}
+                      <NavigationMenuTrigger
+                        onPointerDown={(e) => {
+                          // Only handle primary button without modifier keys
+                          if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+                            e.preventDefault();
+                            router.push('/features');
+                          }
+                        }}
+                        aria-label="Open features menu or click to go to Features"
+                      >
+                        Features
+                      </NavigationMenuTrigger>
                       <NavigationMenuContent>
                         <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
                           <li className="row-span-3">
                             <NavigationMenuLink asChild>
                               <Link
-                                className="flex h-full w-full select-none flex-col justify-end rounded-md gradient-brand p-6 no-underline outline-none focus:shadow-md"
+                                className="flex h-full w-full select-none flex-col justify-end rounded-md brand-background p-6 no-underline outline-none focus:shadow-md"
                                 href="/features"
                               >
-                                <div className="mb-2 mt-4 text-lg font-medium text-white">
+                                <div className="mb-2 mt-4 text-lg font-medium text-primary-dark">
                                   All Features
                                 </div>
-                                <p className="text-sm leading-tight text-white/90">
+                                <p className="text-sm leading-tight text-secondary-dark">
                                   Discover how Repruv can transform your review management
                                 </p>
                               </Link>
@@ -218,7 +232,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                 Request Demo
               </Link>
             </div>
-            <div className="pt-4 pb-3 border-t border-gray-200 dark:border-[hsl(222,47%,16%)]">
+            <div className="pt-4 pb-3 border-t border-[var(--border)]">
               <div className="flex items-center justify-center px-4 mb-3">
                 <ThemeToggle />
               </div>
@@ -249,7 +263,9 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-grow">{children}</main>
       
       {/* Footer */}
-      <Footer />
+      <div className="border-t border-[var(--border)]">
+        <Footer />
+      </div>
     </div>
   );
 }

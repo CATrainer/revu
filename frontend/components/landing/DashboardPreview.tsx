@@ -25,15 +25,15 @@ const metrics: MiniMetricProps[] = [
 export function DashboardPreview() {
   return (
     <div
-      className="relative mx-auto max-w-5xl rounded-xl shadow-2xl border border-muted bg-white dark:bg-[hsl(222,84%,7%)] overflow-hidden backdrop-blur-sm" 
+      className="relative mx-auto max-w-5xl rounded-xl shadow-2xl border border-muted bg-[var(--card)] overflow-hidden backdrop-blur-sm" 
       style={{ perspective: '2000px' }}
     >
       {/* Header bar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-muted bg-gray-50 dark:bg-[hsl(222,84%,8%)] text-primary-dark select-none pointer-events-none">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-muted bg-[var(--muted)] dark:bg-[var(--secondary)] text-primary-dark select-none pointer-events-none">
         <div className="flex items-center space-x-2">
-          <div className="h-3 w-3 rounded-full bg-red-400" />
-          <div className="h-3 w-3 rounded-full bg-yellow-400" />
-            <div className="h-3 w-3 rounded-full bg-green-400" />
+          <div className="h-3 w-3 rounded-full bg-[var(--danger)]/80" />
+          <div className="h-3 w-3 rounded-full bg-[var(--warning)]/80" />
+            <div className="h-3 w-3 rounded-full bg-[var(--success)]/80" />
           <span className="ml-3 font-semibold text-sm">Repruv Dashboard (Preview)</span>
         </div>
         <div className="text-xs text-secondary-dark hidden sm:block">Static preview • Not live data</div>
@@ -108,16 +108,16 @@ export function DashboardPreview() {
               </p>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[10px] text-secondary-dark">
-              <div className="p-2 rounded bg-gray-50 dark:bg-[hsl(222,84%,8%)]">Peak: 9-11am</div>
-              <div className="p-2 rounded bg-gray-50 dark:bg-[hsl(222,84%,8%)]">Slow: 2-4pm</div>
-              <div className="p-2 rounded bg-gray-50 dark:bg-[hsl(222,84%,8%)]">Best Resp: 2.1h</div>
+              <div className="p-2 rounded bg-[var(--muted)] dark:bg-[var(--secondary)]">Peak: 9-11am</div>
+              <div className="p-2 rounded bg-[var(--muted)] dark:bg-[var(--secondary)]">Slow: 2-4pm</div>
+              <div className="p-2 rounded bg-[var(--muted)] dark:bg-[var(--secondary)]">Best Resp: 2.1h</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Fade vignette to blend with hero background */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white dark:from-[hsl(222,84%,5%)] to-transparent" />
+  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[var(--background)] to-transparent" />
     </div>
   );
 }

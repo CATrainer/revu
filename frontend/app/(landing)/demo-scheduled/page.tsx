@@ -229,7 +229,7 @@ const DemoScheduledPage = () => {
                     </div>
 
                     {error && (
-                      <div className="text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded">
+                      <div className="text-destructive text-sm bg-[var(--destructive-muted)] p-3 rounded">
                         {error}
                       </div>
                     )}
@@ -330,25 +330,25 @@ const DemoScheduledPage = () => {
           <Card className="button-primary mb-8">
             <CardContent className="pt-6">
               <div className="text-center">
-                <h3 className="text-xl font-bold mb-2 flex items-center justify-center gap-2 text-white">
+                <h3 className="text-xl font-bold mb-2 flex items-center justify-center gap-2 text-primary-dark">
                   <Sparkles className="h-6 w-6" />
                   Get Early Access While You Wait
                 </h3>
-                <p className="mb-4 text-white/90">
+                <p className="mb-4 text-secondary-dark">
                   Don&apos;t wait for the demo! Create your Repruv account now and start exploring our platform. 
                   You&apos;ll be better prepared for the demonstration and can begin optimizing your review strategy immediately.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button 
                     variant="secondary" 
-                    className="bg-white text-[var(--brand-primary-solid)] hover:bg-[var(--muted)]"
+                    className="card-background text-[var(--brand-primary-solid)] hover:section-background-alt"
                     onClick={() => setShowSignupPrompt(true)}
                   >
                     Create Account Now
                   </Button>
                   <Button 
                     variant="secondary" 
-                    className="bg-white/10 text-white border-white/30 hover:bg-white hover:text-[var(--brand-primary-solid)]"
+                    className="button-secondary"
                     onClick={() => router.push('/login')}
                   >
                     Already Have an Account?

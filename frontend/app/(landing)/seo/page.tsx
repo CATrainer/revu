@@ -40,7 +40,7 @@ export default function SEOPage() {
           </div>
           <div className="card-background p-8 rounded-lg shadow-sm">
             <div className="flex items-center justify-center mb-6">
-              <TrendingUp className="h-12 w-12 text-green-600" />
+              <TrendingUp className="h-12 w-12 brand-text" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-primary-dark">Local Pack Rankings</h3>
             <p className="text-secondary-dark">
@@ -111,15 +111,15 @@ export default function SEOPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-secondary-dark">Local Search Visibility</span>
-                  <span className="text-2xl font-bold text-green-600">+47%</span>
+                  <span className="text-2xl font-bold brand-text">+47%</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-secondary-dark">Click-Through Rate</span>
-                  <span className="text-2xl font-bold text-green-600">+32%</span>
+                  <span className="text-2xl font-bold brand-text">+32%</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-secondary-dark">Map Pack Position</span>
-                  <span className="text-2xl font-bold text-green-600">#3 → #1</span>
+                  <span className="text-2xl font-bold brand-text">#3 → #1</span>
                 </div>
               </div>
             </div>
@@ -127,8 +127,8 @@ export default function SEOPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24">
+  {/* CTA Section */}
+  <section className="py-16 section-background-alt border-t border-[var(--border)]">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-primary-dark mb-4">
             Ready to Dominate Local Search?

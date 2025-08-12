@@ -23,37 +23,38 @@ interface Feature {
 const features: Feature[] = [
   {
     icon: FaStar,
-    iconColor: "text-amber-500", // Brighter gold for review stars
+  // Home page feature set: use one consistent, non-green accent across the set
+  iconColor: "text-sky-600 dark:text-sky-400",
     title: 'Review Management',
     description: 'Centralize all reviews from Google, TrustPilot, Social Media platforms and more into one intelligent inbox.',
   },
   {
     icon: FaBrain,
-    iconColor: "brand-text", // Deep purple/blue for AI/technology
+  iconColor: "text-sky-600 dark:text-sky-400",
     title: 'AI Responses',
     description: 'Generate personalized responses in your brand voice using AI.',
   },
   {
     icon: FaBinoculars,
-    iconColor: "text-sky-600", // Professional blue for business insights
+  iconColor: "text-sky-600 dark:text-sky-400",
     title: 'Competitor Tracking',
     description: 'Monitor and benchmark against local competitors to stay ahead of the competition.',
   },
   {
     icon: FaHashtag,
-    iconColor: "text-pink-500", // Social media pink (common in social platforms)
+  iconColor: "text-sky-600 dark:text-sky-400",
     title: 'Social Monitoring',
     description: 'Track mentions and feedback across social media platforms.',
   },
   {
     icon: FaChartBar,
-    iconColor: "text-green-600", // Success/growth green for analytics
+  iconColor: "text-sky-600 dark:text-sky-400",
     title: 'Analytics & Reports',
     description: 'Get actionable insights with comprehensive reporting and analytics derived from your review data.',
   },
   {
     icon: FaUsers,
-    iconColor: "brand-text", // Was text-purple-600
+  iconColor: "text-sky-600 dark:text-sky-400",
     title: 'Team Collaboration',
     description: 'Work collaboratively with task assignments, role-based permissions and automation workflows.',
   },

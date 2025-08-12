@@ -16,12 +16,12 @@ interface MetricsCardProps {
 
 export function MetricsCard({ title, value, change, icon: Icon, trend }: MetricsCardProps) {
   return (
-    <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-[hsl(222,84%,8%)] border-gray-200 dark:border-[hsl(222,47%,16%)]">
+  <Card className="hover:shadow-lg transition-shadow cursor-pointer card-background border-[var(--border)]">
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600 dark:text-[hsl(215,20%,65%)]">{title}</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-[hsl(215,20%,85%)] mt-2">{value}</p>
+            <p className="text-sm font-medium text-secondary-dark">{title}</p>
+            <p className="text-2xl font-bold text-primary-dark mt-2">{value}</p>
             {change && (
               <div className="flex items-center mt-2">
                 <span
@@ -33,7 +33,7 @@ export function MetricsCard({ title, value, change, icon: Icon, trend }: Metrics
                   {change.type === 'increase' ? '↑' : '↓'} {Math.abs(change.value)}%
                 </span>
                 {trend && (
-                  <span className="text-sm text-gray-500 dark:text-[hsl(215,20%,55%)] ml-2">{trend}</span>
+                  <span className="text-sm text-muted-dark ml-2">{trend}</span>
                 )}
               </div>
             )}

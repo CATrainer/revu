@@ -128,9 +128,9 @@ const AdminDemoPage = () => {
 
   const getStatusBadge = (user: DemoUser) => {
     if (user.demo_completed) {
-      return <Badge variant="default" className="bg-green-100 text-green-800">Completed</Badge>;
+  return <Badge variant="default" className="status-success">Completed</Badge>;
     } else if (user.demo_scheduled_at) {
-      return <Badge variant="default" className="bg-blue-100 text-blue-800">Scheduled</Badge>;
+  return <Badge variant="default" className="status-info">Scheduled</Badge>;
     } else if (user.demo_requested) {
       return <Badge variant="default" className="bg-yellow-100 text-yellow-800">Requested</Badge>;
     }
@@ -165,8 +165,8 @@ const AdminDemoPage = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-64">
           <div className="text-center">
-            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-400" />
-            <div className="text-gray-600">Loading demo requests...</div>
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-dark" />
+            <div className="text-secondary-dark">Loading demo requests...</div>
           </div>
         </div>
       </div>
@@ -178,8 +178,8 @@ const AdminDemoPage = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Demo Management</h1>
-            <p className="text-gray-600">Manage demo requests and track progress</p>
+            <h1 className="text-3xl font-bold text-primary-dark mb-2">Demo Management</h1>
+            <p className="text-secondary-dark">Manage demo requests and track progress</p>
           </div>
           <Button 
             onClick={fetchDemoUsers}
@@ -192,10 +192,10 @@ const AdminDemoPage = () => {
         </div>
         
         {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <div className="mt-4 p-4 bg-[var(--destructive-muted)] border border-[var(--destructive)] rounded-md">
             <div className="flex items-center">
               <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-              <p className="text-red-700">{error}</p>
+              <p className="text-destructive">{error}</p>
             </div>
           </div>
         )}
@@ -292,12 +292,12 @@ const AdminDemoPage = () => {
                   <TableCell>
                     <div>
                       <div className="font-medium">{user.full_name || 'N/A'}</div>
-                      <div className="text-sm text-gray-500">{user.email}</div>
+                      <div className="text-sm text-muted-dark">{user.email}</div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center">
-                      <Building2 className="h-4 w-4 mr-2 text-gray-400" />
+                      <Building2 className="h-4 w-4 mr-2 text-muted-dark" />
                       {user.company}
                     </div>
                   </TableCell>
@@ -407,8 +407,8 @@ const AdminDemoPage = () => {
           </Table>
           
           {filteredUsers.length === 0 && !isLoading && (
-            <div className="text-center py-12 text-gray-500">
-              <User className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <div className="text-center py-12 text-muted-dark">
+              <User className="h-12 w-12 mx-auto mb-4 text-muted-dark" />
               <div className="mb-4">
                 {users.length === 0 
                   ? "No demo requests found. Demo requests will appear here when users request demos from your landing page."
@@ -416,7 +416,7 @@ const AdminDemoPage = () => {
                 }
               </div>
               {users.length === 0 && (
-                <div className="text-sm text-gray-400">
+                <div className="text-sm text-muted-dark">
                   <p>Demo requests are typically created when:</p>
                   <ul className="mt-2 space-y-1">
                     <li>• Users fill out demo request forms on your website</li>

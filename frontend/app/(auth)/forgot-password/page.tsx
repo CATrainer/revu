@@ -190,7 +190,7 @@ export default function ForgotPasswordPage() {
             </form>
 
             {/* Help Section */}
-            <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="mt-6 p-4 section-background-alt rounded-lg">
               <p className="text-xs text-secondary-dark text-center">
                 <strong>Need help?</strong> Contact our support team at{' '}
                 <a href="mailto:support@repruv.co.uk" className="brand-text hover:underline">

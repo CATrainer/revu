@@ -10,7 +10,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-50">
+  <div className="h-screen flex overflow-hidden section-background">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex">
         <Sidebar />

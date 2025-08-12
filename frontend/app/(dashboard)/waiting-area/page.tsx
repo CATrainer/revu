@@ -264,9 +264,9 @@ export default function WaitingAreaPage() {
               <div className="border-l-4 border-brand pl-4">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium">Week of July 28, 2025</span>
-                  <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Complete</span>
+                  <span className="status-success-bg text-white text-xs px-2 py-1 rounded-full">Complete</span>
                 </div>
-                <p className="text-gray-600 text-sm">
+                <p className="text-secondary-dark text-sm">
                   ✅ AI response engine optimization completed<br/>
                   ✅ Google My Business integration testing<br/>
                   ✅ Security audit and penetration testing
@@ -276,9 +276,9 @@ export default function WaitingAreaPage() {
               <div className="border-l-4 border-yellow-500 pl-4">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium">Week of August 4, 2025</span>
-                  <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">In Progress</span>
+                  <span className="status-warning-bg text-[var(--foreground)]/90 text-xs px-2 py-1 rounded-full">In Progress</span>
                 </div>
-                <p className="text-gray-600 text-sm">
+                <p className="text-secondary-dark text-sm">
                   🔄 Dashboard UI/UX improvements<br/>
                   🔄 Multi-location management features<br/>
                   🔄 Advanced analytics dashboard
@@ -288,9 +288,9 @@ export default function WaitingAreaPage() {
               <div className="border-l-4 border-muted pl-4">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium">Week of August 11, 2025</span>
-                  <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">Planned</span>
+                  <span className="status-info-bg text-white text-xs px-2 py-1 rounded-full">Planned</span>
                 </div>
-                <p className="text-gray-600 text-sm">
+                <p className="text-secondary-dark text-sm">
                   📋 Yelp integration development<br/>
                   📋 Email notification system<br/>
                   📋 Mobile app MVP development
@@ -302,8 +302,8 @@ export default function WaitingAreaPage() {
 
         {/* Contact Section */}
         <div className="mt-8 text-center">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Questions?</h3>
-          <p className="text-gray-600 mb-4">
+          <h3 className="text-lg font-medium text-primary-dark mb-2">Questions?</h3>
+          <p className="text-secondary-dark mb-4">
             We&apos;re here to help! Reach out to us anytime.
           </p>
           <div className="flex justify-center gap-4">

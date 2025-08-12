@@ -240,9 +240,9 @@ export default function AdminPage() {
       case 'waiting_list':
         return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Waiting List</Badge>;
       case 'early_access':
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Early Access</Badge>;
+  return <Badge variant="secondary" className="status-info">Early Access</Badge>;
       case 'full_access':
-        return <Badge variant="default" className="bg-green-100 text-green-800">Full Access</Badge>;
+  return <Badge variant="default" className="status-success">Full Access</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -250,9 +250,9 @@ export default function AdminPage() {
 
   const getAccountBadge = (hasAccount: boolean) => {
     return hasAccount ? (
-      <Badge variant="default" className="bg-green-100 text-green-800">Yes</Badge>
+  <Badge variant="default" className="status-success">Yes</Badge>
     ) : (
-      <Badge variant="outline" className="bg-gray-100 text-gray-600">No</Badge>
+  <Badge variant="outline" className="text-secondary-dark">No</Badge>
     );
   };
 
@@ -334,17 +334,17 @@ export default function AdminPage() {
             <UserCheck className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.users_with_accounts}</div>
+            <div className="text-2xl font-bold status-success-text">{stats.users_with_accounts}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">No Account</CardTitle>
-            <Users className="h-4 w-4 text-gray-500" />
+            <Users className="h-4 w-4 text-muted-dark" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-600">{stats.users_without_accounts}</div>
+            <div className="text-2xl font-bold text-secondary-dark">{stats.users_without_accounts}</div>
           </CardContent>
         </Card>
       </div>
@@ -362,7 +362,7 @@ export default function AdminPage() {
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-dark h-4 w-4" />
                 <Input
                   placeholder="Search by name or email..."
                   value={searchQuery}
@@ -404,7 +404,7 @@ export default function AdminPage() {
           </div>
           
           {/* Results count */}
-          <div className="mt-4 text-sm text-gray-600">
+          <div className="mt-4 text-sm text-secondary-dark">
             Showing {filteredUsers.length} of {users.length} users
           </div>
         </CardContent>
@@ -476,7 +476,7 @@ export default function AdminPage() {
               
               {filteredUsers.length === 0 && (
                 <TableRow>
-                  <td colSpan={7} className="p-4 text-center py-8 text-gray-500">
+                  <td colSpan={7} className="p-4 text-center py-8 text-muted-dark">
                     {users.length === 0 
                       ? "No users found." 
                       : "No users match the current filters."

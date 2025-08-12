@@ -94,7 +94,7 @@ function WaitlistSuccessContent() {
             {!showAccountForm ? (
               <div className="space-y-4">
                 <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-secondary-dark mb-4">
                     Want to get special offers and potential early access?
                   </p>
                   <div className="space-y-2">

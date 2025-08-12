@@ -101,7 +101,7 @@ export default function DemoBookedPage() {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center space-x-2">
                 <Calendar className="h-5 w-5 text-blue-600" />
-                <span className="text-sm font-medium text-blue-800">
+                <span className="text-sm font-medium text-primary-dark">
                   Demo scheduled - Check your email for details
                 </span>
               </div>
@@ -110,7 +110,7 @@ export default function DemoBookedPage() {
             {!showAccountForm ? (
               <div className="space-y-4">
                 <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-secondary-dark mb-4">
                     Want to get the most out of your demo? Create an account to unlock exclusive features and early access.
                   </p>
                   <div className="space-y-2">
