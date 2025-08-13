@@ -181,7 +181,7 @@ export default function AIPage() {
             Let AI handle the heavy lifting while you focus on your business
           </p>
           <Button size="lg" className="button-primary" asChild>
-            <Link href="/join-waitlist">Join Waiting List</Link>
+            <Link href="/join-waitlist">Get Early Access</Link>
           </Button>
         </div>
       </section>

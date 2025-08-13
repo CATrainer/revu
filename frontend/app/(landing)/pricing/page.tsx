@@ -8,7 +8,7 @@ export default function PricingPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16">
         <Badge className="mb-4 bg-[var(--brand-primary-solid)] hover:bg-[var(--brand-primary-solid-hover)] text-[var(--brand-primary-solid-foreground)] border-0">Launch Special</Badge>
     <h1 className="text-4xl md:text-5xl font-bold text-primary-dark mb-4">
-          Simple, Transparent Pricing
+          Intuitive Pricing
         </h1>
     <p className="text-xl text-secondary-dark max-w-2xl mx-auto">
           Choose the plan that grows with your business. All plans include a 30-day free trial.

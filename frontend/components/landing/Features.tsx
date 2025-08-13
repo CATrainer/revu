@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { motion, LazyMotion, domAnimation, useInView } from "framer-motion";
 import { 
   FaStar,
-  FaBrain,         // Changed from FaRobot to FaBrain for AI
-  FaBinoculars,
-  FaHashtag,
-  FaChartBar,
-  FaUsers
+  FaBrain,         // AI brain for intelligent responses
+  FaBinoculars,    // Binoculars for competitor tracking
+  FaHashtag,       // Social media hashtag
+  FaChartBar,      // Analytics charts
+  FaUsers          // Team collaboration
 } from "react-icons/fa";
 import { IconType } from "react-icons";
 
@@ -23,38 +23,37 @@ interface Feature {
 const features: Feature[] = [
   {
     icon: FaStar,
-  // Home page feature set: use one consistent, non-green accent across the set
-  iconColor: "text-sky-600 dark:text-sky-400",
+    iconColor: "text-yellow-500 dark:text-yellow-400", // Golden yellow for star ratings
     title: 'Review Management',
     description: 'Centralize all reviews from Google, TrustPilot, Social Media platforms and more into one intelligent inbox.',
   },
   {
     icon: FaBrain,
-  iconColor: "text-sky-600 dark:text-sky-400",
+    iconColor: "text-purple-600 dark:text-purple-400", // Purple for AI intelligence
     title: 'AI Responses',
     description: 'Generate personalized responses in your brand voice using AI.',
   },
   {
     icon: FaBinoculars,
-  iconColor: "text-sky-600 dark:text-sky-400",
+    iconColor: "text-emerald-600 dark:text-emerald-400", // Green for competitive advantage
     title: 'Competitor Tracking',
     description: 'Monitor and benchmark against local competitors to stay ahead of the competition.',
   },
   {
     icon: FaHashtag,
-  iconColor: "text-sky-600 dark:text-sky-400",
+    iconColor: "text-blue-500 dark:text-blue-400", // Blue for social media
     title: 'Social Monitoring',
     description: 'Track mentions and feedback across social media platforms.',
   },
   {
     icon: FaChartBar,
-  iconColor: "text-sky-600 dark:text-sky-400",
+    iconColor: "text-orange-600 dark:text-orange-400", // Orange for analytics/data
     title: 'Analytics & Reports',
     description: 'Get actionable insights with comprehensive reporting and analytics derived from your review data.',
   },
   {
     icon: FaUsers,
-  iconColor: "text-sky-600 dark:text-sky-400",
+    iconColor: "text-indigo-600 dark:text-indigo-400", // Indigo for team collaboration
     title: 'Team Collaboration',
     description: 'Work collaboratively with task assignments, role-based permissions and automation workflows.',
   },
@@ -84,6 +83,14 @@ export function Features() {
                 initial={{ opacity: 0, y: 40 }}
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
                 transition={{ delay: index * 0.15, duration: 0.6 }}
+                whileHover={{ 
+                  scale: 1.05,
+                  transition: { duration: 0.2 }
+                }}
+                whileTap={{ 
+                  scale: 0.98,
+                  transition: { duration: 0.1 }
+                }}
                 className="card-background p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer"
               >
                 <Link href={`/features#${feature.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')}`} className="block">

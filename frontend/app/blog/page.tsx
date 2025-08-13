@@ -32,7 +32,7 @@ export default function BlogPage() {
               </p>
               
               <Button className="button-primary" onClick={() => window.location.href = '/demo'}>
-                Schedule a Demo Instead
+                Book a Demo Instead
               </Button>
             </div>
           </CardContent>

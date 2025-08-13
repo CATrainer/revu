@@ -136,10 +136,10 @@ export default function JoinWaitlistPage() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Joining Waitlist...
+                    Getting Early Access...
                   </>
                 ) : (
-                  'Join Waiting List'
+                  'Get Early Access'
                 )}
               </Button>
             </form>
