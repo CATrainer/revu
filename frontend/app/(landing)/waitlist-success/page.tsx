@@ -85,9 +85,9 @@ function WaitlistSuccessContent() {
             <div className="mx-auto mb-4">
               <CheckCircle className="h-16 w-16 text-green-500" />
             </div>
-            <CardTitle className="text-2xl font-bold">You&apos;re on the List!</CardTitle>
+            <CardTitle className="text-2xl font-bold">You&apos;re in!</CardTitle>
             <CardDescription>
-              Thank you for joining our waiting list. We&apos;ll notify you as soon as Repruv is ready for early access.
+              Thank you for getting early access. We&apos;ll notify you as soon as Repruv is ready.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

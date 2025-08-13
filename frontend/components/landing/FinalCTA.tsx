@@ -21,7 +21,7 @@ export function FinalCTA() {
           </Button>
         </div>
         <p className="mt-4 text-secondary-dark">
-          Get early access • Join the waiting list • Be first to know
+          Get early access • No lengthy waits • Be first to know
         </p>
       </div>
     </section>

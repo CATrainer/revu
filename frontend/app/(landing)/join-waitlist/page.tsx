@@ -32,8 +32,8 @@ export default function JoinWaitlistPage() {
       // Redirect to success page with user info
       router.push(`/waitlist-success?user_id=${response.data.user_id}&has_account=${response.data.has_account}&email=${encodeURIComponent(formData.email)}`);
     } catch (error: unknown) {
-      console.error('Failed to join waitlist:', error);
-      let errorMessage = 'Failed to join waitlist. Please try again.';
+      console.error('Failed to get early access:', error);
+      let errorMessage = 'Failed to get early access. Please try again.';
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: { detail?: string } } };
         errorMessage = axiosError.response?.data?.detail || errorMessage;
@@ -56,7 +56,7 @@ export default function JoinWaitlistPage() {
       <div className="max-w-md mx-auto px-4">
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Join Our Waiting List</CardTitle>
+            <CardTitle className="text-2xl font-bold">Get Early Access</CardTitle>
             <CardDescription>
               Be the first to know when Repruv launches and get early access to powerful review management tools.
             </CardDescription>

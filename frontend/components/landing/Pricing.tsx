@@ -54,7 +54,7 @@ export function Pricing() {
 
 	return (
 		<LazyMotion features={domAnimation}>
-			<section ref={ref} className="py-24 section-background">
+			<section ref={ref} className="py-24 section-background-alt">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 					<motion.div 
 						className="text-center mb-16"
@@ -145,7 +145,7 @@ export function Pricing() {
 						transition={{ delay: 0.8, duration: 0.6 }}
 					>
 						<p className="text-secondary-dark">
-							Join our waiting list to be first to access these plans when we
+							Get early access to be first to access these plans when we
 							launch.
 						</p>
 					</motion.div>

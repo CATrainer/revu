@@ -56,7 +56,7 @@ export default function ContactPage() {
                     <Link href="/demo">Book a Demo</Link>
                   </Button>
                   <Button variant="outline" asChild className="w-full button-secondary">
-                    <Link href="/join-waitlist">Join Waitlist</Link>
+                    <Link href="/join-waitlist">Get Early Access</Link>
                   </Button>
                   <Button variant="outline" asChild className="w-full button-secondary">
 
