@@ -17,7 +17,7 @@ export function Hero() {
   };
 
   return (
-    <section className="relative section-background-alt py-24 overflow-hidden">
+    <section id="hero" className="relative section-background-alt py-24 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-dark mb-6">

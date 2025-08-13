@@ -9,7 +9,7 @@ export function SocialProof() {
   const isInView = useInView(ref, { margin: "-100px" });
 
   return (
-    <section className="py-24 section-background-alt">
+    <section id="vision" className="py-24 section-background-alt">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div ref={ref} className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           

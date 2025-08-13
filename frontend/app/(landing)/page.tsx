@@ -4,6 +4,7 @@ import { Features } from '@/components/landing/Features';
 import { SocialProof } from '@/components/landing/SocialProof';
 import { Pricing } from '@/components/landing/Pricing';
 import { FinalCTA } from '@/components/landing/FinalCTA';
+import { ScrollNavigation } from '@/components/shared/ScrollNavigation';
 
 export default function HomePage() {
   return (
@@ -13,6 +14,7 @@ export default function HomePage() {
       <SocialProof />
       <Pricing />
       <FinalCTA />
+      <ScrollNavigation />
     </>
   );
 }
