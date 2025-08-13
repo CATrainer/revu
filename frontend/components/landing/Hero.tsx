@@ -30,11 +30,11 @@ export function Hero() {
             AI-powered insights that save you hours every week
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="button-primary" onClick={scrollToForm}>
+            <Button size="lg" className="button-primary py-4 px-8 text-lg font-semibold" onClick={scrollToForm}>
               Get Early Access
             </Button>
-            <Button size="lg" className="button-secondary" asChild>
-              <Link href="/demo">Request Demo</Link>
+            <Button size="lg" className="button-secondary py-4 px-8 text-lg font-semibold" asChild>
+              <Link href="/demo">Book Demo</Link>
             </Button>
           </div>
         </div>
