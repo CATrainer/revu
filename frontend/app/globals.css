@@ -192,6 +192,27 @@
 
 /* Semantic classes */
 @layer components {
+  /* Section theme variables for icon + checkmark colors */
+  .theme-home-features { --feature-icon: #0284C7; --feature-tick: #0284C7; }
+  .dark .theme-home-features { --feature-icon: #38BDF8; --feature-tick: #38BDF8; }
+
+  .theme-review { --feature-icon: #059669; --feature-tick: #059669; }
+  .dark .theme-review { --feature-icon: #34D399; --feature-tick: #34D399; }
+
+  .theme-ai { --feature-icon: #38BDF8; --feature-tick: #38BDF8; }
+  .dark .theme-ai { --feature-icon: #38BDF8; --feature-tick: #38BDF8; }
+
+  .theme-competitors { --feature-icon: #D97706; --feature-tick: #D97706; }
+  .dark .theme-competitors { --feature-icon: #F59E0B; --feature-tick: #F59E0B; }
+
+  .theme-social { --feature-icon: #DB2777; --feature-tick: #DB2777; }
+  .dark .theme-social { --feature-icon: #F472B6; --feature-tick: #F472B6; }
+
+  .theme-team { --feature-icon: #7C3AED; --feature-tick: #7C3AED; }
+  .dark .theme-team { --feature-icon: #A78BFA; --feature-tick: #A78BFA; }
+
+  .theme-analytics { --feature-icon: #4F46E5; --feature-tick: #4F46E5; }
+  .dark .theme-analytics { --feature-icon: #818CF8; --feature-tick: #818CF8; }
   .section-background { @apply bg-[var(--background)]; }
   .dark .section-background { @apply bg-[var(--background)]; }
   .section-background-alt { @apply bg-[var(--muted)]; }
