@@ -15,7 +15,6 @@ import { IconType } from "react-icons";
 
 interface Feature {
   icon: IconType;
-  iconColor: string;
   title: string;
   description: string;
 }
@@ -23,37 +22,37 @@ interface Feature {
 const features: Feature[] = [
   {
     icon: FaStar,
-    iconColor: "text-yellow-500 dark:text-yellow-400", // Golden yellow for star ratings
+
     title: 'Review Management',
     description: 'Centralize all reviews from Google, TrustPilot, Social Media platforms and more into one intelligent inbox.',
   },
   {
     icon: FaBrain,
-    iconColor: "text-purple-600 dark:text-purple-400", // Purple for AI intelligence
+
     title: 'AI Responses',
     description: 'Generate personalized responses in your brand voice using AI.',
   },
   {
     icon: FaBinoculars,
-    iconColor: "text-emerald-600 dark:text-emerald-400", // Green for competitive advantage
+
     title: 'Competitor Tracking',
     description: 'Monitor and benchmark against local competitors to stay ahead of the competition.',
   },
   {
     icon: FaHashtag,
-    iconColor: "text-blue-500 dark:text-blue-400", // Blue for social media
+
     title: 'Social Monitoring',
     description: 'Track mentions and feedback across social media platforms.',
   },
   {
     icon: FaChartBar,
-    iconColor: "text-orange-600 dark:text-orange-400", // Orange for analytics/data
+
     title: 'Analytics & Reports',
     description: 'Get actionable insights with comprehensive reporting and analytics derived from your review data.',
   },
   {
     icon: FaUsers,
-    iconColor: "text-indigo-600 dark:text-indigo-400", // Indigo for team collaboration
+
     title: 'Team Collaboration',
     description: 'Work collaboratively with task assignments, role-based permissions and automation workflows.',
   },
@@ -65,7 +64,7 @@ export function Features() {
 
   return (
     <LazyMotion features={domAnimation}>
-      <section id="features" ref={ref} className="py-24 section-background-alt">
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-primary-dark mb-4">
@@ -96,7 +95,7 @@ export function Features() {
                 <Link href={`/features#${feature.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')}`} className="block">
                   <div className="flex items-center justify-center mb-6">
                     <feature.icon 
-                      className={`${feature.iconColor} transition-transform hover:scale-110`} 
+                      className={`text-[var(--feature-icon)] transition-transform hover:scale-110`} 
                       size={48} 
                     />
                   </div>
