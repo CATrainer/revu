@@ -72,23 +72,46 @@ export function FinalCTA() {
   };
 
   return (
-    <section id="early-access-form" className="py-24 section-background-alt">
+    <motion.section 
+      id="early-access-form" 
+      className="py-24 section-background-alt"
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: false, amount: 0.3 }}
+      transition={{ duration: 0.8 }}
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          initial={{ opacity: 0, y: 50, scale: 0.9 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: false }}
+          transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-dark mb-4">
-            Ready to Transform Your Review Management?
-          </h2>
-          <p className="text-xl text-secondary-dark max-w-3xl mx-auto">
-            Join hundreds of businesses saving time and growing their reputation with Repruv
-          </p>
+          <motion.h2 
+            className="text-3xl md:text-4xl font-bold brand-text mb-4 font-['Poppins',sans-serif]"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            Ready to Transform Your Online Reputation?
+          </motion.h2>
+          <motion.p 
+            className="text-xl text-primary-dark max-w-3xl mx-auto font-['Poppins',sans-serif] font-bold"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            Join hundreds of businesses saving time and enchancing their online reputation with Repruv
+          </motion.p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+        <motion.div 
+          className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+        >
           {/* Left side - Early Access Form */}
           <motion.div 
             initial={{ opacity: 0, x: -30 }}
@@ -115,9 +138,9 @@ export function FinalCTA() {
                     animate={{ scale: focusedField ? 1.05 : 1 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <CardTitle className="text-2xl font-bold text-primary-dark">Get Early Access</CardTitle>
-                    <CardDescription className="text-secondary-dark mt-2">
-                      Be the first to know when Repruv launches and get early access to powerful review management tools.
+                    <CardTitle className="text-2xl font-bold text-primary-dark font-['Poppins',sans-serif]">Get Early Access</CardTitle>
+                    <CardDescription className="text-primary-dark mt-2 font-['Poppins',sans-serif] font-bold">
+                      Be the first to know when Repruv launches and get early access to powerful reputation management tools.
                     </CardDescription>
                   </motion.div>
                 </CardHeader>
@@ -129,7 +152,7 @@ export function FinalCTA() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
-                        <Label htmlFor="full_name" className="text-sm font-medium">Full Name *</Label>
+                        <Label htmlFor="full_name" className="text-sm font-medium font-['Poppins',sans-serif]">Full Name *</Label>
                         <Input
                           id="full_name"
                           name="full_name"
@@ -148,7 +171,7 @@ export function FinalCTA() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
-                        <Label htmlFor="email" className="text-sm font-medium">Email *</Label>
+                        <Label htmlFor="email" className="text-sm font-medium font-['Poppins',sans-serif]">Email *</Label>
                         <Input
                           id="email"
                           name="email"
@@ -185,7 +208,7 @@ export function FinalCTA() {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                           >
-                            <Label htmlFor="phone" className="text-sm font-medium">Phone Number</Label>
+                            <Label htmlFor="phone" className="text-sm font-medium font-['Poppins',sans-serif]">Phone Number</Label>
                             <Input
                               id="phone"
                               name="phone"
@@ -203,7 +226,7 @@ export function FinalCTA() {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                           >
-                            <Label htmlFor="company_name" className="text-sm font-medium">Company Name</Label>
+                            <Label htmlFor="company_name" className="text-sm font-medium font-['Poppins',sans-serif]">Company Name</Label>
                             <Input
                               id="company_name"
                               name="company_name"
@@ -222,7 +245,7 @@ export function FinalCTA() {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          <Label htmlFor="industry" className="text-sm font-medium">Industry</Label>
+                          <Label htmlFor="industry" className="text-sm font-medium font-['Poppins',sans-serif]">Industry</Label>
                           <Input
                             id="industry"
                             name="industry"
@@ -274,7 +297,7 @@ export function FinalCTA() {
                       <motion.p 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="text-center text-sm text-secondary-dark mt-3"
+                        className="text-center text-sm text-secondary-dark mt-3 font-['Poppins',sans-serif]"
                       >
                         Click to add optional details
                       </motion.p>
@@ -299,11 +322,11 @@ export function FinalCTA() {
             >
               <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 h-fit">
                 <CardContent className="p-6 text-center">
-                  <h3 className="text-xl font-semibold text-primary-dark mb-3">
+                  <h3 className="text-2xl font-bold text-primary-dark mb-3 font-['Poppins',sans-serif]">
                     Prefer a Demo?
                   </h3>
-                  <p className="text-secondary-dark mb-6 text-sm leading-relaxed">
-                    Schedule a personalized demo to see how Repruv can transform your review management process.
+                  <p className="text-primary-dark mb-6 text-sm leading-relaxed font-['Poppins',sans-serif] font-bold">
+                    Schedule a personalized demo to see how Repruv can enhcance your reputation management process.
                   </p>
                   <motion.div
                     whileHover={{ scale: 1.05 }}
@@ -315,7 +338,7 @@ export function FinalCTA() {
                   </motion.div>
                   
                   <div className="mt-6 pt-4 border-t border-[var(--border)]">
-                    <p className="text-xs text-secondary-dark">
+                    <p className="text-xs text-secondary-dark font-['Poppins',sans-serif]">
                       🎯 Personalized walkthrough • See live features • Ask questions
                     </p>
                   </div>
@@ -323,8 +346,8 @@ export function FinalCTA() {
               </Card>
             </motion.div>
           </motion.div>
-        </div>
+        </motion.div>
       </div>
-    </section>
+    </motion.section>
   );
 }

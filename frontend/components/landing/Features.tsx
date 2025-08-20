@@ -9,7 +9,13 @@ import {
   FaBinoculars,    // Binoculars for competitor tracking
   FaHashtag,       // Social media hashtag
   FaChartBar,      // Analytics charts
-  FaUsers          // Team collaboration
+  FaUsers,         // Team collaboration
+  FaInstagram,     // Instagram icon
+  FaFacebook,      // Facebook icon
+  FaTwitter,       // Twitter icon
+  FaYoutube,       // YouTube icon
+  FaLinkedin,      // LinkedIn icon
+  FaTiktok         // TikTok icon
 } from "react-icons/fa";
 import { IconType } from "react-icons";
 
@@ -65,51 +71,115 @@ export function Features() {
 
   return (
     <LazyMotion features={domAnimation}>
-      <section id="features" ref={ref} className="py-24 section-background-alt">
+      <motion.section 
+        id="features" 
+        ref={ref} 
+        className="py-24 section-background-alt"
+        initial={{ opacity: 0 }}
+        animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+        transition={{ duration: 0.6 }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-primary-dark mb-4">
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <motion.h2 
+              className="text-3xl md:text-4xl font-bold brand-text mb-4 font-['Poppins',sans-serif]"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
               Everything You Need to Manage Your Online Reputation
-            </h2>
-            <p className="text-lg text-secondary-dark max-w-2xl mx-auto">
+            </motion.h2>
+            <motion.p 
+              className="text-lg text-primary-dark max-w-2xl mx-auto font-['Poppins',sans-serif] font-bold"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+            >
               Powerful features designed to save you time and grow your business
-            </p>
-          </div>
+            </motion.p>
+          </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
             {features.map((feature, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 40 }}
-                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-                transition={{ delay: index * 0.15, duration: 0.6 }}
+                initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                animate={isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 50, scale: 0.9 }}
+                transition={{ 
+                  delay: 0.6 + (index * 0.1), 
+                  duration: 0.7,
+                  ease: [0.25, 0.46, 0.45, 0.94]
+                }}
                 whileHover={{ 
                   scale: 1.05,
+                  y: -5,
                   transition: { duration: 0.2 }
                 }}
                 whileTap={{ 
                   scale: 0.98,
                   transition: { duration: 0.1 }
                 }}
-                className="card-background p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                className="card-background p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer group relative overflow-hidden"
               >
-                <Link href={`/features#${feature.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')}`} className="block">
-                  <div className="flex items-center justify-center mb-6">
+                {/* Social Media Background Icons for Review Management */}
+                {feature.title === 'Review Management' && (
+                  <div className="absolute inset-0 opacity-5 pointer-events-none">
+                    <FaInstagram className="absolute top-4 right-4 text-pink-500" size={24} />
+                    <FaFacebook className="absolute top-16 right-12 text-blue-600" size={20} />
+                    <FaTwitter className="absolute top-8 right-24 text-blue-400" size={18} />
+                    <FaYoutube className="absolute bottom-16 right-8 text-red-500" size={22} />
+                    <FaLinkedin className="absolute bottom-8 right-20 text-blue-700" size={16} />
+                    <FaTiktok className="absolute bottom-4 right-32 text-black" size={20} />
+                    <FaInstagram className="absolute bottom-12 left-8 text-pink-500" size={18} />
+                    <FaFacebook className="absolute top-12 left-4 text-blue-600" size={24} />
+                    <FaTwitter className="absolute bottom-20 left-16 text-blue-400" size={16} />
+                    <FaYoutube className="absolute top-20 left-12 text-red-500" size={20} />
+                  </div>
+                )}
+                
+                <Link href={`/features#${feature.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')}`} className="block relative z-10">
+                  <motion.div 
+                    className="flex items-center justify-center mb-6"
+                    whileHover={{ rotate: 5 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <feature.icon 
-                      className={`${feature.iconColor} transition-transform hover:scale-110`} 
+                      className={`${feature.iconColor} transition-transform group-hover:scale-110`} 
                       size={48} 
                     />
-                  </div>
-                  <h3 className="text-xl font-semibold text-primary-dark mb-2">
+                  </motion.div>
+                  <motion.h3 
+                    className="text-xl font-semibold text-primary-dark mb-2 font-['Poppins',sans-serif]"
+                    initial={{ opacity: 0 }}
+                    animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+                    transition={{ delay: 0.8 + (index * 0.1), duration: 0.5 }}
+                  >
                     {feature.title}
-                  </h3>
-                  <p className="text-secondary-dark">{feature.description}</p>
+                  </motion.h3>
+                  <motion.p 
+                    className="text-secondary-dark font-['Poppins',sans-serif]"
+                    initial={{ opacity: 0 }}
+                    animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+                    transition={{ delay: 1.0 + (index * 0.1), duration: 0.5 }}
+                  >
+                    {feature.description}
+                  </motion.p>
                 </Link>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
     </LazyMotion>
   );
 }

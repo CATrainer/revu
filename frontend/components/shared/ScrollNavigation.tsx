@@ -14,8 +14,7 @@ const sections: Section[] = [
   { id: 'hero', name: 'Home' },
   { id: 'features', name: 'Everything You Need to Manage Your Online Reputation' },
   { id: 'vision', name: 'Our Vision' },
-  { id: 'pricing', name: 'Intuitive Pricing' },
-  { id: 'early-access-form', name: 'Ready to Transform Your Review Management?' }
+  { id: 'early-access-form', name: 'Ready to Transform Your Online Reputation?' }
 ];
 
 export function ScrollNavigation() {
