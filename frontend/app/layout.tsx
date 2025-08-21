@@ -1,9 +1,6 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/lib/theme';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
 
@@ -29,7 +26,7 @@ export default function RootLayout({
         <link rel="preload" as="image" href="/logo/text_light.png" />
         <link rel="preload" as="image" href="/logo/text_dark.png" />
       </head>
-      <body className={inter.className}>
+      <body className="font-sans">
         <ThemeProvider>
           {children}
         </ThemeProvider>

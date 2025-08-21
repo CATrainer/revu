@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Moon, Sun, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +12,22 @@ import {
 import { useTheme } from '@/lib/theme';
 
 export function ThemeToggle() {
+  const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // More robust fallback for SSR and missing context
+  if (!mounted || !theme) {
+    return (
+      <Button variant="ghost" size="sm" className="h-8 w-8 px-0">
+        <Sun className="h-[1.2rem] w-[1.2rem]" />
+        <span className="sr-only">Toggle theme</span>
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>

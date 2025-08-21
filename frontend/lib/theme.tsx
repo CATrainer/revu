@@ -13,18 +13,28 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('system');
+  const [theme, setTheme] = useState<Theme>('light'); // Default to light instead of system
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Load theme from localStorage
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme) {
-      setTheme(savedTheme);
+    setMounted(true);
+    // Load theme from localStorage after mount
+    try {
+      const savedTheme = localStorage.getItem('theme') as Theme;
+      if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
+        setTheme(savedTheme);
+      } else {
+        setTheme('system'); // Default to system after mount
+      }
+    } catch (error) {
+      console.warn('Failed to load theme from localStorage:', error);
     }
   }, []);
 
   useEffect(() => {
+    if (!mounted) return;
+    
     const root = window.document.documentElement;
     
     const updateTheme = () => {
@@ -61,11 +71,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     mediaQuery.addEventListener('change', handleChange);
     
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
+  }, [theme, mounted]);
 
   const handleSetTheme = (newTheme: Theme) => {
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+    try {
+      localStorage.setItem('theme', newTheme);
+    } catch (error) {
+      console.warn('Failed to save theme to localStorage:', error);
+    }
   };
 
   return (
@@ -77,8 +91,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 export function useTheme() {
   const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
+  
+  // During SSR or if context is not available, return safe defaults
+  if (typeof window === 'undefined' || context === undefined) {
+    return {
+      theme: 'light' as Theme,
+      setTheme: () => {},
+      resolvedTheme: 'light' as 'light' | 'dark'
+    };
   }
+  
   return context;
 }
