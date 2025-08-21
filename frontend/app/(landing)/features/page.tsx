@@ -29,12 +29,12 @@ export default function FeaturesPage() {
       </section>
 
       {/* Review Management Section */}
-      <section id="review-management" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
+  <section id="review-management" className="theme-review max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <div className="flex items-center gap-3 mb-6">
               <div className="h-12 w-12 icon-background rounded-lg flex items-center justify-center">
-                <MessageSquare className="h-6 w-6 icon-color" />
+                <MessageSquare className="h-6 w-6 text-[var(--feature-icon)]" />
               </div>
               <h2 className="text-3xl font-bold text-primary-dark">Review Management</h2>
             </div>
@@ -43,23 +43,23 @@ export default function FeaturesPage() {
             </p>
             <ul className="space-y-3">
               <li className="flex items-start">
-                <span className="text-emerald-600 dark:text-emerald-400 mr-3 mt-1">✓</span>
+                <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Real-time syncing from Google, TripAdvisor, Facebook & more</span>
               </li>
               <li className="flex items-start">
-                <span className="text-emerald-600 dark:text-emerald-400 mr-3 mt-1">✓</span>
+                <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Smart filters to prioritize what matters most</span>
               </li>
               <li className="flex items-start">
-                <span className="text-emerald-600 dark:text-emerald-400 mr-3 mt-1">✓</span>
+                <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Bulk actions for efficient management</span>
               </li>
               <li className="flex items-start">
-                <span className="text-emerald-600 dark:text-emerald-400 mr-3 mt-1">✓</span>
+                <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Team collaboration with assignments and notes</span>
               </li>
               <li className="flex items-start">
-                <span className="text-emerald-600 dark:text-emerald-400 mr-3 mt-1">✓</span>
+                <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Response tracking and analytics</span>
               </li>
             </ul>
@@ -71,7 +71,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* AI Responses Section */}
-      <section id="ai-responses" className="section-background-alt py-24 mt-24">
+  <section id="ai-responses" className="theme-ai section-background-alt py-24 mt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1 card-background rounded-lg p-8 h-96 flex items-center justify-center shadow-sm">
@@ -80,7 +80,7 @@ export default function FeaturesPage() {
             <div className="order-1 md:order-2">
               <div className="flex items-center gap-3 mb-6">
                 <div className="h-12 w-12 icon-background rounded-lg flex items-center justify-center">
-                  <Brain className="h-6 w-6 icon-color" />
+                  <Brain className="h-6 w-6 text-[var(--feature-icon)]" />
                 </div>
                 <h2 className="text-3xl font-bold text-primary-dark">AI-Powered Responses</h2>
               </div>
@@ -89,23 +89,23 @@ export default function FeaturesPage() {
               </p>
               <ul className="space-y-3">
                 <li className="flex items-start">
-                  <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">✓</span>
+                  <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Learns your brand voice and tone</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">✓</span>
+                  <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Context-aware responses for every situation</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">✓</span>
+                  <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span className="text-body-dark">One-click generation and sending</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">✓</span>
+                  <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Improves with every edit you make</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">✓</span>
+                  <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Multi-language support coming soon</span>
                 </li>
               </ul>
@@ -115,12 +115,12 @@ export default function FeaturesPage() {
       </section>
 
       {/* Competitor Tracking Section */}
-      <section id="competitor-tracking" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+  <section id="competitor-tracking" className="theme-competitors max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <div className="flex items-center gap-3 mb-6">
               <div className="h-12 w-12 icon-background rounded-lg flex items-center justify-center">
-                <Trophy className="h-6 w-6 icon-color" />
+                <Trophy className="h-6 w-6 text-[var(--feature-icon)]" />
               </div>
               <h2 className="text-3xl font-bold text-primary-dark">Competitor Tracking</h2>
             </div>
@@ -129,23 +129,23 @@ export default function FeaturesPage() {
             </p>
             <ul className="space-y-3">
               <li className="flex items-start">
-                <span className="text-amber-600 dark:text-amber-400 mr-3 mt-1">✓</span>
+                <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Monitor unlimited competitors</span>
               </li>
               <li className="flex items-start">
-                <span className="text-amber-600 dark:text-amber-400 mr-3 mt-1">✓</span>
+                <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Rating and review velocity comparisons</span>
               </li>
               <li className="flex items-start">
-                <span className="text-amber-600 dark:text-amber-400 mr-3 mt-1">✓</span>
+                <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Sentiment analysis benchmarking</span>
               </li>
               <li className="flex items-start">
-                <span className="text-amber-600 dark:text-amber-400 mr-3 mt-1">✓</span>
+                <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Alert when competitors make moves</span>
               </li>
               <li className="flex items-start">
-                <span className="text-amber-600 dark:text-amber-400 mr-3 mt-1">✓</span>
+                <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                 <span className="text-body-dark">Identify opportunities and threats</span>
               </li>
             </ul>
@@ -157,7 +157,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* Social Monitoring Section */}
-      <section id="social-monitoring" className="section-background-alt py-24">
+  <section id="social-monitoring" className="theme-social section-background-alt py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1 card-background rounded-lg p-8 h-96 flex items-center justify-center shadow-sm">
@@ -165,8 +165,8 @@ export default function FeaturesPage() {
             </div>
             <div className="order-1 md:order-2">
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-12 w-12 bg-pink-100 dark:bg-pink-500/10 rounded-lg flex items-center justify-center">
-                  <FaHashtag className="h-6 w-6 text-pink-500" />
+                <div className="h-12 w-12 icon-background rounded-lg flex items-center justify-center">
+                  <FaHashtag className="h-6 w-6 text-[var(--feature-icon)]" />
                 </div>
                 <h2 className="text-3xl font-bold text-primary-dark">Social Monitoring</h2>
               </div>
@@ -175,23 +175,23 @@ export default function FeaturesPage() {
               </p>
               <ul className="space-y-3">
                 <li className="flex items-start">
-                  <span className="text-pink-600 dark:text-pink-400 mr-3 mt-1">✓</span>
+                  <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Monitor Facebook, Instagram, Twitter, and more</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-pink-600 dark:text-pink-400 mr-3 mt-1">✓</span>
+                  <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Real-time sentiment analysis</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-pink-600 dark:text-pink-400 mr-3 mt-1">✓</span>
+                  <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Automated alert notifications</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-pink-600 dark:text-pink-400 mr-3 mt-1">✓</span>
+                  <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Hashtag and keyword tracking</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-pink-600 dark:text-pink-400 mr-3 mt-1">✓</span>
+                  <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Influencer mention identification</span>
                 </li>
               </ul>
@@ -201,12 +201,12 @@ export default function FeaturesPage() {
       </section>
 
       {/* Analytics and Reports Section */}
-      <section id="analytics-and-reports" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+  <section id="analytics-and-reports" className="theme-analytics max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="h-12 w-12 brand-background rounded-lg flex items-center justify-center">
-                <FaChartBar className="h-6 w-6 brand-text" />
+              <div className="h-12 w-12 icon-background rounded-lg flex items-center justify-center">
+                <FaChartBar className="h-6 w-6 text-[var(--feature-icon)]" />
               </div>
               <h2 className="text-3xl font-bold text-primary-dark">Analytics & Reports</h2>
             </div>
@@ -243,7 +243,7 @@ export default function FeaturesPage() {
       </section>
 
   {/* Team Collaboration Section */}
-  <section id="team-collaboration" className="section-background py-24">
+  <section id="team-collaboration" className="theme-team section-background py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1 card-background rounded-lg p-8 h-96 flex items-center justify-center shadow-sm">
@@ -251,33 +251,33 @@ export default function FeaturesPage() {
             </div>
             <div className="order-1 md:order-2">
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-12 w-12 brand-background rounded-lg flex items-center justify-center">
-                  <FaUsers className="h-6 w-6 brand-text" />
-                </div>
+                  <div className="h-12 w-12 icon-background rounded-lg flex items-center justify-center">
+                    <FaUsers className="h-6 w-6 text-[var(--feature-icon)]" />
+                  </div>
                 <h2 className="text-3xl font-bold text-primary-dark">Team Collaboration</h2>
               </div>
               <p className="text-lg text-secondary-dark mb-6">
                 Work collaboratively with task assignments, role-based permissions and automation workflows.
               </p>
               <ul className="space-y-3">
-                <li className="flex items-start">
-                  <span className="text-purple-600 dark:text-purple-400 mr-3 mt-1">✓</span>
+          <li className="flex items-start">
+            <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Role-based access control</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-purple-600 dark:text-purple-400 mr-3 mt-1">✓</span>
+                    <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Task assignments and notifications</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-purple-600 dark:text-purple-400 mr-3 mt-1">✓</span>
+                    <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Internal notes and comments</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-purple-600 dark:text-purple-400 mr-3 mt-1">✓</span>
+                    <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span className="text-body-dark">Approval workflows</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                    <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
                   <span>Team performance analytics</span>
                 </li>
               </ul>
