@@ -23,42 +23,43 @@ interface Feature {
   icon: IconType;
   title: string;
   description: string;
+  iconColor: string;
 }
 
 const features: Feature[] = [
   {
     icon: FaStar,
-
+    iconColor: 'text-yellow-500', // Gold for star ratings
     title: 'Review Management',
     description: 'Centralize all reviews from Google, TrustPilot, Social Media platforms and more into one intelligent inbox.',
   },
   {
     icon: FaBrain,
-
+    iconColor: 'text-purple-500', // Purple for AI intelligence
     title: 'AI Responses',
     description: 'Generate personalized responses in your brand voice using AI.',
   },
   {
     icon: FaBinoculars,
-
+    iconColor: 'text-blue-500', // Blue for observation/tracking
     title: 'Competitor Tracking',
     description: 'Monitor and benchmark against local competitors to stay ahead of the competition.',
   },
   {
     icon: FaHashtag,
-
+    iconColor: 'text-pink-500', // Pink for social media
     title: 'Social Monitoring',
     description: 'Track mentions and feedback across social media platforms.',
   },
   {
     icon: FaChartBar,
-
+    iconColor: 'text-green-500', // Green for growth/analytics
     title: 'Analytics & Reports',
     description: 'Get actionable insights with comprehensive reporting and analytics derived from your review data.',
   },
   {
     icon: FaUsers,
-
+    iconColor: 'text-orange-500', // Orange for team/collaboration
     title: 'Team Collaboration',
     description: 'Work collaboratively with task assignments, role-based permissions and automation workflows.',
   },
@@ -153,7 +154,7 @@ export function Features() {
                     transition={{ duration: 0.2 }}
                   >
                     <feature.icon 
-                      className={`text-[var(--feature-icon)] transition-transform group-hover:scale-110`} 
+                      className={`${feature.iconColor} transition-transform group-hover:scale-110`} 
                       size={48} 
                     />
                   </motion.div>

@@ -321,13 +321,15 @@ export function FinalCTA() {
               className="w-full"
             >
               <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 h-fit">
-                <CardContent className="p-6 text-center">
-                  <h3 className="text-2xl font-bold text-primary-dark mb-3 font-['Poppins',sans-serif]">
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="text-2xl font-bold text-primary-dark font-['Poppins',sans-serif]">
                     Prefer a Demo?
-                  </h3>
-                  <p className="text-primary-dark mb-6 text-sm leading-relaxed font-['Poppins',sans-serif] font-bold">
+                  </CardTitle>
+                  <CardDescription className="text-primary-dark mt-2 font-['Poppins',sans-serif] font-bold">
                     Schedule a personalized demo to see how Repruv can enhcance your reputation management process.
-                  </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-2 text-center">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}

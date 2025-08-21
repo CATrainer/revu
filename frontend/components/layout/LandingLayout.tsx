@@ -6,6 +6,15 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
+import { 
+  FaStar,
+  FaBrain,
+  FaBinoculars,
+  FaHashtag,
+  FaChartBar,
+  FaUsers,
+  FaThLarge
+} from "react-icons/fa";
 import { Footer } from './Footer';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
@@ -75,17 +84,20 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                       Features
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
-                      <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                        <li className="row-span-3">
+                      <ul className="grid gap-3 p-6 md:w-[600px] lg:w-[800px] grid-cols-4">
+                        <li>
                           <NavigationMenuLink asChild>
                             <Link
-                              className="flex h-full w-full select-none flex-col justify-end rounded-md brand-background p-6 no-underline outline-none focus:shadow-md"
+                              className="flex h-full w-full select-none flex-col justify-center items-center rounded-md brand-background p-4 no-underline outline-none focus:shadow-md hover:bg-accent/50 transition-colors"
                               href="/features"
                             >
-                              <div className="mb-2 mt-4 text-lg font-medium text-primary-dark">
+                              <div className="mb-2 flex items-center justify-center">
+                                <FaThLarge className="text-blue-600 mb-2" size={24} />
+                              </div>
+                              <div className="text-base font-medium text-primary-dark text-center">
                                 All Features
                               </div>
-                              <p className="text-sm leading-tight text-secondary-dark">
+                              <p className="text-xs leading-tight text-secondary-dark text-center mt-1">
                                 Discover how Repruv can transform your review management
                               </p>
                             </Link>
@@ -93,30 +105,78 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                         </li>
                         <li>
                           <NavigationMenuLink asChild>
-                            <Link href="/features#review-management" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                            <Link href="/features#review-management" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
+                              <div className="flex items-center justify-center mb-2">
+                                <FaStar className="text-yellow-500" size={20} />
+                              </div>
                               <div className="text-sm font-medium leading-none">Review Management</div>
-                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                Centralize all your reviews in one place
+                              <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
+                                Centralize all your reviews
                               </p>
                             </Link>
                           </NavigationMenuLink>
                         </li>
                         <li>
                           <NavigationMenuLink asChild>
-                            <Link href="/features#ai-responses" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                              <div className="text-sm font-medium leading-none">AI Responses</div>
-                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                Generate personalized responses instantly
+                            <Link href="/features#ai-responses" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
+                              <div className="flex items-center justify-center mb-2">
+                                <FaBrain className="text-purple-500" size={20} />
+                              </div>
+                              <div className="text-sm font-medium leading-none">AI-Powered Responses</div>
+                              <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
+                                Generate responses instantly
                               </p>
                             </Link>
                           </NavigationMenuLink>
                         </li>
                         <li>
                           <NavigationMenuLink asChild>
-                            <Link href="/features#competitor-tracking" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                            <Link href="/features#competitor-tracking" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
+                              <div className="flex items-center justify-center mb-2">
+                                <FaBinoculars className="text-blue-500" size={20} />
+                              </div>
                               <div className="text-sm font-medium leading-none">Competitor Tracking</div>
-                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                Stay ahead of your competition
+                              <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
+                                Stay ahead of competition
+                              </p>
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                        <li>
+                          <NavigationMenuLink asChild>
+                            <Link href="/features#social-monitoring" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
+                              <div className="flex items-center justify-center mb-2">
+                                <FaHashtag className="text-pink-500" size={20} />
+                              </div>
+                              <div className="text-sm font-medium leading-none">Social Monitoring</div>
+                              <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
+                                Track social mentions
+                              </p>
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                        <li>
+                          <NavigationMenuLink asChild>
+                            <Link href="/features#analytics-reports" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
+                              <div className="flex items-center justify-center mb-2">
+                                <FaChartBar className="text-green-500" size={20} />
+                              </div>
+                              <div className="text-sm font-medium leading-none">Analytics & Reports</div>
+                              <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
+                                Comprehensive insights
+                              </p>
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                        <li>
+                          <NavigationMenuLink asChild>
+                            <Link href="/features#team-collaboration" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
+                              <div className="flex items-center justify-center mb-2">
+                                <FaUsers className="text-orange-500" size={20} />
+                              </div>
+                              <div className="text-sm font-medium leading-none">Team Collaboration</div>
+                              <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
+                                Work together seamlessly
                               </p>
                             </Link>
                           </NavigationMenuLink>

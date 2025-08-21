@@ -82,6 +82,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Early return if React is not available (during build) - after all hooks
+  if (typeof React === 'undefined' || React === null) {
+    return children;
+  }
+
   return (
     <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme, resolvedTheme }}>
       {children}
@@ -92,8 +97,26 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export function useTheme() {
   const context = useContext(ThemeContext);
   
-  // During SSR or if context is not available, return safe defaults
-  if (typeof window === 'undefined' || context === undefined) {
+  // During SSR, provide safe defaults without early returns that would violate hooks rules
+  if (typeof window === 'undefined') {
+    return {
+      theme: 'light' as Theme,
+      setTheme: () => {},
+      resolvedTheme: 'light' as 'light' | 'dark'
+    };
+  }
+  
+  // Safety check for React availability after hooks
+  if (typeof React === 'undefined' || React === null) {
+    return {
+      theme: 'light' as Theme,
+      setTheme: () => {},
+      resolvedTheme: 'light' as 'light' | 'dark'
+    };
+  }
+  
+  // If context is not available, return safe defaults
+  if (context === undefined) {
     return {
       theme: 'light' as Theme,
       setTheme: () => {},
