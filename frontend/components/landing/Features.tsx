@@ -59,7 +59,7 @@ const features: Feature[] = [
   },
   {
     icon: FaUsers,
-    iconColor: 'text-orange-500', // Orange for team/collaboration
+    iconColor: 'text-purple-500', // Purple for team/collaboration
     title: 'Team Collaboration',
     description: 'Work collaboratively with task assignments, role-based permissions and automation workflows.',
   },

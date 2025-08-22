@@ -37,7 +37,6 @@ export function Footer() {
               <li><Link href="/features" className="text-sm text-[var(--muted-foreground)] hover:text-[var(--brand-primary-solid)] dark:hover:text-[var(--brand-primary)]">Features</Link></li>
               <li><Link href="/pricing" className="text-sm text-[var(--muted-foreground)] hover:text-[var(--brand-primary-solid)] dark:hover:text-[var(--brand-primary)]">Pricing</Link></li>
               <li><Link href="/demo" className="text-sm text-[var(--muted-foreground)] hover:text-[var(--brand-primary-solid)] dark:hover:text-[var(--brand-primary)]">Book Demo</Link></li>
-              <li><Link href="/seo" className="text-sm text-[var(--muted-foreground)] hover:text-[var(--brand-primary-solid)] dark:hover:text-[var(--brand-primary)]">SEO Tools</Link></li>
             </ul>
           </div>
           

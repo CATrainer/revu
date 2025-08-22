@@ -581,3 +581,360 @@ function CTASection({ activeTab }: { activeTab: 'ai' | 'seo' }) {
     </motion.section>
   );
 }
+
+      {/* AI Content */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: activeTab === 'ai' ? 1 : 0, y: activeTab === 'ai' ? 0 : 20 }}
+        transition={{ duration: 0.3 }}
+        style={{ display: activeTab === 'ai' ? 'block' : 'none' }}
+      >
+        {/* AI Hero Section */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 brand-background text-[var(--brand-primary)] px-4 py-2 rounded-full text-sm font-medium mb-6">
+            <FaMagic className="h-4 w-4" />
+            Powered by Advanced AI
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-primary-dark mb-6">
+            AI That Speaks Your Brand&apos;s Language
+          </h1>
+          <p className="text-xl text-secondary-dark mb-8 max-w-3xl mx-auto">
+            Generate personalized responses that maintain your unique voice while saving 80% of response time
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button size="lg" className="button-primary" asChild>
+              <Link href="/join-waitlist">Try AI Response Generator</Link>
+            </Button>
+            <Button size="lg" variant="secondary" className="button-secondary" asChild>
+              <Link href="/demo">Watch Demo</Link>
+            </Button>
+          </div>
+        </section>
+
+        {/* How It Works */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
+          <h2 className="text-3xl font-bold text-primary-dark mb-12 text-center">
+            How Our AI Works
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-center mb-4">
+                  <FaBrain className="h-12 w-12 brand-text" />
+                </div>
+                <CardTitle>1. Learn Your Voice</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-secondary-dark">
+                  Our AI analyzes your past responses and brand guidelines to understand your unique communication style.
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-center mb-4">
+                  <FaMagic className="h-12 w-12 brand-text" />
+                </div>
+                <CardTitle>2. Generate Responses</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-secondary-dark">
+                  Creates contextual, personalized responses for each review that sound authentically like you.
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-center mb-4">
+                  <FaChartLine className="h-12 w-12 brand-text" />
+                </div>
+                <CardTitle>3. Improve Over Time</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-secondary-dark">
+                  Every edit you make helps the AI better understand your preferences and improve future responses.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* AI Features */}
+        <section className="section-background-alt py-24 mt-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-bold text-primary-dark mb-12 text-center">
+              Advanced AI Features
+            </h2>
+            <div className="grid md:grid-cols-2 gap-12">
+              <div>
+                <h3 className="text-2xl font-semibold mb-6 text-primary-dark">Smart Response Generation</h3>
+                <ul className="space-y-4">
+                  <li className="flex items-start">
+                    <span className="text-[var(--foreground)]/70 dark:text-[var(--brand-primary)] mr-3">✓</span>
+                    <div className="text-body-dark">
+                      <strong>Context-Aware</strong> - Understands review sentiment and responds appropriately
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-[var(--foreground)]/70 dark:text-[var(--brand-primary)] mr-3">✓</span>
+                    <div className="text-body-dark">
+                      <strong>Brand Consistent</strong> - Maintains your tone whether professional, friendly, or casual
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-[var(--foreground)]/70 dark:text-[var(--brand-primary)] mr-3">✓</span>
+                    <div className="text-body-dark">
+                      <strong>Personalized</strong> - References specific details mentioned in reviews
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-[var(--foreground)]/70 dark:text-[var(--brand-primary)] mr-3">✓</span>
+                    <div>
+                      <strong>Multi-language</strong> - Coming soon: respond in the reviewer&apos;s language
+                    </div>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-2xl font-semibold mb-6">Natural Language Insights</h3>
+                <ul className="space-y-4">
+                  <li className="flex items-start">
+                    <span className="text-[var(--foreground)]/70 dark:text-[var(--brand-primary)] mr-3">✓</span>
+                    <div>
+                      <strong>Ask Anything</strong> - Query your reviews in plain English
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-[var(--foreground)]/70 dark:text-[var(--brand-primary)] mr-3">✓</span>
+                    <div>
+                      <strong>Trend Detection</strong> - Automatically identifies emerging issues
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-[var(--foreground)]/70 dark:text-[var(--brand-primary)] mr-3">✓</span>
+                    <div>
+                      <strong>Sentiment Analysis</strong> - Understand customer emotions at scale
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-[var(--foreground)]/70 dark:text-[var(--brand-primary)] mr-3">✓</span>
+                    <div>
+                      <strong>Actionable Recommendations</strong> - Get specific improvement suggestions
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* AI Stats */}
+        <section className="py-24 section-background">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid md:grid-cols-4 gap-8 text-center">
+              <div>
+                <div className="text-4xl font-bold status-info mb-2">92%</div>
+                <p className="text-secondary-dark">Response Acceptance Rate</p>
+              </div>
+              <div>
+                <div className="text-4xl font-bold status-info mb-2">10min</div>
+                <p className="text-secondary-dark">Average Response Time</p>
+              </div>
+              <div>
+                <div className="text-4xl font-bold status-info mb-2">4.8/5</div>
+                <p className="text-secondary-dark">Customer Satisfaction</p>
+              </div>
+              <div>
+                <div className="text-4xl font-bold status-info mb-2">80%</div>
+                <p className="text-secondary-dark">Time Saved</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </motion.div>
+
+      {/* SEO Content */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: activeTab === 'seo' ? 1 : 0, y: activeTab === 'seo' ? 0 : 20 }}
+        transition={{ duration: 0.3 }}
+        style={{ display: activeTab === 'seo' ? 'block' : 'none' }}
+      >
+        {/* SEO Hero Section */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-primary-dark mb-6">
+            Reviews That Boost Your Local SEO
+          </h1>
+          <p className="text-xl text-secondary-dark mb-8 max-w-3xl mx-auto">
+            Turn customer feedback into search engine gold with our SEO-optimized review management
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button size="lg" className="button-primary border-0" asChild>
+              <Link href="/join-waitlist">Get Early Access</Link>
+            </Button>
+            <Button size="lg" variant="outline" className="button-secondary" asChild>
+              <Link href="/demo">See How It Works</Link>
+            </Button>
+          </div>
+        </section>
+
+        {/* Why Reviews Matter for SEO */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
+          <h2 className="text-3xl font-bold text-primary-dark mb-12 text-center">
+            Why Reviews Matter for SEO
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="card-background p-8 rounded-lg shadow-sm">
+              <div className="flex items-center justify-center mb-6">
+                <Search className="h-12 w-12 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-primary-dark">Fresh Content</h3>
+              <p className="text-secondary-dark">
+                Google values fresh, relevant content. Regular reviews keep your profile active and engaging.
+              </p>
+            </div>
+            <div className="card-background p-8 rounded-lg shadow-sm">
+              <div className="flex items-center justify-center mb-6">
+                <TrendingUp className="h-12 w-12 brand-text" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-primary-dark">Local Pack Rankings</h3>
+              <p className="text-secondary-dark">
+                Review signals directly impact your position in Googles local 3-pack results.
+              </p>
+            </div>
+            <div className="card-background p-8 rounded-lg shadow-sm">
+              <div className="flex items-center justify-center mb-6">
+                <BarChart3 className="h-12 w-12 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-primary-dark">Increased Visibility</h3>
+              <p className="text-secondary-dark">
+                More reviews mean more keywords and long-tail search opportunities.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* How Repruv Helps */}
+        <section className="section-background-alt py-24 mt-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-bold text-primary-dark mb-12 text-center">
+              How Repruv Supercharges Your SEO
+            </h2>
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <ul className="space-y-4">
+                  <li className="flex items-start">
+                    <Check className="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-semibold mb-1 text-primary-dark">Automated Response Publishing</h4>
+                      <p className="text-secondary-dark">
+                        Every response adds fresh, keyword-rich content to your profile
+                      </p>
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-semibold mb-1 text-primary-dark">Keyword Optimization</h4>
+                      <p className="text-secondary-dark">
+                        AI naturally includes local keywords and service terms in responses
+                      </p>
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-semibold mb-1 text-primary-dark">Review Velocity Tracking</h4>
+                      <p className="text-secondary-dark">
+                        Monitor and improve your review acquisition rate
+                      </p>
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-semibold mb-1 text-primary-dark">Rich Snippet Optimization</h4>
+                      <p className="text-secondary-dark">
+                        Structured data helps your reviews appear in search results
+                      </p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+              <div className="card-background p-8 rounded-lg shadow-lg">
+                <h3 className="text-xl font-semibold mb-4 text-primary-dark">SEO Impact Example</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-secondary-dark">Local Search Visibility</span>
+                    <span className="text-2xl font-bold brand-text">+47%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-secondary-dark">Click-Through Rate</span>
+                    <span className="text-2xl font-bold brand-text">+32%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-secondary-dark">Map Pack Position</span>
+                    <span className="text-2xl font-bold brand-text">#3 → #1</span>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+      </motion.section>
+    </>
+  );
+}
+
+function CTASection({ activeTab }: { activeTab: 'ai' | 'seo' }) {
+  const ctaRef = useRef(null);
+  const isCtaInView = useInView(ctaRef, { once: false, amount: 0.5 });
+
+  return (
+    <motion.section 
+      ref={ctaRef}
+      className="py-16 section-background-alt"
+      initial={{ opacity: 0 }}
+      animate={isCtaInView ? { opacity: 1 } : { opacity: 0 }}
+      transition={{ duration: 0.8 }}
+    >
+      <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+        <motion.h2 
+          className="text-3xl font-bold text-primary-dark mb-4"
+          initial={{ opacity: 0, y: 30 }}
+          animate={isCtaInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          {activeTab === 'ai' 
+            ? 'Experience the Future of Review Management'
+            : 'Ready to Dominate Local Search?'
+          }
+        </motion.h2>
+        <motion.p 
+          className="text-xl text-secondary-dark mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isCtaInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          {activeTab === 'ai'
+            ? 'Let AI handle the heavy lifting while you focus on your business'
+            : 'Join businesses seeing 40%+ increases in local search visibility'
+          }
+        </motion.p>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isCtaInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Button size="lg" className="button-primary" asChild>
+            <Link href="/join-waitlist">Get Early Access</Link>
+          </Button>
+        </motion.div>
+      </div>
+    </motion.section>
+  );
+}
