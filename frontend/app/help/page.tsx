@@ -93,7 +93,7 @@ export default function HelpPage() {
                     Contact Support
                   </Button>
                   <Button variant="outline" className="w-full" onClick={() => window.location.href = '/demo'}>
-                    Schedule a Demo
+                    Book a Demo
                   </Button>
                 </div>
               </div>

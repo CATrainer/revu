@@ -18,7 +18,7 @@ export function SectionDivider({ className = '' }: SectionDividerProps) {
         initial={{ scaleX: 0, opacity: 0 }}
         animate={isInView ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0 }}
         transition={{ duration: 1.0, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="h-0.5 w-full bg-gradient-to-r from-transparent via-gray-400 dark:via-gray-500 to-transparent origin-center"
+        className="h-0.5 w-full bg-gradient-to-r from-transparent via-[var(--border)] dark:via-[var(--border)] to-transparent origin-center"
       />
     </div>
   );

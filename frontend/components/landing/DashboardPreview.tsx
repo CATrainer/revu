@@ -25,7 +25,7 @@ const metrics: MiniMetricProps[] = [
 export function DashboardPreview() {
   return (
     <div
-      className="relative mx-auto max-w-5xl rounded-xl shadow-2xl border border-muted bg-[var(--card)] overflow-hidden backdrop-blur-sm" 
+      className="relative mx-auto max-w-6xl rounded-xl shadow-2xl border border-muted bg-[var(--card)] overflow-hidden backdrop-blur-sm" 
       style={{ perspective: '2000px' }}
     >
       {/* Header bar */}

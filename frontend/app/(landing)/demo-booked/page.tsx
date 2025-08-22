@@ -42,7 +42,7 @@ export default function DemoBookedPage() {
     setError('');
 
     try {
-      // First add to waitlist
+      // First add to early access
       await api.post('/users/waitlist/join', {
         email: formData.email,
         full_name: formData.full_name,
@@ -238,7 +238,7 @@ export default function DemoBookedPage() {
                         Creating Account...
                       </>
                     ) : (
-                      'Create Account & Join Waitlist'
+                      'Create Account & Get Early Access'
                     )}
                   </Button>
                   

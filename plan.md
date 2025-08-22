@@ -1208,7 +1208,7 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 **CTA:** "Improve Your Local Rankings"
 
 #### Pricing Page
-**Headline:** "Simple, Transparent Pricing"
+**Headline:** "Intuitive Pricing"
 **Subheadline:** "Choose the plan that grows with your business"
 
 **Tier 1: Essentials - £79/month**
