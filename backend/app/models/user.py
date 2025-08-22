@@ -42,6 +42,8 @@ class User(Base):
     demo_scheduled_at = Column(DateTime(timezone=True))
     demo_completed = Column(Boolean, default=False, nullable=False)
     demo_completed_at = Column(DateTime(timezone=True))
+    # Demo access subtype (creator | business | agency_creators | agency_businesses)
+    demo_access_type = Column(String(50), nullable=True)
     
     # Demo-specific information
     company_size = Column(String(50))
@@ -90,7 +92,7 @@ class User(Base):
     @property
     def can_access_dashboard(self) -> bool:
         """Check if user can access the main dashboard."""
-        return self.access_status in ["early_access", "full_access"]
+        return self.access_status in ["early_access", "full_access", "demo_access"]
     
     def grant_early_access(self) -> None:
         """Grant early access to user."""

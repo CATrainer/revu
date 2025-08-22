@@ -1,17 +1,16 @@
 // frontend/app/(dashboard)/dashboard/page.tsx
-import { 
-  Star, 
-  TrendingUp, 
-  MessageSquare, 
-  Brain, 
-  AlertCircle,
-  Clock 
-} from 'lucide-react';
+"use client";
+import { TrendingUp, AlertCircle } from 'lucide-react';
 import { MetricsCard } from '@/components/dashboard/MetricsCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useStore } from '@/lib/store';
+import { getProfileKPIs } from '@/lib/profile-config';
 
 export default function DashboardPage() {
+  const { currentWorkspace, interactions } = useStore();
+  const relevant = currentWorkspace ? interactions.filter(i => i.workspaceId === currentWorkspace.id || (currentWorkspace.id === 'agency' && i.workspaceId === 'agency')) : interactions;
+  const kpis = currentWorkspace ? getProfileKPIs(currentWorkspace, relevant) : [];
   return (
     <div className="space-y-8">
       <div>
@@ -21,46 +20,13 @@ export default function DashboardPage() {
       
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <MetricsCard
-          title="Average Rating"
-          value="4.7"
-          change={{ value: 0.2, type: 'increase' }}
-          icon={Star}
-          trend="from last month"
-        />
-        <MetricsCard
-          title="Reviews This Month"
-          value="142"
-          change={{ value: 23, type: 'increase' }}
-          icon={MessageSquare}
-          trend="23% increase"
-        />
-        <MetricsCard
-          title="Response Rate"
-          value="95%"
-          change={{ value: 5, type: 'increase' }}
-          icon={TrendingUp}
-          trend="improvement"
-        />
-        <MetricsCard
-          title="Sentiment Score"
-          value="82%"
-          change={{ value: 5, type: 'increase' }}
-          icon={Brain}
-          trend="5% better"
-        />
-        <MetricsCard
-          title="Avg Response Time"
-          value="2.5h"
-          change={{ value: 15, type: 'decrease' }}
-          icon={Clock}
-          trend="faster"
-        />
-        <MetricsCard
-          title="Action Required"
-          value="5"
-          icon={AlertCircle}
-        />
+        {kpis.length > 0 ? (
+          kpis.map(k => (
+            <MetricsCard key={k.title} title={k.title} value={k.value} icon={TrendingUp} trend={k.trend} />
+          ))
+        ) : (
+          <MetricsCard title="Pending Actions" value="5" icon={AlertCircle} />
+        )}
       </div>
       
       {/* Recent Activity and Quick Actions */}
@@ -96,7 +62,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         
-        <QuickActions />
+  <QuickActions />
       </div>
     </div>
   );

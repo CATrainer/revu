@@ -19,6 +19,8 @@ class Location(Base):
     timezone = Column(String(50), default="Europe/London")
     settings = Column(JSONB, default=dict, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
+    # Distinguish location type: business_location | agency_client
+    kind = Column(String(50), default="business_location", nullable=False)
     
     # AI Training Data
     brand_voice_data = Column(JSONB, default=dict, nullable=False)

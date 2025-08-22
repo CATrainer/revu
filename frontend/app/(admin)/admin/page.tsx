@@ -67,7 +67,8 @@ interface User {
   is_active: boolean;
   is_admin: boolean;
   has_account: boolean;
-  access_status: 'waiting_list' | 'early_access' | 'full_access';
+  access_status: 'waiting_list' | 'early_access' | 'full_access' | 'demo_access';
+  demo_access_type?: 'creator' | 'business' | 'agency_creators' | 'agency_businesses' | null;
   joined_waiting_list_at: string | null;
   early_access_granted_at: string | null;
   created_at: string;
@@ -230,7 +231,7 @@ export default function AdminPage() {
     );
   }
 
-  const getStatusBadge = (status: string, isAdmin: boolean) => {
+  const getStatusBadge = (status: string, isAdmin: boolean, demoType?: string | null) => {
     // Show "Admin" for admin users regardless of their access_status
     if (isAdmin) {
       return <Badge variant="destructive" className="bg-red-100 text-red-800">Admin</Badge>;
@@ -240,9 +241,11 @@ export default function AdminPage() {
       case 'waiting_list':
         return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Waiting List</Badge>;
       case 'early_access':
-  return <Badge variant="secondary" className="status-info">Early Access</Badge>;
+        return <Badge variant="secondary" className="status-info">Early Access</Badge>;
       case 'full_access':
-  return <Badge variant="default" className="status-success">Full Access</Badge>;
+        return <Badge variant="default" className="status-success">Full Access</Badge>;
+      case 'demo_access':
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">{`Demo${demoType ? `: ${demoType.replace('_', ' ')}` : ''}`}</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -268,6 +271,8 @@ export default function AdminPage() {
       case 'early_access':
         return 'Grant Full Access';
       case 'full_access':
+        return 'Reset to Waiting List';
+      case 'demo_access':
         return 'Reset to Waiting List';
       default:
         return 'Update Status';
@@ -439,7 +444,7 @@ export default function AdminPage() {
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    {getStatusBadge(user.access_status, user.is_admin)}
+                    {getStatusBadge(user.access_status, user.is_admin, user.demo_access_type || null)}
                   </TableCell>
                   <TableCell>
                     {getAccountBadge(user.has_account)}
@@ -458,18 +463,43 @@ export default function AdminPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleToggleAccess(user.id, user.access_status, user.is_admin)}
-                      disabled={actionLoading === user.id || user.is_admin}
-                    >
-                      {actionLoading === user.id ? (
-                        <LoadingSpinner size="sm" />
-                      ) : (
-                        getNextAction(user.access_status, user.is_admin)
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleToggleAccess(user.id, user.access_status, user.is_admin)}
+                        disabled={actionLoading === user.id || user.is_admin}
+                      >
+                        {actionLoading === user.id ? (
+                          <LoadingSpinner size="sm" />
+                        ) : (
+                          getNextAction(user.access_status, user.is_admin)
+                        )}
+                      </Button>
+                      {!user.is_admin && (
+                        <Select
+                          onValueChange={async (val) => {
+                            try {
+                              setActionLoading(user.id);
+                              await api.post(`/admin/users/${user.id}/access`, { access_status: 'demo_access', demo_access_type: val });
+                              setUsers((prev: User[]) => prev.map((u: User) => u.id === user.id ? { ...u, access_status: 'demo_access', demo_access_type: (val as User['demo_access_type']) } : u));
+                            } finally {
+                              setActionLoading(null);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-44">
+                            <SelectValue placeholder="Set Demo Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="creator">Demo: Creator</SelectItem>
+                            <SelectItem value="business">Demo: Business</SelectItem>
+                            <SelectItem value="agency_creators">Demo: Agency (Creators)</SelectItem>
+                            <SelectItem value="agency_businesses">Demo: Agency (Businesses)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       )}
-                    </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

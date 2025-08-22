@@ -1,6 +1,29 @@
 // frontend/lib/pdf-utils.ts
 'use client';
 
+export function downloadSimpleAnalyticsPDF(summary: { range: string; stats: Array<[string,string]> }) {
+  const w = window.open('', '_blank');
+  if (!w) {
+    alert('Please allow popups to download the PDF');
+    return;
+  }
+  const rows = summary.stats
+    .map(([k, v]) => `<tr><td style="padding:8px;border:1px solid #e5e7eb;">${k}</td><td style="padding:8px;border:1px solid #e5e7eb;font-weight:600;">${v}</td></tr>`) 
+    .join('');
+  const html = `<!doctype html><html><head><title>Repruv Analytics (${summary.range})</title>
+  <style>body{font-family:Arial,sans-serif;color:#111827;padding:24px} h1{color:#111827} .muted{color:#6b7280}</style>
+  </head><body>
+  <h1>Analytics Summary</h1>
+  <div class="muted">Range: ${summary.range}</div>
+  <table style="border-collapse:collapse;margin-top:16px;width:100%;">
+    <tbody>${rows}</tbody>
+  </table>
+  <script>window.onload=function(){window.print();setTimeout(()=>window.close(),800);}</script>
+  </body></html>`;
+  w.document.write(html);
+  w.document.close();
+}
+
 export const downloadTermsAsPDF = () => {
   // Create a new window with the terms content formatted for printing
   const printWindow = window.open('', '_blank');

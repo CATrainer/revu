@@ -24,11 +24,10 @@ export default function WaitingAreaPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch user's access status
+    // Fetch user's access status using centralized API (includes auth header)
     const fetchUserStatus = async () => {
       try {
-        const response = await fetch('/api/auth/me/access-status');
-        const data = await response.json();
+        const { data } = await api.get('/auth/me/access-status');
         setUserStatus(data);
         setDemoRequested(data.demo_requested);
       } catch (error) {

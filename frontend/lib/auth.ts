@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from './api';
+import type { AccessStatus } from './types';
 
 interface User {
   id: string;
@@ -10,11 +11,13 @@ interface User {
   last_login_at: string | null;
   is_active: boolean;
   is_admin: boolean;
-  access_status: 'waiting_list' | 'early_access' | 'full_access';
+  has_account?: boolean;
+  access_status: AccessStatus;
   joined_waiting_list_at: string | null;
   early_access_granted_at: string | null;
   demo_requested: boolean;
   demo_requested_at: string | null;
+  demo_access_type?: 'creator' | 'business' | 'agency_creators' | 'agency_businesses' | null;
 }
 
 interface AuthState {
@@ -27,7 +30,8 @@ interface AuthState {
   checkAuth: () => Promise<void>;
   requestDemo: () => Promise<void>;
   getAccessStatus: () => Promise<{
-    access_status: string;
+  access_status: AccessStatus;
+  demo_access_type?: 'creator' | 'business' | 'agency_creators' | 'agency_businesses' | null;
     can_access_dashboard: boolean;
     joined_waiting_list_at: string | null;
     early_access_granted_at: string | null;
@@ -45,11 +49,12 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   login: async (email: string, password: string) => {
     try {
-      const formData = new FormData();
-      formData.append('username', email); // OAuth2 spec uses username
-      formData.append('password', password);
+  // Use URLSearchParams for x-www-form-urlencoded payloads
+  const params = new URLSearchParams();
+  params.set('username', email); // OAuth2 spec uses username
+  params.set('password', password);
 
-      const response = await api.post('/auth/login', formData, {
+  const response = await api.post('/auth/login', params, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -79,11 +84,11 @@ export const useAuth = create<AuthState>((set, get) => ({
       });
 
       // Auto-login after signup
-      const formData = new FormData();
-      formData.append('username', email);
-      formData.append('password', password);
+  const params = new URLSearchParams();
+  params.set('username', email);
+  params.set('password', password);
 
-      const loginResponse = await api.post('/auth/login', formData, {
+  const loginResponse = await api.post('/auth/login', params, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -162,19 +167,19 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   canAccessDashboard: (): boolean => {
     const { user } = get();
-    return user?.access_status === 'early_access' || user?.access_status === 'full_access';
+  return user?.access_status === 'early_access' || user?.access_status === 'full_access' || user?.access_status === 'demo_access';
   },
 
   getRedirectPath: (): string => {
     const { user } = get();
-    if (!user) return '/auth/login';
+  if (!user) return '/login';
     
     // Admin users go to admin dashboard
     if (user.is_admin) return '/admin';
     
     // Regular users based on access status
     if (user.access_status === 'waiting_list') return '/waiting-area';
-    if (user.access_status === 'early_access' || user.access_status === 'full_access') return '/dashboard';
+  if (user.access_status === 'early_access' || user.access_status === 'full_access' || user.access_status === 'demo_access') return '/dashboard';
     
     // Fallback
     return '/waiting-area';

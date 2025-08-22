@@ -16,7 +16,9 @@ from pydantic import BaseModel
 router = APIRouter(tags=["admin"])
 
 class GrantAccessRequest(BaseModel):
-    access_status: str  # "waiting_list", "early_access", or "full_access"
+    email: str | None = None  # For grant_user_access by email
+    access_status: str  # waiting_list | early_access | full_access | demo_access
+    demo_access_type: str | None = None  # creator | business | agency_creators | agency_businesses
 
 class UserResponse(BaseModel):
     id: str
@@ -26,6 +28,7 @@ class UserResponse(BaseModel):
     is_admin: bool
     has_account: bool
     access_status: str
+    demo_access_type: str | None = None
     joined_waiting_list_at: str | None
     early_access_granted_at: str | None
     demo_requested: bool
@@ -46,7 +49,9 @@ async def grant_user_access(
     #         detail="Admin access required"
     #     )
     
-    # Find the target user
+    # Find the target user by email
+    if not request.email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email is required")
     result = await db.execute(select(User).filter(User.email == request.email))
     user = result.scalar_one_or_none()
     if not user:
@@ -55,25 +60,26 @@ async def grant_user_access(
             detail=f"User with email '{request.email}' not found"
         )
     
-    # Validate access level
-    if request.access_level not in ["early_access", "full_access"]:
+    # Validate access status
+    if request.access_status not in ["early_access", "full_access", "demo_access"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Access level must be 'early_access' or 'full_access'"
+            detail="Access status must be 'early_access', 'full_access', or 'demo_access'"
         )
     
     # Grant access
     old_status = user.access_status
-    user.access_status = request.access_level
+    user.access_status = request.access_status
+    user.demo_access_type = request.demo_access_type if request.access_status == "demo_access" else None
     
-    if request.access_level in ["early_access", "full_access"] and not user.early_access_granted_at:
+    if request.access_status in ["early_access", "full_access"] and not user.early_access_granted_at:
         user.early_access_granted_at = datetime.now(timezone.utc)
     
     await db.commit()
     await db.refresh(user)
     
     return {
-        "message": f"Successfully granted {request.access_level} to {request.email}",
+    "message": f"Successfully granted {request.access_status} to {request.email}",
         "user": {
             "email": user.email,
             "old_status": old_status,
@@ -108,6 +114,7 @@ async def get_waiting_list(
             is_admin=user.is_admin,
             has_account=user.has_account,
             access_status=user.access_status,
+            demo_access_type=getattr(user, "demo_access_type", None),
             joined_waiting_list_at=user.joined_waiting_list_at.isoformat() if user.joined_waiting_list_at else None,
             early_access_granted_at=user.early_access_granted_at.isoformat() if user.early_access_granted_at else None,
             demo_requested=user.demo_requested,
@@ -142,6 +149,7 @@ async def get_all_users(
             is_admin=user.is_admin,
             has_account=user.has_account,
             access_status=user.access_status,
+            demo_access_type=getattr(user, "demo_access_type", None),
             joined_waiting_list_at=user.joined_waiting_list_at.isoformat() if user.joined_waiting_list_at else None,
             early_access_granted_at=user.early_access_granted_at.isoformat() if user.early_access_granted_at else None,
             demo_requested=user.demo_requested,
@@ -178,7 +186,7 @@ async def update_user_access(
         )
     
     # Validate access status
-    valid_statuses = ["waiting_list", "early_access", "full_access"]
+    valid_statuses = ["waiting_list", "early_access", "full_access", "demo_access"]
     if request.access_status not in valid_statuses:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -187,6 +195,7 @@ async def update_user_access(
     
     # Update access status
     user_to_update.access_status = request.access_status
+    user_to_update.demo_access_type = request.demo_access_type if request.access_status == "demo_access" else None
     if request.access_status == "early_access" and not user_to_update.early_access_granted_at:
         user_to_update.early_access_granted_at = datetime.now(timezone.utc)
     

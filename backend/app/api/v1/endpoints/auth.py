@@ -370,7 +370,8 @@ async def get_my_access_status(
     """
     return {
         "access_status": current_user.access_status,
-        "can_access_dashboard": current_user.access_status in ["early_access", "full_access"],
+        "demo_access_type": getattr(current_user, "demo_access_type", None),
+        "can_access_dashboard": current_user.access_status in ["early_access", "full_access", "demo_access"],
         "joined_waiting_list_at": current_user.joined_waiting_list_at,
         "early_access_granted_at": current_user.early_access_granted_at,
         "demo_requested": current_user.demo_requested,

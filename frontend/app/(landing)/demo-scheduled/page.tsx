@@ -72,12 +72,12 @@ const DemoScheduledPage = () => {
         full_name: signupData.full_name
       });
 
-      // Auto-login after signup
-      const loginData = new FormData();
-      loginData.append('username', signupData.email);
-      loginData.append('password', signupData.password);
-      
-      await api.post('/auth/login', loginData, {
+  // Auto-login after signup (x-www-form-urlencoded)
+  const loginParams = new URLSearchParams();
+  loginParams.set('username', signupData.email);
+  loginParams.set('password', signupData.password);
+
+  await api.post('/auth/login', loginParams, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       });
 

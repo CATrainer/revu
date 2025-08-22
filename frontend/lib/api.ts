@@ -1,12 +1,13 @@
 import axios from 'axios';
 
-// Determine API base URL with safer production default
-const API_URL = (
-  process.env.NEXT_PUBLIC_API_URL?.trim() ||
-  (process.env.NODE_ENV === 'development'
-    ? 'http://localhost:8000/api/v1'
-    : 'https://revu-backend-production.up.railway.app/api/v1')
-);
+// Resolve API base URL with a production-first default.
+// If NEXT_PUBLIC_API_URL is provided it takes precedence.
+const API_URL = (() => {
+  const fromEnv = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (fromEnv) return fromEnv;
+  // Default to production API in all environments unless explicitly overridden.
+  return 'https://revu-backend-production.up.railway.app/api/v1';
+})();
 
 if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_URL.startsWith('http://')) {
   console.warn('[Repruv] Insecure API_URL detected over HTTPS page:', API_URL);

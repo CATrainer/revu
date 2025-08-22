@@ -60,6 +60,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             </Button>
             <div className="hidden lg:flex items-center gap-3 ml-2">
               <Image src="/logo/mark.png" alt="Repruv" width={32} height={32} className="h-8 w-8" priority />
+              {/* Location selector appears only when relevant (org/agency or demo agency) */}
               <LocationSelector />
             </div>
             <div className="hidden sm:block lg:hidden ml-4">

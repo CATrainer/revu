@@ -9,7 +9,7 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field
 
 # Type alias for access status
-AccessStatus = Literal["waiting_list", "early_access", "full_access"]
+AccessStatus = Literal["waiting_list", "early_access", "full_access", "demo_access"]
 
 
 class UserBase(BaseModel):
@@ -97,6 +97,7 @@ class User(UserBase):
     updated_at: datetime
     last_login_at: Optional[datetime] = None
     access_status: AccessStatus = "waiting_list"
+    demo_access_type: Optional[Literal["creator", "business", "agency_creators", "agency_businesses"]] = None
     joined_waiting_list_at: Optional[datetime] = None
     early_access_granted_at: Optional[datetime] = None
     demo_requested: bool = False

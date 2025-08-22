@@ -4,33 +4,34 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import {
-  BarChart3,
-  MessageSquare,
-  Brain,
-  Trophy,
-  Zap,
-  FileText,
-  Settings,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+import { BarChart3, Inbox, Brain, Users, TrendingUp, ChartPie, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useStore } from '@/lib/store';
 
-const navigation = [
+const baseNav = [
   { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
-  { name: 'Review Hub', href: '/reviews', icon: MessageSquare },
-  { name: 'Ask Repruv AI', href: '/ai-assistant', icon: Brain },
-  { name: 'Competitors', href: '/competitors', icon: Trophy },
-  { name: 'Automation', href: '/automation', icon: Zap },
-  { name: 'Reports', href: '/reports', icon: FileText },
+  { name: 'Engagement Hub', href: '/engagement', icon: Inbox },
+  { name: 'Pulse Monitor', href: '/pulse', icon: TrendingUp },
+  { name: 'Competitors', href: '/competitors', icon: Users },
+  { name: 'Trends', href: '/trends', icon: TrendingUp },
+  { name: 'Analytics', href: '/analytics', icon: ChartPie },
+  { name: 'AI Assistant', href: '/ai-assistant', icon: Brain },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { currentWorkspace } = useStore();
+  const navigation = useMemo(() => {
+    const items = [...baseNav];
+    if (currentWorkspace?.type === 'Agency') {
+      // Insert Clients after Engagement Hub
+      items.splice(2, 0, { name: 'Clients', href: '/clients', icon: Users });
+    }
+    return items;
+  }, [currentWorkspace?.type]);
 
   return (
     <aside
