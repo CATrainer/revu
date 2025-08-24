@@ -93,17 +93,51 @@ Key variables:
 
 ## 👨‍💻 Admin Access
 
-For development and testing purposes, a shared admin account is available:
+For development and testing purposes, a shared admin account is available (seeded by the demo script):
 
-- **Email**: `admin@Repruve.dev`
-- **Password**: `DevAdmin2025!`
+- Email: `admin@revu.dev`
+- Password: `Demo2025!`
 
 This admin account has full access to:
-- User management (view all users, grant/revoke access)
+- User management (view all users, grant/revoke access or demo subtypes)
 - System administration features
 - Dashboard analytics and insights
 
-⚠️ **Security Note**: Change these credentials in production environments.
+⚠️ Security: Change these credentials in production environments.
+
+## 🧪 Demo Accounts
+
+These demo users are created by `backend/scripts/seed_demo_accounts.py` and exist as real DB users. All share the same password unless you change it.
+
+- Creator demo
+   - Email: `demo+creator@revu.app`
+   - Password: `Demo2025!`
+   - Access: Demo (creator). Routes to a creator-focused dashboard with social comments.
+
+- Business demo
+   - Email: `demo+business@revu.app`
+   - Password: `Demo2025!`
+   - Access: Demo (business). Routes to a local business dashboard with review feeds.
+
+- Agency (creators) demo
+   - Email: `demo+agency@revu.app`
+   - Password: `Demo2025!`
+   - Access: Demo (agency_creators). Defaults to the Agency workspace; Clients tab enabled.
+
+- Agency (businesses) demo
+   - Email: `demo+agency-biz@revu.app`
+   - Password: `Demo2025!`
+   - Access: Demo (agency_businesses). Defaults to the Agency workspace; Clients tab enabled.
+
+- Agency manager (scoped example)
+   - Email: `manager+agency@revu.app`
+   - Password: `Demo2025!`
+   - Access: Early access manager, scoped to a single client under the creators agency.
+
+Notes
+- Demo data in the UI is generated on the client; actions (assign, tag, archive) simulate behavior without writing to external platforms.
+- The Admin page allows setting a user’s Access Status to `demo_access` and choosing a `demo_access_type` (creator, business, agency_creators, agency_businesses).
+- Frontend defaults to the production API unless `NEXT_PUBLIC_API_URL` is set. Override in `frontend/.env.local` if needed.
 
 ## 🧪 Testing
 
