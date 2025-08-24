@@ -12,6 +12,7 @@ import type { Interaction, InteractionStatus, Platform } from '@/lib/types';
 import { downloadReviewsPDF } from '@/lib/pdf-utils';
 import { openPrefilledEmail } from '@/lib/email';
 import { useAuth } from '@/lib/auth';
+import { runAlertScan } from '@/lib/alerts';
 
 const platforms: Platform[] = ['Google', 'YouTube', 'Instagram', 'TikTok', 'Facebook', 'X/Twitter'];
 const statuses: Array<'All' | InteractionStatus> = ['All', 'Unread', 'Needs Response', 'Responded', 'Archived', 'Reported'];
@@ -54,6 +55,11 @@ export default function ReviewsPage() {
   const ratingOptions = ['All','>=4','>=3','<=2'] as const;
   if (rating && ratingOptions.includes(rating as typeof ratingOptions[number])) setRatingFilter(rating as typeof ratingOptions[number]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Demo: auto-scan alerts on page open
+  useEffect(() => {
+    try { runAlertScan(); } catch {}
   }, []);
 
   const reviews = useMemo(() => {
@@ -142,6 +148,7 @@ export default function ReviewsPage() {
         <span className="text-sm text-secondary-dark">Quick actions:</span>
         <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => router.push('/engagement?play=1')}>✨ Play timeline</Button>
         <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => router.push('/engagement')}>✨ Generate 3 replies</Button>
+  <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={async () => { const route = `${window.location.pathname}${window.location.search}`; const encoded = btoa(JSON.stringify({ route, title: 'Reviews shared view' })); const url = `${window.location.origin}/share?t=${encoded}`; try { await navigator.clipboard.writeText(url); } catch {} }}>🔗 Copy share link</Button>
         <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => {
           const range = `${filters.dateRange.from || 'All time'} → ${filters.dateRange.to || 'Today'}`;
           const filtersLabel = [

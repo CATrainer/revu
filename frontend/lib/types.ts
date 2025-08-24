@@ -144,3 +144,113 @@ export interface NotificationPrefs {
   mutedPlatforms: Array<'google' | 'facebook' | 'instagram' | 'tiktok' | 'twitter' | 'tripadvisor'>;
   mode: 'All' | 'Important only';
 }
+
+// Workspace branding and settings (demo)
+export interface BrandingSettings {
+  logoUrl?: string;
+  primaryColor?: string; // hex
+  accentColor?: string; // hex
+  headerText?: string;
+  footerText?: string;
+  useBrandingInExports?: boolean;
+}
+
+export interface WorkspaceSettings {
+  name?: string;
+  slug?: string;
+  timezone?: string;
+  domain?: string; // custom domain for white-label
+}
+
+export type RoleName = Role;
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: RoleName;
+  status?: 'active' | 'invited' | 'suspended';
+}
+
+export interface BillingInfo {
+  plan: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
+  seats: number;
+  status: 'active' | 'past_due' | 'trialing' | 'canceled';
+}
+
+export interface PaymentMethod {
+  id: string;
+  brand: 'visa' | 'mastercard' | 'amex' | 'other';
+  last4: string;
+  expMonth: number;
+  expYear: number;
+  default?: boolean;
+}
+
+export interface ApiToken {
+  id: string;
+  name: string;
+  tokenPreview: string; // only show preview in UI
+  createdAt: string;
+}
+
+export interface WebhookEndpoint {
+  id: string;
+  url: string;
+  events: Array<'review.created' | 'review.updated' | 'comment.created' | 'alert.triggered'>;
+  secretPreview: string;
+  createdAt: string;
+}
+
+export interface AITrainingConfig {
+  brandVoice?: string; // freeform text
+  allowedTones: Array<'Professional' | 'Friendly' | 'Casual' | 'Empathetic'>;
+  blockedWords: string[];
+  escalationRule?: string; // description
+}
+
+// Alerts (demo)
+export type AlertRuleType = 'negative_surge' | 'vip_mention' | 'low_rating' | 'keyword_match';
+
+export interface AlertRule {
+  id: string;
+  name: string;
+  type: AlertRuleType;
+  // Optional params depending on type
+  threshold?: number; // e.g., count or rating threshold
+  keyword?: string;
+  channels: { inapp: boolean; email: boolean; slack: boolean };
+  enabled: boolean;
+  createdAt: string;
+}
+
+export interface AlertEvent {
+  id: string;
+  ruleId: string;
+  title: string;
+  message: string;
+  createdAt: string;
+}
+
+export interface AlertsSettings {
+  slackWebhookUrl?: string; // demo only, not used to post
+  emailRecipients?: string; // comma-separated
+}
+
+// Reports (demo-only)
+export type ReportFrequency = 'Weekly' | 'Monthly' | 'One-off';
+
+export interface ReportSchedule {
+  id: string;
+  name: string; // e.g., "Weekly Analytics Summary"
+  frequency: ReportFrequency;
+  // simple target for demo: which route to open when viewing this report
+  route: string; // e.g., '/analytics?range=<auto>'
+  createdAt: string; // ISO
+}
+
+export interface ReportEntry {
+  id: string;
+  title: string;
+  route: string; // where to open to view this report
+  createdAt: string; // generated time
+}

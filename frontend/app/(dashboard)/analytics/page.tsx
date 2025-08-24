@@ -11,6 +11,7 @@ import { summarizeKPIs } from '@/lib/profile-config';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { openPrefilledEmail } from '@/lib/email';
 import { useAuth } from '@/lib/auth';
+import { runAlertScan } from '@/lib/alerts';
 
 export default function AnalyticsPage() {
   const searchParams = useSearchParams();
@@ -41,6 +42,9 @@ export default function AnalyticsPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Demo: auto-scan alerts on page open
+  useEffect(() => { try { runAlertScan(); } catch {} }, []);
 
   const stats: Array<[string, string]> = [
     ['Total Interactions', String(s.total)],
@@ -76,6 +80,12 @@ export default function AnalyticsPage() {
       <div className="flex items-center justify-between">
   <h1 className="text-2xl font-bold text-primary-dark">Analytics{client ? ` — ${client}` : ''}</h1>
   <div className="flex gap-2">
+        <Button variant="outline" className="border-[var(--border)]" onClick={async () => {
+          const link = `${window.location.pathname}${window.location.search}`;
+          const encoded = btoa(JSON.stringify({ route: link, title: 'Analytics shared view' }));
+          const url = `${window.location.origin}/share?t=${encoded}`;
+          try { await navigator.clipboard.writeText(url); } catch {}
+        }}>🔗 Copy share link</Button>
     <Button variant="outline" className="border-[var(--border)]" onClick={() => {
       const link = `${window.location.origin}${window.location.pathname}${window.location.search}`;
       openPrefilledEmail(user?.email || 'me@example.com','Revu — Analytics summary', `Quick link to the analytics report:\n${link}`);

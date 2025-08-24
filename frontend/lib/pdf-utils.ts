@@ -1,25 +1,61 @@
 // frontend/lib/pdf-utils.ts
 'use client';
 
+import { useStore } from '@/lib/store';
+
+// Build a base HTML document, optionally branded with workspace colors/logo/header/footer.
+function buildHtml(pageTitle: string, bodyContent: string, opts?: { contentTitle?: string; subtitleHtml?: string }) {
+  const branding = (() => { try { return useStore.getState().branding; } catch { return undefined; } })();
+  const useBranding = !!branding?.useBrandingInExports;
+  const primary = branding?.primaryColor || '#111827';
+  const accent = branding?.accentColor || '#22c55e';
+  const headerText = branding?.headerText || 'Revu';
+  const footerText = branding?.footerText || '';
+  const logo = branding?.logoUrl || '';
+
+  const baseStyles = `
+    body{font-family:Arial,Helvetica,sans-serif;color:#111827;padding:24px}
+    h1{color:#111827;margin:0}
+    .muted{color:#6b7280}
+    table{border-collapse:collapse;margin-top:16px;width:100%}
+    th,td{font-size:12px}
+  `;
+
+  const brandedHeader = useBranding ? `
+    <div style="display:flex;align-items:center;gap:12px;padding-bottom:12px;margin-bottom:16px;border-bottom:3px solid ${primary}">
+      ${logo ? `<img src="${logo}" alt="logo" style="height:36px;object-fit:contain"/>` : ''}
+      <div style="font-size:20px;font-weight:700;color:${primary}">${headerText}</div>
+    </div>
+  ` : '';
+
+  const brandedFooter = useBranding && footerText ? `
+    <div style="position:fixed;left:24px;right:24px;bottom:24px;padding-top:8px;border-top:1px dashed ${accent};color:#6b7280;font-size:12px;">
+      ${footerText}
+    </div>
+  ` : '';
+
+  const doc = `<!doctype html><html><head><title>${pageTitle}</title>
+  <style>${baseStyles}</style>
+  </head><body>
+  ${brandedHeader}
+  ${opts?.contentTitle ? `<h1 style="color:${useBranding ? primary : '#111827'}">${opts.contentTitle}</h1>` : ''}
+  ${opts?.subtitleHtml || ''}
+  ${bodyContent}
+  ${brandedFooter}
+  <script>window.onload=function(){window.print();setTimeout(()=>window.close(),800);}</script>
+  </body></html>`;
+  return doc;
+}
+
 export function downloadSimpleAnalyticsPDF(summary: { range: string; stats: Array<[string,string]> }) {
   const w = window.open('', '_blank');
-  if (!w) {
-    alert('Please allow popups to download the PDF');
-    return;
-  }
+  if (!w) { alert('Please allow popups to download the PDF'); return; }
   const rows = summary.stats
     .map(([k, v]) => `<tr><td style="padding:8px;border:1px solid #e5e7eb;">${k}</td><td style="padding:8px;border:1px solid #e5e7eb;font-weight:600;">${v}</td></tr>`) 
     .join('');
-  const html = `<!doctype html><html><head><title>Repruv Analytics (${summary.range})</title>
-  <style>body{font-family:Arial,sans-serif;color:#111827;padding:24px} h1{color:#111827} .muted{color:#6b7280}</style>
-  </head><body>
-  <h1>Analytics Summary</h1>
-  <div class="muted">Range: ${summary.range}</div>
-  <table style="border-collapse:collapse;margin-top:16px;width:100%;">
-    <tbody>${rows}</tbody>
-  </table>
-  <script>window.onload=function(){window.print();setTimeout(()=>window.close(),800);}</script>
-  </body></html>`;
+  const subtitle = `<div class="muted">Range: ${summary.range}</div>`;
+  const body = `<table><tbody>${rows}</tbody></table>`;
+  const html = buildHtml(`Revu Analytics (${summary.range})`, body, { contentTitle: 'Analytics Summary', subtitleHtml: subtitle });
   w.document.write(html);
   w.document.close();
 }
@@ -31,10 +67,7 @@ export function downloadReviewsPDF(payload: {
   rows: Array<{ date: string; rating: string | number; platform: string; status: string; content: string }>;
 }) {
   const w = window.open('', '_blank');
-  if (!w) {
-    alert('Please allow popups to download the PDF');
-    return;
-  }
+  if (!w) { alert('Please allow popups to download the PDF'); return; }
   const rows = payload.rows
     .map((r) => `
       <tr>
@@ -46,19 +79,8 @@ export function downloadReviewsPDF(payload: {
       </tr>`)
     .join('');
   const title = payload.title || 'Reviews Export';
-  const html = `<!doctype html><html><head><title>${title}</title>
-  <style>
-    body{font-family:Arial,sans-serif;color:#111827;padding:24px}
-    h1{color:#111827}
-    .muted{color:#6b7280}
-    table{border-collapse:collapse;margin-top:16px;width:100%}
-    th,td{font-size:12px}
-  </style>
-  </head><body>
-  <h1>${title}</h1>
-  <div class="muted">Range: ${payload.range}</div>
-  <div class="muted" style="margin-top:4px">Filters: ${payload.filters || 'none'}</div>
-  <table>
+  const subtitle = `<div class="muted">Range: ${payload.range}</div><div class="muted" style="margin-top:4px">Filters: ${payload.filters || 'none'}</div>`;
+  const body = `<table>
     <thead>
       <tr>
         <th style="text-align:left;padding:8px;border:1px solid #e5e7eb;">Date</th>
@@ -69,9 +91,8 @@ export function downloadReviewsPDF(payload: {
       </tr>
     </thead>
     <tbody>${rows}</tbody>
-  </table>
-  <script>window.onload=function(){window.print();setTimeout(()=>window.close(),800);}</script>
-  </body></html>`;
+  </table>`;
+  const html = buildHtml(title, body, { contentTitle: title, subtitleHtml: subtitle });
   w.document.write(html);
   w.document.close();
 }
@@ -83,15 +104,8 @@ export function downloadEngagementSummaryPDF(payload: { title?: string; stats: A
   const rows = payload.stats
     .map(([k, v]) => `<tr><td style="padding:8px;border:1px solid #e5e7eb;">${k}</td><td style="padding:8px;border:1px solid #e5e7eb;font-weight:600;">${v}</td></tr>`) 
     .join('');
-  const html = `<!doctype html><html><head><title>${title}</title>
-  <style>body{font-family:Arial,sans-serif;color:#111827;padding:24px} h1{color:#111827} .muted{color:#6b7280}</style>
-  </head><body>
-  <h1>${title}</h1>
-  <table style="border-collapse:collapse;margin-top:16px;width:100%;">
-    <tbody>${rows}</tbody>
-  </table>
-  <script>window.onload=function(){window.print();setTimeout(()=>window.close(),800);}</script>
-  </body></html>`;
+  const body = `<table><tbody>${rows}</tbody></table>`;
+  const html = buildHtml(title, body, { contentTitle: title });
   w.document.write(html);
   w.document.close();
 }

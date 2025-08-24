@@ -1,7 +1,7 @@
 // frontend/components/layout/Header.tsx
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Bell, Menu, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,10 +30,11 @@ interface HeaderProps {
 export function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const { notifications, markNotificationsRead, markNotificationRead, scenario, setScenario, setInteractions, addNotification, notificationPrefs, badgeRespectsMute, setBadgeRespectsMute } = useStore();
+  const { notifications, markNotificationsRead, markNotificationRead, scenario, setScenario, setInteractions, addNotification, notificationPrefs, badgeRespectsMute, setBadgeRespectsMute, alertHistory } = useStore();
   const [searchOpen, setSearchOpen] = useState(false);
   const [showMuted, setShowMuted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAlertBanner, setShowAlertBanner] = useState(false);
   const scenes = [
     { label: 'Negative surge recovery', href: '/engagement?sentiment=Negative&status=Unread' },
     { label: '5-star highlights', href: '/reviews?rating=>=4' },
@@ -76,8 +77,23 @@ export function Header({ onMenuClick }: HeaderProps) {
     }).length;
   })();
 
+  // Simple auto-banner for the latest alert
+  useEffect(() => {
+    if (alertHistory.length > 0) {
+      setShowAlertBanner(true);
+    }
+  }, [alertHistory.length]);
+
   return (
   <header className="card-background shadow-sm border-b border-[var(--border)]">
+      {showAlertBanner && alertHistory[0] && (
+        <div className="px-4 sm:px-6 lg:px-8 py-2 bg-amber-50 border-b border-[var(--border)] flex items-center justify-between">
+          <div className="text-sm text-primary-dark">⚠️ {alertHistory[0].title}: <span className="text-secondary-dark">{alertHistory[0].message}</span></div>
+          <div className="flex items-center gap-2">
+            <button className="text-xs underline" onClick={() => setShowAlertBanner(false)}>Dismiss</button>
+          </div>
+        </div>
+      )}
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
