@@ -98,7 +98,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                                 All Features
                               </div>
                               <p className="text-xs leading-tight text-secondary-dark text-center mt-1">
-                                Discover how Repruv can transform your review management
+                                Discover how Repruv can transform your reputation management
                               </p>
                             </Link>
                           </NavigationMenuLink>
@@ -157,7 +157,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                         </li>
                         <li>
                           <NavigationMenuLink asChild>
-                            <Link href="/features#analytics-reports" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
+                            <Link href="/features#analytics-and-reports" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
                               <div className="flex items-center justify-center mb-2">
                                 <FaChartBar className="text-green-500" size={20} />
                               </div>
@@ -172,7 +172,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                           <NavigationMenuLink asChild>
                             <Link href="/features#team-collaboration" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
                               <div className="flex items-center justify-center mb-2">
-                                <FaUsers className="text-orange-500" size={20} />
+                                <FaUsers className="text-purple-500" size={20} />
                               </div>
                               <div className="text-sm font-medium leading-none">Team Collaboration</div>
                               <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
@@ -180,6 +180,18 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                               </p>
                             </Link>
                           </NavigationMenuLink>
+                        </li>
+                        <li className="flex flex-col space-y-2 p-3">
+                          <Button asChild className="bg-green-600 hover:bg-green-700 text-white text-xs h-8">
+                            <Link href="/demo">
+                              Request Demo
+                            </Link>
+                          </Button>
+                          <Button asChild variant="outline" className="text-xs h-8 border-green-600 text-green-600 hover:bg-green-50">
+                            <Link href="/#early-access-form">
+                              Get Early Access
+                            </Link>
+                          </Button>
                         </li>
                       </ul>
                     </NavigationMenuContent>
