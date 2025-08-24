@@ -8,6 +8,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useStore } from '@/lib/store';
 import { pushToast } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -66,6 +67,48 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 relative overflow-y-auto focus:outline-none">
           <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+              {/* Demo persona banner */}
+              {(() => {
+                const { scenario, setScenario, demoBannerDismissed, setDemoBannerDismissed } = useStore.getState();
+                if (demoBannerDismissed) return null;
+                const label = scenario === 'creator' ? 'Creator' : scenario === 'business' ? 'Business' : scenario === 'agency-creators' ? 'Agency (Creators)' : 'Agency (Businesses)';
+                const blurb = scenario === 'creator'
+                  ? 'You are viewing a Creator demo. Content and AI replies skew to audience engagement.'
+                  : scenario === 'business'
+                    ? 'You are viewing a Business demo. Reviews and owner responses reflect a local brand.'
+                    : scenario === 'agency-creators'
+                      ? 'Agency demo (Creators): portfolio-wide monitoring across creator accounts.'
+                      : 'Agency demo (Businesses): multi-location brand reputation at a glance.';
+                return (
+                  <div className="mb-4 p-3 rounded-md border border-[var(--border)] section-background-alt">
+                    <div className="flex flex-col md:flex-row md:items-center gap-3">
+                      <div className="text-sm text-secondary-dark flex-1">
+                        <span className="font-medium text-primary-dark">Demo Mode — {label}.</span> {blurb}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <select
+                          aria-label="Scenario"
+                          className="card-background border-[var(--border)] rounded-md px-2 py-1 text-sm"
+                          value={scenario}
+                          onChange={(e) => setScenario(e.target.value as typeof scenario)}
+                        >
+                          <option value="creator">Creator</option>
+                          <option value="business">Business</option>
+                          <option value="agency-creators">Agency (Creators)</option>
+                          <option value="agency-businesses">Agency (Businesses)</option>
+                        </select>
+                        <button className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt" onClick={() => setDemoBannerDismissed(true)}>Dismiss</button>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                      <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => router.push('/engagement?play=1')}>▶ AI Magic: Play Timeline</Button>
+                      <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => router.push('/engagement')}>✨ Generate 3 on-brand replies</Button>
+                      <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => router.push('/analytics')}>📄 Export Summary PDF</Button>
+                      <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => router.push('/reviews?filter=new')}>🧭 Jump to “New Reviews”</Button>
+                    </div>
+                  </div>
+                );
+              })()}
               {children}
             </div>
           </div>

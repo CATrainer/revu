@@ -33,6 +33,7 @@ interface StoreState {
   notificationPrefs: NotificationPrefs;
   // UI prefs
   badgeRespectsMute: boolean;
+  demoBannerDismissed: boolean;
 
   setCurrentUser: (user: User | null) => void;
   setWorkspaces: (ws: Workspace[]) => void;
@@ -63,6 +64,7 @@ interface StoreState {
   setIntegrationStatus: (id: IntegrationConnection['id'], patch: Partial<IntegrationConnection>) => void;
   setNotificationPrefs: (p: Partial<NotificationPrefs>) => void;
   setBadgeRespectsMute: (v: boolean) => void;
+  setDemoBannerDismissed: (v: boolean) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -107,6 +109,7 @@ export const useStore = create<StoreState>()(
   ],
   notificationPrefs: { muteKeywords: ['refund','delay'], mutedPlatforms: [], mode: 'All' },
   badgeRespectsMute: false,
+  demoBannerDismissed: false,
 
   setCurrentUser: (user) => set({ currentUser: user }),
   setWorkspaces: (ws) => set({ workspaces: ws, currentWorkspace: ws[0] ?? null }),
@@ -166,6 +169,7 @@ export const useStore = create<StoreState>()(
     set((s) => ({ integrations: s.integrations.map((i) => (i.id === id ? { ...i, ...patch } : i)) })),
   setNotificationPrefs: (p) => set((s) => ({ notificationPrefs: { ...s.notificationPrefs, ...p } })),
   setBadgeRespectsMute: (v) => set({ badgeRespectsMute: v }),
+  setDemoBannerDismissed: (v) => set({ demoBannerDismissed: v }),
     }),
     {
       name: 'revu-persist',
@@ -183,6 +187,7 @@ export const useStore = create<StoreState>()(
         scenario: state.scenario,
         notificationPrefs: state.notificationPrefs,
         badgeRespectsMute: state.badgeRespectsMute,
+  demoBannerDismissed: state.demoBannerDismissed,
       }),
       version: 4,
     }

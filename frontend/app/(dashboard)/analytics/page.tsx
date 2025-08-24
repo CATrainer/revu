@@ -3,12 +3,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { downloadSimpleAnalyticsPDF } from '@/lib/pdf-utils';
 import { useStore } from '@/lib/store';
 import { summarizeKPIs } from '@/lib/profile-config';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import { openPrefilledEmail } from '@/lib/email';
 
 export default function AnalyticsPage() {
   const searchParams = useSearchParams();
@@ -29,6 +30,15 @@ export default function AnalyticsPage() {
   const [from, setFrom] = useState<string>('');
   const [to, setTo] = useState<string>('');
   const rangeLabel = useMemo(() => (from && to ? `${from} → ${to}` : 'Custom'), [from, to]);
+  useEffect(() => {
+    const range = searchParams.get('range');
+    if (range) {
+      const [a,b] = range.split(',');
+      if (a) setFrom(a);
+      if (b) setTo(b);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const stats: Array<[string, string]> = [
     ['Total Interactions', String(s.total)],
@@ -63,7 +73,13 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
   <h1 className="text-2xl font-bold text-primary-dark">Analytics{client ? ` — ${client}` : ''}</h1>
-  <Button className="button-primary" data-tour="export-report" onClick={() => { downloadSimpleAnalyticsPDF({ range: rangeLabel, stats }); try { useStore.getState().setTour({ step: 4 }); } catch {} }}>Export PDF</Button>
+  <div className="flex gap-2">
+    <Button variant="outline" className="border-[var(--border)]" onClick={() => {
+      const link = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+      openPrefilledEmail('me@example.com','Revu — Analytics summary', `Quick link to the analytics report:\n${link}`);
+    }}>📧 Email me this</Button>
+    <Button className="button-primary" data-tour="export-report" onClick={() => { downloadSimpleAnalyticsPDF({ range: rangeLabel, stats }); try { useStore.getState().setTour({ step: 4 }); } catch {} }}>Export PDF</Button>
+  </div>
       </div>
 
       <Card className="card-background border-[var(--border)]">

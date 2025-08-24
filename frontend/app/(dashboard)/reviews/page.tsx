@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { Interaction, InteractionStatus, Platform } from '@/lib/types';
 import { downloadReviewsPDF } from '@/lib/pdf-utils';
+import { openPrefilledEmail } from '@/lib/email';
 
 const platforms: Platform[] = ['Google', 'YouTube', 'Instagram', 'TikTok', 'Facebook', 'X/Twitter'];
 const statuses: Array<'All' | InteractionStatus> = ['All', 'Unread', 'Needs Response', 'Responded', 'Archived', 'Reported'];
@@ -134,6 +135,34 @@ export default function ReviewsPage() {
 
   return (
     <div className="space-y-6">
+      {/* AI magic CTA bar */}
+      <div className="flex flex-wrap items-center gap-2 p-3 rounded-md border border-[var(--border)] section-background-alt">
+        <span className="text-sm text-secondary-dark">Quick actions:</span>
+        <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => router.push('/engagement?play=1')}>✨ Play timeline</Button>
+        <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => router.push('/engagement')}>✨ Generate 3 replies</Button>
+        <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => {
+          const range = `${filters.dateRange.from || 'All time'} → ${filters.dateRange.to || 'Today'}`;
+          const filtersLabel = [
+            filters.platforms.length ? `Platforms: ${filters.platforms.join('/')}` : null,
+            filters.status !== 'All' ? `Status: ${filters.status}` : null,
+            ratingFilter !== 'All' ? `Rating: ${ratingFilter}` : null,
+            filters.search ? `Search: ${filters.search}` : null,
+          ].filter(Boolean).join(' • ');
+          const rows = reviews.slice(0, 50).map(r => ({
+            date: new Date(r.createdAt).toLocaleDateString(),
+            rating: 'rating' in r ? r.rating : '',
+            platform: r.platform,
+            status: r.status,
+            content: ('content' in r && typeof r.content === 'string' ? r.content : '').replace(/\n/g,' '),
+          }));
+          downloadReviewsPDF({ title: 'Revu — Reviews Export', range, filters: filtersLabel, rows });
+        }}>📄 Export PDF</Button>
+        <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => {
+          // email prefill with current link
+          const link = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+          openPrefilledEmail('me@example.com', 'Revu — Reviews summary', `Here is the current Reviews view link to share or export later:\n${link}`);
+        }}>📧 Email me this</Button>
+      </div>
       <h1 className="text-2xl font-bold text-primary-dark">Review Hub {filter === 'new' ? '— New' : ''}</h1>
 
   {/* Saved Views */}

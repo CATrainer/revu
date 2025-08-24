@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useStore } from '@/lib/store';
 import { generateAllDemoData } from '@/lib/demo-data';
+import { ChevronDown } from 'lucide-react';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -33,6 +34,13 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [showMuted, setShowMuted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const scenes = [
+    { label: 'Negative surge recovery', href: '/engagement?sentiment=Negative&status=Unread' },
+    { label: '5-star highlights', href: '/reviews?rating=>=4' },
+    { label: 'Competitor mentions', href: '/engagement?search=competitor' },
+    { label: 'Agency portfolio overview', href: '/analytics' },
+    { label: 'New reviews today', href: '/reviews?filter=new' },
+  ];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,6 +157,25 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <option value="agency-businesses">Agency (Businesses)</option>
               </select>
             </div>
+
+            {/* Scenes dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="hover-background">
+                  Scenes
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64 card-background border-[var(--border)]">
+                <DropdownMenuLabel className="text-primary-dark">Guided Scenes</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-[var(--border)]" />
+                {scenes.map(s => (
+                  <DropdownMenuItem key={s.label} className="hover:section-background-alt" onClick={() => router.push(s.href)}>
+                    <span className="text-primary-dark">{s.label}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Notifications */}
             <DropdownMenu onOpenChange={(open) => { if (!open) markNotificationsRead(); }}>

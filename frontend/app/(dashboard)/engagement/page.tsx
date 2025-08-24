@@ -14,6 +14,7 @@ import { useSearchParams } from 'next/navigation';
 import { pushToast } from '@/components/ui/toast';
 import { downloadEngagementSummaryPDF } from '@/lib/pdf-utils';
 import { useAuth } from '@/lib/auth';
+import { openPrefilledEmail } from '@/lib/email';
 
 const platforms: Platform[] = ['Google', 'YouTube', 'Instagram', 'TikTok', 'Facebook', 'X/Twitter'];
 const sentiments: Array<'All' | Sentiment> = ['All', 'Positive', 'Negative', 'Neutral', 'Mixed'];
@@ -272,6 +273,30 @@ export default function EngagementPage() {
 
   return (
     <div className="space-y-6">
+      {/* AI magic CTA bar */}
+      <div className="flex flex-wrap items-center gap-2 p-3 rounded-md border border-[var(--border)] section-background-alt">
+        <span className="text-sm text-secondary-dark">Quick actions:</span>
+        <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => setPlaybackActive(true)}>▶ Play timeline</Button>
+        <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => {
+          // Export summary PDF for filtered list
+          const byPlatform: Record<string, number> = {};
+          const bySentiment: Record<string, number> = {};
+          filtered.forEach((i) => {
+            byPlatform[i.platform] = (byPlatform[i.platform] || 0) + 1;
+            bySentiment[i.sentiment] = (bySentiment[i.sentiment] || 0) + 1;
+          });
+          const stats: Array<[string,string]> = [
+            ['Total items', String(filtered.length)],
+            ...Object.entries(bySentiment).map(([k,v]) => [String(`${k} sentiment`), String(v)]) as Array<[string,string]>,
+            ...Object.entries(byPlatform).map(([k,v]) => [String(`${k} items`), String(v)]) as Array<[string,string]>,
+          ];
+          downloadEngagementSummaryPDF({ title: 'Revu — Engagement Summary', stats });
+        }}>📄 Export PDF</Button>
+        <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => {
+          const link = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+          openPrefilledEmail('me@example.com','Revu — Engagement summary', `Quick link to the current Engagement view:\n${link}`);
+        }}>📧 Email me this</Button>
+      </div>
       {/* Saved Views */}
       <div className="flex flex-wrap items-center gap-2">
         {savedViews.filter(v => v.route.startsWith('/engagement')).map((v) => (
