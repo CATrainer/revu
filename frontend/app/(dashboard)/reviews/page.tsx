@@ -22,7 +22,7 @@ export default function ReviewsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const filter = searchParams.get('filter');
-  const { interactions, currentWorkspace, updateInteraction, filters, setFilters, savedViews, addSavedView, removeSavedView } = useStore();
+  const { interactions, currentWorkspace, updateInteraction, filters, setFilters, savedViews, addSavedView, removeSavedView, branding } = useStore();
   const [limit, setLimit] = useState(50);
   const [ratingFilter, setRatingFilter] = useState<'All' | '>=4' | '>=3' | '<=2'>('All');
 
@@ -91,6 +91,8 @@ export default function ReviewsPage() {
     return list.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
   }, [interactions, currentWorkspace, filter, filters.platforms, filters.status, filters.search, filters.dateRange?.from, filters.dateRange?.to, ratingFilter]);
 
+  const isCreator = useStore.getState().scenario === 'creator' || currentWorkspace?.type === 'Individual';
+
   // Keep URL in sync with filters for shareable links (preserve legacy filter=new when present)
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -113,7 +115,7 @@ export default function ReviewsPage() {
   // Listen for palette share event to export CSV (for ?export=csv link)
   useEffect(() => {
     const handler = () => {
-      const rows = reviews.map(r => ({
+          const rows = reviews.map(r => ({
         id: r.id,
         platform: r.platform,
         rating: 'rating' in r ? r.rating : '',
@@ -122,11 +124,17 @@ export default function ReviewsPage() {
         content: ('content' in r && typeof r.content === 'string' ? r.content : '').replace(/\n/g, ' '),
       }));
       const header = Object.keys(rows[0] || { id: '', platform: '', rating: '', status: '', createdAt: '', content: '' });
-      const csv = [header.join(','), ...rows.map(row => header.map(k => {
+          const { branding: b } = useStore.getState();
+          const brandTop = b?.useBrandingInExports ? [[`Brand: ${b.headerText || 'Revu'}`].join(',')] : [];
+      const csv = [
+        ...brandTop,
+        header.join(','),
+        ...rows.map(row => header.map(k => {
         const val = String((row as Record<string, unknown>)[k] ?? '');
         const escaped = '"' + val.replace(/"/g, '""') + '"';
         return val.includes(',') || val.includes('"') ? escaped : val;
-      }).join(','))].join('\n');
+      }).join(','))
+      ].join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -172,7 +180,15 @@ export default function ReviewsPage() {
           openPrefilledEmail(user?.email || 'me@example.com', 'Revu — Reviews summary', `Here is the current Reviews view link to share or export later:\n${link}`);
         }}>📧 Email me this</Button>
       </div>
-      <h1 className="text-2xl font-bold text-primary-dark">Review Hub {filter === 'new' ? '— New' : ''}</h1>
+  <h1 className="text-2xl font-bold text-primary-dark">{isCreator ? 'Mentions Hub' : 'Review Hub'} {filter === 'new' ? '— New' : ''}</h1>
+
+      {isCreator && (
+        <Card className="card-background border-[var(--border)]">
+          <CardContent className="p-4 text-sm text-secondary-dark">
+            Creators mostly receive comments/mentions. For a dedicated feed with AI replies, open <button className="underline" onClick={() => router.push('/engagement')}>Audience Engagement</button>.
+          </CardContent>
+        </Card>
+      )}
 
   {/* Saved Views */}
       <div className="flex flex-wrap items-center gap-2" data-tour="saved-views">
@@ -323,11 +339,16 @@ export default function ReviewsPage() {
                 content: ('content' in r && typeof r.content === 'string' ? r.content : '').replace(/\n/g, ' '),
               }));
               const header = Object.keys(rows[0] || { id: '', platform: '', rating: '', status: '', createdAt: '', content: '' });
-              const csv = [header.join(','), ...rows.map(row => header.map(k => {
+              const brandTop = branding?.useBrandingInExports ? [[`Brand: ${branding.headerText || 'Revu'}`].join(',')] : [];
+              const csv = [
+                ...brandTop,
+                header.join(','),
+                ...rows.map(row => header.map(k => {
                 const val = String((row as Record<string, unknown>)[k] ?? '');
                 const escaped = '"' + val.replace(/"/g, '""') + '"';
                 return val.includes(',') || val.includes('"') ? escaped : val;
-              }).join(','))].join('\n');
+              }).join(','))
+              ].join('\n');
               const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
               const url = URL.createObjectURL(blob);
               const a = document.createElement('a');

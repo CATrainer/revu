@@ -7,7 +7,8 @@ import { useStore } from '@/lib/store';
 
 export function QuickActions() {
   const router = useRouter();
-  const { addReportEntry, addNotification } = useStore();
+  const { addReportEntry, addNotification, scenario } = useStore();
+  const labelNew = scenario === 'creator' ? 'View New Mentions' : 'View New Reviews';
   return (
   <Card className="card-background border-[var(--border)]">
     <CardHeader>
@@ -15,7 +16,7 @@ export function QuickActions() {
       </CardHeader>
       <CardContent className="space-y-2">
     <Button className="w-full button-primary" variant="default" onClick={() => router.push('/reviews?filter=new')}>
-          View New Reviews (5)
+          {labelNew} (5)
         </Button>
   <Button className="w-full border-[var(--border)] text-secondary-dark hover:section-background-alt" variant="outline" onClick={() => { addReportEntry({ id: `rep_${Date.now()}`, title: `Weekly Analytics Summary — ${new Date().toLocaleDateString()}`, route: '/analytics', createdAt: new Date().toISOString() }); addNotification({ id: `n_${Date.now()}`, title: 'Report ready', message: 'Weekly report generated (demo). Open Analytics to export.', createdAt: new Date().toISOString(), severity: 'success' }); pushToast('Weekly report generated (demo). Check Analytics > Export.', 'success'); }}>
           Generate Weekly Report

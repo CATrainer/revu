@@ -16,7 +16,7 @@ import { runAlertScan } from '@/lib/alerts';
 export default function AnalyticsPage() {
   const searchParams = useSearchParams();
   const client = searchParams.get('client');
-  const { currentWorkspace, interactions } = useStore();
+  const { currentWorkspace, interactions, scenario } = useStore();
   const { user } = useAuth();
   const scoped = useMemo(() => {
     let list = interactions;
@@ -46,11 +46,14 @@ export default function AnalyticsPage() {
   // Demo: auto-scan alerts on page open
   useEffect(() => { try { runAlertScan(); } catch {} }, []);
 
+  const isCreator = scenario === 'creator' || currentWorkspace?.type === 'Individual';
+  const isBusiness = scenario === 'business' || currentWorkspace?.type === 'Organization';
+  const pageTitle = isCreator ? 'Channel Analytics' : isBusiness ? 'Reviews Analytics' : 'Analytics';
   const stats: Array<[string, string]> = [
-    ['Total Interactions', String(s.total)],
+    [isCreator ? 'Mentions' : isBusiness ? 'Reviews' : 'Total Interactions', String(s.total)],
     ['Response Rate', `${Math.round(s.responseRate * 100)}%`],
-    ['Reputation Score', `${Math.round(Math.max(0, s.sentimentScore) * 1000)}`],
-    ['Unread', String(s.unread)],
+    [isCreator ? 'Audience Sentiment' : 'Reputation Score', `${Math.round(Math.max(0, s.sentimentScore) * 1000)}`],
+    [isCreator ? 'Unaddressed' : 'Unread', String(s.unread)],
   ];
 
   // Chart data
@@ -78,7 +81,13 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-  <h1 className="text-2xl font-bold text-primary-dark">Analytics{client ? ` — ${client}` : ''}</h1>
+  <div>
+    <h1 className="text-2xl font-bold text-primary-dark">{pageTitle}{client ? ` — ${client}` : ''}</h1>
+    <p className="text-sm text-secondary-dark mt-1">
+      {isCreator && 'Track mentions volume, platforms, and audience sentiment.'}
+      {isBusiness && 'Monitor reviews, response rate, and reputation trends.'}
+    </p>
+  </div>
   <div className="flex gap-2">
         <Button variant="outline" className="border-[var(--border)]" onClick={async () => {
           const link = `${window.location.pathname}${window.location.search}`;

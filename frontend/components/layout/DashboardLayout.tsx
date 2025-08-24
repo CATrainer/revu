@@ -308,11 +308,17 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         .slice(0, 200)
                         .map(i => ({ id: i.id, kind: i.kind, platform: i.platform, status: i.status, sentiment: i.sentiment, createdAt: i.createdAt, content: i.content.replace(/\n/g,' ') }));
                       const header = Object.keys(rows[0] || { id: '', kind: '', platform: '', status: '', sentiment: '', createdAt: '', content: '' });
-                      const csv = [header.join(','), ...rows.map(r => header.map(k => {
+                      const { branding: b } = useStore.getState();
+                      const brandTop = b?.useBrandingInExports ? [[`Brand: ${b.headerText || 'Revu'}`].join(',')] : [];
+                      const csv = [
+                        ...brandTop,
+                        header.join(','),
+                        ...rows.map(r => header.map(k => {
                         const val = String((r as Record<string, unknown>)[k] ?? '');
                         const escaped = '"' + val.replace(/"/g, '""') + '"';
                         return val.includes(',') || val.includes('"') ? escaped : val;
-                      }).join(','))].join('\n');
+                      }).join(','))
+                      ].join('\n');
                       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement('a');

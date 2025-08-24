@@ -75,6 +75,20 @@ export default function EngagementPage() {
     }
   }, [interactions.length, setInteractions, user?.demo_access_type]);
 
+  // Scenario-aware defaults on first mount
+  useEffect(() => {
+    const { scenario: sc } = useStore.getState();
+    if (sc === 'creator') {
+      setFilters({ sentiment: 'All', status: 'All' });
+      setAiTone('Friendly');
+    } else if (sc === 'business') {
+      setFilters({ sentiment: 'All', status: 'Needs Response' });
+      setAiTone('Professional');
+    }
+    // agencies retain current saved prefs
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // If navigated with query params (e.g., from Clients or Reviews), prefill the search
   useEffect(() => {
     const client = searchParams.get('client');
@@ -138,11 +152,17 @@ export default function EngagementPage() {
       setTimeout(() => {
         const rows = filtered.slice(0, 200).map(i => ({ id: i.id, kind: i.kind, platform: i.platform, status: i.status, sentiment: i.sentiment, createdAt: i.createdAt, content: i.content.replace(/\n/g,' ') }));
         const header = Object.keys(rows[0] || { id: '', kind: '', platform: '', status: '', sentiment: '', createdAt: '', content: '' });
-        const csv = [header.join(','), ...rows.map(r => header.map(k => {
+        const { branding: b } = useStore.getState();
+        const brandTop = b?.useBrandingInExports ? [[`Brand: ${b.headerText || 'Revu'}`].join(',')] : [];
+        const csv = [
+          ...brandTop,
+          header.join(','),
+          ...rows.map(r => header.map(k => {
           const val = String((r as Record<string, unknown>)[k] ?? '');
           const escaped = '"' + val.replace(/"/g, '""') + '"';
           return val.includes(',') || val.includes('"') ? escaped : val;
-        }).join(','))].join('\n');
+        }).join(','))
+        ].join('\n');
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -235,6 +255,10 @@ export default function EngagementPage() {
       return true;
     });
   }, [interactions, filters, currentWorkspace]);
+
+  const isCreator = useStore.getState().scenario === 'creator' || currentWorkspace?.type === 'Individual';
+  const isBusiness = useStore.getState().scenario === 'business' || currentWorkspace?.type === 'Organization';
+  const pageTitle = isCreator ? 'Audience Engagement' : isBusiness ? 'Responses' : 'Engagement Hub';
 
   const generateAIText = (it: Interaction, tone: typeof aiTone) => {
     // return a tone-customized suggestion, tailored by interaction kind/sentiment and demo subtype
@@ -389,7 +413,13 @@ export default function EngagementPage() {
         >Save view</button>
       </div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-primary-dark">Engagement Hub</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-primary-dark">{pageTitle}</h1>
+          <p className="text-sm text-secondary-dark mt-1">
+            {isCreator && 'Reply to audience comments with on-brand, friendly AI drafts.'}
+            {isBusiness && 'Triage and respond to reviews efficiently to protect your reputation.'}
+          </p>
+        </div>
         <div className="flex gap-2">
           <Button
             variant="outline"

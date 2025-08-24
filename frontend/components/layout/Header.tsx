@@ -35,12 +35,14 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [showMuted, setShowMuted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAlertBanner, setShowAlertBanner] = useState(false);
+  const personaLabel = scenario === 'creator' ? 'Creator' : scenario === 'business' ? 'Business' : scenario === 'agency-creators' ? 'Agency: Creators' : 'Agency: Businesses';
+  const personaColor = scenario === 'creator' ? 'bg-purple-100 text-purple-700 border-purple-200' : scenario === 'business' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-blue-100 text-blue-700 border-blue-200';
   const scenes = [
-    { label: 'Negative surge recovery', href: '/engagement?sentiment=Negative&status=Unread' },
-    { label: '5-star highlights', href: '/reviews?rating=>=4' },
-    { label: 'Competitor mentions', href: '/engagement?search=competitor' },
+    { label: scenario === 'creator' ? 'Spike in negative comments' : 'Negative surge recovery', href: '/engagement?sentiment=Negative&status=Unread' },
+    { label: scenario === 'creator' ? 'Top fan shoutouts' : '5-star highlights', href: scenario === 'creator' ? '/engagement?sentiment=Positive' : '/reviews?rating=>=4' },
+    { label: scenario === 'creator' ? 'Peer mentions' : 'Competitor mentions', href: '/engagement?search=competitor' },
     { label: 'Agency portfolio overview', href: '/analytics' },
-    { label: 'New reviews today', href: '/reviews?filter=new' },
+    { label: scenario === 'creator' ? 'New mentions today' : 'New reviews today', href: scenario === 'creator' ? '/engagement?status=Unread' : '/reviews?filter=new' },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -116,6 +118,14 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Persona badge */}
+            <span
+              title={`Persona: ${personaLabel}`}
+              className={`hidden md:inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${personaColor}`}
+            >
+              <span className={`inline-block h-1.5 w-1.5 rounded-full ${personaColor.split(' ').find(c=>c.startsWith('bg-')) || 'bg-blue-500'}`}></span>
+              {personaLabel}
+            </span>
             {/* Search */}
             {searchOpen ? (
               <form onSubmit={handleSearch} className="flex items-center space-x-2">

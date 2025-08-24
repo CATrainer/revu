@@ -9,7 +9,7 @@ import { getProfileKPIs } from '@/lib/profile-config';
 import Link from 'next/link';
 
 export default function DashboardPage() {
-  const { currentWorkspace, interactions, onboarding, setOnboardingTask } = useStore();
+  const { currentWorkspace, interactions, onboarding, setOnboardingTask, scenario } = useStore();
   const relevant = currentWorkspace ? interactions.filter(i => i.workspaceId === currentWorkspace.id || (currentWorkspace.id === 'agency' && i.workspaceId === 'agency')) : interactions;
   const kpis = currentWorkspace ? getProfileKPIs(currentWorkspace, relevant) : [];
   return (
@@ -17,10 +17,15 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold text-primary-dark">Dashboard Overview</h1>
         <p className="mt-2 text-secondary-dark">Welcome back! Here&apos;s what&apos;s happening with your reviews.</p>
+      <div>
+        <h1 className="text-2xl font-bold text-primary-dark">Dashboard Overview</h1>
+        <p className="mt-2 text-secondary-dark">
+          { (scenario === 'creator' || currentWorkspace?.type === 'Individual') && 'Creator view — track mentions, replies, and fan sentiment.' }
+          { (scenario === 'business' || currentWorkspace?.type === 'Organization') && 'Business view — manage reviews, ratings, and response SLAs.' }
+          { (currentWorkspace?.type === 'Agency') && (currentWorkspace.agencyFlavor === 'creators' ? 'Agency (creators) — portfolio-wide creator engagement.' : 'Agency (businesses) — portfolio review health at a glance.') }
+          { (!currentWorkspace || (currentWorkspace.type !== 'Agency' && scenario !== 'creator' && scenario !== 'business')) && "Welcome back! Here's what's happening with your reviews." }
+        </p>
       </div>
-      
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {kpis.length > 0 ? (
           kpis.map(k => (
             <MetricsCard key={k.title} title={k.title} value={k.value} icon={TrendingUp} trend={k.trend} />

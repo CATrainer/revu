@@ -23,15 +23,34 @@ const baseNav = [
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const { currentWorkspace } = useStore();
+  const { currentWorkspace, scenario } = useStore();
   const navigation = useMemo(() => {
-    const items = [...baseNav];
+    // Start from base and clone so we can mutate labels safely
+    const items = [...baseNav.map((x) => ({ ...x }))];
+    // Insert Clients for Agency
     if (currentWorkspace?.type === 'Agency') {
-      // Insert Clients after Engagement Hub
       items.splice(2, 0, { name: 'Clients', href: '/clients', icon: Users });
     }
+    // Scenario-aware label tweaks
+    const isCreator = scenario === 'creator' || currentWorkspace?.type === 'Individual';
+    const isBusiness = scenario === 'business' || currentWorkspace?.type === 'Organization';
+    const isAgency = currentWorkspace?.type === 'Agency';
+    items.forEach((it) => {
+      if (it.href === '/engagement') {
+        it.name = isCreator ? 'Audience Engagement' : isBusiness ? 'Responses' : isAgency ? 'Engagement Hub' : it.name;
+      }
+      if (it.href === '/pulse') {
+        it.name = isCreator ? 'Mentions Pulse' : isBusiness ? 'Reputation Pulse' : 'Pulse Monitor';
+      }
+      if (it.href === '/competitors') {
+        it.name = isCreator ? 'Peers' : 'Competitors';
+      }
+      if (it.href === '/analytics') {
+        it.name = isCreator ? 'Channel Analytics' : isBusiness ? 'Reviews Analytics' : isAgency ? 'Portfolio Analytics' : 'Analytics';
+      }
+    });
     return items;
-  }, [currentWorkspace?.type]);
+  }, [currentWorkspace?.type, scenario]);
 
   return (
     <aside
