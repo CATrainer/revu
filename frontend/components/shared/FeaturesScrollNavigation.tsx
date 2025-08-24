@@ -33,7 +33,6 @@ export function FeaturesScrollNavigation() {
         const element = document.getElementById(sections[i].id);
         if (element) {
           const elementTop = element.offsetTop;
-          const elementBottom = elementTop + element.offsetHeight;
           const elementCenter = elementTop + element.offsetHeight / 2;
           
           // Use element center for better section detection

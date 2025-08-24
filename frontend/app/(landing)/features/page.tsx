@@ -6,12 +6,8 @@ import React from 'react';
 import { motion, LazyMotion, domAnimation, useInView } from "framer-motion";
 import { FeaturesScrollNavigation } from '@/components/shared/FeaturesScrollNavigation';
 import { 
-  MessageSquare, 
-  Brain, 
-  Trophy, 
 } from 'lucide-react';
 import { 
-  FaMobileAlt, 
   FaChartBar, 
   FaUsers,
   FaBolt,
@@ -306,7 +302,7 @@ export default function FeaturesPage() {
                       <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs">Y</div>
                       <span className="text-xs font-medium text-gray-700">Mike Johnson - 2★</span>
                     </div>
-                    <p className="text-xs text-gray-600 mb-3">"Food was cold and service was terrible. Won't come back."</p>
+                    <p className="text-xs text-gray-600 mb-3">&quot;Food was cold and service was terrible. Won&apos;t come back.&quot;</p>
                     
                     {/* AI analysis */}
                     <div className="border-t pt-3">
@@ -333,7 +329,7 @@ export default function FeaturesPage() {
                         <button className="px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded">Edit</button>
                       </div>
                     </div>
-                    <p className="text-xs text-gray-700">"Hi Mike, we sincerely apologize for your experience. We take food quality and service seriously. Please contact us at..."</p>
+                    <p className="text-xs text-gray-700">&quot;Hi Mike, we sincerely apologize for your experience. We take food quality and service seriously. Please contact us at...&quot;</p>
                   </div>
                   
                   {/* Stats */}
