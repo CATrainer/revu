@@ -11,11 +11,13 @@ import { Input } from '@/components/ui/input';
 import type { Interaction, InteractionStatus, Platform } from '@/lib/types';
 import { downloadReviewsPDF } from '@/lib/pdf-utils';
 import { openPrefilledEmail } from '@/lib/email';
+import { useAuth } from '@/lib/auth';
 
 const platforms: Platform[] = ['Google', 'YouTube', 'Instagram', 'TikTok', 'Facebook', 'X/Twitter'];
 const statuses: Array<'All' | InteractionStatus> = ['All', 'Unread', 'Needs Response', 'Responded', 'Archived', 'Reported'];
 
 export default function ReviewsPage() {
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const filter = searchParams.get('filter');
@@ -160,7 +162,7 @@ export default function ReviewsPage() {
         <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => {
           // email prefill with current link
           const link = `${window.location.origin}${window.location.pathname}${window.location.search}`;
-          openPrefilledEmail('me@example.com', 'Revu — Reviews summary', `Here is the current Reviews view link to share or export later:\n${link}`);
+          openPrefilledEmail(user?.email || 'me@example.com', 'Revu — Reviews summary', `Here is the current Reviews view link to share or export later:\n${link}`);
         }}>📧 Email me this</Button>
       </div>
       <h1 className="text-2xl font-bold text-primary-dark">Review Hub {filter === 'new' ? '— New' : ''}</h1>

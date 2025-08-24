@@ -294,7 +294,7 @@ export default function EngagementPage() {
         }}>📄 Export PDF</Button>
         <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => {
           const link = `${window.location.origin}${window.location.pathname}${window.location.search}`;
-          openPrefilledEmail('me@example.com','Revu — Engagement summary', `Quick link to the current Engagement view:\n${link}`);
+          openPrefilledEmail(user?.email || 'me@example.com','Revu — Engagement summary', `Quick link to the current Engagement view:\n${link}`);
         }}>📧 Email me this</Button>
       </div>
       {/* Saved Views */}

@@ -10,11 +10,13 @@ import { useStore } from '@/lib/store';
 import { summarizeKPIs } from '@/lib/profile-config';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { openPrefilledEmail } from '@/lib/email';
+import { useAuth } from '@/lib/auth';
 
 export default function AnalyticsPage() {
   const searchParams = useSearchParams();
   const client = searchParams.get('client');
   const { currentWorkspace, interactions } = useStore();
+  const { user } = useAuth();
   const scoped = useMemo(() => {
     let list = interactions;
     if (currentWorkspace) {
@@ -76,7 +78,7 @@ export default function AnalyticsPage() {
   <div className="flex gap-2">
     <Button variant="outline" className="border-[var(--border)]" onClick={() => {
       const link = `${window.location.origin}${window.location.pathname}${window.location.search}`;
-      openPrefilledEmail('me@example.com','Revu — Analytics summary', `Quick link to the analytics report:\n${link}`);
+      openPrefilledEmail(user?.email || 'me@example.com','Revu — Analytics summary', `Quick link to the analytics report:\n${link}`);
     }}>📧 Email me this</Button>
     <Button className="button-primary" data-tour="export-report" onClick={() => { downloadSimpleAnalyticsPDF({ range: rangeLabel, stats }); try { useStore.getState().setTour({ step: 4 }); } catch {} }}>Export PDF</Button>
   </div>

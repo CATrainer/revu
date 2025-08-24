@@ -9,6 +9,7 @@ import { useStore } from '@/lib/store';
 import { pushToast } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { generateAllDemoData } from '@/lib/demo-data';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -69,7 +70,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
               {/* Demo persona banner */}
               {(() => {
-                const { scenario, setScenario, demoBannerDismissed, setDemoBannerDismissed } = useStore.getState();
+                const { scenario, setScenario, demoBannerDismissed, setDemoBannerDismissed, setInteractions, addNotification } = useStore.getState();
                 if (demoBannerDismissed) return null;
                 const label = scenario === 'creator' ? 'Creator' : scenario === 'business' ? 'Business' : scenario === 'agency-creators' ? 'Agency (Creators)' : 'Agency (Businesses)';
                 const blurb = scenario === 'creator'
@@ -90,7 +91,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                           aria-label="Scenario"
                           className="card-background border-[var(--border)] rounded-md px-2 py-1 text-sm"
                           value={scenario}
-                          onChange={(e) => setScenario(e.target.value as typeof scenario)}
+                          onChange={(e) => {
+                            const s = e.target.value as typeof scenario;
+                            setScenario(s);
+                            const flavor = s === 'agency-businesses' ? 'agency-businesses' : s === 'agency-creators' ? 'agency-creators' : 'default';
+                            const { interactions } = generateAllDemoData(flavor as 'default' | 'agency-creators' | 'agency-businesses');
+                            setInteractions(interactions);
+                            addNotification({ id: `scenario_${Date.now()}`, title: 'Scenario changed', message: `Now viewing ${s.replace('-', ' ')}`, createdAt: new Date().toISOString(), severity: 'info' });
+                          }}
                         >
                           <option value="creator">Creator</option>
                           <option value="business">Business</option>

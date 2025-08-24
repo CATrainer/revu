@@ -174,6 +174,15 @@ export function Header({ onMenuClick }: HeaderProps) {
                     <span className="text-primary-dark">{s.label}</span>
                   </DropdownMenuItem>
                 ))}
+                <DropdownMenuItem className="hover:section-background-alt" onClick={() => {
+                  const today = new Date();
+                  const toStr = today.toISOString().slice(0,10);
+                  const fromStr = new Date(today.getTime() - 29*24*3600*1000).toISOString().slice(0,10);
+                  router.push(`/analytics?range=${fromStr},${toStr}`);
+                  try { useStore.getState().addNotification({ id: `scene_${Date.now()}`, title: 'Scene applied', message: 'Monthly report — last 30 days', createdAt: new Date().toISOString(), severity: 'info' }); } catch {}
+                }}>
+                  <span className="text-primary-dark">Monthly report (30 days)</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
