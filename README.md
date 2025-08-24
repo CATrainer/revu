@@ -1,4 +1,4 @@
-# Repruv - AI-Powered Review Management Platform
+# Revu - AI-Powered Review Management Platform
 
 All-in-one dashboard to supercharge your business through intelligent review management, competitor tracking, and AI-powered insights.
 
@@ -45,8 +45,8 @@ All-in-one dashboard to supercharge your business through intelligent review man
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/Repruve.git
-   cd Repruve
+   git clone https://github.com/yourusername/Revu.git
+   cd Revu
    ```
 
 2. **Start infrastructure services**
@@ -197,5 +197,4 @@ This project is proprietary software. All rights reserved.
 
 Built with ❤️ for local businesses
 
-DATABASE_URL=postgresql://postgres:password@localhost:5432/Repruve_db
-REDIS_URL=redis://localhost:6379
+Note: Do not store secrets in this README. Place environment variables in the appropriate `.env` files. See `backend/.env.example` and `frontend/.env.example` for templates.

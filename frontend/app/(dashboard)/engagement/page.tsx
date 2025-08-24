@@ -12,6 +12,7 @@ import type { Interaction, Platform, Sentiment } from '@/lib/types';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { pushToast } from '@/components/ui/toast';
+import { downloadEngagementSummaryPDF } from '@/lib/pdf-utils';
 import { useAuth } from '@/lib/auth';
 
 const platforms: Platform[] = ['Google', 'YouTube', 'Instagram', 'TikTok', 'Facebook', 'X/Twitter'];
@@ -29,6 +30,7 @@ export default function EngagementPage() {
   const {
     interactions,
     setInteractions,
+    addInteractions,
     currentWorkspace,
     filters,
     setFilters,
@@ -38,6 +40,13 @@ export default function EngagementPage() {
     clearSelection,
     cacheAISuggestion,
   updateInteraction,
+  addNotification,
+  templates,
+  addSavedView,
+  savedViews,
+  notificationPrefs,
+  addTemplate,
+  setTour,
   } = useStore();
   const { user } = useAuth();
 
@@ -48,6 +57,9 @@ export default function EngagementPage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [bulkTag, setBulkTag] = useState('');
   const [assignee, setAssignee] = useState('Me');
+  const [playbackActive, setPlaybackActive] = useState(false);
+  const [playbackProgress, setPlaybackProgress] = useState(0); // seconds 0..60
+  const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
 
   // seed demo data
   useEffect(() => {
@@ -62,17 +74,47 @@ export default function EngagementPage() {
     }
   }, [interactions.length, setInteractions, user?.demo_access_type]);
 
-  // If navigated from Clients with a client query, prefill the search
+  // If navigated with query params (e.g., from Clients or Reviews), prefill the search
   useEffect(() => {
     const client = searchParams.get('client');
-    if (client) {
-      setFilters({ search: `(Client: ${client})` });
-    }
+    if (client) setFilters({ search: `(Client: ${client})` });
+    const search = searchParams.get('search');
+    if (search) setFilters({ search });
+  const platformsParam = searchParams.get('platforms');
+  if (platformsParam) setFilters({ platforms: platformsParam.split(',').filter(Boolean) as Platform[] });
+  const statusParam = searchParams.get('status');
+  if (statusParam) setFilters({ status: statusParam as typeof filters.status });
+  const sentimentParam = searchParams.get('sentiment');
+  if (sentimentParam) setFilters({ sentiment: sentimentParam as typeof filters.sentiment });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // simulate new interactions every 30s
   useEffect(() => {
+    const platformIdMap: Record<string, Platform> = {
+      google: 'Google',
+      facebook: 'Facebook',
+      instagram: 'Instagram',
+      tiktok: 'TikTok',
+      twitter: 'X/Twitter',
+      tripadvisor: 'Google', // fallback mapping
+    };
+    const shouldNotify = (incoming: Interaction) => {
+      // platform mute
+      if (notificationPrefs.mutedPlatforms.map(p => platformIdMap[p]).includes(incoming.platform)) return false;
+      // keywords mute
+      if (notificationPrefs.muteKeywords.length) {
+        const hay = `${incoming.content}`.toLowerCase();
+        if (notificationPrefs.muteKeywords.some(k => hay.includes(k.toLowerCase()))) return false;
+      }
+      // important-only gate: negative or high-priority only
+      if (notificationPrefs.mode === 'Important only') {
+        if (incoming.sentiment === 'Negative') return true;
+        if (incoming.priority === 'high') return true;
+        return false;
+      }
+      return true;
+    };
     const id = setInterval(() => {
       const flavor = user?.demo_access_type === 'agency_businesses'
         ? 'agency-businesses'
@@ -80,10 +122,37 @@ export default function EngagementPage() {
           ? 'agency-creators'
           : 'default';
       const { interactions: more } = generateAllDemoData(flavor as 'default' | 'agency-creators' | 'agency-businesses');
-      setInteractions([more[0], ...interactions].slice(0, 300));
+      const incoming = more[0];
+      addInteractions([incoming]);
+      if (shouldNotify(incoming)) {
+        addNotification({ id: `n_${incoming.id}`, title: incoming.kind === 'review' ? 'New review' : 'New mention', message: incoming.content.slice(0, 100), createdAt: new Date().toISOString(), severity: 'info' });
+      }
     }, 30000);
     return () => clearInterval(id);
-  }, [interactions, setInteractions, user?.demo_access_type]);
+  }, [addInteractions, addNotification, user?.demo_access_type, notificationPrefs]);
+
+  // Auto-export CSV via ?export=csv
+  useEffect(() => {
+    if (searchParams.get('export') === 'csv') {
+      setTimeout(() => {
+        const rows = filtered.slice(0, 200).map(i => ({ id: i.id, kind: i.kind, platform: i.platform, status: i.status, sentiment: i.sentiment, createdAt: i.createdAt, content: i.content.replace(/\n/g,' ') }));
+        const header = Object.keys(rows[0] || { id: '', kind: '', platform: '', status: '', sentiment: '', createdAt: '', content: '' });
+        const csv = [header.join(','), ...rows.map(r => header.map(k => {
+          const val = String((r as Record<string, unknown>)[k] ?? '');
+          const escaped = '"' + val.replace(/"/g, '""') + '"';
+          return val.includes(',') || val.includes('"') ? escaped : val;
+        }).join(','))].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'engagement.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+      }, 50);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // infinite scroll simulation
   const loadMore = () => {
@@ -100,6 +169,57 @@ export default function EngagementPage() {
     }, 800);
   };
 
+  // timeline playback: emit 1 item/sec for up to 60s
+  const togglePlayback = () => {
+    if (playbackActive) {
+      if (timerId) clearInterval(timerId);
+      setTimerId(null);
+      setPlaybackActive(false);
+      return;
+    }
+    setPlaybackActive(true);
+    setPlaybackProgress(0);
+    const id = setInterval(() => {
+      setPlaybackProgress((p) => {
+        const next = p + 1;
+        const flavor = user?.demo_access_type === 'agency_businesses'
+          ? 'agency-businesses'
+          : user?.demo_access_type === 'agency_creators'
+            ? 'agency-creators'
+            : 'default';
+        const { interactions: more } = generateAllDemoData(flavor as 'default' | 'agency-creators' | 'agency-businesses');
+        const incoming = more[0];
+        addInteractions([incoming]);
+        // Gate via prefs
+        const platformIdMap: Record<string, Platform> = { google: 'Google', facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok', twitter: 'X/Twitter', tripadvisor: 'Google' };
+        const hay = `${incoming.content}`.toLowerCase();
+        const muted = notificationPrefs.mutedPlatforms.map(p => platformIdMap[p]).includes(incoming.platform)
+          || notificationPrefs.muteKeywords.some(k => hay.includes(k.toLowerCase()));
+        const important = incoming.sentiment === 'Negative' || incoming.priority === 'high';
+        if (!muted && (notificationPrefs.mode === 'All' || important)) {
+          addNotification({ id: `n_${incoming.id}`, title: incoming.kind === 'review' ? 'New review' : 'New mention', message: incoming.content.slice(0, 100), createdAt: new Date().toISOString(), severity: 'info' });
+        }
+        if (next >= 60) {
+          clearInterval(id);
+          setTimerId(null);
+          setPlaybackActive(false);
+        }
+        return next;
+      });
+    }, 1000);
+    setTimerId(id);
+  };
+
+  useEffect(() => () => { if (timerId) clearInterval(timerId); }, [timerId]);
+
+  // Auto-start via ?play=1
+  useEffect(() => {
+    if (searchParams.get('play') === '1') {
+      setPlaybackActive(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const filtered = useMemo(() => {
     // Scope to current workspace when selected
     const scoped = currentWorkspace
@@ -115,22 +235,134 @@ export default function EngagementPage() {
     });
   }, [interactions, filters, currentWorkspace]);
 
-  const onAISuggest = (it: Interaction) => {
+  const generateAIText = (it: Interaction, tone: typeof aiTone) => {
+    // return a tone-customized suggestion, tailored by interaction kind/sentiment and demo subtype
+    const isBusiness = user?.demo_access_type === 'business' || currentWorkspace?.type === 'Organization';
+    const isCreator = user?.demo_access_type === 'creator' || currentWorkspace?.type === 'Individual';
+    const prefix = tone === 'Professional' ? '' : tone === 'Friendly' ? 'Hey there! ' : tone === 'Casual' ? 'Hey! ' : 'I understand how you feel. ';
+    if (it.kind === 'review') {
+      if (it.sentiment === 'Negative') {
+        return `${prefix}Thanks for the feedback. This isn't our standard and we'd like to make it right. Please email support@${isBusiness ? 'yourrestaurant' : 'yourbrand'}.com so we can help.`;
+      }
+      if ('rating' in it) {
+        return `${prefix}Thanks so much for the ${isBusiness ? `${it.rating}-star ` : ''}review! We appreciate you and hope to see you again soon.`;
+      }
+      return `${prefix}Thanks so much for the review! We appreciate you and hope to see you again soon.`;
+    }
+    // comment
+    if (isCreator) {
+      return `${prefix}Thanks for watching! Glad you enjoyed it — more like this coming soon 🙌`;
+    }
+    return `${prefix}Thanks for the mention! We appreciate your support.`;
+  };
+
+  const onAISuggest = (it: Interaction, tone: typeof aiTone = aiTone) => {
     setAiOpenFor(it.id);
     setAiLoading(true);
-    // simulate AI generation
+    // simulate AI generation based on tone
     setTimeout(() => {
-      const txt = it.kind === 'review' && it.sentiment === 'Negative'
-        ? "Hi NAME, I'm truly sorry to hear about your experience. This isn't the standard we aim for. I'd like to make this right - could you please email me at manager@business.com so we can discuss this further? We value your feedback and want to ensure your next visit exceeds expectations."
-        : 'Thank you so much for the love! 💕 Glad you enjoyed the recipe. Stay tuned for more delicious content coming your way!';
+      const txt = generateAIText(it, tone);
       setAiText(txt);
       cacheAISuggestion(it.id, txt);
       setAiLoading(false);
-    }, 750);
+  // Tour progression: if user triggered AI Suggest during step 2, advance
+  try { setTour({ step: 3 }); } catch {}
+    }, 500);
   };
 
   return (
     <div className="space-y-6">
+      {/* Saved Views */}
+      <div className="flex flex-wrap items-center gap-2">
+        {savedViews.filter(v => v.route.startsWith('/engagement')).map((v) => (
+          <button
+            key={v.id}
+            className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt"
+            onClick={() => window.location.assign(v.route)}
+            title={new Date(v.createdAt).toLocaleString()}
+          >
+            {v.name}
+          </button>
+        ))}
+        <button
+          className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt"
+          onClick={() => {
+            const name = prompt('Name this view:');
+            if (!name) return;
+            const params = new URLSearchParams();
+            if (filters.platforms.length) params.set('platforms', filters.platforms.join(','));
+            if (filters.status !== 'All') params.set('status', filters.status);
+            if (filters.sentiment !== 'All') params.set('sentiment', filters.sentiment);
+            if (filters.search) params.set('search', filters.search);
+            const route = `/engagement?${params.toString()}`;
+            addSavedView({ id: `sv_${Date.now()}`, name, route, createdAt: new Date().toISOString() });
+          }}
+        >Save view</button>
+        <button
+          className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt"
+          onClick={async () => {
+            const url = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+            try { await navigator.clipboard.writeText(url); } catch {}
+          }}
+        >Copy link</button>
+      </div>
+
+      {/* Timeline playback */}
+      <Card className="card-background border-[var(--border)]">
+        <CardContent className="p-4 flex items-center gap-4">
+          <Button className="button-primary" onClick={togglePlayback}>{playbackActive ? 'Pause' : 'Play'} Timeline</Button>
+          <Button
+            variant="outline"
+            className="border-[var(--border)]"
+            onClick={() => {
+              // Build a simple summary from current filtered view
+              const byPlatform: Record<string, number> = {};
+              const bySentiment: Record<string, number> = {};
+              filtered.forEach((i) => {
+                byPlatform[i.platform] = (byPlatform[i.platform] || 0) + 1;
+                bySentiment[i.sentiment] = (bySentiment[i.sentiment] || 0) + 1;
+              });
+              const stats: Array<[string,string]> = [
+                ['Total items', String(filtered.length)],
+                ...Object.entries(bySentiment).map(([k,v]) => [String(`${k} sentiment`), String(v)]) as Array<[string,string]>,
+                ...Object.entries(byPlatform).map(([k,v]) => [String(`${k} items`), String(v)]) as Array<[string,string]>,
+              ];
+              downloadEngagementSummaryPDF({ title: 'Revu — Engagement Summary', stats });
+            }}
+          >Export Summary PDF</Button>
+          <div className="flex-1 h-2 rounded bg-[var(--section-bg-alt)] overflow-hidden">
+            <div className="h-2 bg-[var(--brand-primary)]" style={{ width: `${(playbackProgress/60)*100}%` }} />
+          </div>
+          <span className="text-xs text-secondary-dark w-14 text-right">{playbackProgress}s</span>
+        </CardContent>
+      </Card>
+      {/* Saved Views */}
+      <div className="flex flex-wrap items-center gap-2">
+        {savedViews.filter(v => v.route.startsWith('/engagement')).map((v) => (
+          <button
+            key={v.id}
+            className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt"
+            onClick={() => window.location.assign(v.route)}
+            title={new Date(v.createdAt).toLocaleString()}
+          >
+            {v.name}
+          </button>
+        ))}
+        <button
+          className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt"
+          onClick={() => {
+            const name = prompt('Name this view:');
+            if (!name) return;
+            const params = new URLSearchParams();
+            if (filters.platforms.length) params.set('platforms', filters.platforms.join(','));
+            if (filters.status !== 'All') params.set('status', filters.status);
+            if (filters.sentiment !== 'All') params.set('sentiment', filters.sentiment);
+            if (filters.search) params.set('search', filters.search);
+            const route = `/engagement?${params.toString()}`;
+            addSavedView({ id: `sv_${Date.now()}`, name, route, createdAt: new Date().toISOString() });
+          }}
+        >Save view</button>
+      </div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-primary-dark">Engagement Hub</h1>
         <div className="flex gap-2">
@@ -343,13 +575,20 @@ export default function EngagementPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" className="border-[var(--border)]" onClick={() => onAISuggest(it)}>
+                  <Button variant="outline" className="border-[var(--border)]" onClick={() => onAISuggest(it)} data-tour="ai-suggest">
                     <Sparkles className="h-4 w-4 mr-2"/>AI Suggest
                   </Button>
                   <Button variant="ghost" onClick={() => {
                     setAiOpenFor(it.id);
                     setAiText('');
                   }}>Reply</Button>
+                  <Button variant="ghost" onClick={() => {
+                    const reason = prompt('Report this item. Enter a reason (demo):');
+                    if (reason) {
+                      updateInteraction(it.id, { status: 'Reported', reportedReason: reason } as Partial<Interaction>);
+                      pushToast('Item reported (demo)', 'success');
+                    }
+                  }}>Report</Button>
                   <Button variant="ghost" onClick={() => {
                     updateInteraction(it.id, { status: 'Archived' } as Partial<Interaction>);
                     pushToast('Archived item', 'success');
@@ -360,12 +599,25 @@ export default function EngagementPage() {
               {/* AI Panel */}
               {aiOpenFor === it.id && (
                 <div className="mt-4 border-t pt-4">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2">
                     <span className="text-sm text-secondary-dark">Tone:</span>
-                    <select className="card-background border-[var(--border)] rounded-md px-3 py-2 text-sm" value={aiTone} onChange={(e) => setAiTone(e.target.value as typeof aiTone)}>
+                    <select className="card-background border-[var(--border)] rounded-md px-3 py-2 text-sm" value={aiTone} onChange={(e) => { const t = e.target.value as typeof aiTone; setAiTone(t); if (aiOpenFor === it.id) onAISuggest(it, t); }}>
                       {['Professional','Friendly','Casual','Empathetic'].map((t) => <option key={t} value={t}>{t}</option>)}
                     </select>
-                    <Button variant="outline" className="border-[var(--border)] ml-auto" onClick={() => onAISuggest(it)} disabled={aiLoading}>
+                    {/* Templates */}
+                    <select
+                      className="card-background border-[var(--border)] rounded-md px-3 py-2 text-sm"
+                      onChange={(e) => {
+                        const tpl = templates.find(x => x.id === e.target.value);
+                        if (tpl) setAiText(tpl.content);
+                      }}
+                    >
+                      <option value="">Insert template...</option>
+                      {templates.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                    <Button variant="outline" className="border-[var(--border)] ml-auto" onClick={() => onAISuggest(it, aiTone)} disabled={aiLoading}>
                       {aiLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin"/> : <RefreshCw className="h-4 w-4 mr-2"/>}
                       Regenerate
                     </Button>
@@ -376,12 +628,30 @@ export default function EngagementPage() {
                     <div className="flex gap-2">
                       <Button size="sm" className="button-primary" onClick={() => {
                         if (!aiText.trim()) return pushToast('Generate or type a reply first','error');
-                        updateInteraction(it.id, { status: 'Responded' } as Partial<Interaction>);
+                        // mark as responded and attach our reply for display in Responded section
+                        if (it.kind === 'comment') {
+                          const patch: Partial<Interaction> = {
+                            status: 'Responded',
+                            ourReply: { content: aiText, createdAt: new Date().toISOString(), tone: aiTone },
+                          };
+                          updateInteraction(it.id, patch);
+                        } else {
+                          const patch: Partial<Interaction> = {
+                            status: 'Responded',
+                            ownerResponse: { content: aiText, createdAt: new Date().toISOString() },
+                          };
+                          updateInteraction(it.id, patch);
+                        }
                         pushToast('Reply sent (demo)', 'success');
                         setAiOpenFor(null);
                       }}>Send</Button>
                       <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => pushToast('Opening composer (demo)','info')}>Edit & Send</Button>
-                      <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => pushToast('Saved as template (demo)','success')}>Save as Template</Button>
+                      <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => {
+                        const name = prompt('Template name:', `Reply (${aiTone})`);
+                        if (!name || !aiText.trim()) return;
+                        addTemplate({ id: `tpl_${Date.now()}`, name, content: aiText, tone: aiTone });
+                        pushToast('Template saved','success');
+                      }}>Save as Template</Button>
                     </div>
                   </div>
                 </div>
@@ -398,6 +668,52 @@ export default function EngagementPage() {
           </Button>
         </div>
       </div>
+
+      {/* Responded Section */}
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold text-primary-dark mt-8">Replied</h2>
+        {filtered.filter(i => i.status === 'Responded').slice(0, 20).map((it) => (
+          <Card key={`resp_${it.id}`} className="card-background border-[var(--border)]">
+            <CardContent className="p-4">
+              <div className="flex justify-between">
+                <div className="text-primary-dark font-medium truncate pr-4">{it.content}</div>
+                <Badge variant="outline" className="border-[var(--border)]">Responded</Badge>
+              </div>
+              <div className="mt-2 text-sm text-secondary-dark">
+        {it.kind === 'comment' && 'ourReply' in it && it.ourReply ? (
+                  <>
+          <div className="text-xs text-muted-dark">Our reply ({it.ourReply.tone || 'Professional'}):</div>
+          <div className="mt-1">{it.ourReply.content}</div>
+                  </>
+        ) : it.kind === 'review' && 'ownerResponse' in it && it.ownerResponse ? (
+                  <>
+                    <div className="text-xs text-muted-dark">Owner response:</div>
+          <div className="mt-1">{it.ownerResponse.content}</div>
+                  </>
+                ) : (
+                  <div className="text-xs">Response details not available (demo)</div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Archived Section */}
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold text-primary-dark mt-8">Archived</h2>
+        {filtered.filter(i => i.status === 'Archived').slice(0, 20).map((it) => (
+          <Card key={`arch_${it.id}`} className="card-background border-[var(--border)]">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div className="text-primary-dark truncate pr-4">{it.content}</div>
+              <Badge variant="outline" className="border-[var(--border)]">Archived</Badge>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Report dialog substitute: inline quick reason capture (demo) */}
+      <div className="hidden" />
     </div>
   );
 }

@@ -24,6 +24,78 @@ export function downloadSimpleAnalyticsPDF(summary: { range: string; stats: Arra
   w.document.close();
 }
 
+export function downloadReviewsPDF(payload: {
+  title?: string;
+  range: string;
+  filters: string;
+  rows: Array<{ date: string; rating: string | number; platform: string; status: string; content: string }>;
+}) {
+  const w = window.open('', '_blank');
+  if (!w) {
+    alert('Please allow popups to download the PDF');
+    return;
+  }
+  const rows = payload.rows
+    .map((r) => `
+      <tr>
+        <td style="padding:8px;border:1px solid #e5e7eb;white-space:nowrap;">${r.date}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;text-align:center;">${r.rating}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;">${r.platform}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;">${r.status}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;max-width:520px;">${r.content}</td>
+      </tr>`)
+    .join('');
+  const title = payload.title || 'Reviews Export';
+  const html = `<!doctype html><html><head><title>${title}</title>
+  <style>
+    body{font-family:Arial,sans-serif;color:#111827;padding:24px}
+    h1{color:#111827}
+    .muted{color:#6b7280}
+    table{border-collapse:collapse;margin-top:16px;width:100%}
+    th,td{font-size:12px}
+  </style>
+  </head><body>
+  <h1>${title}</h1>
+  <div class="muted">Range: ${payload.range}</div>
+  <div class="muted" style="margin-top:4px">Filters: ${payload.filters || 'none'}</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align:left;padding:8px;border:1px solid #e5e7eb;">Date</th>
+        <th style="text-align:center;padding:8px;border:1px solid #e5e7eb;">Rating</th>
+        <th style="text-align:left;padding:8px;border:1px solid #e5e7eb;">Platform</th>
+        <th style="text-align:left;padding:8px;border:1px solid #e5e7eb;">Status</th>
+        <th style="text-align:left;padding:8px;border:1px solid #e5e7eb;">Content</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <script>window.onload=function(){window.print();setTimeout(()=>window.close(),800);}</script>
+  </body></html>`;
+  w.document.write(html);
+  w.document.close();
+}
+
+export function downloadEngagementSummaryPDF(payload: { title?: string; stats: Array<[string, string]> }) {
+  const w = window.open('', '_blank');
+  if (!w) { alert('Please allow popups to download the PDF'); return; }
+  const title = payload.title || 'Engagement Summary';
+  const rows = payload.stats
+    .map(([k, v]) => `<tr><td style="padding:8px;border:1px solid #e5e7eb;">${k}</td><td style="padding:8px;border:1px solid #e5e7eb;font-weight:600;">${v}</td></tr>`) 
+    .join('');
+  const html = `<!doctype html><html><head><title>${title}</title>
+  <style>body{font-family:Arial,sans-serif;color:#111827;padding:24px} h1{color:#111827} .muted{color:#6b7280}</style>
+  </head><body>
+  <h1>${title}</h1>
+  <table style="border-collapse:collapse;margin-top:16px;width:100%;">
+    <tbody>${rows}</tbody>
+  </table>
+  <script>window.onload=function(){window.print();setTimeout(()=>window.close(),800);}</script>
+  </body></html>`;
+  w.document.write(html);
+  w.document.close();
+}
+
 export const downloadTermsAsPDF = () => {
   // Create a new window with the terms content formatted for printing
   const printWindow = window.open('', '_blank');

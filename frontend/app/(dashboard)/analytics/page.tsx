@@ -8,6 +8,7 @@ import { useSearchParams } from 'next/navigation';
 import { downloadSimpleAnalyticsPDF } from '@/lib/pdf-utils';
 import { useStore } from '@/lib/store';
 import { summarizeKPIs } from '@/lib/profile-config';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 
 export default function AnalyticsPage() {
   const searchParams = useSearchParams();
@@ -32,15 +33,37 @@ export default function AnalyticsPage() {
   const stats: Array<[string, string]> = [
     ['Total Interactions', String(s.total)],
     ['Response Rate', `${Math.round(s.responseRate * 100)}%`],
-    ['Sentiment Score', `${Math.round(Math.max(0, s.sentimentScore) * 100)}%`],
+    ['Reputation Score', `${Math.round(Math.max(0, s.sentimentScore) * 1000)}`],
     ['Unread', String(s.unread)],
   ];
+
+  // Chart data
+  const byDay = useMemo(() => {
+    const days = Array.from({ length: 30 }).map((_, idx) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (29 - idx));
+      const key = d.toDateString();
+      const count = scoped.filter(i => new Date(i.createdAt).toDateString() === key).length;
+      const responded = scoped.filter(i => new Date(i.createdAt).toDateString() === key && i.status === 'Responded').length;
+      return { day: d.toISOString().slice(5, 10), total: count, responded };
+    });
+    return days;
+  }, [scoped]);
+  const sentiments = useMemo(() => {
+    const order = ['Positive','Neutral','Mixed','Negative'] as const;
+    return order.map(name => ({ name, value: scoped.filter(i => i.sentiment === name).length }));
+  }, [scoped]);
+  const platforms = useMemo(() => {
+    const map: Record<string, { name: string; value: number }> = {};
+    scoped.forEach(i => { map[i.platform] = map[i.platform] || { name: i.platform, value: 0 }; map[i.platform].value++; });
+    return Object.values(map);
+  }, [scoped]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
   <h1 className="text-2xl font-bold text-primary-dark">Analytics{client ? ` — ${client}` : ''}</h1>
-        <Button className="button-primary" onClick={() => downloadSimpleAnalyticsPDF({ range: rangeLabel, stats })}>Export PDF</Button>
+  <Button className="button-primary" data-tour="export-report" onClick={() => { downloadSimpleAnalyticsPDF({ range: rangeLabel, stats }); try { useStore.getState().setTour({ step: 4 }); } catch {} }}>Export PDF</Button>
       </div>
 
       <Card className="card-background border-[var(--border)]">
@@ -84,20 +107,32 @@ export default function AnalyticsPage() {
         ))}
       </div>
 
-      {/* Charts placeholders */}
+      {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="h-64 card-background border-[var(--border)] rounded-lg flex items-center justify-center text-secondary-dark">
-          Interactions over time (line)
-        </div>
-        <div className="h-64 card-background border-[var(--border)] rounded-lg flex items-center justify-center text-secondary-dark">
-          Sentiment distribution (stacked bar)
-        </div>
-        <div className="h-64 card-background border-[var(--border)] rounded-lg flex items-center justify-center text-secondary-dark">
-          Platform breakdown (donut)
-        </div>
-        <div className="h-64 card-background border-[var(--border)] rounded-lg flex items-center justify-center text-secondary-dark">
-          Response time trend (area)
-        </div>
+        <Card className="card-background border-[var(--border)]">
+          <CardHeader><CardTitle className="text-primary-dark">Interactions over time</CardTitle></CardHeader>
+          <CardContent className="h-64">
+            <ResponsiveContainer width="100%" height="100%"><LineChart data={byDay}><XAxis dataKey="day"/><YAxis/><Tooltip/><Legend/><Line dataKey="total" stroke="#6366f1" /><Line dataKey="responded" stroke="#22c55e" /></LineChart></ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card className="card-background border-[var(--border)]">
+          <CardHeader><CardTitle className="text-primary-dark">Sentiment distribution</CardTitle></CardHeader>
+          <CardContent className="h-64">
+            <ResponsiveContainer width="100%" height="100%"><BarChart data={sentiments}><XAxis dataKey="name"/><YAxis/><Tooltip/><Bar dataKey="value" fill="#8b5cf6"/></BarChart></ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card className="card-background border-[var(--border)]">
+          <CardHeader><CardTitle className="text-primary-dark">Platform breakdown</CardTitle></CardHeader>
+          <CardContent className="h-64">
+            <ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={platforms} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80}>{platforms.map((_, i) => <Cell key={i} fill={["#6366f1","#22c55e","#f59e0b","#ef4444","#14b8a6","#a78bfa"][i % 6]} />)}</Pie><Tooltip/></PieChart></ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card className="card-background border-[var(--border)]">
+          <CardHeader><CardTitle className="text-primary-dark">Response volume</CardTitle></CardHeader>
+          <CardContent className="h-64">
+            <ResponsiveContainer width="100%" height="100%"><AreaChart data={byDay}><XAxis dataKey="day"/><YAxis/><Tooltip/><Area dataKey="responded" stroke="#22c55e" fill="#22c55e" fillOpacity={0.2}/></AreaChart></ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
 
       <Card className="card-background border-[var(--border)]">

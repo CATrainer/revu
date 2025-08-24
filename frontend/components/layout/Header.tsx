@@ -17,7 +17,10 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/lib/auth';
 import { LocationSelector } from '@/components/dashboard/LocationSelector';
+import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { useStore } from '@/lib/store';
+import { generateAllDemoData } from '@/lib/demo-data';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -25,7 +28,10 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
+  const router = useRouter();
+  const { notifications, markNotificationsRead, markNotificationRead, scenario, setScenario, setInteractions, addNotification, notificationPrefs, badgeRespectsMute, setBadgeRespectsMute } = useStore();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [showMuted, setShowMuted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
@@ -39,11 +45,28 @@ export function Header({ onMenuClick }: HeaderProps) {
     }
   };
 
-  const mockNotifications = [
-    { id: 1, title: 'New review received', message: 'You have a new 5-star review on Google', time: '2 minutes ago', unread: true },
-    { id: 2, title: 'Response needed', message: 'Customer feedback requires your attention', time: '1 hour ago', unread: true },
-    { id: 3, title: 'Monthly report ready', message: 'Your analytics report is now available', time: '2 hours ago', unread: false },
-  ];
+  const items = notifications.items.map((n) => ({ id: n.id, title: n.title, message: n.message, time: new Date(n.createdAt).toLocaleTimeString(), unread: !n.read }));
+  const unreadCount = (() => {
+    if (!badgeRespectsMute) return notifications.unread;
+    // compute unread excluding muted items by keyword/platform when possible
+    const platformIdMap: Record<string, string> = { google: 'Google', facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok', twitter: 'X/Twitter', tripadvisor: 'Google' };
+    return notifications.items.filter((it) => {
+      if (it.read) return false;
+      const hay = `${it.title} ${it.message}`.toLowerCase();
+      if (notificationPrefs.muteKeywords.some(k => hay.includes(k.toLowerCase()))) return false;
+      // best-effort platform match from title
+      if (notificationPrefs.mutedPlatforms.length) {
+        const mutedNames = notificationPrefs.mutedPlatforms.map(k => platformIdMap[k]);
+        if (mutedNames.some(name => it.title.includes(name))) return false;
+      }
+      if (notificationPrefs.mode === 'Important only') {
+        // heuristic: only count if title hints negative or priority
+        const t = it.title.toLowerCase();
+        if (!(t.includes('negative') || t.includes('high'))) return false;
+      }
+      return true;
+    }).length;
+  })();
 
   return (
   <header className="card-background shadow-sm border-b border-[var(--border)]">
@@ -104,12 +127,35 @@ export function Header({ onMenuClick }: HeaderProps) {
               </Button>
             )}
 
+            {/* Scenario selector */}
+            <div className="hidden md:block">
+              <select
+                aria-label="Scenario"
+                className="card-background border-[var(--border)] rounded-md px-2 py-1 text-sm"
+                value={scenario}
+                onChange={(e) => {
+                  const s = e.target.value as typeof scenario;
+                  setScenario(s);
+                  // Reseed interactions to match scenario flavor
+                  const flavor = s === 'agency-businesses' ? 'agency-businesses' : s === 'agency-creators' ? 'agency-creators' : 'default';
+                  const { interactions } = generateAllDemoData(flavor as 'default' | 'agency-creators' | 'agency-businesses');
+                  setInteractions(interactions);
+                  addNotification({ id: `scenario_${Date.now()}`, title: 'Scenario changed', message: `Now viewing ${s.replace('-', ' ')}`, createdAt: new Date().toISOString(), severity: 'info' });
+                }}
+              >
+                <option value="creator">Creator</option>
+                <option value="business">Business</option>
+                <option value="agency-creators">Agency (Creators)</option>
+                <option value="agency-businesses">Agency (Businesses)</option>
+              </select>
+            </div>
+
             {/* Notifications */}
-            <DropdownMenu>
+            <DropdownMenu onOpenChange={(open) => { if (!open) markNotificationsRead(); }}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="relative hover-background">
                   <Bell className="h-5 w-5" />
-                  {mockNotifications.some(n => n.unread) && (
+                  {unreadCount > 0 && (
                     <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
                   )}
                 </Button>
@@ -119,11 +165,37 @@ export function Header({ onMenuClick }: HeaderProps) {
                 className="w-80 card-background border-[var(--border)]"
               >
                 <DropdownMenuLabel className="text-primary-dark">Notifications</DropdownMenuLabel>
+                <div className="px-3 py-2 text-xs text-secondary-dark flex items-center justify-between">
+                  <span>Badge respects mute</span>
+                  <input type="checkbox" checked={badgeRespectsMute} onChange={(e) => setBadgeRespectsMute(e.target.checked)} />
+                </div>
+                <div className="px-3 -mt-2 pb-2 text-xs text-secondary-dark flex items-center justify-between">
+                  <span>Show muted items</span>
+                  <input type="checkbox" checked={showMuted} onChange={(e) => setShowMuted(e.target.checked)} />
+                </div>
                 <DropdownMenuSeparator className="bg-[var(--border)]" />
-                {mockNotifications.map((notification) => (
+                {items.length === 0 && (
+                  <div className="p-4 text-sm text-secondary-dark">No notifications</div>
+                )}
+        {items
+          .filter(n => {
+            if (showMuted) return true;
+            const hay = `${n.title} ${n.message}`.toLowerCase();
+            if (notificationPrefs.muteKeywords.some(k => hay.includes(k.toLowerCase()))) return false;
+            return true;
+          })
+          .map((notification) => (
                   <DropdownMenuItem 
                     key={notification.id} 
-                    className="flex flex-col items-start p-4 hover:section-background-alt"
+                    className="flex flex-col items-start p-4 hover:section-background-alt cursor-pointer"
+                    onClick={() => {
+                      // Simple routing based on title keywords (demo)
+                      const t = notification.title.toLowerCase();
+          markNotificationRead(notification.id);
+                      if (t.includes('review')) router.push('/reviews');
+                      else if (t.includes('response')) router.push('/engagement');
+                      else if (t.includes('report')) router.push('/analytics');
+                    }}
                   >
                     <div className="flex items-center justify-between w-full">
                       <h4 className={`text-sm font-medium ${notification.unread ? 'text-primary-dark' : 'text-secondary-dark'}`}>
@@ -173,13 +245,13 @@ export function Header({ onMenuClick }: HeaderProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-[var(--border)]" />
-                <DropdownMenuItem className="hover:section-background-alt">
+                <DropdownMenuItem className="hover:section-background-alt" onClick={() => router.push('/profile')}>
                   <span className="text-primary-dark">Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="hover:section-background-alt">
+                <DropdownMenuItem className="hover:section-background-alt" onClick={() => router.push('/billing')}>
                   <span className="text-primary-dark">Billing</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="hover:section-background-alt">
+                <DropdownMenuItem className="hover:section-background-alt" onClick={() => router.push('/settings')}>
                   <span className="text-primary-dark">Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[var(--border)]" />

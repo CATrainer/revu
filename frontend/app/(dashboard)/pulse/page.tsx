@@ -5,9 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { generateAllDemoData } from '@/lib/demo-data';
 import { useStore } from '@/lib/store';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/lib/auth';
+import { Line, LineChart, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 
 export default function PulsePage() {
   const { interactions, setInteractions } = useStore();
+  const { user } = useAuth();
   const [score, setScore] = useState(0);
 
   useEffect(() => {
@@ -39,14 +42,27 @@ export default function PulsePage() {
     return () => clearInterval(id);
   }, [metrics.score]);
 
+  // build simple chart data
+  const days = Array.from({ length: 30 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (29 - i));
+    const dayStr = d.toISOString().slice(5, 10);
+    const count = metrics.last30.filter((x) => new Date(x.createdAt).toDateString() === d.toDateString()).length;
+    return { day: dayStr, count };
+  });
+  const sentimentOrder = ['Positive', 'Neutral', 'Mixed', 'Negative'] as const;
+  const sentimentCounts = sentimentOrder.map((k) => ({ name: k, value: metrics.last30.filter(i => i.sentiment === k).length }));
+  const platformCountsMap = metrics.last30.reduce<Record<string, number>>((acc, i) => { acc[i.platform] = (acc[i.platform] || 0) + 1; return acc; }, {});
+  const platformCounts = Object.entries(platformCountsMap).map(([name, value]) => ({ name, value }));
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-primary-dark">Pulse Monitor</h1>
 
-      <Card className="card-background border-[var(--border)]">
+  <Card className="card-background border-[var(--border)]">
         <CardContent className="p-6 flex items-center justify-between">
           <div>
-            <div className="text-sm text-secondary-dark">Reputation Score</div>
+    <div className="text-sm text-secondary-dark">Reputation Score</div>
             <div className="text-5xl font-bold">{score}</div>
             <div className="text-xs text-green-600 flex items-center gap-2 mt-2">
               <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
@@ -54,7 +70,7 @@ export default function PulsePage() {
             </div>
           </div>
           <div className="text-sm text-secondary-dark">
-            Sentiment (40%), Response Rate (20%), Engagement Velocity (20%), Crisis (20%)
+    Composite score of key signals: response rate, sentiment balance, velocity, and crises.
           </div>
         </CardContent>
       </Card>
@@ -65,10 +81,27 @@ export default function PulsePage() {
         </CardHeader>
         <CardContent className="p-6">
           <ul className="list-disc pl-5 text-secondary-dark space-y-2">
-            <li>Customers praise friendly staff and quick service</li>
-            <li>Recent viral content driving positive engagement on TikTok</li>
-            <li>Occasional complaints about delivery times during peak hours</li>
-            <li>Competitor mentions are increasing in the last 7 days</li>
+            {user?.demo_access_type === 'creator' && (
+              <>
+                <li>Recent recipe short drove a spike in saves and positive comments</li>
+                <li>Audience loves behind-the-scenes prep; consider a weekly series</li>
+                <li>Minor concerns around audio levels on the last upload</li>
+              </>
+            )}
+            {user?.demo_access_type === 'business' && (
+              <>
+                <li>Guests praise staff friendliness and ambience</li>
+                <li>Delivery delays noted on weekends; opportunity to improve</li>
+                <li>Google reviews trending upward after menu refresh</li>
+              </>
+            )}
+            {user?.demo_access_type?.startsWith('agency_') && (
+              <>
+                <li>Top clients show improved response rates week-over-week</li>
+                <li>Two clients have rising negative mentions — flagged for CS follow-up</li>
+                <li>Creator vertical: trending audios increasing comment velocity</li>
+              </>
+            )}
           </ul>
         </CardContent>
       </Card>
@@ -89,20 +122,49 @@ export default function PulsePage() {
         </CardContent>
       </Card>
 
-      {/* Charts placeholders (Recharts/wordcloud would go here) */}
+      {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="h-64 card-background border-[var(--border)] rounded-lg flex items-center justify-center text-secondary-dark">
-          Line chart (30-day trend)
-        </div>
-        <div className="h-64 card-background border-[var(--border)] rounded-lg flex items-center justify-center text-secondary-dark">
-          Sentiment pie chart
-        </div>
-        <div className="h-64 card-background border-[var(--border)] rounded-lg flex items-center justify-center text-secondary-dark">
-          Platform breakdown bar chart
-        </div>
-        <div className="h-64 card-background border-[var(--border)] rounded-lg flex items-center justify-center text-secondary-dark">
-          Word cloud of trending topics
-        </div>
+        <Card className="card-background border-[var(--border)]">
+          <CardHeader><CardTitle className="text-primary-dark">30-day Activity</CardTitle></CardHeader>
+          <CardContent className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={days}>
+                <XAxis dataKey="day" hide />
+                <YAxis hide />
+                <Tooltip />
+                <Line type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card className="card-background border-[var(--border)]">
+          <CardHeader><CardTitle className="text-primary-dark">Sentiment</CardTitle></CardHeader>
+          <CardContent className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={sentimentCounts} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80}>
+                  {sentimentCounts.map((_, i) => (
+                    <Cell key={i} fill={["#22c55e","#e5e7eb","#f59e0b","#ef4444"][i]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card className="card-background border-[var(--border)]">
+          <CardHeader><CardTitle className="text-primary-dark">Platforms</CardTitle></CardHeader>
+          <CardContent className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={platformCounts}>
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#8b5cf6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

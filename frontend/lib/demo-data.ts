@@ -66,9 +66,7 @@ export function generateCreatorInteractions(count = 520, workspaceId = 'alex'): 
       author: makeAuthor(i),
       content:
         faker.lorem.paragraph({ min: 1, max: 4 }) +
-        (Math.random() < 0.15 ? ' 🔥💯😍' : '') +
-        (Math.random() < 0.05 ? ' ¡Me encanta! ' : '') +
-        (Math.random() < 0.03 ? ' 我喜欢这个食谱 ' : ''),
+        (Math.random() < 0.15 ? ' 🔥💯😍' : ''),
       createdAt: randomPastDate(90),
       sentiment,
       status: pick(['Unread', 'Needs Response', 'Responded', 'Archived']),
@@ -161,7 +159,7 @@ export function generateBusinessReviews(count = 220, workspaceId = 'bella'): Int
         name: faker.person.fullName(),
         avatarUrl: `https://i.pravatar.cc/150?u=${workspaceId}_${i}`,
       },
-      content: content + (Math.random() < 0.1 ? ' 🔥💯😍' : ''),
+  content: content + (Math.random() < 0.1 ? ' 🔥💯😍' : ''),
       createdAt: randomPastDate(90),
       sentiment,
       status: pick(['Unread', 'Needs Response', 'Responded', 'Archived']),

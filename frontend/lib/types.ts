@@ -29,7 +29,7 @@ export type Platform = 'Google' | 'YouTube' | 'Instagram' | 'TikTok' | 'Facebook
 
 export type Sentiment = 'Positive' | 'Negative' | 'Neutral' | 'Mixed';
 
-export type InteractionStatus = 'Unread' | 'Needs Response' | 'Responded' | 'Archived';
+export type InteractionStatus = 'Unread' | 'Needs Response' | 'Responded' | 'Archived' | 'Reported';
 
 export interface InteractionBase {
   id: string;
@@ -51,16 +51,23 @@ export interface InteractionBase {
   // Demo-only optional fields used by UI actions
   assignedTo?: string;
   tags?: string[];
+  // Optional reply fields usable in UI for both kinds (populated as appropriate)
+  ourReply?: {
+    content: string;
+    createdAt: string;
+    tone?: 'Professional' | 'Friendly' | 'Casual' | 'Empathetic';
+  };
+  ownerResponse?: {
+    content: string;
+    createdAt: string;
+  };
+  reportedReason?: string;
 }
 
 export interface Review extends InteractionBase {
   kind: 'review';
   rating: 1 | 2 | 3 | 4 | 5;
   location?: string;
-  ownerResponse?: {
-    content: string;
-    createdAt: string;
-  };
 }
 
 export interface Comment extends InteractionBase {
@@ -77,6 +84,7 @@ export interface NotificationItem {
   severity?: 'info' | 'success' | 'warning' | 'error';
   createdAt: string;
   read?: boolean;
+  href?: string; // optional link to navigate when clicked
 }
 
 export interface FiltersState {
@@ -88,3 +96,51 @@ export interface FiltersState {
 }
 
 export type Theme = 'light' | 'dark' | 'system';
+
+// Demo enhancements
+export interface ReplyTemplate {
+  id: string;
+  name: string;
+  content: string;
+  tone?: 'Professional' | 'Friendly' | 'Casual' | 'Empathetic';
+}
+
+export interface SavedView {
+  id: string;
+  name: string;
+  route: string; // e.g., '/reviews?status=Unread'
+  createdAt: string;
+}
+
+export interface NoteItem {
+  id: string;
+  author: string;
+  content: string;
+  mentions?: string[]; // '@name'
+  createdAt: string;
+}
+
+export interface GoalsState {
+  avgRatingTarget?: number; // e.g., 4.6
+  responseTimeTargetMins?: number; // e.g., 60
+  reviewsPerMonthTarget?: number; // e.g., 120
+}
+
+export interface WhatIfState {
+  responseTimeDeltaPct?: number; // -50..+50
+  replyRateDeltaPct?: number; // -50..+50
+}
+
+export interface IntegrationConnection {
+  id: 'google' | 'facebook' | 'instagram' | 'tiktok' | 'twitter' | 'tripadvisor';
+  name: string;
+  connected: boolean;
+  status?: 'ok' | 'error' | 'pending';
+}
+
+// Notification preferences (demo)
+export interface NotificationPrefs {
+  muteKeywords: string[]; // case-insensitive contains match
+  mutedPlatforms: Array<'google' | 'facebook' | 'instagram' | 'tiktok' | 'twitter' | 'tripadvisor'>;
+  mode: 'All' | 'Important only';
+}

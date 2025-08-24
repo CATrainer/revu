@@ -6,9 +6,10 @@ import { QuickActions } from '@/components/dashboard/QuickActions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useStore } from '@/lib/store';
 import { getProfileKPIs } from '@/lib/profile-config';
+import Link from 'next/link';
 
 export default function DashboardPage() {
-  const { currentWorkspace, interactions } = useStore();
+  const { currentWorkspace, interactions, onboarding, setOnboardingTask } = useStore();
   const relevant = currentWorkspace ? interactions.filter(i => i.workspaceId === currentWorkspace.id || (currentWorkspace.id === 'agency' && i.workspaceId === 'agency')) : interactions;
   const kpis = currentWorkspace ? getProfileKPIs(currentWorkspace, relevant) : [];
   return (
@@ -29,7 +30,7 @@ export default function DashboardPage() {
         )}
       </div>
       
-      {/* Recent Activity and Quick Actions */}
+  {/* Recent Activity and Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="dashboard-card">
           <CardHeader>
@@ -37,33 +38,43 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-start space-x-4">
-                <div className="w-2 h-2 status-success-bg rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-primary-dark">New 5-star review</p>
-                  <p className="text-sm text-secondary-dark">2 minutes ago • Google</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-4">
-                <div className="w-2 h-2 status-danger-bg rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-primary-dark">Negative review needs response</p>
-                  <p className="text-sm text-secondary-dark">15 minutes ago • TripAdvisor</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-4">
-                <div className="w-2 h-2 status-info-bg rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-primary-dark">Competitor alert</p>
-                  <p className="text-sm text-secondary-dark">1 hour ago • Rating increased</p>
-                </div>
-              </div>
+              {relevant.slice(0, 6).map((i) => (
+                <Link key={i.id} href={i.kind === 'review' ? '/reviews' : '/engagement'} className="flex items-start space-x-4 group">
+                  <div className={`w-2 h-2 rounded-full mt-2 ${i.sentiment === 'Negative' ? 'status-danger-bg' : i.sentiment === 'Positive' ? 'status-success-bg' : 'status-info-bg'}`}></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-primary-dark truncate">{i.kind === 'review' ? 'New review' : 'New mention'} — {i.platform}</p>
+                    <p className="text-sm text-secondary-dark truncate group-hover:text-primary-dark">{i.content}</p>
+                  </div>
+                </Link>
+              ))}
             </div>
           </CardContent>
         </Card>
         
   <QuickActions />
       </div>
+
+      {/* Onboarding Checklist */}
+      <Card className="dashboard-card">
+        <CardHeader>
+          <CardTitle className="text-primary-dark">Getting Started</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-3">
+            {onboarding.tasks.map(t => (
+              <li key={t.id} className="flex items-center justify-between">
+                <span className={`text-sm ${t.done ? 'line-through text-muted-dark' : 'text-primary-dark'}`}>{t.title}</span>
+                <button
+                  className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt"
+                  onClick={() => setOnboardingTask(t.id, !t.done)}
+                >
+                  {t.done ? 'Undo' : 'Mark done'}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
     </div>
   );
 }
