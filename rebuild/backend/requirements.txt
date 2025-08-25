@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pydantic
+python-dotenv
+asyncpg
+psycopg2-binary
+redis
+supabase
