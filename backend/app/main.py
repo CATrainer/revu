@@ -12,6 +12,7 @@ from fastapi import FastAPI, Request, status, HTTPException
 
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
 
@@ -179,88 +180,16 @@ origins = [o for o in origins if not (o in _seen or _seen.add(o))]
 
 logger.info(f"CORS configured for origins: {origins}")
 
-@app.middleware("http")
-async def manual_cors_middleware(request: Request, call_next):
-    # Normalize origin from request
-    req_origin_raw = request.headers.get("origin") or ""
-    req_origin = req_origin_raw.rstrip('/')
-    req_origin_norm = req_origin.lower()
-
-    # Handle preflight requests early
-    if request.method == "OPTIONS":
-        # Only allow known origins
-        if req_origin and req_origin_norm in origins:
-            allow_headers = request.headers.get(
-                "access-control-request-headers",
-                "Content-Type, Authorization, X-Requested-With",
-            )
-            allow_method = request.headers.get(
-                "access-control-request-method",
-                "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD",
-            )
-
-            headers = {
-                "Access-Control-Allow-Origin": req_origin,
-                "Vary": "Origin",
-                "Access-Control-Allow-Methods": allow_method if "," in allow_method else "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD",
-                "Access-Control-Allow-Headers": allow_headers,
-                "Access-Control-Allow-Credentials": "true",
-                "Access-Control-Max-Age": "3600",
-            }
-            return JSONResponse(content={"message": "OK"}, headers=headers, status_code=204)
-        # Not an allowed origin; return minimal response
-        return JSONResponse(content={"message": "Forbidden origin"}, status_code=403)
-
-    # Proceed with request and ensure we always return a response
-    try:
-        response = await call_next(request)
-    except Exception as exc:
-        # Preserve FastAPI HTTPException semantics (e.g., 401/403/404)
-        if isinstance(exc, HTTPException):
-            response = JSONResponse(
-                status_code=exc.status_code,
-                content={"detail": exc.detail},
-                headers=getattr(exc, "headers", None) or {},
-            )
-        else:
-            # Log and convert to JSON response so we can append CORS headers
-            logger.error(f"Unhandled error during request {request.method} {request.url.path}: {exc}")
-            # Temporarily expose error details for login route to aid debugging
-            is_login_path = str(request.url.path).endswith("/auth/login")
-            error_payload = {
-                "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(exc) if is_login_path or not settings.is_production else "An internal error occurred",
-                    "type": type(exc).__name__ if is_login_path or not settings.is_production else None,
-                },
-            }
-            response = JSONResponse(
-                status_code=500,
-                content=error_payload,
-            )
-            # Add hint headers
-            try:
-                response.headers["X-Error-Type"] = type(exc).__name__
-                response.headers["X-Error-Message"] = str(exc)[:200]
-            except Exception:
-                pass
-
-    # Add CORS headers for allowed origins on actual responses
-    if req_origin and req_origin_norm in origins:
-        response.headers["Access-Control-Allow-Origin"] = req_origin
-        response.headers["Vary"] = "Origin"
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD"
-        # Expose common headers if needed by frontend (safe default)
-        response.headers.setdefault("Access-Control-Expose-Headers", "Content-Disposition")
-        # Mirror requested headers when possible (best-effort; not strictly required on non-preflight)
-        acrh = request.headers.get("access-control-request-headers")
-        if acrh:
-            response.headers["Access-Control-Allow-Headers"] = acrh
-        else:
-            response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-    return response
+# Use Starlette's CORSMiddleware for robust, battle-tested handling
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+    ,expose_headers=["Content-Disposition"],
+    max_age=3600,
+)
 
 # Add other middlewares
 app.add_middleware(GZipMiddleware, minimum_size=1000)
