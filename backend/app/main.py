@@ -225,19 +225,26 @@ async def manual_cors_middleware(request: Request, call_next):
         else:
             # Log and convert to JSON response so we can append CORS headers
             logger.error(f"Unhandled error during request {request.method} {request.url.path}: {exc}")
+            # Temporarily expose error details for login route to aid debugging
+            is_login_path = str(request.url.path).endswith("/auth/login")
+            error_payload = {
+                "success": False,
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": str(exc) if is_login_path or not settings.is_production else "An internal error occurred",
+                    "type": type(exc).__name__ if is_login_path or not settings.is_production else None,
+                },
+            }
             response = JSONResponse(
                 status_code=500,
-                content={
-                    "success": False,
-                    "error": {
-                        "code": "INTERNAL_ERROR",
-                        "message": (
-                            "An internal error occurred" if settings.is_production else str(exc)
-                        ),
-                        "type": type(exc).__name__ if not settings.is_production else None,
-                    },
-                },
+                content=error_payload,
             )
+            # Add hint headers
+            try:
+                response.headers["X-Error-Type"] = type(exc).__name__
+                response.headers["X-Error-Message"] = str(exc)[:200]
+            except Exception:
+                pass
 
     # Add CORS headers for allowed origins on actual responses
     if req_origin and req_origin_norm in origins:
