@@ -80,7 +80,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   }, [alertHistory.length]);
 
   return (
-  <header className="card-background shadow-sm border-b border-[var(--border)]">
+  <header className="nav-background soft-shadow elevated">
       {showAlertBanner && alertHistory[0] && (
         <div className="px-4 sm:px-6 lg:px-8 py-2 bg-amber-50 border-b border-[var(--border)] flex items-center justify-between">
           <div className="text-sm text-primary-dark">⚠️ {alertHistory[0].title}: <span className="text-secondary-dark">{alertHistory[0].message}</span></div>
@@ -89,7 +89,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
         </div>
       )}
-      <div className="px-4 sm:px-6 lg:px-8">
+  <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Button

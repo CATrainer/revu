@@ -192,6 +192,33 @@
 
 /* Semantic classes */
 @layer components {
+  /* Elevation & surfaces */
+  :root {
+    --shadow-sm: 0 1px 2px 0 color-mix(in oklab, var(--foreground) 8%, transparent);
+    --shadow-md: 0 4px 10px -2px color-mix(in oklab, var(--foreground) 10%, transparent);
+    --shadow-lg: 0 10px 30px -12px color-mix(in oklab, var(--foreground) 18%, transparent);
+  }
+  .elevated { box-shadow: var(--shadow-sm); }
+  .elevated-md { box-shadow: var(--shadow-md); }
+  .elevated-lg { box-shadow: var(--shadow-lg); }
+  .soft-shadow { box-shadow: 0 1px 0 0 var(--border), var(--shadow-sm); }
+  .hover-raise { transition: transform .18s ease, box-shadow .18s ease; }
+  .hover-raise:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+  /* Smooth focus visible */
+  :where(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-color: color-mix(in oklab, var(--ring) 50%, var(--border)); }
+
+  /* Nice scrollbars */
+  .scrollbar-nice { scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--foreground) 20%, transparent) transparent; }
+  .scrollbar-nice::-webkit-scrollbar { height: 10px; width: 10px; }
+  .scrollbar-nice::-webkit-scrollbar-thumb { background: color-mix(in oklab, var(--foreground) 18%, transparent); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+  .scrollbar-nice::-webkit-scrollbar-track { background: transparent; }
+
+  /* App shell helpers */
+  .content-container { @apply max-w-7xl mx-auto px-4 sm:px-6 md:px-8; }
+  .section-pad { @apply py-6; }
+
+  /* Cards */
   /* Section theme variables for icon + checkmark colors */
   .theme-home-features { --feature-icon: #0284C7; --feature-tick: #0284C7; }
   .dark .theme-home-features { --feature-icon: #38BDF8; --feature-tick: #38BDF8; }
@@ -220,6 +247,9 @@
 
   .card-background { @apply bg-[var(--card)] border border-[var(--border)]; }
   .dark .card-background { @apply bg-[var(--card)] border-[var(--border)]; }
+  .card-hover { @apply transition-colors hover:section-background-alt; }
+  .glass-card { backdrop-filter: blur(8px); background: color-mix(in oklab, var(--card) 85%, transparent); border: 1px solid color-mix(in oklab, var(--border) 60%, transparent); }
+  .glass { backdrop-filter: blur(8px); background: color-mix(in oklab, var(--background) 80%, transparent); }
   .card-background-light { @apply bg-[var(--muted)] border border-[var(--border)]; }
   .dark .card-background-light { @apply bg-[var(--secondary)] border-[var(--border)]; }
 
@@ -264,6 +294,10 @@
 
   .brand-text { @apply text-[var(--brand-primary)]; }
   .brand-background { @apply bg-[var(--brand-primary)]/10; }
+
+  /* Badges & kbd */
+  .pill { @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs border border-[var(--border)] bg-[var(--muted)] text-[var(--foreground)]; }
+  .kbd { @apply inline-flex items-center justify-center rounded border border-[var(--border)] bg-[var(--muted)] px-1.5 py-0.5 text-[10px] font-mono; }
 
   .status-background { @apply bg-[var(--muted)]; }
   .dark .status-background { @apply bg-[var(--secondary)]; }
@@ -311,3 +345,6 @@
   .icon-container { background-color: var(--muted); }
   .dark .icon-container { background-color: color-mix(in oklab, var(--brand-primary) 15%, transparent); }
 }
+
+/* Typography smoothing & misc base polish */
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; font-feature-settings: "kern" 1, "liga" 1, "calt" 1; }

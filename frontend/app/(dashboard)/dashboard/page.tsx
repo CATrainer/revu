@@ -11,7 +11,7 @@ export default function DashboardPage() {
         <p className="mt-2 text-secondary-dark">Connect your social accounts to get started.</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="dashboard-card">
+        <Card className="dashboard-card hover-raise card-hover elevated">
           <CardHeader>
             <CardTitle className="text-primary-dark">Connect YouTube</CardTitle>
           </CardHeader>
@@ -19,7 +19,7 @@ export default function DashboardPage() {
             <Link href="/settings?tab=Integrations" className="text-sm underline">Go to integrations</Link>
           </CardContent>
         </Card>
-        <Card className="dashboard-card">
+        <Card className="dashboard-card hover-raise card-hover elevated">
           <CardHeader>
             <CardTitle className="text-primary-dark">Connect Instagram</CardTitle>
           </CardHeader>
@@ -27,7 +27,7 @@ export default function DashboardPage() {
             <Link href="/settings?tab=Integrations" className="text-sm underline">Go to integrations</Link>
           </CardContent>
         </Card>
-        <Card className="dashboard-card">
+        <Card className="dashboard-card hover-raise card-hover elevated">
           <CardHeader>
             <CardTitle className="text-primary-dark">Connect TikTok</CardTitle>
           </CardHeader>

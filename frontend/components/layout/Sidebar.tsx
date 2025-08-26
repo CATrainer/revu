@@ -22,9 +22,9 @@ export function Sidebar() {
   const navigation = useMemo(() => baseNav, []);
 
   return (
-    <aside
+  <aside
       className={cn(
-        'dashboard-card border-r pt-5 pb-4 overflow-y-auto transition-all duration-300',
+    'dashboard-card soft-shadow border-r pt-5 pb-4 overflow-y-auto scrollbar-nice transition-all duration-300',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
