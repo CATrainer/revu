@@ -50,16 +50,29 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   login: async (email: string, password: string) => {
     try {
-  // Use URLSearchParams for x-www-form-urlencoded payloads
-  const params = new URLSearchParams();
-  params.set('username', email); // OAuth2 spec uses username
-  params.set('password', password);
+      // Use URLSearchParams for x-www-form-urlencoded payloads
+      const params = new URLSearchParams();
+      params.set('username', email); // OAuth2 spec uses username
+      params.set('password', password);
 
-  const response = await api.post('/auth/login', params, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
+      const doLogin = async () =>
+        api.post('/auth/login', params, {
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        });
+
+      let response;
+      try {
+        response = await doLogin();
+      } catch (err: any) {
+        const status = err?.response?.status as number | undefined;
+        const retriable = err?.code === 'ERR_NETWORK' || (status !== undefined && status >= 500);
+        if (retriable) {
+          await new Promise((r) => setTimeout(r, 600));
+          response = await doLogin();
+        } else {
+          throw err;
+        }
+      }
 
       // Only store in localStorage in browser environment
       if (typeof window !== 'undefined') {
