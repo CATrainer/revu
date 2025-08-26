@@ -83,7 +83,6 @@ api_router.include_router(
 
 api_router.include_router(
     platforms.router,
-    prefix="/",
     tags=["platforms"],
 )
 
