@@ -43,7 +43,7 @@ export function LocationSelector() {
           <SelectItem
             key={ws.id}
             value={ws.id}
-            className="text-primary-dark hover:section-background-alt"
+            className="text-primary-dark hover-background"
           >
             {ws.name}
           </SelectItem>

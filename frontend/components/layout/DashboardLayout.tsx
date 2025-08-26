@@ -83,15 +83,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               {tour.step === 4 && 'Step 4: Tweak notification noise in Settings.'}
             </span>
             {tour.step === 0 ? (
-              <button className="ml-3 text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt" onClick={() => setTour({ step: 1 })}>Start</button>
+              <button className="ml-3 text-xs px-2 py-1 rounded border border-[var(--border)] hover-background" onClick={() => setTour({ step: 1 })}>Start</button>
             ) : (
               <>
-                <button className="ml-3 text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt" onClick={() => {
+                <button className="ml-3 text-xs px-2 py-1 rounded border border-[var(--border)] hover-background" onClick={() => {
                   // Navigate, but let step progression happen when user completes the action on the page
                   if (tour.step === 1) router.push('/comments');
                   if (tour.step === 2) router.push('/analytics');
                 }}>Go</button>
-                <button className="ml-2 text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt" onClick={() => setTour({ completed: true })}>Done</button>
+                <button className="ml-2 text-xs px-2 py-1 rounded border border-[var(--border)] hover-background" onClick={() => setTour({ completed: true })}>Done</button>
               </>
             )}
           </div>
@@ -112,11 +112,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="mt-2 flex gap-2">
               <button
-                className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt"
+                className="text-xs px-2 py-1 rounded border border-[var(--border)] hover-background"
                 onClick={() => setTour({ step: Math.max(1, tour.step - 1) })}
               >Back</button>
               <button
-                className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt"
+                className="text-xs px-2 py-1 rounded border border-[var(--border)] hover-background"
                 onClick={() => {
                   if (tour.step >= 4) setTour({ completed: true });
                   else setTour({ step: tour.step + 1 });
@@ -134,13 +134,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <div className="absolute top-24 left-1/2 -translate-x-1/2 w-full max-w-xl card-background border border-[var(--border)] rounded-md shadow">
               <div className="p-3 border-b border-[var(--border)] text-sm text-secondary-dark">Command Palette</div>
               <ul className="p-3 space-y-2 text-sm">
-                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/comments'); setPaletteOpen(false); }}>Go to Comments</li>
-                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/analytics'); setPaletteOpen(false); }}>Go to Analytics</li>
-                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { setTheme('light'); setPaletteOpen(false); }}>Theme: Light</li>
-                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { setTheme('dark'); setPaletteOpen(false); }}>Theme: Dark</li>
-                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { setTheme('system'); setPaletteOpen(false); }}>Theme: System</li>
-                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/settings?tab=Notifications'); setPaletteOpen(false); }}>Open Settings → Notifications</li>
-                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => {
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/comments'); setPaletteOpen(false); }}>Go to Comments</li>
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/analytics'); setPaletteOpen(false); }}>Go to Analytics</li>
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { setTheme('light'); setPaletteOpen(false); }}>Theme: Light</li>
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { setTheme('dark'); setPaletteOpen(false); }}>Theme: Dark</li>
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { setTheme('system'); setPaletteOpen(false); }}>Theme: System</li>
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/settings?tab=Notifications'); setPaletteOpen(false); }}>Open Settings → Notifications</li>
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => {
                   const name = prompt('Name this view:');
                   if (!name) return;
                   const params = new URLSearchParams();
@@ -153,14 +153,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   pushToast('View saved', 'success');
                   setPaletteOpen(false);
                 }}>Save current view</li>
-                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { pushToast('AI Suggest on latest (demo)', 'info'); setPaletteOpen(false); }}>Run AI Suggest on latest</li>
-                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { 
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { pushToast('AI Suggest on latest (demo)', 'info'); setPaletteOpen(false); }}>Run AI Suggest on latest</li>
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { 
                   const hasPlay = typeof window !== 'undefined' && window.location.pathname.startsWith('/engagement') && new URLSearchParams(window.location.search).get('play') === '1';
                   router.push(hasPlay ? '/engagement' : '/engagement?play=1');
                   setPaletteOpen(false);
                 }}>Toggle timeline playback</li>
                 {typeof window !== 'undefined' && window.location.pathname.startsWith('/comments') ? (
-                  <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => {
+                  <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => {
                     // Export Comments CSV based on store filters
                     const ws = currentWorkspace;
                     const filtered = interactions
@@ -196,7 +196,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   }}>Export Comments CSV</li>
                 ) : null}
                 {typeof window !== 'undefined' && window.location.pathname.startsWith('/comments') ? (
-                  <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={async () => {
+                  <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={async () => {
                     // Build a shareable CSV link that encodes current filters and triggers csv export via ?export=csv
                     const params = new URLSearchParams(window.location.search);
                     if (filters.platforms?.length) params.set('platforms', filters.platforms.join(','));
@@ -212,7 +212,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   }}>Copy CSV link</li>
                 ) : null}
                 {typeof window !== 'undefined' && window.location.pathname.startsWith('/comments') ? (
-                  <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => {
+                  <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => {
                     const name = prompt('Name this view from current filters:');
                     if (!name) return;
                     const params = new URLSearchParams();
@@ -226,9 +226,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     setPaletteOpen(false);
                   }}>Create saved view from selection</li>
                 ) : null}
-                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); pushToast('Link copied', 'success'); } catch {} setPaletteOpen(false); }}>Copy link</li>
-                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { setTour({ completed: false, step: 0 }); pushToast('Tour restarted','info'); setPaletteOpen(false); }}>Restart tour</li>
-                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { const name = prompt('Template name:'); if (!name) return; const content = prompt('Template content:'); if (!content) return; addTemplate({ id: `tpl_${Date.now()}`, name, content }); pushToast('Template created', 'success'); setPaletteOpen(false); }}>Create new template</li>
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); pushToast('Link copied', 'success'); } catch {} setPaletteOpen(false); }}>Copy link</li>
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { setTour({ completed: false, step: 0 }); pushToast('Tour restarted','info'); setPaletteOpen(false); }}>Restart tour</li>
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { const name = prompt('Template name:'); if (!name) return; const content = prompt('Template content:'); if (!content) return; addTemplate({ id: `tpl_${Date.now()}`, name, content }); pushToast('Template created', 'success'); setPaletteOpen(false); }}>Create new template</li>
                 {/* Saved views quick nav */}
                 {(() => {
                   const path = typeof window !== 'undefined' ? window.location.pathname : '';
@@ -238,7 +238,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     <div className="pt-2 border-t border-[var(--border)]">
                       <div className="text-[11px] uppercase tracking-wide text-secondary-dark mb-1">Saved views</div>
                       {views.map(v => (
-                        <div key={v.id} className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { router.push(v.route); setPaletteOpen(false); }}>{v.name}</div>
+                        <div key={v.id} className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push(v.route); setPaletteOpen(false); }}>{v.name}</div>
                       ))}
                     </div>
                   );
@@ -246,7 +246,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 {typeof window !== 'undefined' && window.location.pathname.startsWith('/comments') ? (
                   <div className="pt-2 border-t border-[var(--border)]">
                     <div className="text-[11px] uppercase tracking-wide text-secondary-dark mb-1">Exports</div>
-                    <div className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => {
+                    <div className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => {
                       // Export a minimal CSV of current comments feed
                       const rows = interactions
                         .filter(i => !currentWorkspace || i.workspaceId === currentWorkspace.id)
@@ -273,7 +273,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                       URL.revokeObjectURL(url);
                       setPaletteOpen(false);
                     }}>Export Engagement CSV</div>
-                    <div className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => {
+                    <div className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => {
                       // Quick summary PDF via existing helper on analytics page; for palette, build a small summary here
                       const bySent: Record<string, number> = {};
                       interactions.forEach(i => { bySent[i.sentiment] = (bySent[i.sentiment] || 0) + 1; });

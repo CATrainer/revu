@@ -326,7 +326,7 @@ export default function EngagementPage() {
         {savedViews.filter(v => v.route.startsWith('/engagement')).map((v) => (
           <button
             key={v.id}
-            className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt"
+            className="text-xs px-2 py-1 rounded border border-[var(--border)] hover-background"
             onClick={() => window.location.assign(v.route)}
             title={new Date(v.createdAt).toLocaleString()}
           >
@@ -334,7 +334,7 @@ export default function EngagementPage() {
           </button>
         ))}
         <button
-          className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt"
+          className="text-xs px-2 py-1 rounded border border-[var(--border)] hover-background"
           onClick={() => {
             const name = prompt('Name this view:');
             if (!name) return;
@@ -348,7 +348,7 @@ export default function EngagementPage() {
           }}
         >Save view</button>
         <button
-          className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt"
+          className="text-xs px-2 py-1 rounded border border-[var(--border)] hover-background"
           onClick={async () => {
             const url = `${window.location.origin}${window.location.pathname}${window.location.search}`;
             try { await navigator.clipboard.writeText(url); } catch {}
@@ -390,7 +390,7 @@ export default function EngagementPage() {
         {savedViews.filter(v => v.route.startsWith('/engagement')).map((v) => (
           <button
             key={v.id}
-            className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt"
+            className="text-xs px-2 py-1 rounded border border-[var(--border)] hover-background"
             onClick={() => window.location.assign(v.route)}
             title={new Date(v.createdAt).toLocaleString()}
           >
@@ -398,7 +398,7 @@ export default function EngagementPage() {
           </button>
         ))}
         <button
-          className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt"
+          className="text-xs px-2 py-1 rounded border border-[var(--border)] hover-background"
           onClick={() => {
             const name = prompt('Name this view:');
             if (!name) return;

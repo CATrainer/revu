@@ -193,7 +193,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           .map((notification) => (
                   <DropdownMenuItem 
                     key={notification.id} 
-                    className="flex flex-col items-start p-4 hover:section-background-alt cursor-pointer"
+                    className="flex flex-col items-start p-4 hover-background cursor-pointer"
                     onClick={() => {
                       // Route to minimal destinations
                       const t = notification.title.toLowerCase();
@@ -250,19 +250,19 @@ export function Header({ onMenuClick }: HeaderProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-[var(--border)]" />
-                <DropdownMenuItem className="hover:section-background-alt" onClick={() => router.push('/profile')}>
+                <DropdownMenuItem className="hover-background" onClick={() => router.push('/profile')}>
                   <span className="text-primary-dark">Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="hover:section-background-alt" onClick={() => router.push('/billing')}>
+                <DropdownMenuItem className="hover-background" onClick={() => router.push('/billing')}>
                   <span className="text-primary-dark">Billing</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="hover:section-background-alt" onClick={() => router.push('/settings')}>
+                <DropdownMenuItem className="hover-background" onClick={() => router.push('/settings')}>
                   <span className="text-primary-dark">Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[var(--border)]" />
                 <DropdownMenuItem 
                   onClick={logout}
-                  className="hover:section-background-alt"
+                  className="hover-background"
                 >
                   <span className="text-primary-dark">Log out</span>
                 </DropdownMenuItem>

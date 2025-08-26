@@ -63,9 +63,10 @@ export const useAuth = create<AuthState>((set, get) => ({
       let response;
       try {
         response = await doLogin();
-      } catch (err: any) {
-        const status = err?.response?.status as number | undefined;
-        const retriable = err?.code === 'ERR_NETWORK' || (status !== undefined && status >= 500);
+      } catch (err: unknown) {
+        const e = err as { response?: { status?: number }, code?: string };
+        const status = e?.response?.status;
+        const retriable = e?.code === 'ERR_NETWORK' || (typeof status === 'number' && status >= 500);
         if (retriable) {
           await new Promise((r) => setTimeout(r, 600));
           response = await doLogin();

@@ -247,7 +247,7 @@
 
   .card-background { @apply bg-[var(--card)] border border-[var(--border)]; }
   .dark .card-background { @apply bg-[var(--card)] border-[var(--border)]; }
-  .card-hover { @apply transition-colors hover:section-background-alt; }
+  .card-hover { transition: color .15s ease, background-color .15s ease; }
   .glass-card { backdrop-filter: blur(8px); background: color-mix(in oklab, var(--card) 85%, transparent); border: 1px solid color-mix(in oklab, var(--border) 60%, transparent); }
   .glass { backdrop-filter: blur(8px); background: color-mix(in oklab, var(--background) 80%, transparent); }
   .card-background-light { @apply bg-[var(--muted)] border border-[var(--border)]; }

@@ -173,7 +173,7 @@ export default function AdminPage() {
               </thead>
               <tbody>
                 {filteredSorted.map((u) => (
-                  <tr key={u.id} className="border-b border-[var(--border)] hover:section-background-alt">
+                  <tr key={u.id} className="border-b border-[var(--border)] hover-background">
                     <td className="px-4 py-3 text-primary-dark font-medium">{u.full_name || '—'}</td>
                     <td className="px-4 py-3 text-secondary-dark">{u.email}</td>
                     <td className="px-4 py-3">
