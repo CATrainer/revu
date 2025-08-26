@@ -8,7 +8,7 @@ including middleware, routers, and event handlers.
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status, HTTPException
 
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -215,21 +215,29 @@ async def manual_cors_middleware(request: Request, call_next):
     try:
         response = await call_next(request)
     except Exception as exc:
-        # Log and convert to JSON response so we can append CORS headers
-        logger.error(f"Unhandled error during request {request.method} {request.url.path}: {exc}")
-        response = JSONResponse(
-            status_code=500,
-            content={
-                "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": (
-                        "An internal error occurred" if settings.is_production else str(exc)
-                    ),
-                    "type": type(exc).__name__ if not settings.is_production else None,
+        # Preserve FastAPI HTTPException semantics (e.g., 401/403/404)
+        if isinstance(exc, HTTPException):
+            response = JSONResponse(
+                status_code=exc.status_code,
+                content={"detail": exc.detail},
+                headers=getattr(exc, "headers", None) or {},
+            )
+        else:
+            # Log and convert to JSON response so we can append CORS headers
+            logger.error(f"Unhandled error during request {request.method} {request.url.path}: {exc}")
+            response = JSONResponse(
+                status_code=500,
+                content={
+                    "success": False,
+                    "error": {
+                        "code": "INTERNAL_ERROR",
+                        "message": (
+                            "An internal error occurred" if settings.is_production else str(exc)
+                        ),
+                        "type": type(exc).__name__ if not settings.is_production else None,
+                    },
                 },
-            },
-        )
+            )
 
     # Add CORS headers for allowed origins on actual responses
     if req_origin and req_origin_norm in origins:
