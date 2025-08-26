@@ -211,8 +211,25 @@ async def manual_cors_middleware(request: Request, call_next):
         # Not an allowed origin; return minimal response
         return JSONResponse(content={"message": "Forbidden origin"}, status_code=403)
 
-    # Proceed with request
-    response = await call_next(request)
+    # Proceed with request and ensure we always return a response
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        # Log and convert to JSON response so we can append CORS headers
+        logger.error(f"Unhandled error during request {request.method} {request.url.path}: {exc}")
+        response = JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": (
+                        "An internal error occurred" if settings.is_production else str(exc)
+                    ),
+                    "type": type(exc).__name__ if not settings.is_production else None,
+                },
+            },
+        )
 
     # Add CORS headers for allowed origins on actual responses
     if req_origin and req_origin_norm in origins:
