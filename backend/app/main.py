@@ -172,7 +172,7 @@ if "https://repruv.co.uk" not in origins:
     origins.append("https://repruv.co.uk")
 
 # Normalize (strip trailing slashes) and coerce to plain strings
-origins = [str(o).rstrip('/') for o in origins if o]
+origins = [str(o).rstrip('/').lower() for o in origins if o]
 # De-duplicate while preserving order
 _seen = set()
 origins = [o for o in origins if not (o in _seen or _seen.add(o))]
@@ -181,26 +181,53 @@ logger.info(f"CORS configured for origins: {origins}")
 
 @app.middleware("http")
 async def manual_cors_middleware(request: Request, call_next):
-    # Handle preflight requests
+    # Normalize origin from request
+    req_origin_raw = request.headers.get("origin") or ""
+    req_origin = req_origin_raw.rstrip('/')
+    req_origin_norm = req_origin.lower()
+
+    # Handle preflight requests early
     if request.method == "OPTIONS":
-        headers = {
-            "Access-Control-Allow-Origin": request.headers.get("origin", "*"),
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
-            "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Max-Age": "3600",
-        }
-        return JSONResponse(content={"message": "OK"}, headers=headers)
-    
+        # Only allow known origins
+        if req_origin and req_origin_norm in origins:
+            allow_headers = request.headers.get(
+                "access-control-request-headers",
+                "Content-Type, Authorization, X-Requested-With",
+            )
+            allow_method = request.headers.get(
+                "access-control-request-method",
+                "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD",
+            )
+
+            headers = {
+                "Access-Control-Allow-Origin": req_origin,
+                "Vary": "Origin",
+                "Access-Control-Allow-Methods": allow_method if "," in allow_method else "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD",
+                "Access-Control-Allow-Headers": allow_headers,
+                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Max-Age": "3600",
+            }
+            return JSONResponse(content={"message": "OK"}, headers=headers, status_code=204)
+        # Not an allowed origin; return minimal response
+        return JSONResponse(content={"message": "Forbidden origin"}, status_code=403)
+
+    # Proceed with request
     response = await call_next(request)
 
-    origin = request.headers.get("origin", "").rstrip('/')
-    if origin in origins:
-
-        response.headers["Access-Control-Allow-Origin"] = origin
+    # Add CORS headers for allowed origins on actual responses
+    if req_origin and req_origin_norm in origins:
+        response.headers["Access-Control-Allow-Origin"] = req_origin
+        response.headers["Vary"] = "Origin"
         response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD"
+        # Expose common headers if needed by frontend (safe default)
+        response.headers.setdefault("Access-Control-Expose-Headers", "Content-Disposition")
+        # Mirror requested headers when possible (best-effort; not strictly required on non-preflight)
+        acrh = request.headers.get("access-control-request-headers")
+        if acrh:
+            response.headers["Access-Control-Allow-Headers"] = acrh
+        else:
+            response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
     return response
 
 # Add other middlewares
