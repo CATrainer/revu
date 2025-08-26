@@ -23,19 +23,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }, [isLoading, isAuthenticated, router]);
 
   useEffect(() => {
-    // If user is authenticated but doesn't have dashboard access,
-    // redirect to waiting area (unless they're already there)
-    if (!isLoading && isAuthenticated && user && !canAccessDashboard()) {
-      if (pathname !== '/waiting-area') {
-        router.push('/waiting-area');
-      }
+    if (isLoading || !isAuthenticated || !user) return;
+    // Waiting users -> waiting area
+    if (!canAccessDashboard()) {
+      if (pathname !== '/waiting-area') router.push('/waiting-area');
+      return;
     }
-    
-    // If user has dashboard access but is on waiting area, redirect to dashboard
-    if (!isLoading && isAuthenticated && user && canAccessDashboard()) {
-      if (pathname === '/waiting-area') {
-        router.push('/dashboard');
-      }
+    // Full access but business kind -> under construction view
+    if (user.user_kind === 'business') {
+      if (pathname !== '/under-construction') router.push('/under-construction');
+      return;
+    }
+    // Content users with full access -> dashboard home if on waiting or UC
+    if (pathname === '/waiting-area' || pathname === '/under-construction') {
+      router.push('/dashboard');
     }
   }, [isLoading, isAuthenticated, user, canAccessDashboard, pathname, router]);
 

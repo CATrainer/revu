@@ -32,6 +32,7 @@ from app.schemas.user import User, UserCreate, DemoRequest
 from app.models.user import User as UserModel
 from app.services.auth import AuthService
 from app.services.user import UserService
+from app.services.demo_data import DemoDataService
 
 router = APIRouter()
 
@@ -74,9 +75,10 @@ async def signup(
         )
     )
     
-    # Set user to waiting list and mark join time
+    # Set user to waiting and mark join time, default kind to content
     from datetime import datetime
-    user.access_status = "waiting_list"
+    user.access_status = "waiting"
+    user.user_kind = "content"
     user.joined_waiting_list_at = datetime.utcnow()
     await db.commit()
     await db.refresh(user)
@@ -142,6 +144,9 @@ async def login(
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
+
+
+    # Note: demo-login removed in production revamp
 
 
 @router.post("/refresh", response_model=Token)
@@ -216,7 +221,7 @@ async def get_current_user_info(
         created_at=current_user.created_at,
         updated_at=current_user.updated_at,
         last_login_at=current_user.last_login_at,
-        access_status=current_user.access_status,
+    access_status=current_user.access_status,
         joined_waiting_list_at=current_user.joined_waiting_list_at,
         early_access_granted_at=current_user.early_access_granted_at,
         demo_requested=current_user.demo_requested,
@@ -370,8 +375,8 @@ async def get_my_access_status(
     """
     return {
         "access_status": current_user.access_status,
-        "demo_access_type": getattr(current_user, "demo_access_type", None),
-        "can_access_dashboard": current_user.access_status in ["early_access", "full_access", "demo_access"],
+        "user_kind": getattr(current_user, "user_kind", None),
+        "can_access_dashboard": current_user.access_status in ["full"],
         "joined_waiting_list_at": current_user.joined_waiting_list_at,
         "early_access_granted_at": current_user.early_access_granted_at,
         "demo_requested": current_user.demo_requested,

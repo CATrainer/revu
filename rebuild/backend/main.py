@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -12,7 +12,15 @@ import re
 import datetime as dt
 import time
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import Response, StreamingResponse
+import secrets
+import hashlib
+import math
+from typing import List, Optional
+import random
+
+from dotenv import load_dotenv
+load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 try:
@@ -22,7 +30,7 @@ try:
 except Exception:
     openai = None
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/postgres")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 app = FastAPI(title="Repruv API (Rebuild Phase 1)")
 
@@ -169,6 +177,13 @@ create table if not exists reports (
     created_at timestamptz default now()
 );
 
+create table if not exists sessions (
+    id uuid primary key,
+    user_id uuid references users(id) on delete cascade,
+    token text unique not null,
+    expires_at timestamptz not null,
+    created_at timestamptz default now()
+);
 -- Indexes for performance
 create index if not exists idx_profiles_user on creator_profiles(user_id);
 create index if not exists idx_uploads_profile on content_uploads(profile_id);
@@ -183,26 +198,55 @@ create index if not exists idx_schedules_user_when on schedules(user_id, schedul
 async def get_db():
     global _pool
     if _pool is None:
-        _pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=5)
-        # ensure schema
-        async with _pool.acquire() as conn:
-            try:
-                # enable pgcrypto/gen_random_uuid if available (ignore errors)
-                await conn.execute("create extension if not exists pgcrypto")
-            except Exception:
-                pass
-            await conn.execute(SCHEMA_SQL)
-            # Add new columns if missing
-            try:
-                await conn.execute("alter table if exists comments add column if not exists flagged boolean default false")
-            except Exception:
-                pass
-            try:
-                await conn.execute("alter table if exists comments add column if not exists hidden boolean default false")
-            except Exception:
-                pass
-            # Readiness probe: run a trivial select
-            await conn.fetchval("select 1")
+        try:
+            # Try different connection configurations
+            conn_str = DATABASE_URL
+            
+            # Add SSL mode if not present and not using pooler
+            if 'pooler.supabase.com' not in conn_str and 'sslmode=' not in conn_str:
+                conn_str += '?sslmode=require' if '?' not in conn_str else '&sslmode=require'
+            
+            print(f"Attempting to connect to database...")
+            print(f"Connection string format: postgresql://[user]:[hidden]@{conn_str.split('@')[1].split('/')[0]}/...")
+            
+            _pool = await asyncpg.create_pool(
+                conn_str, 
+                min_size=1, 
+                max_size=5,
+                command_timeout=60,
+                server_settings={
+                    'application_name': 'repruv_backend'
+                }
+            )
+            
+            # Test the connection
+            async with _pool.acquire() as conn:
+                # Try to enable pgcrypto if available
+                try:
+                    await conn.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto")
+                except Exception:
+                    pass  # Extension might already exist or no permissions
+                
+                # Create schema
+                await conn.execute(SCHEMA_SQL)
+                
+                # Add missing columns
+                try:
+                    await conn.execute("ALTER TABLE comments ADD COLUMN IF NOT EXISTS flagged boolean DEFAULT false")
+                    await conn.execute("ALTER TABLE comments ADD COLUMN IF NOT EXISTS hidden boolean DEFAULT false")
+                except Exception:
+                    pass
+                
+                # Test query
+                await conn.fetchval("SELECT 1")
+                print("✓ Database connection successful")
+                
+        except Exception as e:
+            print(f"❌ Database connection failed: {str(e)}")
+            print(f"Make sure your DATABASE_URL in .env is correct")
+            print(f"Format should be: postgresql://postgres.[project-ref]:[password]@[host]:[port]/postgres")
+            raise
+            
     return _pool
 
 # ----- Logging & Metrics & Rate limiting -----
@@ -418,12 +462,337 @@ async def signup(body: SignupBody, pool=Depends(get_db)):
 
 @app.post("/auth/login")
 async def login(body: LoginBody, pool=Depends(get_db)):
-    # For Phase 1, accept any known email; password ignored (front-end will use Supabase)
+    # Accept any known email for now; password ignored (front-end handles auth)
+    # Ensure user exists
+    user_id = await upsert_user(pool, body.email)
+    # Issue session token valid for 7 days
+    token = secrets.token_urlsafe(48)
+    expires = dt.datetime.utcnow() + dt.timedelta(days=7)
     async with pool.acquire() as conn:
-        row = await conn.fetchrow("select id, account_type, account_tier from users where email=$1", body.email)
+        await conn.execute(
+            "insert into sessions(id,user_id,token,expires_at) values($1,$2,$3,$4)",
+            uuid.uuid4(), user_id, token, expires
+        )
+        row = await conn.fetchrow("select account_type, account_tier from users where id=$1", user_id)
+    return {"ok": True, "user_id": str(user_id), "session_token": token, "expires_at": expires.isoformat(), "account_type": row[0] if row else None, "account_tier": row[1] if row else None}
+
+async def get_current_user(authorization: str = Header(None), pool=Depends(get_db)) -> str:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(401, "Invalid auth")
+    token = authorization.replace("Bearer ", "").strip()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "select user_id, expires_at from sessions where token=$1",
+            token
+        )
     if not row:
-        raise HTTPException(401, "Invalid credentials")
-    return {"ok": True, "user_id": str(row[0]), "account_type": row[1], "account_tier": row[2]}
+        raise HTTPException(401, "Invalid token")
+    if row[1] and row[1] < dt.datetime.utcnow().replace(tzinfo=row[1].tzinfo):
+        raise HTTPException(401, "Token expired")
+    return str(row[0])
+
+# Very small AI service with multi-provider fallback
+class AIService:
+    def __init__(self):
+        self.openai_key = os.getenv("OPENAI_API_KEY")
+        self.anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+        # lazy clients
+        self._openai_client = None
+        self._anthropic_client = None
+
+    def _ensure_openai(self):
+        if not self.openai_key:
+            return None
+        if self._openai_client is not None:
+            return self._openai_client
+        try:
+            import openai
+            try:
+                from openai import OpenAI
+                self._openai_client = OpenAI(api_key=self.openai_key)
+            except Exception:
+                openai.api_key = self.openai_key
+                self._openai_client = openai
+        except Exception:
+            self._openai_client = None
+        return self._openai_client
+
+    def _ensure_anthropic(self):
+        if not self.anthropic_key:
+            return None
+        if self._anthropic_client is not None:
+            return self._anthropic_client
+        try:
+            import anthropic  # type: ignore
+            self._anthropic_client = anthropic.Anthropic(api_key=self.anthropic_key)
+        except Exception:
+            self._anthropic_client = None
+        return self._anthropic_client
+
+    async def generate_text(self, prompt: str) -> str:
+        # Try Anthropic Claude
+        try:
+            client = self._ensure_anthropic()
+            if client:
+                msg = client.messages.create(
+                    model=os.getenv("ANTHROPIC_MODEL", "claude-3-haiku-20240307"),
+                    max_tokens=400,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                # anthropic returns structured content
+                if hasattr(msg, "content") and msg.content:
+                    parts = []
+                    for p in msg.content:
+                        if hasattr(p, "text"):
+                            parts.append(p.text)
+                        elif isinstance(p, dict) and p.get("type") == "text":
+                            parts.append(p.get("text", ""))
+                    if parts:
+                        return "\n".join(parts).strip()
+        except Exception:
+            pass
+        # Try OpenAI
+        try:
+            client = self._ensure_openai()
+            if client:
+                # support both new and legacy SDKs
+                if hasattr(client, "chat") and hasattr(client.chat, "completions"):
+                    resp = client.chat.completions.create(
+                        model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
+                        messages=[{"role": "user", "content": prompt}],
+                        max_tokens=400,
+                        temperature=0.2,
+                    )
+                    return resp.choices[0].message.content.strip()
+                elif hasattr(client, "chat_completions") or hasattr(client, "responses") or hasattr(client, "responses"):
+                    # fall through to simple outcome below
+                    raise Exception("Unsupported OpenAI SDK variant")
+        except Exception:
+            pass
+        # Fallback local
+        return (
+            "Here’s a concise answer based on your context and question. "
+            "I don’t have external AI access configured, so this is a local heuristic summary.\n\n"
+            + (prompt[:600] + ("…" if len(prompt) > 600 else ""))
+        )
+
+    async def embedding(self, text: str, dim: int = 1536) -> List[float]:
+        # Try OpenAI embeddings if available
+        try:
+            client = self._ensure_openai()
+            if client and hasattr(client, "embeddings"):
+                model = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small")
+                if hasattr(client.embeddings, "create"):
+                    resp = client.embeddings.create(model=model, input=text)
+                    return list(resp.data[0].embedding)
+        except Exception:
+            pass
+        # Local deterministic embedding
+        seed = int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16) % (2**32)
+        rnd = random.Random(seed)
+        vec = [rnd.uniform(-1.0, 1.0) for _ in range(dim)]
+        # L2 normalize
+        norm = math.sqrt(sum(x * x for x in vec)) or 1.0
+        return [x / norm for x in vec]
+
+    async def sentiment(self, text: str) -> str:
+        # Simple heuristic sentiment as fallback
+        positive = ["good", "great", "love", "awesome", "amazing", "nice"]
+        negative = ["bad", "terrible", "hate", "awful", "horrible", "worse", "bug"]
+        lo = text.lower()
+        score = sum(1 for w in positive if w in lo) - sum(1 for w in negative if w in lo)
+        if score > 0:
+            return "positive"
+        if score < 0:
+            return "negative"
+        return "neutral"
+
+ai_service = AIService()
+
+
+# Auth middleware enforcing Bearer token for protected routes
+PUBLIC_PATHS = set([
+    "/",
+    "/health",
+    "/ready",
+    "/metrics",
+    "/docs",
+    "/openapi.json",
+    "/auth/login",
+    "/auth/signup",
+])
+REQUIRE_AUTH = os.getenv("REQUIRE_AUTH", "0") == "1"
+
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    if not REQUIRE_AUTH:
+        return await call_next(request)
+    path = request.url.path
+    if path in PUBLIC_PATHS or any(path.startswith(p) for p in ["/static", "/assets", "/favicon"]):
+        return await call_next(request)
+    # Already validated and attached by previous middleware? if so continue
+    auth = request.headers.get("Authorization")
+    if not auth or not auth.lower().startswith("bearer "):
+        return Response(status_code=401)
+    token = auth.split(" ", 1)[1].strip()
+    try:
+        pool = await get_db()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow("select user_id, expires_at from sessions where token=$1", token)
+        if not row:
+            return Response(status_code=401)
+        expires_at = row[1]
+        # normalize tz
+        now = dt.datetime.utcnow().replace(tzinfo=expires_at.tzinfo)
+        if expires_at < now:
+            return Response(status_code=401)
+        request.state.user_id = str(row[0])
+    except Exception:
+        return Response(status_code=401)
+    return await call_next(request)
+
+
+def _vec_literal(vec: List[float]) -> str:
+    return "[" + ",".join(f"{x:.6f}" for x in vec) + "]"
+
+async def _get_object_text(conn, object_type: str, object_id: str) -> Optional[str]:
+    if object_type == "comment":
+        row = await conn.fetchrow("select content from comments where id=$1", uuid.UUID(object_id))
+        return row[0] if row else None
+    if object_type == "template":
+        row = await conn.fetchrow("select content from templates where id=$1", uuid.UUID(object_id))
+        return row[0] if row else None
+    if object_type == "idea":
+        row = await conn.fetchrow("select idea from ideas where id=$1", uuid.UUID(object_id))
+        return row[0] if row else None
+    if object_type == "brief":
+        row = await conn.fetchrow("select brief from briefs where id=$1", uuid.UUID(object_id))
+        return row[0] if row else None
+    if object_type == "upload":
+        row = await conn.fetchrow("select title from content_uploads where id=$1", uuid.UUID(object_id))
+        return row[0] if row else None
+    return None
+
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatBody(BaseModel):
+    messages: List[ChatMessage]
+    top_k: int = 5
+
+@app.post("/assistant/chat")
+async def assistant_chat(body: ChatBody, pool=Depends(get_db), user_id: str = Depends(get_current_user)):
+    if not body.messages:
+        raise HTTPException(400, "messages required")
+    user_msg = body.messages[-1].content
+    # get semantic context
+    vec = await ai_service.embedding(user_msg)
+    veclit = _vec_literal(vec)
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            select object_type, object_id, 1 - (embedding <=> $1::vector) as score
+            from embeddings
+            where user_id=$2
+            order by embedding <=> $1::vector
+            limit $3
+            """,
+            veclit, uuid.UUID(user_id), body.top_k,
+        )
+        contexts = []
+        for r in rows:
+            text = await _get_object_text(conn, r[0], str(r[1]))
+            if text:
+                contexts.append(f"[{r[0]}:{str(r[1])}] {text}")
+    context_blob = "\n---\n".join(contexts)
+    system_preamble = (
+        "You are Repruv, an assistant for creators. Use the provided context from the user's own data "
+        "to ground answers. Be concise and actionable. If context is insufficient, say so briefly."
+    )
+    convo = []
+    for m in body.messages:
+        role = m.role if m.role in ("system", "user", "assistant") else "user"
+        convo.append(f"{role.upper()}: {m.content}")
+    prompt = (
+        system_preamble
+        + "\n\nCONTEXT:\n" + (context_blob or "(none)")
+        + "\n\nCONVERSATION so far:\n" + "\n".join(convo)
+        + "\n\nProvide your next assistant reply only."
+    )
+    reply = await ai_service.generate_text(prompt)
+    return {"reply": reply, "contexts": contexts}
+
+
+@app.post("/embeddings/reindex")
+async def reindex_embeddings(pool=Depends(get_db), user_id: str = Depends(get_current_user)):
+    # ensure embeddings table exists
+    try:
+        async with pool.acquire() as conn:
+            await conn.fetchval("select 1 from embeddings limit 1")
+    except Exception:
+        raise HTTPException(400, "Vector/embeddings not available on this database")
+    # Basic reindex: wipe and rebuild for this user from key tables
+    async with pool.acquire() as conn:
+        await conn.execute("delete from embeddings where user_id=$1", uuid.UUID(user_id))
+        # comments
+        comments = await conn.fetch("select id, content from comments where user_id=$1 limit 500", uuid.UUID(user_id))
+        templates = await conn.fetch("select id, content from templates where user_id=$1 limit 200", uuid.UUID(user_id))
+        ideas = await conn.fetch("select id, idea from ideas where user_id=$1 limit 200", uuid.UUID(user_id))
+        briefs = await conn.fetch("select id, brief from briefs where user_id=$1 limit 200", uuid.UUID(user_id))
+        uploads = await conn.fetch("select id, title from content_uploads where user_id=$1 limit 200", uuid.UUID(user_id))
+        total = 0
+        for tbl, rows in (
+            ("comment", comments),
+            ("template", templates),
+            ("idea", ideas),
+            ("brief", briefs),
+            ("upload", uploads),
+        ):
+            for r in rows:
+                text = r[1] or ""
+                vec = await ai_service.embedding(text)
+                await conn.execute(
+                    "insert into embeddings (id,user_id,object_type,object_id,embedding) values ($1,$2,$3,$4,$5::vector)",
+                    uuid.uuid4(), uuid.UUID(user_id), tbl, r[0], _vec_literal(vec)
+                )
+                total += 1
+    # invalidate any caches relying on embeddings (none specific yet)
+    return {"ok": True, "indexed": total}
+
+
+@app.get("/search/semantic")
+async def semantic_search(q: str, k: int = 10, pool=Depends(get_db), user_id: str = Depends(get_current_user)):
+    # ensure embeddings table exists
+    try:
+        async with pool.acquire() as conn:
+            await conn.fetchval("select 1 from embeddings limit 1")
+    except Exception:
+        raise HTTPException(400, "Vector/embeddings not available on this database")
+    vec = await ai_service.embedding(q)
+    veclit = _vec_literal(vec)
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            select object_type, object_id, 1 - (embedding <=> $1::vector) as score
+            from embeddings
+            where user_id=$2
+            order by embedding <=> $1::vector
+            limit $3
+            """,
+            veclit, uuid.UUID(user_id), max(1, min(50, k))
+        )
+        results = []
+        for r in rows:
+            text = await _get_object_text(conn, r[0], str(r[1]))
+            results.append({
+                "object_type": r[0],
+                "object_id": str(r[1]),
+                "score": float(r[2]),
+                "text": text,
+            })
+    return {"results": results}
 
 @app.post("/auth/set-type")
 async def set_type(user_id: str, account_type: str, pool=Depends(get_db)):

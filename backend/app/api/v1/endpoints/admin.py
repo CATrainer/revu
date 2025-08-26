@@ -17,8 +17,8 @@ router = APIRouter(tags=["admin"])
 
 class GrantAccessRequest(BaseModel):
     email: str | None = None  # For grant_user_access by email
-    access_status: str  # waiting_list | early_access | full_access | demo_access
-    demo_access_type: str | None = None  # creator | business | agency_creators | agency_businesses
+    access_status: str  # waiting | full
+    user_kind: str | None = None  # content | business
 
 class UserResponse(BaseModel):
     id: str
@@ -28,7 +28,7 @@ class UserResponse(BaseModel):
     is_admin: bool
     has_account: bool
     access_status: str
-    demo_access_type: str | None = None
+    user_kind: str | None = None
     joined_waiting_list_at: str | None
     early_access_granted_at: str | None
     demo_requested: bool
@@ -61,16 +61,20 @@ async def grant_user_access(
         )
     
     # Validate access status
-    if request.access_status not in ["early_access", "full_access", "demo_access"]:
+    if request.access_status not in ["waiting", "full"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Access status must be 'early_access', 'full_access', or 'demo_access'"
+            detail="Access status must be 'waiting' or 'full'"
         )
     
     # Grant access
     old_status = user.access_status
     user.access_status = request.access_status
-    user.demo_access_type = request.demo_access_type if request.access_status == "demo_access" else None
+    if request.user_kind in ("content", "business"):
+        user.user_kind = request.user_kind
+    
+    if request.access_status == "full" and not user.early_access_granted_at:
+        user.early_access_granted_at = datetime.now(timezone.utc)
     
     if request.access_status in ["early_access", "full_access"] and not user.early_access_granted_at:
         user.early_access_granted_at = datetime.now(timezone.utc)
@@ -102,7 +106,7 @@ async def get_waiting_list(
             detail="Admin access required"
         )
     
-    result = await db.execute(select(User).filter(User.access_status == 'waiting_list'))
+    result = await db.execute(select(User).filter(User.access_status.in_(['waiting', 'waiting_list'])))
     waiting_users = result.scalars().all()
     
     return [
@@ -114,7 +118,7 @@ async def get_waiting_list(
             is_admin=user.is_admin,
             has_account=user.has_account,
             access_status=user.access_status,
-            demo_access_type=getattr(user, "demo_access_type", None),
+            user_kind=getattr(user, "user_kind", None),
             joined_waiting_list_at=user.joined_waiting_list_at.isoformat() if user.joined_waiting_list_at else None,
             early_access_granted_at=user.early_access_granted_at.isoformat() if user.early_access_granted_at else None,
             demo_requested=user.demo_requested,
@@ -149,7 +153,7 @@ async def get_all_users(
             is_admin=user.is_admin,
             has_account=user.has_account,
             access_status=user.access_status,
-            demo_access_type=getattr(user, "demo_access_type", None),
+            user_kind=getattr(user, "user_kind", None),
             joined_waiting_list_at=user.joined_waiting_list_at.isoformat() if user.joined_waiting_list_at else None,
             early_access_granted_at=user.early_access_granted_at.isoformat() if user.early_access_granted_at else None,
             demo_requested=user.demo_requested,
@@ -186,7 +190,7 @@ async def update_user_access(
         )
     
     # Validate access status
-    valid_statuses = ["waiting_list", "early_access", "full_access", "demo_access"]
+    valid_statuses = ["waiting", "full"]
     if request.access_status not in valid_statuses:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -195,8 +199,9 @@ async def update_user_access(
     
     # Update access status
     user_to_update.access_status = request.access_status
-    user_to_update.demo_access_type = request.demo_access_type if request.access_status == "demo_access" else None
-    if request.access_status == "early_access" and not user_to_update.early_access_granted_at:
+    if request.user_kind in ("content", "business"):
+        user_to_update.user_kind = request.user_kind
+    if request.access_status == "full" and not user_to_update.early_access_granted_at:
         user_to_update.early_access_granted_at = datetime.now(timezone.utc)
     
     await db.commit()

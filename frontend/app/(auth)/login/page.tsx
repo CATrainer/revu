@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/lib/auth';
 import { useStore } from '@/lib/store';
-import { generateAllDemoData } from '@/lib/demo-data';
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
 import { FormInput } from '@/components/ui/form-input';
 import { LoadingButton } from '@/components/ui/loading-button';
@@ -25,7 +24,7 @@ interface ErrorResponse {
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const { setWorkspaces, setInteractions, setCurrentWorkspace } = useStore();
+  const {} = useStore();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
 
@@ -50,52 +49,6 @@ export default function LoginPage() {
       const redirectPath = getRedirectPath();
       router.push(redirectPath);
     } catch (err) {
-      // If login fails and it's a known demo email, fall back to local demo seeding (dev-only)
-      const email = data.email.toLowerCase();
-      const isDemo = email.startsWith('demo+') && email.endsWith('@revu.app');
-      if (isDemo) {
-        const flavor: 'default' | 'agency-creators' | 'agency-businesses' = email.includes('agency-biz')
-          ? 'agency-businesses'
-          : email.includes('agency')
-            ? 'agency-creators'
-            : 'default';
-        const { workspaces, interactions } = generateAllDemoData(flavor);
-        setWorkspaces(workspaces);
-        setInteractions(interactions);
-        const map: Record<string, string> = {
-          'demo+creator@revu.app': 'alex',
-          'demo+business@revu.app': 'bella',
-          'demo+agency@revu.app': 'agency',
-          'demo+agency-biz@revu.app': 'agency',
-        };
-        const wsId = map[email] || workspaces[0].id;
-        setCurrentWorkspace(wsId);
-        const now = new Date().toISOString();
-        useAuth.setState({
-          user: {
-            id: `demo_${wsId}`,
-            email,
-            full_name: email.replace('demo+', '').replace('@revu.app', '').replace('-', ' ').replace(/\b\w/g, (m) => m.toUpperCase()),
-            created_at: now,
-            updated_at: now,
-            last_login_at: now,
-            is_active: true,
-            is_admin: false,
-            access_status: 'demo_access',
-            joined_waiting_list_at: null,
-            early_access_granted_at: null,
-            demo_requested: true,
-            demo_requested_at: now,
-            demo_access_type: email.includes('agency-biz') ? 'agency_businesses' : email.includes('agency') ? 'agency_creators' : (email.includes('creator') ? 'creator' : 'business'),
-          },
-          isAuthenticated: true,
-          isLoading: false,
-        });
-        const target = email.includes('agency') ? '/clients' : '/dashboard';
-        router.push(target);
-        return;
-      }
-
       console.error('Login error:', err);
       const axiosError = err as AxiosError<ErrorResponse>;
       setServerError(
@@ -212,20 +165,7 @@ export default function LoginPage() {
               </LoadingButton>
             </form>
 
-            {/* Demo CTA */}
-            <div className="mt-6 p-4 brand-background rounded-lg">
-              <p className="text-sm text-center text-primary-dark">
-                <strong>New to Repruv?</strong> See it in action first.
-              </p>
-              <div className="mt-2 text-center">
-                <Link
-                  href="/demo"
-                  className="text-sm brand-text hover:underline font-medium"
-                >
-                  Schedule a free demo →
-                </Link>
-              </div>
-            </div>
+            {/* Marketing CTA removed: demo is no longer supported */}
           </CardContent>
         </Card>
       </div>

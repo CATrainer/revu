@@ -183,7 +183,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                         </li>
                         <li className="flex flex-col space-y-2 p-3">
                           <Button asChild className="bg-green-600 hover:bg-green-700 text-white text-xs h-8">
-                            <Link href="/demo">
+                            <Link href="/join-waitlist">
                               Request Demo
                             </Link>
                           </Button>
@@ -215,7 +215,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                   
                   <NavigationMenuItem>
                     <Button asChild className="bg-green-600 hover:bg-green-700 text-white">
-                      <Link href="/demo">
+                      <Link href="/join-waitlist">
                         Request Demo
                       </Link>
                     </Button>
@@ -283,7 +283,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
               </Link>
               <div className="px-3 py-2">
                 <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
-                  <Link href="/demo">
+                  <Link href="/join-waitlist">
                     Request Demo
                   </Link>
                 </Button>

@@ -32,8 +32,15 @@ class User(Base):
     access_status = Column(
         String(20), 
         nullable=False, 
-        default="waiting_list",
-        comment="Access level: waiting_list, early_access, full_access"
+        default="waiting",
+        comment="Access level: waiting, full"
+    )
+    # Simple user category flag (content creator vs business)
+    user_kind = Column(
+        String(20),
+        nullable=False,
+        default="content",
+        comment="User kind: content | business"
     )
     joined_waiting_list_at = Column(DateTime(timezone=True))
     early_access_granted_at = Column(DateTime(timezone=True))
@@ -77,28 +84,37 @@ class User(Base):
     @property
     def is_waiting_list(self) -> bool:
         """Check if user is on waiting list."""
-        return self.access_status == "waiting_list"
+        # Support legacy value waiting_list as well
+        return self.access_status in ("waiting", "waiting_list")
     
     @property
     def has_early_access(self) -> bool:
-        """Check if user has early access."""
-        return self.access_status == "early_access"
+        """Deprecated: early access collapsed into full access."""
+        return False
     
     @property
     def has_full_access(self) -> bool:
         """Check if user has full access."""
-        return self.access_status == "full_access"
+        return self.access_status in ("full", "full_access")
     
     @property
     def can_access_dashboard(self) -> bool:
         """Check if user can access the main dashboard."""
-        return self.access_status in ["early_access", "full_access", "demo_access"]
+        return self.access_status in ("full", "full_access")
     
     def grant_early_access(self) -> None:
-        """Grant early access to user."""
-        self.access_status = "early_access"
+        """Deprecated: map to full access."""
+        self.access_status = "full"
         if not self.early_access_granted_at:
             self.early_access_granted_at = datetime.utcnow()
+
+    @property
+    def is_content(self) -> bool:
+        return (self.user_kind or "content") == "content"
+
+    @property
+    def is_business(self) -> bool:
+        return (self.user_kind or "content") == "business"
     
     def request_demo(self) -> None:
         """Mark user as having requested a demo."""

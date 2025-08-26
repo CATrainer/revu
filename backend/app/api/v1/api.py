@@ -12,8 +12,9 @@ from app.api.v1.endpoints import (
     ai,
     analytics,
     auth,
-    locations,
-    organizations,
+    platforms,
+    # locations,
+    # organizations,
     reviews,
     users,
     webhooks,
@@ -41,17 +42,18 @@ api_router.include_router(
     tags=["users"],
 )
 
-api_router.include_router(
-    organizations.router,
-    prefix="/organizations",
-    tags=["organizations"],
-)
+# Temporarily disable organizations and locations while simplifying to single-user accounts
+# api_router.include_router(
+#     organizations.router,
+#     prefix="/organizations",
+#     tags=["organizations"],
+# )
 
-api_router.include_router(
-    locations.router,
-    prefix="/locations",
-    tags=["locations"],
-)
+# api_router.include_router(
+#     locations.router,
+#     prefix="/locations",
+#     tags=["locations"],
+# )
 
 api_router.include_router(
     reviews.router,
@@ -77,6 +79,14 @@ api_router.include_router(
     tags=["webhooks"],
 )
 
+# demo routes removed for production revamp
+
+api_router.include_router(
+    platforms.router,
+    prefix="/",
+    tags=["platforms"],
+)
+
 
 # Root endpoint for API version
 @api_router.get("/", tags=["root"])
@@ -88,8 +98,8 @@ async def api_root():
         "endpoints": {
             "auth": "/auth",
             "users": "/users",
-            "organizations": "/organizations",
-            "locations": "/locations",
+            # "organizations": "/organizations",
+            # "locations": "/locations",
             "reviews": "/reviews",
             "ai": "/ai",
             "analytics": "/analytics",

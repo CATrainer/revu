@@ -28,16 +28,18 @@ export function AccountDropdown({ variant = 'landing' }: AccountDropdownProps) {
   const handleNavigateToApp = () => {
     if (user.is_admin) {
       router.push('/admin');
-    } else if (user.access_status === 'early_access' || user.access_status === 'full_access') {
-      router.push('/dashboard');
-    } else {
-      router.push('/waiting-area');
+      return;
     }
+    if (user.access_status === 'full') {
+      router.push(user.user_kind === 'business' ? '/under-construction' : '/dashboard');
+      return;
+    }
+    router.push('/waiting-area');
   };
 
   const getNavigationLabel = () => {
     if (user.is_admin) return 'Go to Admin Area';
-    if (user.access_status === 'early_access' || user.access_status === 'full_access') return 'Go to Dashboard';
+    if (user.access_status === 'full') return user.user_kind === 'business' ? 'Go to Under Construction' : 'Go to Dashboard';
     return 'My Account';
   };
 

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -40,13 +40,9 @@ export default function WaitingAreaPage() {
     fetchUserStatus();
   }, []);
 
+  // Demo booking removed; keep local flag if previously requested
   const handleRequestDemo = async () => {
-    try {
-      await api.post('/auth/request-demo', { message: '' });
-      setDemoRequested(true);
-    } catch (error) {
-      console.error('Failed to request demo:', error);
-    }
+    setDemoRequested(true);
   };
 
   if (isLoading) {
@@ -145,6 +141,8 @@ export default function WaitingAreaPage() {
             )}
           </CardContent>
         </Card>
+
+  {/* Instant Demo Mode removed */}
 
         {/* Pricing Preview */}
         <div className="mb-8">

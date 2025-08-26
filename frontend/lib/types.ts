@@ -2,9 +2,10 @@
 
 export type Role = 'Owner' | 'Admin' | 'Manager' | 'Analyst' | 'Responder';
 
-// Auth/access control
-export type AccessStatus = 'waiting_list' | 'early_access' | 'full_access' | 'demo_access';
-export type DemoAccessType = 'creator' | 'business' | 'agency_creators' | 'agency_businesses';
+// Auth/access control (revamped)
+export type AccessStatus = 'waiting' | 'full';
+export type UserKind = 'content' | 'business';
+export type DemoAccessType = never;
 
 export interface User {
   id: string;
@@ -108,7 +109,7 @@ export interface ReplyTemplate {
 export interface SavedView {
   id: string;
   name: string;
-  route: string; // e.g., '/reviews?status=Unread'
+  route: string; // e.g., '/comments?status=Unread'
   createdAt: string;
 }
 

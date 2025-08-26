@@ -2,23 +2,17 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { generateAllDemoData } from '@/lib/demo-data';
 import { useStore } from '@/lib/store';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth';
 import { Line, LineChart, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 
 export default function PulsePage() {
-  const { interactions, setInteractions } = useStore();
+  const { interactions } = useStore();
   const { user } = useAuth();
   const [score, setScore] = useState(0);
 
-  useEffect(() => {
-    if (interactions.length === 0) {
-      const { interactions } = generateAllDemoData();
-      setInteractions(interactions);
-    }
-  }, [interactions.length, setInteractions]);
+  // Demo-data seeding removed; rely on real data when available
 
   const metrics = useMemo(() => {
     const last30 = interactions.filter((i) => Date.now() - +new Date(i.createdAt) < 30 * 86400_000);

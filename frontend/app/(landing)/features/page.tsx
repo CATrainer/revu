@@ -1061,7 +1061,7 @@ export default function FeaturesPage() {
                 <Link href="/join-waitlist">Get Early Access</Link>
               </Button>
               <Button size="lg" className="button-secondary" asChild>
-                <Link href="/demo">Request Demo</Link>
+                <Link href="/join-waitlist">Join Waitlist</Link>
               </Button>
             </motion.div>
           </div>

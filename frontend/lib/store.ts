@@ -36,7 +36,6 @@ interface StoreState {
   notificationPrefs: NotificationPrefs;
   // UI prefs
   badgeRespectsMute: boolean;
-  demoBannerDismissed: boolean;
 
   // Reports (demo)
   reportSchedules: ReportSchedule[];
@@ -86,7 +85,6 @@ interface StoreState {
   setIntegrationStatus: (id: IntegrationConnection['id'], patch: Partial<IntegrationConnection>) => void;
   setNotificationPrefs: (p: Partial<NotificationPrefs>) => void;
   setBadgeRespectsMute: (v: boolean) => void;
-  setDemoBannerDismissed: (v: boolean) => void;
   // Reports (demo)
   addReportSchedule: (s: ReportSchedule) => void;
   removeReportSchedule: (id: string) => void;
@@ -158,7 +156,6 @@ export const useStore = create<StoreState>()(
   ],
   notificationPrefs: { muteKeywords: ['refund','delay'], mutedPlatforms: [], mode: 'All' },
   badgeRespectsMute: false,
-  demoBannerDismissed: false,
 
   reportSchedules: [],
   reportHistory: [],
@@ -248,7 +245,6 @@ export const useStore = create<StoreState>()(
     set((s) => ({ integrations: s.integrations.map((i) => (i.id === id ? { ...i, ...patch } : i)) })),
   setNotificationPrefs: (p) => set((s) => ({ notificationPrefs: { ...s.notificationPrefs, ...p } })),
   setBadgeRespectsMute: (v) => set({ badgeRespectsMute: v }),
-  setDemoBannerDismissed: (v) => set({ demoBannerDismissed: v }),
   addReportSchedule: (s) => set((st) => ({ reportSchedules: [s, ...st.reportSchedules] })),
   removeReportSchedule: (id) => set((st) => ({ reportSchedules: st.reportSchedules.filter((x) => x.id !== id) })),
   addReportEntry: (e) => set((st) => ({ reportHistory: [e, ...st.reportHistory] })),
@@ -288,8 +284,7 @@ export const useStore = create<StoreState>()(
         integrations: state.integrations,
         scenario: state.scenario,
         notificationPrefs: state.notificationPrefs,
-        badgeRespectsMute: state.badgeRespectsMute,
-  demoBannerDismissed: state.demoBannerDismissed,
+  badgeRespectsMute: state.badgeRespectsMute,
   reportSchedules: state.reportSchedules,
   reportHistory: state.reportHistory,
   branding: state.branding,
@@ -304,7 +299,7 @@ export const useStore = create<StoreState>()(
   alertHistory: state.alertHistory,
   alertsSettings: state.alertsSettings,
       }),
-      version: 4,
+  version: 5,
     }
   )
 );

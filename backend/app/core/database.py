@@ -159,6 +159,7 @@ async def create_db_and_tables() -> None:
                 template,
                 competitor,
                 analytics,
+                demo,
             )
 
             await conn.run_sync(Base.metadata.create_all)

@@ -275,7 +275,7 @@ export default function SignupPage() {
               </p>
               <div className="mt-2 text-center">
                 <Link
-                  href="/demo"
+                  href="/join-waitlist"
                   className="text-sm brand-text hover:underline font-medium"
                 >
                   Schedule a free demo →

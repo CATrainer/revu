@@ -25,6 +25,7 @@ from app.schemas.review import (
     CreateResponseRequest,
     ReviewResponseCreate,
 )
+from app.services.demo_adapter import DemoDataAdapter
 
 router = APIRouter()
 

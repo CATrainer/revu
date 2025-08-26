@@ -20,8 +20,6 @@ import { LocationSelector } from '@/components/dashboard/LocationSelector';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useStore } from '@/lib/store';
-import { generateAllDemoData } from '@/lib/demo-data';
-import { ChevronDown } from 'lucide-react';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -30,20 +28,15 @@ interface HeaderProps {
 export function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const { notifications, markNotificationsRead, markNotificationRead, scenario, setScenario, setInteractions, addNotification, notificationPrefs, badgeRespectsMute, setBadgeRespectsMute, alertHistory } = useStore();
+  const { notifications, markNotificationsRead, markNotificationRead, notificationPrefs, badgeRespectsMute, setBadgeRespectsMute, alertHistory } = useStore();
   const [searchOpen, setSearchOpen] = useState(false);
   const [showMuted, setShowMuted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAlertBanner, setShowAlertBanner] = useState(false);
-  const personaLabel = scenario === 'creator' ? 'Creator' : scenario === 'business' ? 'Business' : scenario === 'agency-creators' ? 'Agency: Creators' : 'Agency: Businesses';
-  const personaColor = scenario === 'creator' ? 'bg-purple-100 text-purple-700 border-purple-200' : scenario === 'business' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-blue-100 text-blue-700 border-blue-200';
-  const scenes = [
-    { label: scenario === 'creator' ? 'Spike in negative comments' : 'Negative surge recovery', href: '/engagement?sentiment=Negative&status=Unread' },
-    { label: scenario === 'creator' ? 'Top fan shoutouts' : '5-star highlights', href: scenario === 'creator' ? '/engagement?sentiment=Positive' : '/reviews?rating=>=4' },
-    { label: scenario === 'creator' ? 'Peer mentions' : 'Competitor mentions', href: '/engagement?search=competitor' },
-    { label: 'Agency portfolio overview', href: '/analytics' },
-    { label: scenario === 'creator' ? 'New mentions today' : 'New reviews today', href: scenario === 'creator' ? '/engagement?status=Unread' : '/reviews?filter=new' },
-  ];
+  const personaLabel = user?.user_kind === 'business' ? 'Business' : 'Content';
+  const personaColor = user?.user_kind === 'business'
+    ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+    : 'bg-purple-100 text-purple-700 border-purple-200';
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,56 +154,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               </Button>
             )}
 
-            {/* Scenario selector */}
-            <div className="hidden md:block">
-              <select
-                aria-label="Scenario"
-                className="card-background border-[var(--border)] rounded-md px-2 py-1 text-sm"
-                value={scenario}
-                onChange={(e) => {
-                  const s = e.target.value as typeof scenario;
-                  setScenario(s);
-                  // Reseed interactions to match scenario flavor
-                  const flavor = s === 'agency-businesses' ? 'agency-businesses' : s === 'agency-creators' ? 'agency-creators' : 'default';
-                  const { interactions } = generateAllDemoData(flavor as 'default' | 'agency-creators' | 'agency-businesses');
-                  setInteractions(interactions);
-                  addNotification({ id: `scenario_${Date.now()}`, title: 'Scenario changed', message: `Now viewing ${s.replace('-', ' ')}`, createdAt: new Date().toISOString(), severity: 'info' });
-                }}
-              >
-                <option value="creator">Creator</option>
-                <option value="business">Business</option>
-                <option value="agency-creators">Agency (Creators)</option>
-                <option value="agency-businesses">Agency (Businesses)</option>
-              </select>
-            </div>
-
-            {/* Scenes dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="hover-background">
-                  Scenes
-                  <ChevronDown className="h-4 w-4 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 card-background border-[var(--border)]">
-                <DropdownMenuLabel className="text-primary-dark">Guided Scenes</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-[var(--border)]" />
-                {scenes.map(s => (
-                  <DropdownMenuItem key={s.label} className="hover:section-background-alt" onClick={() => router.push(s.href)}>
-                    <span className="text-primary-dark">{s.label}</span>
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuItem className="hover:section-background-alt" onClick={() => {
-                  const today = new Date();
-                  const toStr = today.toISOString().slice(0,10);
-                  const fromStr = new Date(today.getTime() - 29*24*3600*1000).toISOString().slice(0,10);
-                  router.push(`/analytics?range=${fromStr},${toStr}`);
-                  try { useStore.getState().addNotification({ id: `scene_${Date.now()}`, title: 'Scene applied', message: 'Monthly report — last 30 days', createdAt: new Date().toISOString(), severity: 'info' }); } catch {}
-                }}>
-                  <span className="text-primary-dark">Monthly report (30 days)</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Demo scenario selector and scenes removed */}
 
             {/* Notifications */}
             <DropdownMenu onOpenChange={(open) => { if (!open) markNotificationsRead(); }}>
@@ -251,12 +195,11 @@ export function Header({ onMenuClick }: HeaderProps) {
                     key={notification.id} 
                     className="flex flex-col items-start p-4 hover:section-background-alt cursor-pointer"
                     onClick={() => {
-                      // Simple routing based on title keywords (demo)
+                      // Route to minimal destinations
                       const t = notification.title.toLowerCase();
-          markNotificationRead(notification.id);
-                      if (t.includes('review')) router.push('/reviews');
-                      else if (t.includes('response')) router.push('/engagement');
-                      else if (t.includes('report')) router.push('/analytics');
+                      markNotificationRead(notification.id);
+                      if (t.includes('review') || t.includes('response') || t.includes('comment')) router.push('/comments');
+                      else if (t.includes('report') || t.includes('analytics')) router.push('/analytics');
                     }}
                   >
                     <div className="flex items-center justify-between w-full">

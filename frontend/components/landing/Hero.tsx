@@ -69,7 +69,7 @@ export function Hero() {
               whileTap={{ scale: 0.95 }}
             >
               <Button size="lg" className="button-secondary py-4 px-8 text-lg font-semibold" asChild>
-                <Link href="/demo">Book Demo</Link>
+                <Link href="/join-waitlist">Join Waitlist</Link>
               </Button>
             </motion.div>
           </motion.div>

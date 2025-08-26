@@ -9,6 +9,7 @@ from app.models.competitor import Competitor
 from app.models.analytics import AnalyticsSnapshot
 from app.models.ai_training import AITrainingData  # Add this
 from app.models.audit import AuditLog  # Add this
+from app.models.demo import DemoAccount, DemoContent, DemoComment
 
 __all__ = [
     "Organization",
@@ -24,4 +25,7 @@ __all__ = [
     "AnalyticsSnapshot",
     "AITrainingData",  # Add this
     "AuditLog",  # Add this
+    "DemoAccount",
+    "DemoContent",
+    "DemoComment",
 ]

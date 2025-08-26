@@ -1,33 +1,55 @@
 "use client";
-import React, { useState } from 'react';
-import axios from 'axios';
-import { API_URL } from '../api-url';
-import { supabase } from '../../lib/supabaseClient';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { postJSON } from '../../lib/api';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [userId, setUserId] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  async function handleLogin(e: React.FormEvent) {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  // Supabase Auth
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) { alert(error.message); return; }
-  // Ensure user exists in backend DB, default to 'waiting'
-  const reg = await axios.post(API_URL + "/auth/signup", { email, account_type: "waiting" });
-  const user_id = reg.data.user_id;
-  setUserId(user_id);
-  window.location.href = "/dashboard?user_id=" + user_id;
-  }
+    setLoading(true);
+    setError(null);
+    try {
+      const json = await postJSON<{ session_token: string }>(`/auth/login`, { email, password });
+      if (typeof window !== 'undefined' && json.session_token) {
+        localStorage.setItem('session_token', json.session_token);
+      }
+      router.replace('/');
+    } catch (err: any) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="max-w-sm">
-      <h1 className="text-xl font-semibold mb-4">Login</h1>
-      <form className="space-y-3" onSubmit={handleLogin}>
-        <input className="w-full border p-2" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
-        <input type="password" className="w-full border p-2" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} />
-        <button className="px-3 py-2 bg-black text-white rounded" type="submit">Login</button>
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <form className="w-full max-w-sm space-y-3" onSubmit={onSubmit}>
+        <h1 className="text-xl font-semibold mb-2">Login</h1>
+        <input
+          className="w-full border p-2 rounded"
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          className="w-full border p-2 rounded"
+          type="password"
+          placeholder="Password (ignored)"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+        <button disabled={loading} className="px-3 py-2 bg-black text-white rounded w-full" type="submit">
+          {loading ? 'Signing in…' : 'Login'}
+        </button>
       </form>
     </div>
   );

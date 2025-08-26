@@ -46,9 +46,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         from sqlalchemy import text
         
         async for session in get_async_session():
-            # Check if the users table has the new columns
+            # Check if the users table has key columns
             result = await session.execute(
-                text("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name IN ('access_status', 'demo_requested')")
+                text("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name IN ('access_status', 'demo_requested', 'user_kind')")
             )
             columns = [row[0] for row in result.fetchall()]
             

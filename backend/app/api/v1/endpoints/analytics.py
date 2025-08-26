@@ -22,6 +22,7 @@ from app.schemas.analytics import (
     SentimentBreakdown,
     CompetitorComparison,
 )
+from app.services.demo_adapter import DemoDataAdapter
 
 router = APIRouter()
 
@@ -37,6 +38,7 @@ async def get_dashboard_metrics(
     """
     Get dashboard metrics for a location.
     """
+    # Demo mode removed; fall back to real data only
     # Verify user has access to location
     result = await db.execute(
         select(Location)

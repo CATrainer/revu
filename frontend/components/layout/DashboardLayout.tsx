@@ -8,8 +8,6 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useStore } from '@/lib/store';
 import { pushToast } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { generateAllDemoData } from '@/lib/demo-data';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -68,55 +66,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 relative overflow-y-auto focus:outline-none">
           <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              {/* Demo persona banner */}
-              {(() => {
-                const { scenario, setScenario, demoBannerDismissed, setDemoBannerDismissed, setInteractions, addNotification } = useStore.getState();
-                if (demoBannerDismissed) return null;
-                const label = scenario === 'creator' ? 'Creator' : scenario === 'business' ? 'Business' : scenario === 'agency-creators' ? 'Agency (Creators)' : 'Agency (Businesses)';
-                const blurb = scenario === 'creator'
-                  ? 'You are viewing a Creator demo. Content and AI replies skew to audience engagement.'
-                  : scenario === 'business'
-                    ? 'You are viewing a Business demo. Reviews and owner responses reflect a local brand.'
-                    : scenario === 'agency-creators'
-                      ? 'Agency demo (Creators): portfolio-wide monitoring across creator accounts.'
-                      : 'Agency demo (Businesses): multi-location brand reputation at a glance.';
-                return (
-                  <div className="mb-4 p-3 rounded-md border border-[var(--border)] section-background-alt">
-                    <div className="flex flex-col md:flex-row md:items-center gap-3">
-                      <div className="text-sm text-secondary-dark flex-1">
-                        <span className="font-medium text-primary-dark">Demo Mode — {label}.</span> {blurb}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <select
-                          aria-label="Scenario"
-                          className="card-background border-[var(--border)] rounded-md px-2 py-1 text-sm"
-                          value={scenario}
-                          onChange={(e) => {
-                            const s = e.target.value as typeof scenario;
-                            setScenario(s);
-                            const flavor = s === 'agency-businesses' ? 'agency-businesses' : s === 'agency-creators' ? 'agency-creators' : 'default';
-                            const { interactions } = generateAllDemoData(flavor as 'default' | 'agency-creators' | 'agency-businesses');
-                            setInteractions(interactions);
-                            addNotification({ id: `scenario_${Date.now()}`, title: 'Scenario changed', message: `Now viewing ${s.replace('-', ' ')}`, createdAt: new Date().toISOString(), severity: 'info' });
-                          }}
-                        >
-                          <option value="creator">Creator</option>
-                          <option value="business">Business</option>
-                          <option value="agency-creators">Agency (Creators)</option>
-                          <option value="agency-businesses">Agency (Businesses)</option>
-                        </select>
-                        <button className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt" onClick={() => setDemoBannerDismissed(true)}>Dismiss</button>
-                      </div>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                      <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => router.push('/engagement?play=1')}>▶ AI Magic: Play Timeline</Button>
-                      <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => router.push('/engagement')}>✨ Generate 3 on-brand replies</Button>
-                      <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => router.push('/analytics')}>📄 Export Summary PDF</Button>
-                      <Button size="sm" variant="outline" className="border-[var(--border)]" onClick={() => router.push('/reviews?filter=new')}>🧭 Jump to “New Reviews”</Button>
-                    </div>
-                  </div>
-                );
-              })()}
+              {/* Demo persona banner removed */}
               {children}
             </div>
           </div>
@@ -127,11 +77,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-md border border-[var(--border)] card-background shadow">
             <span className="text-sm text-primary-dark">
               {tour.step === 0 && 'Take a 60s tour of Revu.'}
-              {tour.step === 1 && 'Step 1: Use Quick Actions to jump into New Reviews.'}
-              {tour.step === 2 && 'Step 2: Try AI Suggest in Engagement with different tones and templates.'}
-              {tour.step === 3 && 'Step 3: Check Analytics and export a branded report.'}
-              {tour.step === 4 && 'Step 4: Save and share a filtered Reviews view.'}
-              {tour.step === 5 && 'Step 5: Tweak notification noise in Settings.'}
+              {tour.step === 1 && 'Step 1: Use Quick Actions to jump into Comments.'}
+              {tour.step === 2 && 'Step 2: Check Analytics and export a branded report.'}
+              {tour.step === 3 && 'Step 3: Save and share a filtered view.'}
+              {tour.step === 4 && 'Step 4: Tweak notification noise in Settings.'}
             </span>
             {tour.step === 0 ? (
               <button className="ml-3 text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt" onClick={() => setTour({ step: 1 })}>Start</button>
@@ -139,9 +88,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <>
                 <button className="ml-3 text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt" onClick={() => {
                   // Navigate, but let step progression happen when user completes the action on the page
-                  if (tour.step === 1) router.push('/reviews?filter=new');
-                  if (tour.step === 2) router.push('/engagement');
-                  if (tour.step === 3) router.push('/analytics');
+                  if (tour.step === 1) router.push('/comments');
+                  if (tour.step === 2) router.push('/analytics');
                 }}>Go</button>
                 <button className="ml-2 text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt" onClick={() => setTour({ completed: true })}>Done</button>
               </>
@@ -158,10 +106,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <div className="text-xs text-secondary-dark">Tour</div>
             <div className="text-sm text-primary-dark">
               {tour.step === 1 && 'Quick Actions jump you into common workflows.'}
-              {tour.step === 2 && 'Use AI Suggest to draft responses with different tones.'}
-              {tour.step === 3 && 'Export a branded PDF report for stakeholders.'}
-              {tour.step === 4 && 'Save a view here to revisit filters fast.'}
-              {tour.step === 5 && 'Adjust notification rules and mute noisy platforms.'}
+              {tour.step === 2 && 'Export a branded PDF report for stakeholders.'}
+              {tour.step === 3 && 'Save a view here to revisit filters fast.'}
+              {tour.step === 4 && 'Adjust notification rules and mute noisy platforms.'}
             </div>
             <div className="mt-2 flex gap-2">
               <button
@@ -171,10 +118,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <button
                 className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:section-background-alt"
                 onClick={() => {
-          if (tour.step >= 5) setTour({ completed: true });
-          else setTour({ step: tour.step + 1 });
+                  if (tour.step >= 4) setTour({ completed: true });
+                  else setTour({ step: tour.step + 1 });
                 }}
-        >{tour.step >= 5 ? 'Finish' : 'Next'}</button>
+        >{tour.step >= 4 ? 'Finish' : 'Next'}</button>
             </div>
             {/* Arrow */}
             <div className="absolute -top-1 left-4 w-2 h-2 rotate-45 bg-[var(--card-bg,white)] border-l border-t border-[var(--border)]"></div>
@@ -187,8 +134,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <div className="absolute top-24 left-1/2 -translate-x-1/2 w-full max-w-xl card-background border border-[var(--border)] rounded-md shadow">
               <div className="p-3 border-b border-[var(--border)] text-sm text-secondary-dark">Command Palette</div>
               <ul className="p-3 space-y-2 text-sm">
-                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/reviews'); setPaletteOpen(false); }}>Go to Reviews</li>
-                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/engagement'); setPaletteOpen(false); }}>Go to Engagement</li>
+                <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/comments'); setPaletteOpen(false); }}>Go to Comments</li>
                 <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/analytics'); setPaletteOpen(false); }}>Go to Analytics</li>
                 <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { setTheme('light'); setPaletteOpen(false); }}>Theme: Light</li>
                 <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => { setTheme('dark'); setPaletteOpen(false); }}>Theme: Dark</li>
@@ -213,12 +159,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   router.push(hasPlay ? '/engagement' : '/engagement?play=1');
                   setPaletteOpen(false);
                 }}>Toggle timeline playback</li>
-                {typeof window !== 'undefined' && window.location.pathname.startsWith('/reviews') ? (
+                {typeof window !== 'undefined' && window.location.pathname.startsWith('/comments') ? (
                   <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => {
-                    // Export Reviews CSV based on store filters (subset of Reviews page logic, without rating)
+                    // Export Comments CSV based on store filters
                     const ws = currentWorkspace;
                     const filtered = interactions
-                      .filter((i) => i.kind === 'review')
+                      .filter((i) => i.kind === 'comment')
                       .filter((i) => (ws ? (i.workspaceId === ws.id || (ws.id === 'agency' && i.workspaceId === 'agency')) : true))
                       .filter((i) => (filters.platforms.length ? filters.platforms.includes(i.platform) : true))
                       .filter((i) => (filters.status !== 'All' ? i.status === filters.status : true))
@@ -226,11 +172,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                       .filter((i) => (filters.dateRange?.from ? (+new Date(i.createdAt) >= +new Date(filters.dateRange.from)) : true))
                       .filter((i) => (filters.dateRange?.to ? (+new Date(i.createdAt) <= +new Date(filters.dateRange.to)) : true))
                       .slice(0, 200);
-                    const header = ['id','platform','rating','status','createdAt','content'];
+                    const header = ['id','platform','status','createdAt','content'];
                     const rows = filtered.map((r) => ({
                       id: r.id,
                       platform: r.platform,
-                      rating: 'rating' in r ? r.rating : '',
                       status: r.status,
                       createdAt: r.createdAt,
                       content: r.content.replace(/\n/g, ' '),
@@ -244,13 +189,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'reviews.csv';
+                    a.download = 'comments.csv';
                     a.click();
                     URL.revokeObjectURL(url);
                     setPaletteOpen(false);
-                  }}>Export Reviews CSV</li>
+                  }}>Export Comments CSV</li>
                 ) : null}
-                {typeof window !== 'undefined' && window.location.pathname.startsWith('/reviews') ? (
+                {typeof window !== 'undefined' && window.location.pathname.startsWith('/comments') ? (
                   <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={async () => {
                     // Build a shareable CSV link that encodes current filters and triggers csv export via ?export=csv
                     const params = new URLSearchParams(window.location.search);
@@ -266,7 +211,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     setPaletteOpen(false);
                   }}>Copy CSV link</li>
                 ) : null}
-                {typeof window !== 'undefined' && window.location.pathname.startsWith('/engagement') ? (
+                {typeof window !== 'undefined' && window.location.pathname.startsWith('/comments') ? (
                   <li className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => {
                     const name = prompt('Name this view from current filters:');
                     if (!name) return;
@@ -275,7 +220,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     if (filters.status !== 'All') params.set('status', filters.status);
                     if (filters.sentiment !== 'All') params.set('sentiment', filters.sentiment);
                     if (filters.search) params.set('search', filters.search);
-                    const route = `/engagement?${params.toString()}`;
+                    const route = `/comments?${params.toString()}`;
                     addSavedView({ id: `sv_${Date.now()}`, name, route, createdAt: new Date().toISOString() });
                     pushToast('View saved from selection','success');
                     setPaletteOpen(false);
@@ -298,15 +243,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     </div>
                   );
                 })()}
-                {typeof window !== 'undefined' && window.location.pathname.startsWith('/engagement') ? (
+                {typeof window !== 'undefined' && window.location.pathname.startsWith('/comments') ? (
                   <div className="pt-2 border-t border-[var(--border)]">
                     <div className="text-[11px] uppercase tracking-wide text-secondary-dark mb-1">Exports</div>
                     <div className="hover:section-background-alt px-2 py-1 rounded cursor-pointer" onClick={() => {
-                      // Export a minimal CSV of current engagement feed
+                      // Export a minimal CSV of current comments feed
                       const rows = interactions
                         .filter(i => !currentWorkspace || i.workspaceId === currentWorkspace.id)
                         .slice(0, 200)
-                        .map(i => ({ id: i.id, kind: i.kind, platform: i.platform, status: i.status, sentiment: i.sentiment, createdAt: i.createdAt, content: i.content.replace(/\n/g,' ') }));
+                        .map(i => ({ id: i.id, platform: i.platform, status: i.status, sentiment: i.sentiment, createdAt: i.createdAt, content: i.content.replace(/\n/g,' ') }));
                       const header = Object.keys(rows[0] || { id: '', kind: '', platform: '', status: '', sentiment: '', createdAt: '', content: '' });
                       const { branding: b } = useStore.getState();
                       const brandTop = b?.useBrandingInExports ? [[`Brand: ${b.headerText || 'Revu'}`].join(',')] : [];
@@ -323,7 +268,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement('a');
                       a.href = url;
-                      a.download = 'engagement.csv';
+                      a.download = 'comments.csv';
                       a.click();
                       URL.revokeObjectURL(url);
                       setPaletteOpen(false);
@@ -333,13 +278,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                       const bySent: Record<string, number> = {};
                       interactions.forEach(i => { bySent[i.sentiment] = (bySent[i.sentiment] || 0) + 1; });
                       const stats: Array<[string,string]> = [
-                        ['Total items', String(interactions.length)],
+                        ['Total comments', String(interactions.length)],
                         ...Object.entries(bySent).map(([k,v]) => [k, String(v)]) as Array<[string,string]>,
                       ];
                       // Lazy import of PDF util not feasible here; instead, create simple HTML and print
                       const w = window.open('', '_blank');
                       if (w) {
-                        w.document.write(`<html><head><title>Revu — Engagement Summary</title></head><body><h1>Revu — Engagement Summary</h1><table border=1 cellpadding=6>${stats.map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</table></body></html>`);
+                        w.document.write(`<html><head><title>Revu — Comments Summary</title></head><body><h1>Revu — Comments Summary</h1><table border=1 cellpadding=6>${stats.map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</table></body></html>`);
                         w.document.close();
                         w.focus();
                         w.print();

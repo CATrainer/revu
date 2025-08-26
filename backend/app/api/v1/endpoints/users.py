@@ -58,7 +58,8 @@ async def join_waitlist(
         new_user = User(
             **waitlist_data.model_dump(),
             has_account=False,
-            access_status="waiting_list",
+            access_status="waiting",
+            user_kind="content",
             joined_waiting_list_at=datetime.now(timezone.utc),
             hashed_password=None  # No password yet
         )
@@ -229,7 +230,7 @@ async def get_waiting_list_users(
     
     result = await db.execute(
         select(User)
-        .where(User.access_status == "waiting_list")
+        .where(User.access_status.in_(["waiting","waiting_list"]))
         .order_by(User.joined_waiting_list_at.desc())
         .offset(skip)
         .limit(limit)
@@ -262,9 +263,9 @@ async def grant_early_access(
             detail="User not found"
         )
     
-    # Grant early access
+    # Grant full access (early access removed)
     from datetime import datetime
-    user.access_status = "early_access"
+    user.access_status = "full"
     if not user.early_access_granted_at:
         user.early_access_granted_at = datetime.utcnow()
     
@@ -325,13 +326,15 @@ async def update_user_access_status(
             detail="User not found"
         )
     
-    # Update access status
+    # Update access status and optional user_kind
     old_status = user.access_status
     user.access_status = access_update.access_status
+    if getattr(access_update, "user_kind", None) in ("content", "business"):
+        user.user_kind = access_update.user_kind
     
     # Set timestamps based on new status
     from datetime import datetime
-    if access_update.access_status == "early_access" and old_status != "early_access":
+    if access_update.access_status == "full" and old_status != "full":
         if not user.early_access_granted_at:
             user.early_access_granted_at = datetime.utcnow()
     
@@ -378,7 +381,8 @@ async def request_demo(
         new_user = User(
             **user_data,
             has_account=False,
-            access_status="waiting_list",
+            access_status="waiting",
+            user_kind="content",
             demo_requested=True,
             demo_requested_at=datetime.now(timezone.utc),
             hashed_password=None

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { api } from './api';
-import type { AccessStatus } from './types';
+import type { AccessStatus, UserKind } from './types';
 
 interface User {
   id: string;
@@ -13,6 +13,7 @@ interface User {
   is_admin: boolean;
   has_account?: boolean;
   access_status: AccessStatus;
+  user_kind?: UserKind;
   joined_waiting_list_at: string | null;
   early_access_granted_at: string | null;
   demo_requested: boolean;
@@ -30,8 +31,8 @@ interface AuthState {
   checkAuth: () => Promise<void>;
   requestDemo: () => Promise<void>;
   getAccessStatus: () => Promise<{
-  access_status: AccessStatus;
-  demo_access_type?: 'creator' | 'business' | 'agency_creators' | 'agency_businesses' | null;
+    access_status: AccessStatus;
+    user_kind?: UserKind;
     can_access_dashboard: boolean;
     joined_waiting_list_at: string | null;
     early_access_granted_at: string | null;
@@ -154,10 +155,8 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   requestDemo: async () => {
-    await api.post('/auth/request-demo', {});
-    // Refresh user data to update demo_requested status
-    const response = await api.get('/auth/me');
-    set(state => ({ ...state, user: response.data }));
+    // Demo removed; keep endpoint no-op client-side
+    return;
   },
 
   getAccessStatus: async () => {
@@ -167,21 +166,17 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   canAccessDashboard: (): boolean => {
     const { user } = get();
-  return user?.access_status === 'early_access' || user?.access_status === 'full_access' || user?.access_status === 'demo_access';
+    return user?.access_status === 'full';
   },
 
   getRedirectPath: (): string => {
     const { user } = get();
   if (!user) return '/login';
-    
-    // Admin users go to admin dashboard
-    if (user.is_admin) return '/admin';
-    
-    // Regular users based on access status
-    if (user.access_status === 'waiting_list') return '/waiting-area';
-  if (user.access_status === 'early_access' || user.access_status === 'full_access' || user.access_status === 'demo_access') return '/dashboard';
-    
-    // Fallback
-    return '/waiting-area';
+  // Admin users go to admin dashboard
+  if (user.is_admin) return '/admin';
+  // Regular users
+  if (user.access_status === 'waiting') return '/waiting-area';
+  if (user.access_status === 'full') return '/dashboard';
+  return '/waiting-area';
   },
 }));

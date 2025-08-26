@@ -335,7 +335,7 @@ export function FinalCTA() {
                     whileTap={{ scale: 0.95 }}
                   >
                     <Button className="button-secondary w-full" asChild>
-                      <Link href="/demo">Book a Demo</Link>
+                      <Link href="/join-waitlist">Join Waitlist</Link>
                     </Button>
                   </motion.div>
                   

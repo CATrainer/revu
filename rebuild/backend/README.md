@@ -18,3 +18,12 @@ Operational notes (production-lite):
 - In-memory rate limiting and small response time buffer
 - GZip compression enabled and basic security headers set
 
+AI and vector search:
+- Optional env: `ANTHROPIC_API_KEY`, `OPENAI_MODEL`, `OPENAI_EMBED_MODEL`, `ANTHROPIC_MODEL`
+- The app will attempt `create extension if not exists vector` for pgvector; ensure your DB supports it.
+- Endpoint `/embeddings/reindex` rebuilds embeddings for your data; `/search/semantic` queries it.
+
+Auth:
+- `/auth/login` issues a `session_token` (7-day expiry) persisted in `sessions`.
+- All non-public routes require `Authorization: Bearer <token>`.
+

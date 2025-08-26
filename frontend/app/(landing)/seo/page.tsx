@@ -18,7 +18,7 @@ export default function SEOPage() {
             <Link href="/join-waitlist">Get Early Access</Link>
           </Button>
           <Button size="lg" variant="outline" className="button-secondary" asChild>
-            <Link href="/demo">See How It Works</Link>
+            <Link href="/join-waitlist">Join Waitlist</Link>
           </Button>
         </div>
       </section>

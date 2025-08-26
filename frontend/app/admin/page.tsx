@@ -6,8 +6,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-type AccessStatus = 'waiting_list' | 'early_access' | 'full_access' | 'demo_access';
-type DemoAccessType = 'creator' | 'business' | 'agency_creators' | 'agency_businesses' | null;
+type AccessStatus = 'waiting' | 'full';
+type UserKind = 'content' | 'business';
 
 interface AdminUser {
   id: string;
@@ -17,7 +17,7 @@ interface AdminUser {
   is_admin: boolean;
   has_account: boolean;
   access_status: AccessStatus;
-  demo_access_type: DemoAccessType;
+  user_kind?: UserKind;
   joined_waiting_list_at: string | null;
   early_access_granted_at: string | null;
   demo_requested: boolean;
@@ -46,8 +46,8 @@ export default function AdminPage() {
     setSaving(u.id);
     try {
       await api.post(`/admin/users/${u.id}/access`, {
-        access_status: u.access_status,
-        demo_access_type: u.access_status === 'demo_access' ? u.demo_access_type : null,
+  access_status: u.access_status,
+  user_kind: u.user_kind,
       });
     } finally {
       setSaving(null);
@@ -82,27 +82,22 @@ export default function AdminPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="card-background border-[var(--border)]">
-                      <SelectItem value="waiting_list">waiting_list</SelectItem>
-                      <SelectItem value="early_access">early_access</SelectItem>
-                      <SelectItem value="full_access">full_access</SelectItem>
-                      <SelectItem value="demo_access">demo_access</SelectItem>
+                      <SelectItem value="waiting">waiting</SelectItem>
+                      <SelectItem value="full">full</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Select
-                    value={u.demo_access_type || ''}
-                    onValueChange={(v: string) => setUsers(s => s.map(x => x.id === u.id ? { ...x, demo_access_type: (v as DemoAccessType) || null } : x))}
-                    disabled={u.access_status !== 'demo_access'}
+                    value={u.user_kind || 'content'}
+                    onValueChange={(v: UserKind) => setUsers(s => s.map(x => x.id === u.id ? { ...x, user_kind: v } : x))}
                   >
                     <SelectTrigger className="w-[220px] card-background border-[var(--border)]">
-                      <SelectValue placeholder="demo subtype" />
+                      <SelectValue placeholder="user kind" />
                     </SelectTrigger>
                     <SelectContent className="card-background border-[var(--border)]">
-                      <SelectItem value="creator">creator</SelectItem>
+                      <SelectItem value="content">content</SelectItem>
                       <SelectItem value="business">business</SelectItem>
-                      <SelectItem value="agency_creators">agency_creators</SelectItem>
-                      <SelectItem value="agency_businesses">agency_businesses</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

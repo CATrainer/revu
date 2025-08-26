@@ -92,8 +92,8 @@ export default function HelpPage() {
                   <Button className="w-full" onClick={() => window.location.href = 'mailto:support@repruv.co.uk'}>
                     Contact Support
                   </Button>
-                  <Button variant="outline" className="w-full" onClick={() => window.location.href = '/demo'}>
-                    Book a Demo
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/join-waitlist">Join Waitlist</Link>
                   </Button>
                 </div>
               </div>

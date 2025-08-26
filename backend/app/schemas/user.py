@@ -8,8 +8,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
-# Type alias for access status
-AccessStatus = Literal["waiting_list", "early_access", "full_access", "demo_access"]
+# Type alias for simplified access status
+AccessStatus = Literal["waiting", "full"]
+UserKind = Literal["content", "business"]
 
 
 class UserBase(BaseModel):
@@ -50,6 +51,7 @@ class UserUpdate(BaseModel):
     password: Optional[str] = Field(None, min_length=8, max_length=128)
     is_active: Optional[bool] = None
     access_status: Optional[AccessStatus] = None
+    user_kind: Optional[UserKind] = None
     has_account: Optional[bool] = None
 
 
@@ -57,6 +59,7 @@ class UserAccessUpdate(BaseModel):
     """Schema for updating user access status."""
     
     access_status: AccessStatus
+    user_kind: Optional[UserKind] = None
 
 
 class WaitlistAccountCreate(BaseModel):
@@ -96,8 +99,8 @@ class User(UserBase):
     created_at: datetime
     updated_at: datetime
     last_login_at: Optional[datetime] = None
-    access_status: AccessStatus = "waiting_list"
-    demo_access_type: Optional[Literal["creator", "business", "agency_creators", "agency_businesses"]] = None
+    access_status: AccessStatus = "waiting"
+    user_kind: Optional[UserKind] = "content"
     joined_waiting_list_at: Optional[datetime] = None
     early_access_granted_at: Optional[datetime] = None
     demo_requested: bool = False
