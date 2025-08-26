@@ -135,6 +135,11 @@ class UserService:
             logger.warning(f"Supabase auth failed, falling back to local: {e}")
 
         # Fallback to local password verification
+        # Some legacy users may not have a local hashed_password (Supabase-only accounts)
+        if not getattr(user, "hashed_password", None):
+            logger.warning("User has no local hashed password; cannot verify locally")
+            return None
+
         if verify_password(password, user.hashed_password):
             await self.update_last_login(user.id)
             return user
