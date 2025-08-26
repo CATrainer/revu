@@ -8,8 +8,7 @@ logout, token refresh, and password management.
 from datetime import timedelta
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -91,7 +90,7 @@ async def signup(
 async def login(
     *,
     db: AsyncSession = Depends(get_async_session),
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    request: Request,
 ) -> Any:
     """
     OAuth2 compatible token login.
@@ -109,9 +108,34 @@ async def login(
     user_service = UserService(db)
 
     # Authenticate user
+    # Accept either application/x-www-form-urlencoded (preferred) or JSON
+    email: str | None = None
+    password: str | None = None
+
+    try:
+        content_type = request.headers.get("content-type", "").lower()
+        if "application/json" in content_type:
+            body = await request.json()
+            email = body.get("email") or body.get("username")
+            password = body.get("password")
+        else:
+            # Fallback to parsing form-encoded body without python-multipart
+            raw = (await request.body()).decode("utf-8")
+            from urllib.parse import parse_qs
+            parsed = parse_qs(raw)
+            # parse_qs returns lists
+            email = (parsed.get("username") or parsed.get("email") or [None])[0]
+            password = (parsed.get("password") or [None])[0]
+    except Exception as e:
+        logger.error(f"Failed to parse login request body: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid request body")
+
+    if not email or not password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing credentials")
+
     user = await user_service.authenticate(
-        email=form_data.username,  # OAuth2 spec uses 'username'
-        password=form_data.password,
+        email=email,
+        password=password,
     )
 
     if not user:
