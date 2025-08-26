@@ -49,8 +49,6 @@ class User(Base):
     demo_scheduled_at = Column(DateTime(timezone=True))
     demo_completed = Column(Boolean, default=False, nullable=False)
     demo_completed_at = Column(DateTime(timezone=True))
-    # Demo access subtype (creator | business | agency_creators | agency_businesses)
-    demo_access_type = Column(String(50), nullable=True)
     
     # Demo-specific information
     company_size = Column(String(50))
