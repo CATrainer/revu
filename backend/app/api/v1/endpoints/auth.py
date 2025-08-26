@@ -133,10 +133,15 @@ async def login(
     if not email or not password:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing credentials")
 
-    user = await user_service.authenticate(
-        email=email,
-        password=password,
-    )
+    try:
+        user = await user_service.authenticate(
+            email=email,
+            password=password,
+        )
+    except Exception as e:
+        logger.error(f"Login authentication error for {email}: {e}")
+        # Avoid leaking internals; return generic 400
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Login failed")
 
     if not user:
         raise HTTPException(
