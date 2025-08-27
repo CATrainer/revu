@@ -2,6 +2,7 @@ import type {
   YouTubeVideo,
   YouTubeComment,
   SyncStatus,
+  YouTubeConnection,
 } from '@/types/youtube';
 
 // Resolve API base URL with a production-first default.
@@ -197,4 +198,25 @@ export async function disconnectYouTube(args: { connectionId: string; token?: st
     },
   });
   return handleResponse(res);
+}
+
+// 8) List user's YouTube connections
+export async function listConnections(args?: { token?: string }): Promise<YouTubeConnection[]> {
+  const res = await fetch(`${API_BASE}/youtube/connections`, {
+    method: 'GET',
+    headers: {
+      ...jsonHeaders(),
+      ...authHeader(args?.token),
+    },
+    cache: 'no-store',
+  });
+  // Backend returns snake_case keys; map to frontend type
+  const raw = await handleResponse<Array<{ id: string; channel_id?: string | null; channel_name?: string | null; status: string; last_synced_at?: string | null }>>(res);
+  return raw.map((c) => ({
+    id: c.id,
+    channelId: c.channel_id ?? null,
+    channelName: c.channel_name ?? null,
+    connectionStatus: c.status as YouTubeConnection['connectionStatus'],
+    lastSyncedAt: c.last_synced_at ?? null,
+  }));
 }
