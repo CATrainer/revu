@@ -12,6 +12,7 @@ from app.api.v1.endpoints import (
     ai,
     analytics,
     auth,
+    youtube_auth,
     platforms,
     # locations,
     # organizations,
@@ -84,6 +85,12 @@ api_router.include_router(
 api_router.include_router(
     platforms.router,
     tags=["platforms"],
+)
+
+api_router.include_router(
+    youtube_auth.router,
+    prefix="/youtube",
+    tags=["youtube"],
 )
 
 
