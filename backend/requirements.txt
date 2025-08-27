@@ -42,6 +42,7 @@ google-auth-httplib2==0.2.0
 
 # Monitoring
 sentry-sdk[fastapi]==1.40.5
+prometheus-client==0.21.0
 
 # AI & NLP
 openai==1.12.0

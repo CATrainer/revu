@@ -38,6 +38,10 @@ class YouTubeAPIClient:
         )
         # cache_discovery False avoids writing to file system in serverless envs
         self.service = build("youtube", "v3", credentials=self.creds, cache_discovery=False)
+        from app.utils.logging import get_logger
+        from app.monitoring.metrics import record_youtube_api_call
+        self.log = get_logger("youtube.client")
+        self._record_youtube_api_call = record_youtube_api_call
 
     # ---- Channels ----
     def get_channel_info(self, channel_id: str) -> Dict[str, Any]:
@@ -154,9 +158,19 @@ class YouTubeAPIClient:
     # ---- Internal helpers ----
     def _execute(self, request):
         """Execute a googleapiclient request and map well-known errors to our exceptions."""
+        op = getattr(request, "methodId", None) or "unknown"
+        import time
+        t0 = time.perf_counter()
         try:
-            return request.execute()
+            resp = request.execute()
+            dt = time.perf_counter() - t0
+            self.log.info("YouTube API call ok", extra={"operation": op, "duration_s": dt})
+            self._record_youtube_api_call(op, "ok", dt)
+            return resp
         except HttpError as e:
+            dt = time.perf_counter() - t0
+            self.log.error("YouTube API HttpError", extra={"operation": op, "duration_s": dt, "status": getattr(e, 'status_code', None) or getattr(getattr(e, 'resp', None), 'status', None)})
+            self._record_youtube_api_call(op, "HttpError", dt)
             self._handle_http_error(e)
 
     def _handle_http_error(self, e: HttpError) -> None:
