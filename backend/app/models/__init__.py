@@ -10,6 +10,13 @@ from app.models.analytics import AnalyticsSnapshot
 from app.models.ai_training import AITrainingData  # Add this
 from app.models.audit import AuditLog  # Add this
 from app.models.demo import DemoAccount, DemoContent, DemoComment
+from app.models.youtube import (
+    YouTubeConnection,
+    YouTubeVideo,
+    YouTubeComment,
+    OAuthStateToken,
+    SyncLog,
+)
 
 __all__ = [
     "Organization",
@@ -28,4 +35,9 @@ __all__ = [
     "DemoAccount",
     "DemoContent",
     "DemoComment",
+    "YouTubeConnection",
+    "YouTubeVideo",
+    "YouTubeComment",
+    "OAuthStateToken",
+    "SyncLog",
 ]
