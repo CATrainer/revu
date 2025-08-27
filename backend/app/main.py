@@ -20,6 +20,7 @@ from app.api.v1.api import api_router
 from app.core.config import settings
 from app.core.database import create_db_and_tables
 from app.utils.logging import setup_logging
+from app.middleware.error_handler import register_error_handlers, add_error_handling_middleware
 
 # Setup logging
 setup_logging()
@@ -201,6 +202,8 @@ if settings.is_production:
     )
 
 # Add custom exception handlers
+register_error_handlers(app)
+
 @app.exception_handler(ValueError)
 async def value_error_handler(request: Request, exc: ValueError):
     return JSONResponse(
@@ -259,6 +262,9 @@ if settings.DEBUG:
         response = await call_next(request)
         logger.debug(f"Response status: {response.status_code}")
         return response
+
+# Install YouTube error handling middleware as last to catch uncaught errors
+add_error_handling_middleware(app)
 
 
 if __name__ == "__main__":
