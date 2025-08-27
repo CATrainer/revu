@@ -34,6 +34,11 @@ python-dotenv==1.0.1
 pendulum==3.0.0
 loguru==0.7.3
 
+# Google APIs (YouTube Data API client)
+google-api-python-client==2.129.0
+google-auth==2.34.0
+google-auth-httplib2==0.2.0
+
 # Monitoring
 sentry-sdk[fastapi]==1.40.5
 
