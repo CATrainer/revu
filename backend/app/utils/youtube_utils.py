@@ -16,7 +16,7 @@ from typing import Iterable, Mapping, Optional
 from urllib.parse import urlencode
 
 
-def generate_oauth_state_token(length: int = 32) -> string:
+def generate_oauth_state_token(length: int = 32) -> str:
     """Generate a cryptographically secure random state token.
 
     Args:
