@@ -54,8 +54,23 @@ class OAuthService:
         await self.session.flush()
 
         client_id = settings.GOOGLE_CLIENT_ID
-        redirect = redirect_uri or settings.GOOGLE_REDIRECT_URI or settings.OAUTH_REDIRECT_URI
+        # Derive redirect URI if not provided via envs
+        redirect = (
+            redirect_uri
+            or settings.GOOGLE_REDIRECT_URI
+            or settings.OAUTH_REDIRECT_URI
+            or (
+                f"{settings.BACKEND_BASE_URL.rstrip('/')}{settings.API_V1_PREFIX}/youtube/connect/callback"
+                if settings.BACKEND_BASE_URL
+                else None
+            )
+        )
         if not client_id or not redirect:
+            from loguru import logger
+            logger.error(
+                "Google OAuth not configured. Missing: {}",
+                "CLIENT_ID" if not client_id else "REDIRECT_URI",
+            )
             raise ValueError("Google OAuth not configured: missing CLIENT_ID or REDIRECT_URI")
 
         from urllib.parse import urlencode
@@ -96,7 +111,16 @@ class OAuthService:
         """Exchange authorization code for access and refresh tokens."""
         client_id = settings.GOOGLE_CLIENT_ID
         client_secret = settings.GOOGLE_CLIENT_SECRET
-        redirect = redirect_uri or settings.GOOGLE_REDIRECT_URI or settings.OAUTH_REDIRECT_URI
+        redirect = (
+            redirect_uri
+            or settings.GOOGLE_REDIRECT_URI
+            or settings.OAUTH_REDIRECT_URI
+            or (
+                f"{settings.BACKEND_BASE_URL.rstrip('/')}{settings.API_V1_PREFIX}/youtube/connect/callback"
+                if settings.BACKEND_BASE_URL
+                else None
+            )
+        )
         if not all([client_id, client_secret, redirect]):
             raise ValueError("Google OAuth not configured: missing CLIENT_ID/SECRET or REDIRECT_URI")
 

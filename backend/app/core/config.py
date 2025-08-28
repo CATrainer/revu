@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
     FRONTEND_URL: str = "http://localhost:3000"
+    BACKEND_BASE_URL: Optional[str] = None
 
     # API Configuration
     API_V1_PREFIX: str = "/api/v1"
