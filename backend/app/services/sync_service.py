@@ -156,8 +156,10 @@ class SyncService:
 
         # Update last_synced_at
         now = datetime.now(timezone.utc)
+        # Ensure we never write a NULL into a NOT NULL column if historical rows had None
+        status = conn.connection_status or "active"
         await self.conn_repo.update_connection_status(
-            connection_id=self.connection_id, status=conn.connection_status, last_synced_at=now
+            connection_id=self.connection_id, status=status, last_synced_at=now
         )
 
         return total
@@ -246,8 +248,9 @@ class SyncService:
 
         # Update last_synced_at
         now = datetime.now(timezone.utc)
+        status = conn.connection_status or "active"
         await self.conn_repo.update_connection_status(
-            connection_id=self.connection_id, status=conn.connection_status, last_synced_at=now
+            connection_id=self.connection_id, status=status, last_synced_at=now
         )
         return total
 

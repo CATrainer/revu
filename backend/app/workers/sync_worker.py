@@ -42,7 +42,7 @@ async def process_channel_sync(connection_id: UUID) -> int:
             logger.info("Full channel sync complete: {count} videos", count=count)
             return count
         except Exception as e:  # noqa: BLE001
-            logger.exception("Full channel sync failed for %s", connection_id)
+            logger.exception("Full channel sync failed for {conn}", conn=str(connection_id))
             raise e
 
     return await _with_session(run)
@@ -65,7 +65,7 @@ async def process_incremental_sync(connection_id: UUID, last_sync: Optional[date
             logger.info("Incremental sync complete: {count} videos", count=count)
             return count
         except Exception as e:  # noqa: BLE001
-            logger.exception("Incremental sync failed for %s", connection_id)
+            logger.exception("Incremental sync failed for {conn}", conn=str(connection_id))
             raise e
 
     return await _with_session(run)
@@ -106,7 +106,7 @@ async def sync_recent_comments(connection_id: UUID) -> int:
             logger.info("Recent comments sync complete: {count} comments", count=total)
             return total
         except Exception as e:  # noqa: BLE001
-            logger.exception("Recent comments sync failed for %s", connection_id)
+            logger.exception("Recent comments sync failed for {conn}", conn=str(connection_id))
             raise e
 
     return await _with_session(run)

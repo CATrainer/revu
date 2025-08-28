@@ -43,21 +43,22 @@ class YouTubeVideoRepository:
             if not vid:
                 continue
             video_ids.append(vid)
-            rows.append(
-                {
-                    "channel_id": channel_id,
-                    "video_id": vid,
-                    "title": v.get("title"),
-                    "description": v.get("description"),
-                    "thumbnail_url": v.get("thumbnail_url"),
-                    "published_at": v.get("published_at"),
-                    "view_count": v.get("view_count"),
-                    "like_count": v.get("like_count"),
-                    "comment_count": v.get("comment_count"),
-                    "duration": v.get("duration"),
-                    "last_fetched_at": v.get("last_fetched_at"),
-                }
-            )
+            row = {
+                "channel_id": channel_id,
+                "video_id": vid,
+                "title": v.get("title"),
+                "description": v.get("description"),
+                "thumbnail_url": v.get("thumbnail_url"),
+                "published_at": v.get("published_at"),
+                "view_count": v.get("view_count"),
+                "like_count": v.get("like_count"),
+                "comment_count": v.get("comment_count"),
+                "duration": v.get("duration"),
+            }
+            # Only include last_fetched_at if provided; otherwise let DB server_default apply
+            if v.get("last_fetched_at") is not None:
+                row["last_fetched_at"] = v.get("last_fetched_at")
+            rows.append(row)
 
         if rows:
             stmt = (
