@@ -9,11 +9,13 @@ import {
   triggerSync,
   disconnectYouTube,
 } from '@/lib/api/youtube';
-import type { YouTubeVideo, YouTubeComment, SyncStatus } from '@/types/youtube';
+import type { YouTubeVideo, YouTubeComment, SyncStatus, YouTubeConnection } from '@/types/youtube';
+import { listConnections } from '@/lib/api/youtube';
 
 // Keys
 const keys = {
   connection: (connectionId: string) => ['yt', 'connection', connectionId] as const,
+  connections: ['yt', 'connections'] as const,
   videos: (connectionId: string, params: { limit?: number; offset?: number; newestFirst?: boolean; publishedAfter?: string | undefined; search?: string | undefined }) =>
     ['yt', 'videos', connectionId, params] as const,
   comments: (connectionId: string, videoId: string, params: { limit?: number; offset?: number; newestFirst?: boolean }) =>
@@ -28,6 +30,15 @@ export function useYouTubeConnection(connectionId: string | undefined) {
     queryFn: () => checkConnectionStatus({ connectionId: connectionId! }),
     enabled,
     refetchInterval: enabled ? 30_000 : false,
+  });
+}
+
+// 1a) List all user connections (to detect already-connected state)
+export function useYouTubeConnections() {
+  return useQuery<YouTubeConnection[]>({
+    queryKey: keys.connections,
+    queryFn: () => listConnections(),
+    staleTime: 30_000,
   });
 }
 
