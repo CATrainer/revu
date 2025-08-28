@@ -198,7 +198,14 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 if settings.is_production:
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=["*.Repruv.ai", "Repruv.ai", "*.railway.app", "*.vercel.app"],
+        allowed_hosts=[
+            "*.repruv.ai",
+            "repruv.ai",
+            "*.railway.app",
+            "*.vercel.app",
+            "repruv.co.uk",
+            "www.repruv.co.uk",
+        ],
     )
 
 # Add custom exception handlers

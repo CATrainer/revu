@@ -90,6 +90,8 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: str
     SUPABASE_SERVICE_ROLE_KEY: str
+    # Toggle use of Supabase Python client (use direct HTTP by default to avoid env proxy issues)
+    SUPABASE_ENABLE_CLIENT: bool = False
 
     # OpenAI
     OPENAI_API_KEY: str
