@@ -107,6 +107,29 @@ class YouTubeConnectionRepository:
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
+    async def set_channel_metadata(
+        self,
+        *,
+        connection_id: UUID,
+        channel_id: Optional[str],
+        channel_name: Optional[str],
+    ) -> Optional[YouTubeConnection]:
+        """Set external channel_id and channel_name for a connection."""
+        values: dict = {"updated_at": datetime.utcnow()}
+        if channel_id is not None:
+            values["channel_id"] = channel_id
+        if channel_name is not None:
+            values["channel_name"] = channel_name
+
+        stmt = (
+            update(YouTubeConnection)
+            .where(YouTubeConnection.id == connection_id)
+            .values(**values)
+            .returning(YouTubeConnection)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
+
     async def delete_connection(self, connection_id: UUID) -> bool:
         """Delete a connection by ID. Returns True if a row was deleted."""
         stmt = delete(YouTubeConnection).where(YouTubeConnection.id == connection_id)

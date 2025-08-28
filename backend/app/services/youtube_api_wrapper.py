@@ -129,6 +129,13 @@ class YouTubeAPIWrapper:
             call_fn=lambda c: c.get_channel_uploads_playlist_id(channel_id),
         )
 
+    async def get_my_channel(self) -> Optional[Dict[str, Any]]:
+        return await self._run(
+            operation="channels.list",
+            scopes=READONLY_SCOPES,
+            call_fn=lambda c: c.get_my_channel(),
+        )
+
     async def list_playlist_videos(
         self,
         *,

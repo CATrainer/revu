@@ -68,6 +68,22 @@ class YouTubeService:
             expires_in=int(expires_in),
         )
 
+        # Attempt to discover and persist the authenticated channel metadata
+        try:
+            api = YouTubeAPIWrapper(self.session, conn.id)
+            me = await api.get_my_channel()
+            if me:
+                channel_id = me.get("id")
+                channel_name = (me.get("snippet") or {}).get("title")
+                if channel_id or channel_name:
+                    await self.conn_repo.set_channel_metadata(
+                        connection_id=conn.id,
+                        channel_id=channel_id,
+                        channel_name=channel_name,
+                    )
+        except Exception:
+            pass
+
         valid.used = True
         await self.session.commit()
         await self.session.refresh(conn)

@@ -16,6 +16,7 @@ from app.models.youtube import OAuthStateToken
 from app.repository.youtube_connection import YouTubeConnectionRepository
 from app.services.oauth_service import OAuthService
 from app.services.token_manager import TokenManager
+from app.services.youtube_api_wrapper import YouTubeAPIWrapper
 
 
 router = APIRouter()
@@ -90,6 +91,19 @@ async def oauth_callback(
         refresh_token=refresh_token,
         expires_in=int(expires_in),
     )
+
+    # Attempt to fetch and store the authenticated channel's id and name
+    try:
+        api = YouTubeAPIWrapper(db, conn.id)
+        me = await api.get_my_channel()
+        if me:
+            channel_id = me.get("id")
+            channel_name = (me.get("snippet") or {}).get("title")
+            if channel_id or channel_name:
+                await repo.set_channel_metadata(connection_id=conn.id, channel_id=channel_id, channel_name=channel_name)
+    except Exception:
+        # Non-fatal: leave channel fields null; sync will guard and can be retried after reconnect
+        pass
 
     # Mark state token as used
     valid.used = True

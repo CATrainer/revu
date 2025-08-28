@@ -53,6 +53,19 @@ class YouTubeAPIClient:
         )
         return self._execute(request)
 
+    def get_my_channel(self) -> Optional[Dict[str, Any]]:
+        """Return the authenticated user's channel resource (id, snippet, contentDetails)."""
+        request = self.service.channels().list(
+            part="id,snippet,contentDetails",
+            mine=True,
+            maxResults=1,
+        )
+        data = self._execute(request)
+        items = data.get("items", []) if isinstance(data, dict) else []
+        if not items:
+            return None
+        return items[0]
+
     def get_channel_uploads_playlist_id(self, channel_id: str) -> Optional[str]:
         """Return the uploads playlist ID for the given channel, or None if not found."""
         request = self.service.channels().list(part="contentDetails", id=channel_id, maxResults=1)
