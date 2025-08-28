@@ -39,6 +39,50 @@ class SyncService:
         )
         return result.scalars().first()
 
+    async def _hydrate_channel_metadata(self) -> Optional[YouTubeConnection]:
+        """Ensure the connection has channel_id/channel_name.
+
+        Attempts to fetch the authenticated user's channel via the API and
+        persists channel_id/channel_name on the connection if missing.
+        Returns the refreshed connection or None if not found.
+        """
+        conn = await self._get_connection()
+        if not conn:
+            logger.error("Connection not found: {cid}", cid=str(self.connection_id))
+            return None
+
+        if conn.channel_id:
+            return conn
+
+        try:
+            me = await self.api.get_my_channel()
+            if me:
+                cid = me.get("id")
+                title = (me.get("snippet") or {}).get("title")
+                if cid:
+                    updated = await self.conn_repo.set_channel_metadata(
+                        connection_id=self.connection_id,
+                        channel_id=cid,
+                        channel_name=title,
+                    )
+                    # Make sure changes are flushed before subsequent queries
+                    await self.session.flush()
+                    logger.info(
+                        "Hydrated channel metadata for connection {cid}: channel_id={ch}",
+                        cid=str(self.connection_id),
+                        ch=cid,
+                    )
+                    return updated or await self._get_connection()
+                else:
+                    logger.warning("Authenticated channel response missing id; cannot hydrate")
+            else:
+                logger.warning("Could not fetch authenticated channel; cannot hydrate")
+        except Exception:
+            logger.exception("Failed to hydrate channel metadata for {cid}", cid=str(self.connection_id))
+
+        # Fallback: return whatever we have
+        return await self._get_connection()
+
     # ---- Video Sync ----
     async def sync_channel_videos(self) -> int:
         """Initial sync: fetch all videos from the channel uploads playlist.
@@ -47,8 +91,11 @@ class SyncService:
         """
         conn = await self._get_connection()
         if not conn or not conn.channel_id:
-            logger.error("Connection or external channel_id not set; cannot sync videos.")
-            return 0
+            # Attempt to auto-hydrate channel metadata before bailing out
+            conn = await self._hydrate_channel_metadata()
+            if not conn or not conn.channel_id:
+                logger.error("Connection or external channel_id not set; cannot sync videos.")
+                return 0
 
         uploads_playlist_id = await self.api.get_channel_uploads_playlist_id(conn.channel_id)
         if not uploads_playlist_id:
@@ -122,8 +169,11 @@ class SyncService:
         """
         conn = await self._get_connection()
         if not conn or not conn.channel_id:
-            logger.error("Connection or external channel_id not set; cannot sync videos.")
-            return 0
+            # Attempt to auto-hydrate channel metadata before bailing out
+            conn = await self._hydrate_channel_metadata()
+            if not conn or not conn.channel_id:
+                logger.error("Connection or external channel_id not set; cannot sync videos.")
+                return 0
 
         uploads_playlist_id = await self.api.get_channel_uploads_playlist_id(conn.channel_id)
         if not uploads_playlist_id:
