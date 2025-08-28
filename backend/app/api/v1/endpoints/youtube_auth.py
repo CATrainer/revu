@@ -43,12 +43,16 @@ async def initiate_oauth(
 async def oauth_callback(
     *,
     db: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user),
     code: Optional[str] = Query(default=None),
     state: Optional[str] = Query(default=None),
     error: Optional[str] = Query(default=None),
 ) -> dict[str, Any]:
-    """Handle OAuth callback, exchange code for tokens, and store encrypted tokens."""
+    """Handle OAuth callback unauthenticated using the state->user mapping.
+
+    This endpoint intentionally does not require an authenticated user because Google redirects
+    the browser directly here without the client's Authorization header. We tie the callback to
+    the initiating user using the stored state token.
+    """
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
     if not code or not state:
@@ -56,7 +60,7 @@ async def oauth_callback(
 
     oauth = OAuthService(db)
     valid = await oauth.validate_state_token(state)
-    if not valid or valid.user_id != current_user.id:
+    if not valid:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired state token")
 
     # Exchange code for tokens
@@ -71,9 +75,9 @@ async def oauth_callback(
     if not access_token or not expires_in:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token response from Google")
 
-    # Create connection row and store tokens (encrypted)
+    # Create connection row for the user associated to the state token and store tokens (encrypted)
     repo = YouTubeConnectionRepository(db)
-    conn = await repo.create_connection(user_id=current_user.id)
+    conn = await repo.create_connection(user_id=valid.user_id)
 
     manager = TokenManager(db)
     await manager.store_tokens(
