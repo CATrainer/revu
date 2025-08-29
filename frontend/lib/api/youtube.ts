@@ -176,7 +176,30 @@ export async function fetchComments(args: {
     },
     cache: 'no-store',
   });
-  return handleResponse(res);
+  const raw = await handleResponse<Array<{
+    id: string;
+    comment_id: string;
+    author_name?: string | null;
+    author_channel_id?: string | null;
+    content?: string | null;
+    published_at?: string | null;
+    like_count?: number | null;
+    reply_count?: number | null;
+    parent_comment_id?: string | null;
+    is_channel_owner_comment: boolean;
+  }>>(res);
+  return raw.map((c) => ({
+    id: c.id,
+    commentId: c.comment_id,
+    authorName: c.author_name ?? null,
+    authorChannelId: c.author_channel_id ?? null,
+    content: c.content ?? null,
+    publishedAt: c.published_at ?? null,
+    likeCount: c.like_count ?? null,
+    replyCount: c.reply_count ?? null,
+    parentCommentId: c.parent_comment_id ?? null,
+    isChannelOwnerComment: Boolean(c.is_channel_owner_comment),
+  }));
 }
 
 // 5) Post a reply to a comment
