@@ -73,20 +73,20 @@ export function Features() {
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             <motion.h2 
-              className="text-2xl md:text-3xl font-bold brand-text mb-4 font-['Poppins',sans-serif]"
+              className="text-3xl md:text-4xl lg:text-5xl font-bold brand-text mb-4 font-['Poppins',sans-serif]"
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              Everything You Need to Manage Your Online Reputation
+              Everything You Need to Manage Your Community Engagement
             </motion.h2>
             <motion.p 
-              className="text-base text-primary-dark max-w-2xl mx-auto font-['Poppins',sans-serif] font-bold"
+              className="text-lg md:text-xl text-primary-dark max-w-2xl mx-auto font-['Poppins',sans-serif] font-bold"
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ duration: 0.6, delay: 0.5 }}
             >
-              Powerful features designed to save you time and grow your business
+              Powerful features designed to save you time and grow your audience&nbsp;⚡.
             </motion.p>
           </motion.div>
           

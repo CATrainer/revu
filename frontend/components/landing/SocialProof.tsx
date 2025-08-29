@@ -101,7 +101,7 @@ export function SocialProof() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.5 }}
-                className="text-2xl md:text-3xl font-bold brand-text font-['Poppins',sans-serif]"
+                className="text-3xl md:text-4xl lg:text-5xl font-bold brand-text font-['Poppins',sans-serif]"
               >
                 {currentAvatar.title}
               </motion.h2>
