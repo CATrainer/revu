@@ -21,6 +21,7 @@ export default function CommentsPage() {
   const [viewMode, setViewMode] = useState<'all' | 'byVideo'>('byVideo');
   const [parentsOnly, setParentsOnly] = useState(true);
   const [newestFirst, setNewestFirst] = useState(true);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   // Per-video comments controls (apply inside modal)
   const [videoSortBy, setVideoSortBy] = useState<'newest' | 'oldest' | 'most_liked' | 'most_replies'>('newest');
   const [videoParentsOnly, setVideoParentsOnly] = useState(true);
@@ -101,7 +102,9 @@ export default function CommentsPage() {
                     >All</button>
                   </div>
                 </div>
-                <div className="w-full max-w-md ml-auto flex items-center gap-3">
+                <div className="w-full max-w-2xl ml-auto flex flex-wrap items-center gap-3">
+                  {/* Tag filters */}
+                  <TagFilters selected={selectedTags} onChange={setSelectedTags} />
                   {viewMode === 'all' && (
                     <div className="flex items-center gap-2 text-sm">
                       <label className="flex items-center gap-1">
@@ -132,9 +135,9 @@ export default function CommentsPage() {
               )}
               {viewMode === 'byVideo' ? (
                 searchQuery.trim() ? (
-                  <SearchResults connectionId={connectionId} query={searchQuery} onSelect={setSelectedVideo} selectedId={selectedVideo?.videoId || null} />
+                  <SearchResults connectionId={connectionId} query={searchQuery} tags={selectedTags} onSelect={setSelectedVideo} selectedId={selectedVideo?.videoId || null} />
                 ) : (
-                  <VideosGrid connectionId={connectionId} onSelect={setSelectedVideo} selectedId={selectedVideo?.videoId || null} />
+                  <VideosGrid connectionId={connectionId} tags={selectedTags} onSelect={setSelectedVideo} selectedId={selectedVideo?.videoId || null} />
                 )
               ) : (
                 <AllCommentsFeed connectionId={connectionId} onSelectVideo={setSelectedVideo} parentsOnly={parentsOnly} newestFirst={newestFirst} />
@@ -222,10 +225,10 @@ export default function CommentsPage() {
   );
 }
 
-function VideosGrid({ connectionId, onSelect, selectedId }: { connectionId: string; onSelect: (v: YouTubeVideo) => void; selectedId: string | null }) {
+function VideosGrid({ connectionId, tags, onSelect, selectedId }: { connectionId: string; tags: string[]; onSelect: (v: YouTubeVideo) => void; selectedId: string | null }) {
   const [page, setPage] = useState(0);
   const pageSize = 6;
-  const { data, isLoading, isFetching, isError, error } = useVideos({ connectionId, limit: pageSize, offset: page * pageSize, newestFirst: true });
+  const { data, isLoading, isFetching, isError, error } = useVideos({ connectionId, limit: pageSize, offset: page * pageSize, newestFirst: true, tags });
 
   const formatDuration = (iso?: string | null) => {
     if (!iso) return '—';
@@ -257,7 +260,7 @@ function VideosGrid({ connectionId, onSelect, selectedId }: { connectionId: stri
     if (!videos.length) return <div className="text-secondary-dark text-sm">No videos found.</div>;
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {videos.map((v) => (
+  {videos.map((v) => (
           <button key={v.id} onClick={() => onSelect(v)} className={`text-left rounded-lg border border-[var(--border)] overflow-hidden hover:shadow transition ${selectedId === v.videoId ? 'ring-2 ring-primary' : ''}`}>
             <div className="relative aspect-video w-full bg-muted">
               {v.thumbnailUrl ? (
@@ -272,6 +275,14 @@ function VideosGrid({ connectionId, onSelect, selectedId }: { connectionId: stri
             <div className="p-3">
               <div className="text-sm font-medium line-clamp-2 text-primary-dark">{v.title || 'Untitled'}</div>
               <div className="text-xs text-secondary-dark mt-1">Comments: {v.commentCount ?? '—'} • Views: {v.viewCount ?? '—'}</div>
+              {v.tags && v.tags.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {v.tags.slice(0, 3).map((t) => (
+                    <span key={t} className="inline-block text-[10px] px-1.5 py-0.5 rounded bg-muted text-primary-dark border border-[var(--border)]">{t}</span>
+                  ))}
+                  {v.tags.length > 3 && <span className="text-[10px] text-secondary-dark">+{v.tags.length - 3} more</span>}
+                </div>
+              )}
             </div>
           </button>
         ))}
@@ -311,8 +322,8 @@ function VideoMetrics({ video }: { video: YouTubeVideo }) {
   );
 }
 
-function SearchResults({ connectionId, query, onSelect, selectedId }: { connectionId: string; query: string; onSelect: (v: YouTubeVideo) => void; selectedId: string | null }) {
-  const { data, isLoading, isError, error } = useVideoSearch({ connectionId, query, limit: 24, offset: 0 });
+function SearchResults({ connectionId, query, tags, onSelect, selectedId }: { connectionId: string; query: string; tags: string[]; onSelect: (v: YouTubeVideo) => void; selectedId: string | null }) {
+  const { data, isLoading, isError, error } = useVideoSearch({ connectionId, query, tags, limit: 24, offset: 0 });
   const formatDuration = (iso?: string | null) => {
     if (!iso) return '—';
     const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
@@ -355,7 +366,36 @@ function SearchResults({ connectionId, query, onSelect, selectedId }: { connecti
           <div className="p-3">
             <div className="text-sm font-medium line-clamp-2 text-primary-dark">{v.title || 'Untitled'}</div>
             <div className="text-xs text-secondary-dark mt-1">Comments: {v.commentCount ?? '—'} • Views: {v.viewCount ?? '—'}</div>
+            {v.tags && v.tags.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {v.tags.slice(0, 3).map((t) => (
+                  <span key={t} className="inline-block text-[10px] px-1.5 py-0.5 rounded bg-muted text-primary-dark border border-[var(--border)]">{t}</span>
+                ))}
+                {v.tags.length > 3 && <span className="text-[10px] text-secondary-dark">+{v.tags.length - 3} more</span>}
+              </div>
+            )}
           </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TagFilters({ selected, onChange }: { selected: string[]; onChange: (tags: string[]) => void }) {
+  const all = ['youtube', 'tiktok', 'instagram', 'shorts', 'long form'] as const;
+  const toggle = (t: string) => {
+    onChange(selected.includes(t) ? selected.filter((x) => x !== t) : [...selected, t]);
+  };
+  return (
+    <div className="flex items-center gap-1">
+      {all.map((t) => (
+        <button
+          key={t}
+          type="button"
+          onClick={() => toggle(t)}
+          className={`text-xs px-2 py-1 rounded border ${selected.includes(t) ? 'bg-primary text-white border-primary' : 'border-[var(--border)] text-primary-dark'}`}
+        >
+          {t}
         </button>
       ))}
     </div>

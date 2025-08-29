@@ -32,6 +32,7 @@ class YouTubeVideoRepository:
         - published_at (datetime)
         - view_count, like_count, comment_count (int)
         - duration (str)
+    - tags (list[str])
         - last_fetched_at (datetime)
 
         Returns all rows in DB for the provided video_ids (inserted or existing).
@@ -54,6 +55,7 @@ class YouTubeVideoRepository:
                 "like_count": v.get("like_count"),
                 "comment_count": v.get("comment_count"),
                 "duration": v.get("duration"),
+                "tags": v.get("tags") or ["youtube"],
             }
             # Only include last_fetched_at if provided; otherwise let DB server_default apply
             if v.get("last_fetched_at") is not None:

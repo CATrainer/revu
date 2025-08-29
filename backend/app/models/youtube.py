@@ -21,6 +21,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, relationship
 
 from app.core.database import Base
@@ -62,6 +63,8 @@ class YouTubeVideo(Base):
     duration: Mapped[str | None] = Column(String, nullable=True)
     # DB migration sets NOT NULL with server_default now(); reflect that here
     last_fetched_at: Mapped[DateTime] = Column(DateTime(timezone=True), nullable=False)
+    # Tags for filtering/categorization (e.g., ["youtube", "shorts"|"long form"], future: "tiktok", "instagram")
+    tags: Mapped[list[str]] = Column(ARRAY(String), nullable=False, default=list)
 
     # Relationships
     connection = relationship("YouTubeConnection", back_populates="videos")

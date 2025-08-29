@@ -110,6 +110,7 @@ class YouTubeService:
         newest_first: bool = True,
         published_after: Optional[datetime] = None,
         search: Optional[str] = None,
+    tags: Optional[list[str]] = None,
     ) -> List[Dict[str, Any]]:
         """Return videos for a connection, with optional filters."""
         # Ownership check
@@ -125,6 +126,10 @@ class YouTubeService:
             from sqlalchemy import or_
 
             q = q.where(or_(YouTubeVideo.title.ilike(like), YouTubeVideo.description.ilike(like)))
+        if tags:
+            # Require any overlap between requested tags and video tags
+            from sqlalchemy.dialects.postgresql import array
+            q = q.where(YouTubeVideo.tags.op("&&")(tags))  # overlap operator
         order_clause = desc(YouTubeVideo.published_at) if newest_first else YouTubeVideo.published_at
         q = q.order_by(order_clause).limit(limit).offset(offset)
         res = await self.session.execute(q)
@@ -141,6 +146,7 @@ class YouTubeService:
                 "like_count": v.like_count,
                 "comment_count": v.comment_count,
                 "duration": v.duration,
+                "tags": getattr(v, "tags", []) or [],
             }
             for v in videos
         ]

@@ -20,6 +20,7 @@ from app.repository.youtube_video import YouTubeVideoRepository
 from app.repository.youtube_comment import YouTubeCommentRepository
 from app.services.youtube_api_wrapper import YouTubeAPIWrapper
 from app.utils.youtube_utils import parse_youtube_timestamp
+from typing import cast
 
 
 class SyncService:
@@ -133,6 +134,29 @@ class SyncService:
                 cdet2 = det.get("contentDetails", {}) if det else {}
                 thumbs = (snippet.get("thumbnails") or {}).get("high") or (snippet.get("thumbnails") or {}).get("default") or {}
 
+                # Determine tags
+                # Always include platform tag
+                tags: list[str] = ["youtube"]
+                dur_iso = cast(str | None, cdet2.get("duration"))
+                # Heuristic: Shorts are typically < 60 seconds
+                def _is_shorts(duration_iso: str | None) -> bool:
+                    if not duration_iso:
+                        return False
+                    # naive parse: PT#H#M#S
+                    import re
+                    m = re.match(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", duration_iso)
+                    if not m:
+                        return False
+                    h = int(m.group(1) or 0)
+                    mnt = int(m.group(2) or 0)
+                    sec = int(m.group(3) or 0)
+                    total = h * 3600 + mnt * 60 + sec
+                    return total > 0 and total < 60
+                if _is_shorts(dur_iso):
+                    tags.append("shorts")
+                else:
+                    tags.append("long form")
+
                 rows.append(
                     {
                         "video_id": vid,
@@ -144,6 +168,7 @@ class SyncService:
                         "like_count": int(stats.get("likeCount", 0) or 0) if stats else None,
                         "comment_count": int(stats.get("commentCount", 0) or 0) if stats else None,
                         "duration": cdet2.get("duration"),
+                        "tags": tags,
                     }
                 )
 
@@ -225,6 +250,19 @@ class SyncService:
                 stats = det.get("statistics", {}) if det else {}
                 cdet2 = det.get("contentDetails", {}) if det else {}
                 thumbs = (snippet.get("thumbnails") or {}).get("high") or (snippet.get("thumbnails") or {}).get("default") or {}
+                # Determine tags
+                tags: list[str] = ["youtube"]
+                dur_iso = cdet2.get("duration")
+                import re
+                m = re.match(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", dur_iso or "")
+                if m:
+                    h = int(m.group(1) or 0)
+                    mnt = int(m.group(2) or 0)
+                    sec = int(m.group(3) or 0)
+                    total = h * 3600 + mnt * 60 + sec
+                    tags.append("shorts" if (total > 0 and total < 60) else "long form")
+                else:
+                    tags.append("long form")
                 rows.append(
                     {
                         "video_id": vid,
@@ -236,6 +274,7 @@ class SyncService:
                         "like_count": int(stats.get("likeCount", 0) or 0) if stats else None,
                         "comment_count": int(stats.get("commentCount", 0) or 0) if stats else None,
                         "duration": cdet2.get("duration"),
+                        "tags": tags,
                     }
                 )
 

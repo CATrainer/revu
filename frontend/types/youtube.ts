@@ -20,6 +20,7 @@ export interface YouTubeVideo {
   likeCount?: number | null;
   commentCount?: number | null;
   duration?: string | null; // ISO 8601 duration
+  tags?: string[]; // e.g., ["youtube", "shorts"|"long form"]
 }
 
 export interface YouTubeComment {

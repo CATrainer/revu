@@ -30,6 +30,7 @@ async def list_videos(
     newest_first: bool = Query(True),
     published_after: Optional[str] = Query(None, description="ISO timestamp filter"),
     search: Optional[str] = Query(None, description="Search in title/description"),
+    tags: Optional[str] = Query(None, description="Comma-separated tags to include (e.g., 'youtube,shorts')"),
 ) -> list[dict[str, Any]]:
     service = YouTubeService(db)
     from datetime import datetime
@@ -49,6 +50,7 @@ async def list_videos(
         newest_first=newest_first,
         published_after=published_dt,
         search=search,
+    tags=[t.strip() for t in (tags.split(",") if tags else []) if t.strip()] or None,
     )
 
 

@@ -19,7 +19,7 @@ import { listConnections } from '@/lib/api/youtube';
 const keys = {
   connection: (connectionId: string) => ['yt', 'connection', connectionId] as const,
   connections: ['yt', 'connections'] as const,
-  videos: (connectionId: string, params: { limit?: number; offset?: number; newestFirst?: boolean; publishedAfter?: string | undefined; search?: string | undefined }) =>
+  videos: (connectionId: string, params: { limit?: number; offset?: number; newestFirst?: boolean; publishedAfter?: string | undefined; search?: string | undefined; tags?: string[] }) =>
     ['yt', 'videos', connectionId, params] as const,
   comments: (connectionId: string, videoId: string, params: { limit?: number; offset?: number; newestFirst?: boolean }) =>
     ['yt', 'comments', connectionId, videoId, params] as const,
@@ -41,13 +41,13 @@ export function useYouTubeConnection(connectionId: string | undefined) {
 }
 
 // 2a) Video search hook for comments page
-export function useVideoSearch(args: { connectionId: string | undefined; query: string; limit?: number; offset?: number }) {
-  const { connectionId, query, limit = 20, offset = 0 } = args;
+export function useVideoSearch(args: { connectionId: string | undefined; query: string; tags?: string[]; limit?: number; offset?: number }) {
+  const { connectionId, query, tags = [], limit = 20, offset = 0 } = args;
   const enabled = Boolean(connectionId && query.trim().length > 0);
-  const params = useMemo(() => ({ limit, offset }), [limit, offset]);
+  const params = useMemo(() => ({ limit, offset, tags }), [limit, offset, tags]);
   return useQuery<YouTubeVideo[]>({
     queryKey: keys.search(connectionId || 'none', query, params),
-    queryFn: () => searchVideos({ connectionId: connectionId!, query, limit, offset }),
+  queryFn: () => searchVideos({ connectionId: connectionId!, query, tags, limit, offset }),
     enabled,
     staleTime: 30_000,
     placeholderData: keepPreviousData,
@@ -71,10 +71,11 @@ export function useVideos(args: {
   newestFirst?: boolean;
   publishedAfter?: string;
   search?: string;
+  tags?: string[];
 }) {
-  const { connectionId, limit = 50, offset = 0, newestFirst = true, publishedAfter, search } = args;
+  const { connectionId, limit = 50, offset = 0, newestFirst = true, publishedAfter, search, tags = [] } = args;
   const enabled = Boolean(connectionId);
-  const params = useMemo(() => ({ limit, offset, newestFirst, publishedAfter, search }), [limit, offset, newestFirst, publishedAfter, search]);
+  const params = useMemo(() => ({ limit, offset, newestFirst, publishedAfter, search, tags }), [limit, offset, newestFirst, publishedAfter, search, tags]);
   return useQuery<YouTubeVideo[]>({
     queryKey: keys.videos(connectionId || 'none', params),
     queryFn: () =>
@@ -85,6 +86,7 @@ export function useVideos(args: {
         newestFirst,
         publishedAfter,
         search,
+        tags,
       }),
   enabled,
   staleTime: 30_000,

@@ -90,6 +90,7 @@ export async function fetchVideos(args: {
   newestFirst?: boolean;
   publishedAfter?: string; // ISO
   search?: string;
+  tags?: string[];
   token?: string;
 }): Promise<YouTubeVideo[]> {
   const qs = toQuery({
@@ -99,6 +100,7 @@ export async function fetchVideos(args: {
     newest_first: args.newestFirst,
     published_after: args.publishedAfter,
     search: args.search,
+    tags: args.tags && args.tags.length ? args.tags.join(',') : undefined,
   });
   const res = await fetch(`${API_BASE}/youtube/videos${qs}`, {
     method: 'GET',
@@ -119,6 +121,7 @@ export async function fetchVideos(args: {
     like_count?: number | null;
     comment_count?: number | null;
     duration?: string | null;
+  tags?: string[];
   }>>(res);
   // Map to frontend types (camelCase)
   return raw.map((v) => ({
@@ -132,6 +135,7 @@ export async function fetchVideos(args: {
     likeCount: v.like_count ?? null,
     commentCount: v.comment_count ?? null,
     duration: v.duration ?? null,
+  tags: v.tags ?? [],
   }));
 }
 
@@ -139,6 +143,7 @@ export async function fetchVideos(args: {
 export async function searchVideos(args: {
   connectionId: string;
   query: string;
+  tags?: string[];
   limit?: number;
   offset?: number;
   token?: string;
@@ -149,6 +154,7 @@ export async function searchVideos(args: {
     offset: args.offset ?? 0,
     newestFirst: true,
     search: args.query,
+    tags: args.tags,
     token: args.token,
   });
 }
