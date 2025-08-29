@@ -12,6 +12,10 @@ interface CommentListProps {
   videoId: string;
   pageSize?: number; // applies to top-level fetch; replies are grouped from fetched set
   className?: string;
+  sortBy?: 'newest' | 'oldest' | 'most_liked' | 'most_replies';
+  parentsOnly?: boolean; // hide replies list
+  unansweredOnly?: boolean; // only parents with 0 replies
+  query?: string; // filter by content/author
 }
 
 function formatDate(iso?: string | null) {
@@ -30,6 +34,7 @@ function CommentItem({
   replying,
   setReplying,
   isSubmitting,
+  displayReplies = true,
 }: {
   comment: YouTubeComment;
   replies: YouTubeComment[];
@@ -37,6 +42,7 @@ function CommentItem({
   replying: string | null;
   setReplying: (id: string | null) => void;
   isSubmitting: boolean;
+  displayReplies?: boolean;
 }) {
   const [text, setText] = useState('');
   const [showReplies, setShowReplies] = useState(true);
@@ -62,7 +68,7 @@ function CommentItem({
             >
               Reply
             </button>
-            {typeof comment.replyCount === 'number' && comment.replyCount > 0 && (
+            {displayReplies && typeof comment.replyCount === 'number' && comment.replyCount > 0 && (
               <button className="hover:underline" onClick={() => setShowReplies((v) => !v)}>
                 {showReplies ? 'Hide' : 'Show'} {comment.replyCount} repl{comment.replyCount === 1 ? 'y' : 'ies'}
               </button>
@@ -96,7 +102,7 @@ function CommentItem({
         </div>
       </div>
 
-      {replies.length > 0 && showReplies && (
+  {displayReplies && replies.length > 0 && showReplies && (
         <div className="mt-3 ml-11 border-l pl-4 space-y-3 max-h-64 overflow-y-auto pr-2">
           {replies.map((r) => (
             <div key={r.id} className="text-sm">
@@ -113,10 +119,10 @@ function CommentItem({
   );
 }
 
-export default function CommentList({ connectionId, videoId, pageSize = 50, className }: CommentListProps) {
+export default function CommentList({ connectionId, videoId, pageSize = 50, className, sortBy = 'newest', parentsOnly = false, unansweredOnly = false, query = '' }: CommentListProps) {
   const [page, setPage] = useState(0);
   const offset = page * pageSize;
-  const newestFirst = true;
+  const newestFirst = sortBy === 'oldest' ? false : true;
 
   const { data, isLoading, isFetching, isError, error } = useComments({ connectionId, videoId, limit: pageSize, offset, newestFirst });
   const reply = useCommentReply(connectionId, videoId);
@@ -141,6 +147,42 @@ export default function CommentList({ connectionId, videoId, pageSize = 50, clas
     await reply.mutateAsync({ commentId: parentId, text });
   }, [reply]);
 
+  const processedParents = useMemo(() => {
+    // Apply filters
+    let arr = [...parents];
+    const q = (query || '').trim().toLowerCase();
+    if (q) {
+      arr = arr.filter((c) => (c.content || '').toLowerCase().includes(q) || (c.authorName || '').toLowerCase().includes(q));
+    }
+    if (unansweredOnly) {
+      arr = arr.filter((c) => {
+        const children = childrenByParent.get(c.commentId) || [];
+        const count = typeof c.replyCount === 'number' ? c.replyCount : children.length;
+        return (count || 0) === 0;
+      });
+    }
+    // Sorting
+    const toNum = (v?: number | null) => (typeof v === 'number' && !Number.isNaN(v) ? v : 0);
+    const toDate = (d?: string | null) => (d ? new Date(d).getTime() : 0);
+    arr.sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return toDate(a.publishedAt) - toDate(b.publishedAt);
+        case 'most_liked':
+          return toNum(b.likeCount) - toNum(a.likeCount);
+        case 'most_replies': {
+          const ar = toNum(a.replyCount ?? (childrenByParent.get(a.commentId) || []).length);
+          const br = toNum(b.replyCount ?? (childrenByParent.get(b.commentId) || []).length);
+          return br - ar;
+        }
+        case 'newest':
+        default:
+          return toDate(b.publishedAt) - toDate(a.publishedAt);
+      }
+    });
+    return arr;
+  }, [parents, childrenByParent, sortBy, unansweredOnly, query]);
+
   const content = useMemo(() => {
     if (isLoading) {
       return (
@@ -160,7 +202,7 @@ export default function CommentList({ connectionId, videoId, pageSize = 50, clas
       return <div className="text-destructive">{(error as Error)?.message ?? 'Failed to load comments'}</div>;
     }
 
-    if (!parents.length) {
+    if (!processedParents.length) {
       return (
         <div className="flex flex-col items-center justify-center rounded-lg border p-8 text-center text-muted-foreground">
           <div className="mb-2">No comments yet.</div>
@@ -170,17 +212,17 @@ export default function CommentList({ connectionId, videoId, pageSize = 50, clas
     }
 
     return null;
-  }, [isLoading, isError, error, parents.length, pageSize]);
+  }, [isLoading, isError, error, processedParents.length, pageSize]);
 
   // Keep track of which comment is open for reply per row
   const [openReplyFor, setOpenReplyFor] = useState<string | null>(null);
 
   return (
     <div className={className}>
-      {/* Render with controlled reply state */}
+    {/* Render with controlled reply state */}
   {content === null ? (
         <div className="divide-y">
-          {parents.map((c) => (
+      {processedParents.map((c) => (
             <CommentItem
               key={c.id}
               comment={c}
@@ -189,6 +231,7 @@ export default function CommentList({ connectionId, videoId, pageSize = 50, clas
               setReplying={setOpenReplyFor}
               onReply={onReply}
               isSubmitting={reply.isPending}
+        displayReplies={!parentsOnly}
             />
           ))}
         </div>

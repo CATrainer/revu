@@ -3,7 +3,6 @@
 import { useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useYouTubeConnection, useTriggerYouTubeSync } from '@/hooks/useYouTube';
 
 interface SyncStatusProps {
@@ -15,7 +14,7 @@ interface SyncStatusProps {
 }
 
 export default function SyncStatus({ connectionId, className, wsUrl }: SyncStatusProps) {
-  const { data: status, isLoading, isFetching, refetch } = useYouTubeConnection(connectionId);
+  const { data: status, refetch } = useYouTubeConnection(connectionId);
   const syncMutation = useTriggerYouTubeSync(connectionId);
   const qc = useQueryClient();
 
@@ -77,37 +76,11 @@ export default function SyncStatus({ connectionId, className, wsUrl }: SyncStatu
     refetch();
   };
 
-  const statusBadge = () => {
-    const t = (status?.status || '').toLowerCase();
-    if (isRunning) return <span className="inline-flex items-center gap-2 text-blue-600"><span className="h-2 w-2 rounded-full bg-blue-500" /> Syncing…</span>;
-    if (t === 'active') return <span className="inline-flex items-center gap-2 text-green-600"><span className="h-2 w-2 rounded-full bg-green-500" /> Active</span>;
-    if (t === 'error') return <span className="inline-flex items-center gap-2 text-red-600"><span className="h-2 w-2 rounded-full bg-red-500" /> Error</span>;
-    return <span className="inline-flex items-center gap-2 text-muted-foreground"><span className="h-2 w-2 rounded-full bg-gray-400" /> {status?.status || 'Unknown'}</span>;
-  };
-
   return (
     <div className={className}>
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col">
-          <div className="text-sm">YouTube Sync Status</div>
-          <div className="mt-1">{statusBadge()}</div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            {isLoading ? (
-              <span className="inline-flex items-center gap-2"><LoadingSpinner size="small" /> Loading…</span>
-            ) : status?.lastSyncedAt ? (
-              <>Last sync: {new Date(status.lastSyncedAt).toLocaleString()}</>
-            ) : (
-              <>No sync yet</>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={onManualSync} disabled={isRunning || syncMutation.isPending}>
-            {syncMutation.isPending ? 'Starting…' : 'Sync now'}
-          </Button>
-          {isFetching && <LoadingSpinner size="small" />}
-        </div>
-      </div>
+      <Button onClick={onManualSync} disabled={isRunning || syncMutation.isPending}>
+        {syncMutation.isPending ? 'Starting…' : 'Sync now'}
+      </Button>
     </div>
   );
 }

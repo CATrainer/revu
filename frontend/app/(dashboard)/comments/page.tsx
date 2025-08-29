@@ -21,6 +21,11 @@ export default function CommentsPage() {
   const [viewMode, setViewMode] = useState<'all' | 'byVideo'>('byVideo');
   const [parentsOnly, setParentsOnly] = useState(true);
   const [newestFirst, setNewestFirst] = useState(true);
+  // Per-video comments controls (apply inside modal)
+  const [videoSortBy, setVideoSortBy] = useState<'newest' | 'oldest' | 'most_liked' | 'most_replies'>('newest');
+  const [videoParentsOnly, setVideoParentsOnly] = useState(true);
+  const [videoUnansweredOnly, setVideoUnansweredOnly] = useState(false);
+  const [videoCommentQuery, setVideoCommentQuery] = useState('');
 
   // On mount, try to find an existing connection and store it.
   useEffect(() => {
@@ -42,14 +47,14 @@ export default function CommentsPage() {
   }, []);
 
   // If connected, prefetch first page of videos and choose first by default
-  const { isLoading: vidsLoading } = useVideos({ connectionId: connectionId ?? undefined, limit: 12, offset: 0, newestFirst: true });
+  const { isLoading: vidsLoading } = useVideos({ connectionId: connectionId ?? undefined, limit: 6, offset: 0, newestFirst: true });
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-primary-dark">Comments</h1>
-          <p className="mt-1 text-secondary-dark">Manage comments and see video metrics side by side.</p>
+          <p className="mt-1 text-secondary-dark">Manage comments and see video metrics.</p>
         </div>
         {connectionId ? (
           <SyncStatus connectionId={connectionId} />
@@ -149,12 +154,50 @@ export default function CommentsPage() {
                     <div className="lg:col-span-2 h-full overflow-hidden">
                       <Card className="card-background border-[var(--border)] h-full flex flex-col">
                         <CardHeader className="py-3 px-4 border-b">
-                          <div className="flex items-center justify-between">
+                          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                             <CardTitle className="text-primary-dark">Comments</CardTitle>
+                            <div className="flex flex-wrap items-center gap-3 text-sm">
+                              <label className="flex items-center gap-2">
+                                <span className="text-secondary-dark">Sort by</span>
+                                <select
+                                  className="rounded-md border border-[var(--border)] bg-background px-2 py-1 text-sm text-primary-dark"
+                                  value={videoSortBy}
+                                  onChange={(e) => setVideoSortBy(e.target.value as typeof videoSortBy)}
+                                >
+                                  <option value="newest">Newest</option>
+                                  <option value="oldest">Oldest</option>
+                                  <option value="most_liked">Most liked</option>
+                                  <option value="most_replies">Most replies</option>
+                                </select>
+                              </label>
+                              <label className="flex items-center gap-1">
+                                <input type="checkbox" className="accent-primary" checked={videoParentsOnly} onChange={(e) => setVideoParentsOnly(e.target.checked)} />
+                                Parents only
+                              </label>
+                              <label className="flex items-center gap-1">
+                                <input type="checkbox" className="accent-primary" checked={videoUnansweredOnly} onChange={(e) => setVideoUnansweredOnly(e.target.checked)} />
+                                Unanswered only
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Filter by text…"
+                                value={videoCommentQuery}
+                                onChange={(e) => setVideoCommentQuery(e.target.value)}
+                                className="w-56 rounded-md border border-[var(--border)] bg-background px-3 py-1.5 text-sm text-primary-dark placeholder:text-secondary-dark focus:outline-none focus:ring-2 focus:ring-primary"
+                              />
+                            </div>
                           </div>
                         </CardHeader>
                         <CardContent className="flex-1 overflow-y-auto px-4">
-                          <CommentList connectionId={connectionId} videoId={selectedVideo.videoId} className="py-4" />
+                          <CommentList
+                            connectionId={connectionId}
+                            videoId={selectedVideo.videoId}
+                            className="py-4"
+                            sortBy={videoSortBy}
+                            parentsOnly={videoParentsOnly}
+                            unansweredOnly={videoUnansweredOnly}
+                            query={videoCommentQuery}
+                          />
                         </CardContent>
                       </Card>
                     </div>
@@ -181,7 +224,7 @@ export default function CommentsPage() {
 
 function VideosGrid({ connectionId, onSelect, selectedId }: { connectionId: string; onSelect: (v: YouTubeVideo) => void; selectedId: string | null }) {
   const [page, setPage] = useState(0);
-  const pageSize = 12;
+  const pageSize = 6;
   const { data, isLoading, isFetching, isError, error } = useVideos({ connectionId, limit: pageSize, offset: page * pageSize, newestFirst: true });
 
   const formatDuration = (iso?: string | null) => {
