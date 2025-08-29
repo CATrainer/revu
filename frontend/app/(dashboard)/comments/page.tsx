@@ -146,13 +146,13 @@ export default function CommentsPage() {
           <Dialog open={Boolean(selectedVideo)} onOpenChange={(open) => !open && setSelectedVideo(null)}>
             <DialogContent className="max-w-[1200px] w-[96vw] h-[85vh] p-0 overflow-hidden">
               {selectedVideo && (
-                <div className="h-full flex flex-col">
+                <div className="h-full flex flex-col min-h-0">
                   <DialogHeader className="px-6 pt-6 pb-4 border-b">
                     <DialogTitle className="text-primary-dark line-clamp-2">{selectedVideo.title || selectedVideo.videoId}</DialogTitle>
                   </DialogHeader>
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-6 h-[calc(100%-72px)]">
-                    <div className="lg:col-span-2 h-full overflow-hidden">
-                      <Card className="card-background border-[var(--border)] h-full flex flex-col">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-6 h-[calc(100%-72px)] min-h-0">
+                    <div className="lg:col-span-2 h-full overflow-hidden min-h-0">
+                      <Card className="card-background border-[var(--border)] h-full flex flex-col min-h-0">
                         <CardHeader className="py-3 px-4 border-b">
                           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                             <CardTitle className="text-primary-dark">Comments</CardTitle>
@@ -188,7 +188,7 @@ export default function CommentsPage() {
                             </div>
                           </div>
                         </CardHeader>
-                        <CardContent className="flex-1 overflow-y-auto px-4">
+                        <CardContent className="flex-1 overflow-y-auto px-4 min-h-0">
                           <CommentList
                             connectionId={connectionId}
                             videoId={selectedVideo.videoId}
@@ -201,12 +201,12 @@ export default function CommentsPage() {
                         </CardContent>
                       </Card>
                     </div>
-                    <div className="lg:col-span-1 h-full overflow-hidden">
-                      <Card className="card-background border-[var(--border)] h-full flex flex-col">
+                    <div className="lg:col-span-1 h-full overflow-hidden min-h-0">
+                      <Card className="card-background border-[var(--border)] h-full flex flex-col min-h-0">
                         <CardHeader className="py-3 px-4 border-b">
                           <CardTitle className="text-primary-dark">Metrics</CardTitle>
                         </CardHeader>
-                        <CardContent className="flex-1 overflow-y-auto px-4">
+                        <CardContent className="flex-1 overflow-y-auto px-4 min-h-0">
                           <VideoMetrics video={selectedVideo} />
                         </CardContent>
                       </Card>

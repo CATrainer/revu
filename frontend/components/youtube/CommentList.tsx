@@ -218,7 +218,7 @@ export default function CommentList({ connectionId, videoId, pageSize = 50, clas
   const [openReplyFor, setOpenReplyFor] = useState<string | null>(null);
 
   return (
-    <div className={className}>
+    <div className={`${className ?? ''} flex flex-col min-h-0`}>
     {/* Render with controlled reply state */}
   {content === null ? (
         <div className="divide-y">
@@ -239,7 +239,7 @@ export default function CommentList({ connectionId, videoId, pageSize = 50, clas
         content
       )}
 
-      <div className="mt-4 flex items-center justify-between">
+  <div className="mt-4 flex items-center justify-between">
         <Button variant="outline" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0 || isFetching}>
           Prev
         </Button>
