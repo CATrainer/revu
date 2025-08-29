@@ -11,6 +11,7 @@ import {
   setCommentLike,
   triggerSync,
   disconnectYouTube,
+  deleteComment,
 } from '@/lib/api/youtube';
 import type { YouTubeVideo, YouTubeComment, SyncStatus, YouTubeConnection } from '@/types/youtube';
 import { listConnections } from '@/lib/api/youtube';
@@ -175,6 +176,31 @@ export function useCommentReply(connectionId: string | undefined, videoId: strin
       if (!connectionId || !videoId) return;
       qc.invalidateQueries({ queryKey: keys.comments(connectionId, videoId, { limit: 50, offset: 0, newestFirst: true }) });
     },
+  });
+}
+
+// 4c) Delete a comment
+export function useDeleteComment(connectionId: string | undefined, videoId: string | undefined) {
+  const qc = useQueryClient();
+  // Build a stable key only when both IDs are available to satisfy TS
+  const queryKey = keys.comments(connectionId ?? '', videoId ?? '', { limit: 50, offset: 0, newestFirst: true });
+  return useMutation({
+    mutationFn: async ({ commentId }: { commentId: string }) => {
+      if (!connectionId) throw new Error('Missing connectionId');
+      return deleteComment({ connectionId, commentId });
+    },
+    onMutate: async ({ commentId }) => {
+      await qc.cancelQueries({ queryKey });
+      const prev = (qc.getQueryData<YouTubeComment[]>(queryKey) || []) as YouTubeComment[];
+      // Optimistically remove the comment and any replies under it
+      const next = prev.filter(c => c.commentId !== commentId && c.parentCommentId !== commentId);
+      qc.setQueryData(queryKey, next);
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(queryKey, ctx.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey }),
   });
 }
 

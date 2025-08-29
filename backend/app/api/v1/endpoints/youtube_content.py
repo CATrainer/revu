@@ -177,6 +177,30 @@ async def post_comment_reply(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
+@router.delete("/comments/{comment_id}")
+async def delete_comment(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+    connection_id: UUID = Query(..., description="YouTube connection ID"),
+    comment_id: str,
+) -> dict[str, Any]:
+    service = YouTubeService(db)
+    try:
+        ok = await service.delete_comment(
+            user_id=current_user.id,
+            connection_id=connection_id,
+            youtube_comment_id=comment_id,
+        )
+        if not ok:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
+        return {"ok": True}
+    except HTTPException:
+        raise
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
 # ---- Sync models ----
 class SyncTriggerRequest(BaseModel):
     connection_id: UUID

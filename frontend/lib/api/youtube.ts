@@ -336,6 +336,23 @@ export async function postCommentReply(args: {
   return handleResponse(res);
 }
 
+// 5c) Delete a comment
+export async function deleteComment(args: {
+  connectionId: string;
+  commentId: string;
+  token?: string;
+}): Promise<{ ok: boolean }> {
+  const qs = toQuery({ connection_id: args.connectionId });
+  const res = await fetch(`${API_BASE}/youtube/comments/${encodeURIComponent(args.commentId)}${qs}`, {
+    method: 'DELETE',
+    headers: {
+      ...jsonHeaders(),
+      ...authHeader(args.token),
+    },
+  });
+  return handleResponse(res);
+}
+
 // 6) Trigger a sync
 export async function triggerSync(args: {
   connectionId: string;

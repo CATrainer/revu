@@ -290,6 +290,13 @@ class YouTubeService:
         if not row:
             return False
         # Local-only toggle (not propagated to YouTube)
+        from loguru import logger
+        logger.info(
+            "Set local heart flag for comment {cid} on connection {conn}: {val}",
+            cid=youtube_comment_id,
+            conn=str(connection_id),
+            val=bool(value),
+        )
         from sqlalchemy import update
         await self.session.execute(
             update(YouTubeComment)
@@ -314,6 +321,13 @@ class YouTubeService:
         row = await self._check_comment_belongs_to_connection(connection_id=connection_id, youtube_comment_id=youtube_comment_id)
         if not row:
             return False
+        from loguru import logger
+        logger.info(
+            "Set local like flag for comment {cid} on connection {conn}: {val}",
+            cid=youtube_comment_id,
+            conn=str(connection_id),
+            val=bool(value),
+        )
         from sqlalchemy import update
         await self.session.execute(
             update(YouTubeComment)
@@ -354,6 +368,38 @@ class YouTubeService:
         return res
 
     # ---- Manual sync trigger ----
+
+    async def delete_comment(
+        self,
+        *,
+        user_id: UUID,
+        connection_id: UUID,
+        youtube_comment_id: str,
+    ) -> bool:
+        """Delete a comment on YouTube (requires channel/video ownership) and remove it locally.
+
+        Returns True if deleted, False if comment not found for this connection.
+        """
+        # Ownership check
+        conns = await self.conn_repo.get_user_connections(user_id)
+        if not any(c.id == connection_id for c in conns):
+            raise ValueError("Connection not found")
+
+        row = await self._check_comment_belongs_to_connection(
+            connection_id=connection_id, youtube_comment_id=youtube_comment_id
+        )
+        if not row:
+            return False
+
+        # Delete via API
+        api = YouTubeAPIWrapper(self.session, connection_id)
+        await api.delete_comment(comment_id=youtube_comment_id)
+
+        # Remove from local DB
+        from sqlalchemy import delete
+        await self.session.execute(delete(YouTubeComment).where(YouTubeComment.id == row.id))
+        await self.session.commit()
+        return True
     async def trigger_manual_sync(
         self,
         *,
