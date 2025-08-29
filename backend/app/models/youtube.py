@@ -60,7 +60,8 @@ class YouTubeVideo(Base):
     like_count: Mapped[int | None] = Column(BigInteger, nullable=True)
     comment_count: Mapped[int | None] = Column(BigInteger, nullable=True)
     duration: Mapped[str | None] = Column(String, nullable=True)
-    last_fetched_at: Mapped[DateTime | None] = Column(DateTime(timezone=True), nullable=True)
+    # DB migration sets NOT NULL with server_default now(); reflect that here
+    last_fetched_at: Mapped[DateTime] = Column(DateTime(timezone=True), nullable=False)
 
     # Relationships
     connection = relationship("YouTubeConnection", back_populates="videos")

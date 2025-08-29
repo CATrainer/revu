@@ -20,6 +20,7 @@ from app.services.oauth_service import OAuthService
 from app.services.token_manager import TokenManager
 from app.services.youtube_api_wrapper import YouTubeAPIWrapper
 from app.workers.sync_worker import process_channel_sync, process_incremental_sync, sync_recent_comments
+from app.services.sync_service import SyncService
 
 
 READONLY_SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"]
@@ -167,6 +168,25 @@ class YouTubeService:
         comments = await self.comment_repo.get_video_comments(
             video_id=video.id, limit=limit, offset=offset, newest_first=newest_first
         )
+
+        # Lazy-load comments on first request if missing
+        if not comments and offset == 0:
+            try:
+                sync = SyncService(self.session, connection_id)
+                fetched = await sync.sync_video_comments(youtube_video_id)
+                if fetched:
+                    await self.session.commit()
+                    comments = await self.comment_repo.get_video_comments(
+                        video_id=video.id, limit=limit, offset=offset, newest_first=newest_first
+                    )
+            except Exception:
+                # Best-effort: don't break the request if sync fails; just return empty set
+                from loguru import logger
+                logger.exception(
+                    "On-demand comment sync failed for video {vid} (conn {cid})",
+                    vid=youtube_video_id,
+                    cid=str(connection_id),
+                )
         return [
             {
                 "id": str(c.id),
