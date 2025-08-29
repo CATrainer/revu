@@ -93,6 +93,44 @@ async def get_video_comments(
     )
 
 
+@router.post("/comments/{comment_id}/heart")
+async def set_comment_heart(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+    connection_id: UUID = Query(..., description="YouTube connection ID"),
+    comment_id: str,
+    value: bool = Query(True, description="Set to true to heart, false to unheart"),
+) -> dict[str, Any]:
+    service = YouTubeService(db)
+    try:
+        ok = await service.set_comment_heart(user_id=current_user.id, connection_id=connection_id, youtube_comment_id=comment_id, value=value)
+        if not ok:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
+        return {"ok": True, "hearted": value}
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/comments/{comment_id}/like")
+async def set_comment_like(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+    connection_id: UUID = Query(..., description="YouTube connection ID"),
+    comment_id: str,
+    value: bool = Query(True, description="Set to true to like, false to unlike"),
+) -> dict[str, Any]:
+    service = YouTubeService(db)
+    try:
+        ok = await service.set_comment_like(user_id=current_user.id, connection_id=connection_id, youtube_comment_id=comment_id, value=value)
+        if not ok:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
+        return {"ok": True, "liked": value}
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
 @router.get("/comments")
 async def get_channel_comments_feed(
     *,

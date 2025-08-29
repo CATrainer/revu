@@ -4,7 +4,7 @@ import { useMemo, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { useComments, useCommentReply } from '@/hooks/useYouTube';
+import { useComments, useCommentReply, useToggleCommentHeart, useToggleCommentLike } from '@/hooks/useYouTube';
 import type { YouTubeComment } from '@/types/youtube';
 
 interface CommentListProps {
@@ -35,6 +35,8 @@ function CommentItem({
   setReplying,
   isSubmitting,
   displayReplies = true,
+  onToggleHeart,
+  onToggleLike,
 }: {
   comment: YouTubeComment;
   replies: YouTubeComment[];
@@ -43,6 +45,8 @@ function CommentItem({
   setReplying: (id: string | null) => void;
   isSubmitting: boolean;
   displayReplies?: boolean;
+  onToggleHeart: (id: string, value: boolean) => void;
+  onToggleLike: (id: string, value: boolean) => void;
 }) {
   const [text, setText] = useState('');
   const [showReplies, setShowReplies] = useState(true);
@@ -67,6 +71,20 @@ function CommentItem({
               onClick={() => setReplying(isOpen ? null : comment.commentId)}
             >
               Reply
+            </button>
+            <button
+              className={`hover:underline inline-flex items-center gap-1 ${comment.heartedByOwner ? 'text-red-600' : ''}`}
+              title={comment.heartedByOwner ? 'Unheart' : 'Heart'}
+              onClick={() => onToggleHeart(comment.commentId, !comment.heartedByOwner)}
+            >
+              <span>❤</span> {comment.heartedByOwner ? 'Hearted' : 'Heart'}
+            </button>
+            <button
+              className={`hover:underline inline-flex items-center gap-1 ${comment.likedByOwner ? 'text-primary' : ''}`}
+              title={comment.likedByOwner ? 'Unlike' : 'Like'}
+              onClick={() => onToggleLike(comment.commentId, !comment.likedByOwner)}
+            >
+              <span>👍</span> {comment.likedByOwner ? 'Liked' : 'Like'}
             </button>
             {displayReplies && typeof comment.replyCount === 'number' && comment.replyCount > 0 && (
               <button className="hover:underline" onClick={() => setShowReplies((v) => !v)}>
@@ -126,6 +144,8 @@ export default function CommentList({ connectionId, videoId, pageSize = 50, clas
 
   const { data, isLoading, isFetching, isError, error } = useComments({ connectionId, videoId, limit: pageSize, offset, newestFirst });
   const reply = useCommentReply(connectionId, videoId);
+  const heartMut = useToggleCommentHeart(connectionId, videoId);
+  const likeMut = useToggleCommentLike(connectionId, videoId);
 
   const { parents, childrenByParent } = useMemo(() => {
     const list = data ?? [];
@@ -232,6 +252,8 @@ export default function CommentList({ connectionId, videoId, pageSize = 50, clas
               onReply={onReply}
               isSubmitting={reply.isPending}
         displayReplies={!parentsOnly}
+        onToggleHeart={(id, value) => heartMut.mutate({ commentId: id, value })}
+        onToggleLike={(id, value) => likeMut.mutate({ commentId: id, value })}
             />
           ))}
         </div>

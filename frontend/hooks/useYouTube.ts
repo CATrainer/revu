@@ -7,6 +7,8 @@ import {
   searchVideos,
   fetchComments,
   postCommentReply,
+  setCommentHeart,
+  setCommentLike,
   triggerSync,
   disconnectYouTube,
 } from '@/lib/api/youtube';
@@ -165,6 +167,70 @@ export function useCommentReply(connectionId: string | undefined, videoId: strin
       if (ctx && (ctx as { previous?: YouTubeComment[]; queryKey: readonly unknown[] }).previous) {
         const { previous, queryKey } = ctx as { previous?: YouTubeComment[]; queryKey: readonly unknown[] };
         if (previous) qc.setQueryData(queryKey, previous);
+      }
+    },
+    onSettled: () => {
+      if (!connectionId || !videoId) return;
+      qc.invalidateQueries({ queryKey: keys.comments(connectionId, videoId, { limit: 50, offset: 0, newestFirst: true }) });
+    },
+  });
+}
+
+// 4a) Heart/unheart a comment (local-only) with optimistic update
+export function useToggleCommentHeart(connectionId: string | undefined, videoId: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, value }: { commentId: string; value: boolean }) => {
+      if (!connectionId) throw new Error('Missing connectionId');
+      return setCommentHeart({ connectionId, commentId, value });
+    },
+    onMutate: async ({ commentId, value }) => {
+      if (!connectionId || !videoId) return;
+      const params = { limit: 50, offset: 0, newestFirst: true } as const;
+      const queryKey = keys.comments(connectionId, videoId, params);
+      await qc.cancelQueries({ queryKey });
+      const prev = qc.getQueryData<YouTubeComment[]>(queryKey);
+      if (prev) {
+        qc.setQueryData(queryKey, prev.map(c => c.commentId === commentId ? { ...c, heartedByOwner: value } : c));
+      }
+      return { prev, queryKey } as { prev?: YouTubeComment[]; queryKey: readonly unknown[] };
+    },
+    onError: (_e, _vars, ctx) => {
+      if (ctx && (ctx as { prev?: YouTubeComment[]; queryKey: readonly unknown[] }).prev) {
+        const { prev, queryKey } = ctx as { prev?: YouTubeComment[]; queryKey: readonly unknown[] };
+        if (prev) qc.setQueryData(queryKey, prev);
+      }
+    },
+    onSettled: () => {
+      if (!connectionId || !videoId) return;
+      qc.invalidateQueries({ queryKey: keys.comments(connectionId, videoId, { limit: 50, offset: 0, newestFirst: true }) });
+    },
+  });
+}
+
+// 4b) Like/unlike a comment (local-only) with optimistic update
+export function useToggleCommentLike(connectionId: string | undefined, videoId: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, value }: { commentId: string; value: boolean }) => {
+      if (!connectionId) throw new Error('Missing connectionId');
+      return setCommentLike({ connectionId, commentId, value });
+    },
+    onMutate: async ({ commentId, value }) => {
+      if (!connectionId || !videoId) return;
+      const params = { limit: 50, offset: 0, newestFirst: true } as const;
+      const queryKey = keys.comments(connectionId, videoId, params);
+      await qc.cancelQueries({ queryKey });
+      const prev = qc.getQueryData<YouTubeComment[]>(queryKey);
+      if (prev) {
+        qc.setQueryData(queryKey, prev.map(c => c.commentId === commentId ? { ...c, likedByOwner: value } : c));
+      }
+      return { prev, queryKey } as { prev?: YouTubeComment[]; queryKey: readonly unknown[] };
+    },
+    onError: (_e, _vars, ctx) => {
+      if (ctx && (ctx as { prev?: YouTubeComment[]; queryKey: readonly unknown[] }).prev) {
+        const { prev, queryKey } = ctx as { prev?: YouTubeComment[]; queryKey: readonly unknown[] };
+        if (prev) qc.setQueryData(queryKey, prev);
       }
     },
     onSettled: () => {

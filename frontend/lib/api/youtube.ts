@@ -186,7 +186,9 @@ export async function fetchComments(args: {
     like_count?: number | null;
     reply_count?: number | null;
     parent_comment_id?: string | null;
-    is_channel_owner_comment: boolean;
+  is_channel_owner_comment: boolean;
+  hearted_by_owner?: boolean;
+  liked_by_owner?: boolean;
   }>>(res);
   return raw.map((c) => ({
     id: c.id,
@@ -198,7 +200,9 @@ export async function fetchComments(args: {
     likeCount: c.like_count ?? null,
     replyCount: c.reply_count ?? null,
     parentCommentId: c.parent_comment_id ?? null,
-    isChannelOwnerComment: Boolean(c.is_channel_owner_comment),
+  isChannelOwnerComment: Boolean(c.is_channel_owner_comment),
+  heartedByOwner: Boolean(c.hearted_by_owner),
+  likedByOwner: Boolean(c.liked_by_owner),
   }));
 }
 
@@ -236,7 +240,9 @@ export async function fetchChannelComments(args: {
     like_count?: number | null;
     reply_count?: number | null;
     parent_comment_id?: string | null;
-    is_channel_owner_comment: boolean;
+  is_channel_owner_comment: boolean;
+  hearted_by_owner?: boolean;
+  liked_by_owner?: boolean;
     video: {
       id: string;
       video_id: string;
@@ -259,7 +265,9 @@ export async function fetchChannelComments(args: {
     likeCount: c.like_count ?? null,
     replyCount: c.reply_count ?? null,
     parentCommentId: c.parent_comment_id ?? null,
-    isChannelOwnerComment: Boolean(c.is_channel_owner_comment),
+  isChannelOwnerComment: Boolean(c.is_channel_owner_comment),
+  heartedByOwner: Boolean(c.hearted_by_owner),
+  likedByOwner: Boolean(c.liked_by_owner),
     video: {
       id: c.video.id,
       videoId: c.video.video_id,
@@ -272,6 +280,26 @@ export async function fetchChannelComments(args: {
       duration: c.video.duration ?? null,
     },
   }));
+}
+
+// 5a) Heart/unheart a comment (local-only)
+export async function setCommentHeart(args: { connectionId: string; commentId: string; value: boolean; token?: string }): Promise<{ ok: boolean; hearted: boolean }> {
+  const qs = toQuery({ connection_id: args.connectionId, value: args.value });
+  const res = await fetch(`${API_BASE}/youtube/comments/${encodeURIComponent(args.commentId)}/heart${qs}`, {
+    method: 'POST',
+    headers: { ...jsonHeaders(), ...authHeader(args.token) },
+  });
+  return handleResponse(res);
+}
+
+// 5b) Like/unlike a comment (local-only)
+export async function setCommentLike(args: { connectionId: string; commentId: string; value: boolean; token?: string }): Promise<{ ok: boolean; liked: boolean }> {
+  const qs = toQuery({ connection_id: args.connectionId, value: args.value });
+  const res = await fetch(`${API_BASE}/youtube/comments/${encodeURIComponent(args.commentId)}/like${qs}`, {
+    method: 'POST',
+    headers: { ...jsonHeaders(), ...authHeader(args.token) },
+  });
+  return handleResponse(res);
 }
 
 // 5) Post a reply to a comment

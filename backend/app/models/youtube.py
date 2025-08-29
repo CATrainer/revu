@@ -84,6 +84,9 @@ class YouTubeComment(Base):
     reply_count: Mapped[int | None] = Column(Integer, nullable=True)
     parent_comment_id: Mapped[str | None] = Column(String, nullable=True)
     is_channel_owner_comment: Mapped[bool] = Column(Boolean, nullable=False, default=False)
+    # Local-only flags (not propagated to YouTube):
+    hearted_by_owner: Mapped[bool] = Column(Boolean, nullable=False, default=False)
+    liked_by_owner: Mapped[bool] = Column(Boolean, nullable=False, default=False)
 
     # Relationships
     video = relationship("YouTubeVideo", back_populates="comments")

@@ -33,6 +33,8 @@ export interface YouTubeComment {
   replyCount?: number | null;
   parentCommentId?: string | null;
   isChannelOwnerComment: boolean;
+  heartedByOwner?: boolean; // local-only
+  likedByOwner?: boolean;   // local-only
 }
 
 export interface SyncLogItem {

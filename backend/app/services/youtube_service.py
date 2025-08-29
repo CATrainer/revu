@@ -199,6 +199,8 @@ class YouTubeService:
                 "reply_count": c.reply_count,
                 "parent_comment_id": c.parent_comment_id,
                 "is_channel_owner_comment": c.is_channel_owner_comment,
+                "hearted_by_owner": getattr(c, "hearted_by_owner", False),
+                "liked_by_owner": getattr(c, "liked_by_owner", False),
             }
             for c in comments
         ]
@@ -239,6 +241,8 @@ class YouTubeService:
                     "reply_count": c.reply_count,
                     "parent_comment_id": c.parent_comment_id,
                     "is_channel_owner_comment": c.is_channel_owner_comment,
+                    "hearted_by_owner": getattr(c, "hearted_by_owner", False),
+                    "liked_by_owner": getattr(c, "liked_by_owner", False),
                     # Video context
                     "video": {
                         "id": str(v.id),
@@ -254,6 +258,64 @@ class YouTubeService:
                 }
             )
         return items
+
+    async def _check_comment_belongs_to_connection(self, *, connection_id: UUID, youtube_comment_id: str) -> Optional[YouTubeComment]:
+        q = (
+            select(YouTubeComment)
+            .join(YouTubeVideo, YouTubeVideo.id == YouTubeComment.video_id)
+            .where(and_(YouTubeVideo.channel_id == connection_id, YouTubeComment.comment_id == youtube_comment_id))
+        )
+        res = await self.session.execute(q)
+        return res.scalars().first()
+
+    async def set_comment_heart(
+        self,
+        *,
+        user_id: UUID,
+        connection_id: UUID,
+        youtube_comment_id: str,
+        value: bool,
+    ) -> bool:
+        # Ownership check
+        conns = await self.conn_repo.get_user_connections(user_id)
+        if not any(c.id == connection_id for c in conns):
+            raise ValueError("Connection not found")
+        row = await self._check_comment_belongs_to_connection(connection_id=connection_id, youtube_comment_id=youtube_comment_id)
+        if not row:
+            return False
+        # Local-only toggle (not propagated to YouTube)
+        from sqlalchemy import update
+        await self.session.execute(
+            update(YouTubeComment)
+            .where(YouTubeComment.id == row.id)
+            .values(hearted_by_owner=bool(value))
+        )
+        await self.session.commit()
+        return True
+
+    async def set_comment_like(
+        self,
+        *,
+        user_id: UUID,
+        connection_id: UUID,
+        youtube_comment_id: str,
+        value: bool,
+    ) -> bool:
+        # Ownership check
+        conns = await self.conn_repo.get_user_connections(user_id)
+        if not any(c.id == connection_id for c in conns):
+            raise ValueError("Connection not found")
+        row = await self._check_comment_belongs_to_connection(connection_id=connection_id, youtube_comment_id=youtube_comment_id)
+        if not row:
+            return False
+        from sqlalchemy import update
+        await self.session.execute(
+            update(YouTubeComment)
+            .where(YouTubeComment.id == row.id)
+            .values(liked_by_owner=bool(value))
+        )
+        await self.session.commit()
+        return True
 
     async def reply_to_comment(
         self,
