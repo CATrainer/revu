@@ -8,10 +8,11 @@ including middleware, routers, and event handlers.
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status, HTTPException
 
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
 
@@ -19,6 +20,7 @@ from app.api.v1.api import api_router
 from app.core.config import settings
 from app.core.database import create_db_and_tables
 from app.utils.logging import setup_logging
+from app.middleware.error_handler import register_error_handlers, add_error_handling_middleware
 
 # Setup logging
 setup_logging()
@@ -48,7 +50,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         async for session in get_async_session():
             # Check if the users table has the new columns
             result = await session.execute(
-                text("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name IN ('access_status', 'demo_requested')")
+                text("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name IN ('access_status', 'demo_requested', 'user_kind')")
             )
             columns = [row[0] for row in result.fetchall()]
             
@@ -172,36 +174,23 @@ if "https://repruv.co.uk" not in origins:
     origins.append("https://repruv.co.uk")
 
 # Normalize (strip trailing slashes) and coerce to plain strings
-origins = [str(o).rstrip('/') for o in origins if o]
+origins = [str(o).rstrip('/').lower() for o in origins if o]
 # De-duplicate while preserving order
 _seen = set()
 origins = [o for o in origins if not (o in _seen or _seen.add(o))]
 
 logger.info(f"CORS configured for origins: {origins}")
 
-@app.middleware("http")
-async def manual_cors_middleware(request: Request, call_next):
-    # Handle preflight requests
-    if request.method == "OPTIONS":
-        headers = {
-            "Access-Control-Allow-Origin": request.headers.get("origin", "*"),
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
-            "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Max-Age": "3600",
-        }
-        return JSONResponse(content={"message": "OK"}, headers=headers)
-    
-    response = await call_next(request)
-
-    origin = request.headers.get("origin", "").rstrip('/')
-    if origin in origins:
-
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
-    return response
+# Use Starlette's CORSMiddleware for robust, battle-tested handling
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+    ,expose_headers=["Content-Disposition"],
+    max_age=3600,
+)
 
 # Add other middlewares
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -209,10 +198,18 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 if settings.is_production:
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=["*.Repruv.ai", "Repruv.ai", "*.railway.app", "*.vercel.app"],
+        allowed_hosts=[
+            "*.repruv.ai",
+            "repruv.ai",
+            "*.railway.app",
+            "*.vercel.app",
+            "repruv.co.uk",
+            "www.repruv.co.uk",
+        ],
     )
 
 # Add custom exception handlers
+register_error_handlers(app)
 @app.exception_handler(ValueError)
 async def value_error_handler(request: Request, exc: ValueError):
     return JSONResponse(
@@ -272,6 +269,7 @@ if settings.DEBUG:
         logger.debug(f"Response status: {response.status_code}")
         return response
 
+add_error_handling_middleware(app)
 
 if __name__ == "__main__":
     import uvicorn
