@@ -6,31 +6,19 @@ loading from environment variables and providing validation.
 """
 
 from functools import lru_cache
-from pathlib import Path
 from typing import List, Optional, Union
 
 from pydantic import AnyHttpUrl, EmailStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
- # Resolve project root (backend folder) to load .env reliably regardless of CWD
-_BACKEND_ROOT = Path(__file__).resolve().parents[2]
-_ENV_FILES = (
-    _BACKEND_ROOT / ".env",
-    _BACKEND_ROOT / ".env.local",
-    Path.cwd() / ".env",
-    Path.cwd() / ".env.local",
-)
-
-
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=_ENV_FILES,
+        env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore",
     )
 
     # Application
@@ -40,7 +28,6 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
     FRONTEND_URL: str = "http://localhost:3000"
-    BACKEND_BASE_URL: Optional[str] = None
 
     # API Configuration
     API_V1_PREFIX: str = "/api/v1"
@@ -91,18 +78,12 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: str
     SUPABASE_SERVICE_ROLE_KEY: str
-    # Toggle use of Supabase Python client (use direct HTTP by default to avoid env proxy issues)
-    SUPABASE_ENABLE_CLIENT: bool = False
 
     # OpenAI
     OPENAI_API_KEY: str
     OPENAI_MODEL: str = "gpt-4-turbo-preview"
     OPENAI_MAX_TOKENS: int = 500
     OPENAI_TEMPERATURE: float = 0.7
-
-    # YouTube / OAuth (optional)
-    YOUTUBE_API_KEY: Optional[str] = None
-    OAUTH_REDIRECT_URI: Optional[str] = None
 
     # Calendly
     CALENDLY_ACCESS_TOKEN: str
@@ -131,9 +112,6 @@ class Settings(BaseSettings):
 
     # Monitoring
     SENTRY_DSN: Optional[str] = None
-
-    # Crypto
-    ENCRYPTION_KEY: Optional[str] = None
 
     # Feature Flags
     ENABLE_SOCIAL_MONITORING: bool = False

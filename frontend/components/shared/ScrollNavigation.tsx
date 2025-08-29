@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronUp } from 'lucide-react';
 
 interface Section {
   id: string;
@@ -11,18 +10,21 @@ interface Section {
 }
 
 const sections: Section[] = [
-  { id: 'hero', name: 'Home & Early Access' },
-  { id: 'features', name: 'Everything You Need for Creator Success' },
-  { id: 'vision', name: 'Our Vision' }
+  { id: 'hero', name: 'Home' },
+  { id: 'features', name: 'Features' },
+  { id: 'vision', name: 'Vision' }
 ];
 
 export function ScrollNavigation() {
   const [currentSection, setCurrentSection] = useState(0);
-  const [isAtEnd, setIsAtEnd] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY + window.innerHeight / 2;
+      
+      // Show navigation after scrolling a bit
+      setIsVisible(window.scrollY > 200);
       
       // Find current section based on scroll position
       for (let i = sections.length - 1; i >= 0; i--) {
@@ -32,151 +34,119 @@ export function ScrollNavigation() {
           break;
         }
       }
-
-      // Check if we're at the end (last section)
-      setIsAtEnd(currentSection >= sections.length - 1);
     };
 
     window.addEventListener('scroll', handleScroll);
     handleScroll(); // Initial check
 
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [currentSection]);
+  }, []);
 
-  const handleNavigation = () => {
-    if (isAtEnd) {
-      // Go back to top
-      const heroSection = document.getElementById('hero');
-      if (heroSection) {
-        heroSection.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }
-    } else {
-      // Go to next section
-      const nextSectionIndex = Math.min(currentSection + 1, sections.length - 1);
-      const nextSection = document.getElementById(sections[nextSectionIndex].id);
-      
-      if (nextSection) {
-        nextSection.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }
+  const scrollToSection = (index: number) => {
+    const element = document.getElementById(sections[index].id);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50"
-    >
-      {/* Container for proper alignment */}
-      <div className="relative flex flex-col items-center">
-        {/* Main navigation button positioned over 3rd indicator */}
-        <motion.button
-          onClick={handleNavigation}
-          whileHover={{ scale: 1.05, y: -2 }}
-          whileTap={{ scale: 0.95 }}
-          className="bg-[var(--brand-primary-solid)] hover:bg-[var(--brand-primary-solid-hover)] text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 group flex items-center justify-center mb-3"
-          aria-label={isAtEnd ? 'Back to Top' : `Section ${currentSection + 1}`}
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 20 }}
+          className="fixed right-8 top-1/2 transform -translate-y-1/2 z-50"
         >
-          {/* Progress indicator with number */}
-          <div className="w-8 h-8 relative">
-            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 32 32">
-              <circle
-                cx="16"
-                cy="16"
-                r="14"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                opacity="0.3"
-              />
-              <motion.circle
-                cx="16"
-                cy="16"
-                r="14"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeDasharray="88"
-                initial={{ strokeDashoffset: 88 }}
-                animate={{ 
-                  strokeDashoffset: isAtEnd ? 0 : 88 - (currentSection / (sections.length - 1)) * 88
-                }}
-                transition={{ duration: 0.5 }}
-                className="text-white"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              {isAtEnd ? (
-                <motion.div
-                  animate={{ 
-                    y: [0, -2, 0]
-                  }}
-                  transition={{ 
-                    duration: 1.5, 
-                    repeat: Infinity, 
-                    ease: "easeInOut" 
-                  }}
-                >
-                  <ChevronUp className="w-4 h-4 text-white" />
-                </motion.div>
-              ) : (
-                <span className="text-xs font-bold text-white">
-                  {currentSection + 1}
+          {/* Navigation Container with Background */}
+          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-4">
+            <div className="flex flex-col items-center space-y-6">
+              {sections.map((section, index) => (
+                <div key={section.id} className="relative flex items-center group">
+                  {/* Section Label */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 10 }}
+                    whileHover={{ opacity: 1, x: 0 }}
+                    className="absolute right-12 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none"
+                  >
+                    <div className="bg-gray-900 dark:bg-white px-3 py-2 rounded-lg shadow-lg">
+                      <span className="text-sm font-medium text-white dark:text-gray-900 whitespace-nowrap">
+                        {section.name}
+                      </span>
+                      {/* Tooltip Arrow */}
+                      <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-[6px] border-l-gray-900 dark:border-l-white border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent" />
+                    </div>
+                  </motion.div>
+
+                  {/* Navigation Dot */}
+                  <motion.button
+                    onClick={() => scrollToSection(index)}
+                    className="relative flex items-center justify-center"
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    {/* Connecting Line */}
+                    {index < sections.length - 1 && (
+                      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-px h-6 bg-gray-300 dark:bg-gray-600" />
+                    )}
+                    
+                    {/* Dot */}
+                    <motion.div
+                      className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${
+                        index === currentSection
+                          ? 'bg-[var(--brand-primary-solid)] border-[var(--brand-primary-solid)] shadow-lg'
+                          : 'bg-white dark:bg-gray-800 border-gray-400 dark:border-gray-500 hover:border-[var(--brand-primary-solid)] hover:bg-[var(--brand-primary-solid)]/20'
+                      }`}
+                      animate={{
+                        scale: index === currentSection ? 1.2 : 1,
+                      }}
+                      transition={{ duration: 0.2 }}
+                    />
+                    
+                    {/* Active indicator - outer ring */}
+                    {index === currentSection && (
+                      <motion.div
+                        className="absolute w-6 h-6 rounded-full border border-[var(--brand-primary-solid)]/40"
+                        animate={{
+                          scale: [1, 1.3, 1],
+                          opacity: [0.4, 0.1, 0.4]
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      />
+                    )}
+                  </motion.button>
+                </div>
+              ))}
+            </div>
+
+            {/* Progress Indicator */}
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-center space-x-2">
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {currentSection + 1} / {sections.length}
                 </span>
-              )}
+                <div className="w-12 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-[var(--brand-primary-solid)] rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ 
+                      width: `${((currentSection + 1) / sections.length) * 100}%` 
+                    }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
-        </motion.button>
-
-        {/* Back to top text for section 5 */}
-        <AnimatePresence>
-          {isAtEnd && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap"
-            >
-              <span className="text-xs text-[var(--brand-primary-solid)] font-medium bg-white px-2 py-1 rounded shadow-sm">
-                Back to Top
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Section indicators - positioned so 3rd indicator aligns with main button */}
-        <motion.div 
-          className="flex justify-center space-x-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          {sections.map((_, index) => (
-            <motion.div
-              key={index}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                index <= currentSection 
-                  ? 'bg-[var(--brand-primary-solid)]' 
-                  : 'bg-[var(--brand-primary-solid)] opacity-30'
-              }`}
-              whileHover={{ scale: 1.2 }}
-              onClick={() => {
-                const section = document.getElementById(sections[index].id);
-                if (section) {
-                  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-              }}
-              style={{ cursor: 'pointer' }}
-            />
-          ))}
         </motion.div>
-      </div>
-    </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
