@@ -10,6 +10,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useVideos, useVideoSearch } from '@/hooks/useYouTube';
 import { listConnections } from '@/lib/api/youtube';
 import type { YouTubeVideo } from '@/types/youtube';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function CommentsPage() {
   const [connectionId, setConnectionId] = useState<string | null>(null);
@@ -109,27 +110,40 @@ export default function CommentsPage() {
             </CardContent>
           </Card>
 
-          {/* Split view: comments on left, metrics on right */}
-          {selectedVideo && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="card-background border-[var(--border)]">
-                <CardHeader>
-                  <CardTitle className="text-primary-dark">Comments — {selectedVideo.title || selectedVideo.videoId}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CommentList connectionId={connectionId} videoId={selectedVideo.videoId} />
-                </CardContent>
-              </Card>
-              <Card className="card-background border-[var(--border)]">
-                <CardHeader>
-                  <CardTitle className="text-primary-dark">Metrics</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <VideoMetrics video={selectedVideo} />
-                </CardContent>
-              </Card>
-            </div>
-          )}
+          {/* Modal with comments + metrics */}
+          <Dialog open={Boolean(selectedVideo)} onOpenChange={(open) => !open && setSelectedVideo(null)}>
+            <DialogContent className="max-w-5xl w-[95vw]">
+              {selectedVideo && (
+                <div className="space-y-4">
+                  <DialogHeader>
+                    <DialogTitle className="text-primary-dark">{selectedVideo.title || selectedVideo.videoId}</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2">
+                      <Card className="card-background border-[var(--border)]">
+                        <CardHeader>
+                          <CardTitle className="text-primary-dark">Comments</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <CommentList connectionId={connectionId} videoId={selectedVideo.videoId} />
+                        </CardContent>
+                      </Card>
+                    </div>
+                    <div className="lg:col-span-1">
+                      <Card className="card-background border-[var(--border)]">
+                        <CardHeader>
+                          <CardTitle className="text-primary-dark">Metrics</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <VideoMetrics video={selectedVideo} />
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
       )}
     </div>
