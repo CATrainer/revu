@@ -39,26 +39,33 @@ function CommentItem({
   isSubmitting: boolean;
 }) {
   const [text, setText] = useState('');
+  const [showReplies, setShowReplies] = useState(true);
   const isOpen = replying === comment.commentId;
 
   return (
     <div className="border-b py-4">
       <div className="flex items-start gap-3">
-        <div className="flex-1">
+        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground select-none">{(comment.authorName || 'U').slice(0,1).toUpperCase()}</div>
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-sm">
             <span className="font-medium">{comment.authorName || 'Unknown'}</span>
+            {comment.isChannelOwnerComment && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">Creator</span>
+            )}
             <span className="text-muted-foreground">• {formatDate(comment.publishedAt)}</span>
           </div>
-          <div className="mt-1 whitespace-pre-wrap">{comment.content || ''}</div>
-          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="mt-1 whitespace-pre-wrap leading-relaxed text-[0.95rem]">{comment.content || ''}</div>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             <button
               className="hover:underline"
               onClick={() => setReplying(isOpen ? null : comment.commentId)}
             >
               Reply
             </button>
-            {typeof comment.replyCount === 'number' && (
-              <span>{comment.replyCount} repl{comment.replyCount === 1 ? 'y' : 'ies'}</span>
+            {typeof comment.replyCount === 'number' && comment.replyCount > 0 && (
+              <button className="hover:underline" onClick={() => setShowReplies((v) => !v)}>
+                {showReplies ? 'Hide' : 'Show'} {comment.replyCount} repl{comment.replyCount === 1 ? 'y' : 'ies'}
+              </button>
             )}
           </div>
           {isOpen && (
@@ -89,15 +96,15 @@ function CommentItem({
         </div>
       </div>
 
-      {replies.length > 0 && (
-        <div className="mt-3 ml-4 border-l pl-4 space-y-3">
+      {replies.length > 0 && showReplies && (
+        <div className="mt-3 ml-11 border-l pl-4 space-y-3 max-h-64 overflow-y-auto pr-2">
           {replies.map((r) => (
             <div key={r.id} className="text-sm">
               <div className="flex items-center gap-2">
                 <span className="font-medium">{r.authorName || 'Unknown'}</span>
                 <span className="text-muted-foreground">• {formatDate(r.publishedAt)}</span>
               </div>
-              <div className="mt-1 whitespace-pre-wrap">{r.content || ''}</div>
+              <div className="mt-1 whitespace-pre-wrap leading-relaxed">{r.content || ''}</div>
             </div>
           ))}
         </div>

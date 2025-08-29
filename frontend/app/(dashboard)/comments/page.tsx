@@ -125,29 +125,31 @@ export default function CommentsPage() {
 
           {/* Modal with comments + metrics */}
           <Dialog open={Boolean(selectedVideo)} onOpenChange={(open) => !open && setSelectedVideo(null)}>
-            <DialogContent className="max-w-5xl w-[95vw]">
+            <DialogContent className="max-w-[1200px] w-[96vw] h-[85vh] p-0 overflow-hidden">
               {selectedVideo && (
-                <div className="space-y-4">
-                  <DialogHeader>
-                    <DialogTitle className="text-primary-dark">{selectedVideo.title || selectedVideo.videoId}</DialogTitle>
+                <div className="h-full flex flex-col">
+                  <DialogHeader className="px-6 pt-6 pb-4 border-b">
+                    <DialogTitle className="text-primary-dark line-clamp-2">{selectedVideo.title || selectedVideo.videoId}</DialogTitle>
                   </DialogHeader>
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2">
-                      <Card className="card-background border-[var(--border)]">
-                        <CardHeader>
-                          <CardTitle className="text-primary-dark">Comments</CardTitle>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-6 h-[calc(100%-72px)]">
+                    <div className="lg:col-span-2 h-full overflow-hidden">
+                      <Card className="card-background border-[var(--border)] h-full flex flex-col">
+                        <CardHeader className="py-3 px-4 border-b">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-primary-dark">Comments</CardTitle>
+                          </div>
                         </CardHeader>
-                        <CardContent>
-                          <CommentList connectionId={connectionId} videoId={selectedVideo.videoId} />
+                        <CardContent className="flex-1 overflow-y-auto px-4">
+                          <CommentList connectionId={connectionId} videoId={selectedVideo.videoId} className="py-4" />
                         </CardContent>
                       </Card>
                     </div>
-                    <div className="lg:col-span-1">
-                      <Card className="card-background border-[var(--border)]">
-                        <CardHeader>
+                    <div className="lg:col-span-1 h-full overflow-hidden">
+                      <Card className="card-background border-[var(--border)] h-full flex flex-col">
+                        <CardHeader className="py-3 px-4 border-b">
                           <CardTitle className="text-primary-dark">Metrics</CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="flex-1 overflow-y-auto px-4">
                           <VideoMetrics video={selectedVideo} />
                         </CardContent>
                       </Card>
