@@ -11,6 +11,7 @@ import { useVideos, useVideoSearch } from '@/hooks/useYouTube';
 import { listConnections } from '@/lib/api/youtube';
 import type { YouTubeVideo } from '@/types/youtube';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import Image from 'next/image';
 
 export default function CommentsPage() {
   const [connectionId, setConnectionId] = useState<string | null>(null);
@@ -38,11 +39,7 @@ export default function CommentsPage() {
   }, []);
 
   // If connected, prefetch first page of videos and choose first by default
-  const { data: videos, isLoading: vidsLoading } = useVideos({ connectionId: connectionId ?? undefined, limit: 12, offset: 0, newestFirst: true });
-  useEffect(() => {
-    if (!connectionId) return;
-    if (videos && videos.length && !selectedVideo) setSelectedVideo(videos[0]);
-  }, [connectionId, videos, selectedVideo]);
+  const { isLoading: vidsLoading } = useVideos({ connectionId: connectionId ?? undefined, limit: 12, offset: 0, newestFirst: true });
 
   return (
     <div className="space-y-6">
@@ -155,6 +152,21 @@ function VideosGrid({ connectionId, onSelect, selectedId }: { connectionId: stri
   const pageSize = 12;
   const { data, isLoading, isFetching, isError, error } = useVideos({ connectionId, limit: pageSize, offset: page * pageSize, newestFirst: true });
 
+  const formatDuration = (iso?: string | null) => {
+    if (!iso) return '—';
+    // Minimal ISO8601 duration parser (PT#H#M#S)
+    const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    if (!m) return iso;
+    const h = parseInt(m[1] || '0', 10);
+    const min = parseInt(m[2] || '0', 10);
+    const s = parseInt(m[3] || '0', 10);
+    const parts = [] as string[];
+    if (h > 0) parts.push(String(h));
+    parts.push(String(min).padStart(h > 0 ? 2 : 1, '0'));
+    parts.push(String(s).padStart(2, '0'));
+    return parts.join(':');
+  };
+
   const grid = useMemo(() => {
     if (isLoading) {
       return (
@@ -172,7 +184,16 @@ function VideosGrid({ connectionId, onSelect, selectedId }: { connectionId: stri
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {videos.map((v) => (
           <button key={v.id} onClick={() => onSelect(v)} className={`text-left rounded-lg border border-[var(--border)] overflow-hidden hover:shadow transition ${selectedId === v.videoId ? 'ring-2 ring-primary' : ''}`}>
-            <div className="relative aspect-video w-full bg-muted" />
+            <div className="relative aspect-video w-full bg-muted">
+              {v.thumbnailUrl ? (
+                <Image src={v.thumbnailUrl} alt={v.title || 'Video thumbnail'} fill className="object-cover" />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">No thumbnail</div>
+              )}
+              <div className="absolute bottom-2 right-2 rounded bg-black/70 text-white text-[10px] px-1.5 py-0.5">
+                {formatDuration(v.duration)}
+              </div>
+            </div>
             <div className="p-3">
               <div className="text-sm font-medium line-clamp-2 text-primary-dark">{v.title || 'Untitled'}</div>
               <div className="text-xs text-secondary-dark mt-1">Comments: {v.commentCount ?? '—'} • Views: {v.viewCount ?? '—'}</div>
@@ -217,6 +238,19 @@ function VideoMetrics({ video }: { video: YouTubeVideo }) {
 
 function SearchResults({ connectionId, query, onSelect, selectedId }: { connectionId: string; query: string; onSelect: (v: YouTubeVideo) => void; selectedId: string | null }) {
   const { data, isLoading, isError, error } = useVideoSearch({ connectionId, query, limit: 24, offset: 0 });
+  const formatDuration = (iso?: string | null) => {
+    if (!iso) return '—';
+    const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    if (!m) return iso;
+    const h = parseInt(m[1] || '0', 10);
+    const min = parseInt(m[2] || '0', 10);
+    const s = parseInt(m[3] || '0', 10);
+    const parts = [] as string[];
+    if (h > 0) parts.push(String(h));
+    parts.push(String(min).padStart(h > 0 ? 2 : 1, '0'));
+    parts.push(String(s).padStart(2, '0'));
+    return parts.join(':');
+  };
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -233,7 +267,16 @@ function SearchResults({ connectionId, query, onSelect, selectedId }: { connecti
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {videos.map((v) => (
         <button key={v.id} onClick={() => onSelect(v)} className={`text-left rounded-lg border border-[var(--border)] overflow-hidden hover:shadow transition ${selectedId === v.videoId ? 'ring-2 ring-primary' : ''}`}>
-          <div className="relative aspect-video w-full bg-muted" />
+          <div className="relative aspect-video w-full bg-muted">
+            {v.thumbnailUrl ? (
+              <Image src={v.thumbnailUrl} alt={v.title || 'Video thumbnail'} fill className="object-cover" />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">No thumbnail</div>
+            )}
+            <div className="absolute bottom-2 right-2 rounded bg-black/70 text-white text-[10px] px-1.5 py-0.5">
+              {formatDuration(v.duration)}
+            </div>
+          </div>
           <div className="p-3">
             <div className="text-sm font-medium line-clamp-2 text-primary-dark">{v.title || 'Untitled'}</div>
             <div className="text-xs text-secondary-dark mt-1">Comments: {v.commentCount ?? '—'} • Views: {v.viewCount ?? '—'}</div>

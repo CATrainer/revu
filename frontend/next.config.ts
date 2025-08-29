@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "i.pravatar.cc",
       },
+  // YouTube thumbnail hosts
+  { protocol: "https", hostname: "i.ytimg.com" },
+  { protocol: "https", hostname: "yt3.ggpht.com" },
       // Add other common demo/image CDNs here if needed later
       // { protocol: "https", hostname: "images.unsplash.com" },
       // { protocol: "https", hostname: "picsum.photos" },

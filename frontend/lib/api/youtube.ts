@@ -108,7 +108,31 @@ export async function fetchVideos(args: {
     },
     cache: 'no-store',
   });
-  return handleResponse(res);
+  const raw = await handleResponse<Array<{
+    id: string;
+    video_id: string;
+    title?: string | null;
+    description?: string | null;
+    thumbnail_url?: string | null;
+    published_at?: string | null;
+    view_count?: number | null;
+    like_count?: number | null;
+    comment_count?: number | null;
+    duration?: string | null;
+  }>>(res);
+  // Map to frontend types (camelCase)
+  return raw.map((v) => ({
+    id: v.id,
+    videoId: v.video_id,
+    title: v.title ?? null,
+    description: v.description ?? null,
+    thumbnailUrl: v.thumbnail_url ?? null,
+    publishedAt: v.published_at ?? null,
+    viewCount: v.view_count ?? null,
+    likeCount: v.like_count ?? null,
+    commentCount: v.comment_count ?? null,
+    duration: v.duration ?? null,
+  }));
 }
 
 // Search videos by text (title/description)
