@@ -612,40 +612,40 @@ export default function FeaturesPage() {
               <motion.div 
                 className="order-1 md:order-2"
                 initial={{ opacity: 0, x: 50 }}
-                animate={teamInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
+                animate={aiInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
                 <div className="flex items-center gap-3 mb-6">
                   <motion.div
                     initial={{ scale: 0, rotate: -180 }}
-                    animate={teamInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
+                    animate={aiInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
                     transition={{ duration: 0.6, delay: 0.6 }}
                   >
-                    <FaUsers className="text-purple-500 h-12 w-12" />
+                    <FaBrain className="text-purple-500 h-12 w-12" />
                   </motion.div>
-                  <h2 className="text-3xl font-bold brand-text">Team Collaboration</h2>
+                  <h2 className="text-3xl font-bold brand-text">AI Responses</h2>
                 </div>
                 <p className="text-lg text-primary-dark font-bold mb-6">
-                  Work collaboratively with task assignments, role-based permissions and automation workflows.
+                  Generate intelligent, personalized responses using advanced AI that understands context and tone.
                 </p>
                 <motion.ul 
                   className="space-y-3"
                   initial={{ opacity: 0 }}
-                  animate={teamInView ? { opacity: 1 } : { opacity: 0 }}
+                  animate={aiInView ? { opacity: 1 } : { opacity: 0 }}
                   transition={{ duration: 0.6, delay: 0.8 }}
                 >
                   {[
-                    'Role-based access control',
-                    'Task assignments and notifications',
-                    'Internal notes and comments',
-                    'Approval workflows',
-                    'Team performance analytics'
+                    'Context-aware response generation',
+                    'Tone matching and personalization',
+                    'Multi-language support',
+                    'Brand voice consistency',
+                    'Learning from your feedback'
                   ].map((item, index) => (
                     <motion.li 
                       key={index}
                       className="flex items-start"
                       initial={{ opacity: 0, x: -20 }}
-                      animate={teamInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                      animate={aiInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                       transition={{ duration: 0.4, delay: 1.0 + (index * 0.1) }}
                     >
                       <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
@@ -654,82 +654,6 @@ export default function FeaturesPage() {
                   ))}
                 </motion.ul>
               </motion.div>
-            </div>
-          </div>
-        </motion.section>
-
-        {/* More Features Grid */}
-        <motion.section 
-          ref={utilitiesRef}
-          className="section-background-alt py-24"
-          initial={{ opacity: 0, y: 50 }}
-          animate={utilitiesInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-          transition={{ duration: 0.8 }}
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.h2 
-              className="text-3xl font-bold brand-text mb-12 text-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={utilitiesInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.6, delay: utilitiesInView ? 0.2 : 0 }}
-            >
-              Plus Bonus Utilities
-            </motion.h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  icon: FaBolt,
-                  color: "text-amber-500",
-                  title: "Automation Rules",
-                  description: "Set up intelligent workflows to handle reviews automatically."
-                },
-                {
-                  icon: FaClock,
-                  color: "text-rose-600 dark:text-rose-400",
-                  title: "Response Templates",
-                  description: "Save time with customizable templates for common scenarios."
-                },
-                {
-                  icon: FaShieldAlt,
-                  color: "text-emerald-600 dark:text-emerald-400",
-                  title: "Enterprise Security",
-                  description: "Bank-level encryption, GDPR compliance, and regular backups."
-                }
-              ].map((utility, index) => (
-                <motion.div 
-                  key={index}
-                  className="card-background p-6 rounded-lg shadow-sm"
-                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                  animate={utilitiesInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 30, scale: 0.9 }}
-                  transition={{ duration: 0.6, delay: utilitiesInView ? 0.4 + (index * 0.2) : 0 }}
-                  whileHover={{ scale: 1.05, y: -5 }}
-                >
-                  <motion.div 
-                    className="flex items-center justify-center mb-4"
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={utilitiesInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
-                    transition={{ duration: 0.6, delay: utilitiesInView ? 0.6 + (index * 0.2) : 0 }}
-                  >
-                    <utility.icon className={`h-10 w-10 ${utility.color}`} />
-                  </motion.div>
-                  <motion.h3 
-                    className="text-xl font-semibold mb-2 text-primary-dark"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={utilitiesInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                    transition={{ duration: 0.5, delay: utilitiesInView ? 0.8 + (index * 0.2) : 0 }}
-                  >
-                    {utility.title}
-                  </motion.h3>
-                  <motion.p 
-                    className="text-secondary-dark"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={utilitiesInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                    transition={{ duration: 0.5, delay: utilitiesInView ? 1.0 + (index * 0.2) : 0 }}
-                  >
-                    {utility.description}
-                  </motion.p>
-                </motion.div>
-              ))}
             </div>
           </div>
         </motion.section>
