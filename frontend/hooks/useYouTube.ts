@@ -4,6 +4,7 @@ import {
   initiateYouTubeConnection,
   checkConnectionStatus,
   fetchVideos,
+  searchVideos,
   fetchComments,
   postCommentReply,
   triggerSync,
@@ -20,6 +21,8 @@ const keys = {
     ['yt', 'videos', connectionId, params] as const,
   comments: (connectionId: string, videoId: string, params: { limit?: number; offset?: number; newestFirst?: boolean }) =>
     ['yt', 'comments', connectionId, videoId, params] as const,
+  search: (connectionId: string, query: string, params: { limit?: number; offset?: number }) =>
+    ['yt', 'search', connectionId, query, params] as const,
 };
 
 // 1) Connection status hook
@@ -30,6 +33,20 @@ export function useYouTubeConnection(connectionId: string | undefined) {
     queryFn: () => checkConnectionStatus({ connectionId: connectionId! }),
     enabled,
     refetchInterval: enabled ? 30_000 : false,
+  });
+}
+
+// 2a) Video search hook for comments page
+export function useVideoSearch(args: { connectionId: string | undefined; query: string; limit?: number; offset?: number }) {
+  const { connectionId, query, limit = 20, offset = 0 } = args;
+  const enabled = Boolean(connectionId && query.trim().length > 0);
+  const params = useMemo(() => ({ limit, offset }), [limit, offset]);
+  return useQuery<YouTubeVideo[]>({
+    queryKey: keys.search(connectionId || 'none', query, params),
+    queryFn: () => searchVideos({ connectionId: connectionId!, query, limit, offset }),
+    enabled,
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 }
 

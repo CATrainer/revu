@@ -111,6 +111,24 @@ export async function fetchVideos(args: {
   return handleResponse(res);
 }
 
+// Search videos by text (title/description)
+export async function searchVideos(args: {
+  connectionId: string;
+  query: string;
+  limit?: number;
+  offset?: number;
+  token?: string;
+}): Promise<YouTubeVideo[]> {
+  return fetchVideos({
+    connectionId: args.connectionId,
+    limit: args.limit ?? 20,
+    offset: args.offset ?? 0,
+    newestFirst: true,
+    search: args.query,
+    token: args.token,
+  });
+}
+
 // 4) Fetch comments for a video
 export async function fetchComments(args: {
   connectionId: string;

@@ -7,7 +7,7 @@ import ConnectButton from '@/components/youtube/ConnectButton';
 import SyncStatus from '@/components/youtube/SyncStatus';
 import CommentList from '@/components/youtube/CommentList';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { useVideos } from '@/hooks/useYouTube';
+import { useVideos, useVideoSearch } from '@/hooks/useYouTube';
 import { listConnections } from '@/lib/api/youtube';
 import type { YouTubeVideo } from '@/types/youtube';
 
@@ -15,6 +15,7 @@ export default function CommentsPage() {
   const [connectionId, setConnectionId] = useState<string | null>(null);
   const [loadingConn, setLoadingConn] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // On mount, try to find an existing connection and store it.
   useEffect(() => {
@@ -77,17 +78,34 @@ export default function CommentsPage() {
 
       {connectionId && (
         <div className="space-y-6">
-          {/* Videos grid */}
+          {/* Search + Videos grid */}
           <Card className="card-background border-[var(--border)]">
             <CardHeader>
-              <CardTitle className="text-primary-dark">Your videos</CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="text-primary-dark">Your videos</CardTitle>
+                <div className="w-full max-w-md ml-auto">
+                  <label className="sr-only" htmlFor="video-search">Search videos</label>
+                  <input
+                    id="video-search"
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by title or description…"
+                    className="w-full rounded-md border border-[var(--border)] bg-background px-3 py-2 text-sm text-primary-dark placeholder:text-secondary-dark focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {vidsLoading && (
                 <div className="text-sm text-secondary-dark flex items-center gap-2"><LoadingSpinner size="small" /> Loading…</div>
               )}
-              {/* Custom grid that allows selecting a video */}
-              <VideosGrid connectionId={connectionId} onSelect={setSelectedVideo} selectedId={selectedVideo?.videoId || null} />
+              {/* If query present, show search results; else show paged grid */}
+              {searchQuery.trim() ? (
+                <SearchResults connectionId={connectionId} query={searchQuery} onSelect={setSelectedVideo} selectedId={selectedVideo?.videoId || null} />
+              ) : (
+                <VideosGrid connectionId={connectionId} onSelect={setSelectedVideo} selectedId={selectedVideo?.videoId || null} />
+              )}
             </CardContent>
           </Card>
 
@@ -178,6 +196,35 @@ function VideoMetrics({ video }: { video: YouTubeVideo }) {
           <div className="text-secondary-dark">{it.label}</div>
           <div className="text-primary-dark font-medium">{it.value ?? '—'}</div>
         </div>
+      ))}
+    </div>
+  );
+}
+
+function SearchResults({ connectionId, query, onSelect, selectedId }: { connectionId: string; query: string; onSelect: (v: YouTubeVideo) => void; selectedId: string | null }) {
+  const { data, isLoading, isError, error } = useVideoSearch({ connectionId, query, limit: 24, offset: 0 });
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <div key={i} className="rounded-lg border border-[var(--border)] aspect-video bg-muted animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+  if (isError) return <div className="text-destructive">{(error as Error)?.message ?? 'Failed to search'}</div>;
+  const videos = data ?? [];
+  if (!videos.length) return <div className="text-secondary-dark text-sm">No results for “{query}”.</div>;
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {videos.map((v) => (
+        <button key={v.id} onClick={() => onSelect(v)} className={`text-left rounded-lg border border-[var(--border)] overflow-hidden hover:shadow transition ${selectedId === v.videoId ? 'ring-2 ring-primary' : ''}`}>
+          <div className="relative aspect-video w-full bg-muted" />
+          <div className="p-3">
+            <div className="text-sm font-medium line-clamp-2 text-primary-dark">{v.title || 'Untitled'}</div>
+            <div className="text-xs text-secondary-dark mt-1">Comments: {v.commentCount ?? '—'} • Views: {v.viewCount ?? '—'}</div>
+          </div>
+        </button>
       ))}
     </div>
   );
