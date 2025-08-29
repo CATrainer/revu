@@ -9,11 +9,22 @@ import {
   FaHashtag,       // Social media hashtag
   FaChartBar,      // Analytics charts
   FaInstagram,     // Instagram icon
-  FaFacebook,      // Facebook icon
-  FaTwitter,       // Twitter icon
+  FaTwitter,       // X (Twitter) icon
   FaYoutube,       // YouTube icon
   FaLinkedin,      // LinkedIn icon
-  FaTiktok         // TikTok icon
+  FaTiktok,        // TikTok icon
+  FaReddit,        // Reddit icon
+  FaRobot,         // Robot/AI icon
+  FaCog,           // Settings/gear icon for AI
+  FaMicrochip,     // Microchip for AI technology
+  FaLightbulb,     // Light bulb for AI intelligence
+  FaCode,          // Code icon for AI development
+  FaChartLine,     // Line chart for analytics
+  FaChartPie,      // Pie chart for data visualization
+  FaTable,         // Table for reports
+  FaFileAlt,       // Document/report icon
+  FaCalculator,    // Calculator for analytics
+  FaArrowUp        // Arrow up for growth metrics
 } from "react-icons/fa";
 import { IconType } from "react-icons";
 
@@ -119,17 +130,73 @@ export function Features() {
               >
                 {/* Social Media Background Icons for Response Automation */}
                 {feature.title === 'Response Automation' && (
-                  <div className="absolute inset-0 opacity-5 pointer-events-none">
-                    <FaInstagram className="absolute top-4 right-4 text-pink-500" size={24} />
-                    <FaFacebook className="absolute top-16 right-12 text-blue-600" size={20} />
-                    <FaTwitter className="absolute top-8 right-24 text-blue-400" size={18} />
-                    <FaYoutube className="absolute bottom-16 right-8 text-red-500" size={22} />
-                    <FaLinkedin className="absolute bottom-8 right-20 text-blue-700" size={16} />
-                    <FaTiktok className="absolute bottom-4 right-32 text-black" size={20} />
-                    <FaInstagram className="absolute bottom-12 left-8 text-pink-500" size={18} />
-                    <FaFacebook className="absolute top-12 left-4 text-blue-600" size={24} />
-                    <FaTwitter className="absolute bottom-20 left-16 text-blue-400" size={16} />
-                    <FaYoutube className="absolute top-20 left-12 text-red-500" size={20} />
+                  <div className="absolute inset-0 opacity-15 pointer-events-none">
+                    <FaYoutube className="absolute top-4 right-4 text-red-500" size={36} />
+                    <FaInstagram className="absolute top-16 right-12 text-pink-500" size={32} />
+                    <FaTiktok className="absolute top-8 right-24 text-black" size={28} />
+                    <FaReddit className="absolute bottom-16 right-8 text-orange-500" size={34} />
+                    <FaLinkedin className="absolute bottom-8 right-20 text-blue-700" size={28} />
+                    <FaTwitter className="absolute bottom-4 right-32 text-blue-400" size={32} />
+                    <FaInstagram className="absolute bottom-12 left-8 text-pink-500" size={30} />
+                    <FaYoutube className="absolute top-12 left-4 text-red-500" size={36} />
+                    <FaTiktok className="absolute bottom-20 left-16 text-black" size={26} />
+                    <FaLinkedin className="absolute top-20 left-12 text-blue-700" size={32} />
+                    <FaReddit className="absolute bottom-6 left-24 text-orange-500" size={30} />
+                    <FaTwitter className="absolute top-28 left-32 text-blue-400" size={28} />
+                  </div>
+                )}
+
+                {/* AI Background Icons for AI Responses */}
+                {feature.title === 'AI Responses' && (
+                  <div className="absolute inset-0 opacity-15 pointer-events-none">
+                    <FaRobot className="absolute top-4 right-4 text-blue-500" size={36} />
+                    <FaBrain className="absolute top-16 right-12 text-purple-500" size={32} />
+                    <FaMicrochip className="absolute top-8 right-24 text-green-500" size={28} />
+                    <FaLightbulb className="absolute bottom-16 right-8 text-yellow-500" size={34} />
+                    <FaCog className="absolute bottom-8 right-20 text-gray-600" size={28} />
+                    <FaCode className="absolute bottom-4 right-32 text-indigo-500" size={32} />
+                    <FaRobot className="absolute bottom-12 left-8 text-blue-500" size={30} />
+                    <FaBrain className="absolute top-12 left-4 text-purple-500" size={36} />
+                    <FaMicrochip className="absolute bottom-20 left-16 text-green-500" size={26} />
+                    <FaLightbulb className="absolute top-20 left-12 text-yellow-500" size={32} />
+                    <FaCog className="absolute bottom-6 left-24 text-gray-600" size={30} />
+                    <FaCode className="absolute top-28 left-32 text-indigo-500" size={28} />
+                  </div>
+                )}
+
+                {/* Social Media Background Icons for Social Monitoring */}
+                {feature.title === 'Social Monitoring' && (
+                  <div className="absolute inset-0 opacity-15 pointer-events-none">
+                    <FaYoutube className="absolute top-4 right-4 text-red-500" size={36} />
+                    <FaInstagram className="absolute top-16 right-12 text-pink-500" size={32} />
+                    <FaTiktok className="absolute top-8 right-24 text-black" size={28} />
+                    <FaReddit className="absolute bottom-16 right-8 text-orange-500" size={34} />
+                    <FaLinkedin className="absolute bottom-8 right-20 text-blue-700" size={28} />
+                    <FaTwitter className="absolute bottom-4 right-32 text-blue-400" size={32} />
+                    <FaInstagram className="absolute bottom-12 left-8 text-pink-500" size={30} />
+                    <FaYoutube className="absolute top-12 left-4 text-red-500" size={36} />
+                    <FaTiktok className="absolute bottom-20 left-16 text-black" size={26} />
+                    <FaLinkedin className="absolute top-20 left-12 text-blue-700" size={32} />
+                    <FaReddit className="absolute bottom-6 left-24 text-orange-500" size={30} />
+                    <FaTwitter className="absolute top-28 left-32 text-blue-400" size={28} />
+                  </div>
+                )}
+
+                {/* Analytics Background Icons for Analytics & Reports */}
+                {feature.title === 'Analytics & Reports' && (
+                  <div className="absolute inset-0 opacity-15 pointer-events-none">
+                    <FaChartLine className="absolute top-4 right-4 text-blue-500" size={36} />
+                    <FaChartBar className="absolute top-16 right-12 text-green-500" size={32} />
+                    <FaChartPie className="absolute top-8 right-24 text-purple-500" size={28} />
+                    <FaFileAlt className="absolute bottom-16 right-8 text-orange-500" size={34} />
+                    <FaTable className="absolute bottom-8 right-20 text-indigo-500" size={28} />
+                    <FaCalculator className="absolute bottom-4 right-32 text-gray-600" size={32} />
+                    <FaChartLine className="absolute bottom-12 left-8 text-blue-500" size={30} />
+                    <FaChartBar className="absolute top-12 left-4 text-green-500" size={36} />
+                    <FaChartPie className="absolute bottom-20 left-16 text-purple-500" size={26} />
+                    <FaFileAlt className="absolute top-20 left-12 text-orange-500" size={32} />
+                    <FaTable className="absolute bottom-6 left-24 text-indigo-500" size={30} />
+                    <FaArrowUp className="absolute top-28 left-32 text-emerald-500" size={28} />
                   </div>
                 )}
                 

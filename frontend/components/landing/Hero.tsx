@@ -78,7 +78,7 @@ export function Hero() {
           >
             <div className="text-center">
               <p className="text-lg md:text-xl text-primary-dark/80 leading-relaxed font-['Poppins',sans-serif] font-bold max-w-4xl mx-auto">
-                Repruv AI replies that sound like you. 💬 Social media monitoring keeping you in the loop. 🔔 Grow your following with data driven insights. 🚀
+                Repruv AI replies that sound like you 💬. Social media monitoring keeping you in the loop 🔔. Grow your following with data driven insights 🚀.
               </p>
             </div>
           </motion.div>
@@ -199,27 +199,27 @@ export function Hero() {
           transition={{ duration: 0.8, delay: 0.8 }}
         >
           <div className="max-w-6xl mx-auto">
-            <div className="bg-gradient-to-br from-white/95 via-white/90 to-white/85 backdrop-blur-md rounded-3xl p-6 lg:p-8 shadow-2xl border border-white/30 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-white/95 via-white/90 to-white/85 dark:from-gray-900/95 dark:via-gray-900/90 dark:to-gray-800/85 backdrop-blur-md rounded-3xl p-6 lg:p-8 shadow-2xl border border-white/30 dark:border-gray-700/50 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-[var(--brand-primary-solid)]/5 via-transparent to-[var(--brand-secondary-solid)]/5 rounded-3xl"></div>
               
               <div className="relative z-10">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
                   <div className="lg:col-span-5">
                     <div className="text-center lg:text-left">
-                      <h3 className="text-2xl lg:text-3xl font-bold text-primary-dark mb-3 font-['Poppins',sans-serif] bg-gradient-to-r from-[var(--brand-primary-solid)] to-[var(--brand-secondary-solid)] bg-clip-text text-transparent">
+                      <h3 className="text-2xl lg:text-3xl font-bold text-primary-dark dark:text-white mb-3 font-['Poppins',sans-serif] bg-gradient-to-r from-[var(--brand-primary-solid)] to-[var(--brand-secondary-solid)] bg-clip-text text-transparent">
                         Get Early Access
                       </h3>
-                      <p className="text-base text-primary-dark/80 font-['Poppins',sans-serif] font-medium mb-3">
+                      <p className="text-base text-primary-dark/80 dark:text-gray-300 font-['Poppins',sans-serif] font-medium mb-3">
                         Start using AI-powered social media engagement that learns your voice and delivers actionable insights.
                       </p>
                       <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
                           Early Access
                         </span>
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
                           Secure &amp; Private
                         </span>
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
                           Free Creator Use
                         </span>
                       </div>
@@ -237,7 +237,7 @@ export function Hero() {
                               value={email}
                               onChange={(e) => setEmail(e.target.value)}
                               required
-                              className="w-full pl-6 pr-12 py-3 text-base border-2 border-gray-200 rounded-xl focus:border-[var(--brand-primary-solid)] focus:ring-4 focus:ring-[var(--brand-primary-solid)]/20 transition-all duration-300 bg-white/90 backdrop-blur-sm group-hover:border-gray-300"
+                              className="w-full pl-6 pr-12 py-3 text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-4 focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30 transition-all duration-300 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm group-hover:border-gray-300 dark:group-hover:border-gray-500 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
                               disabled={loading}
                             />
                           </div>
@@ -246,7 +246,7 @@ export function Hero() {
                             <Button 
                               type="submit" 
                               disabled={loading || !email.trim()} 
-                              className="w-full sm:w-auto px-6 py-3 text-base font-semibold bg-gradient-to-r from-[var(--brand-primary-solid)] to-[var(--brand-secondary-solid)] hover:from-[var(--brand-primary-solid-hover)] hover:to-[var(--brand-secondary-solid-hover)] text-white border-0 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+                              className="w-full sm:w-auto px-6 py-3 text-base font-semibold bg-gradient-to-r from-[var(--brand-primary-solid)] to-[var(--brand-secondary-solid)] hover:from-[var(--brand-primary-solid-hover)] hover:to-[var(--brand-secondary-solid-hover)] text-white border-0 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 focus:ring-4 focus:ring-[var(--brand-primary-solid)]/30"
                             >
                               {loading ? (
                                 <>
@@ -262,14 +262,14 @@ export function Hero() {
                       </div>
                       
                       {error && (
-                        <div className="flex items-center space-x-2 text-red-600 text-sm bg-red-50 p-3 rounded-xl border border-red-200">
+                        <div className="flex items-center space-x-2 text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-200 dark:border-red-800">
                           <AlertCircle className="h-4 w-4" />
                           <span>{error}</span>
                         </div>
                       )}
                       
                       <div className="text-center sm:text-left">
-                        <p className="text-sm text-primary-dark/60 font-['Poppins',sans-serif]">
+                        <p className="text-sm text-primary-dark/60 dark:text-gray-400 font-['Poppins',sans-serif]">
                           Join <span className="font-semibold text-[var(--brand-primary-solid)]">countless</span> creators already on the waitlist
                         </p>
                       </div>
