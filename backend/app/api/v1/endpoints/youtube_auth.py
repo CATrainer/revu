@@ -28,7 +28,7 @@ async def initiate_oauth(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user),
     scopes: Optional[str] = Query(
-        default="https://www.googleapis.com/auth/youtube.readonly",
+        default="https://www.googleapis.com/auth/youtube.force-ssl",
         description="Space-separated list of Google OAuth scopes",
     ),
 ) -> dict[str, Any]:

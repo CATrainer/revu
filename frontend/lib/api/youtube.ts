@@ -50,7 +50,7 @@ function toQuery(params: Record<string, QueryValue>): string {
 
 // 1) Initiate OAuth flow
 export async function initiateYouTubeConnection(options?: {
-  scopes?: string; // space-separated scopes
+  scopes?: string; // space-separated scopes (default is youtube.force-ssl on backend)
   token?: string; // override auth token if needed
 }): Promise<{ redirect_url: string; state: string }> {
   const qs = toQuery({ scopes: options?.scopes });

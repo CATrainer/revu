@@ -179,7 +179,7 @@ class YouTubeAPIWrapper:
     ) -> Dict[str, Any]:
         return await self._run(
             operation="commentThreads.list",
-            scopes=READONLY_SCOPES,
+            scopes=WRITE_SCOPES,
             call_fn=lambda c: c.list_video_comments(
                 video_id=video_id,
                 page_token=page_token,
@@ -198,7 +198,7 @@ class YouTubeAPIWrapper:
     ) -> Dict[str, Any]:
         return await self._run(
             operation="comments.list",
-            scopes=READONLY_SCOPES,
+            scopes=WRITE_SCOPES,
             call_fn=lambda c: c.list_comment_replies(
                 parent_comment_id=parent_comment_id,
                 page_token=page_token,

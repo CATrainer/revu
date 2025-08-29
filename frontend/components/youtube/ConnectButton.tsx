@@ -19,7 +19,8 @@ export default function ConnectButton({ connectionId, className }: ConnectButton
   const onConnect = async () => {
     setError(null);
     try {
-      const res = await init.mutateAsync(undefined);
+  // Request youtube.force-ssl by default to allow comment operations (and some reads)
+  const res = await init.mutateAsync('https://www.googleapis.com/auth/youtube.force-ssl');
       if (res?.redirect_url) {
         window.location.href = res.redirect_url;
       } else {
