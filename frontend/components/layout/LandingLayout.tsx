@@ -7,12 +7,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { 
-  FaStar,
+  FaReply,
   FaBrain,
-  FaBinoculars,
   FaHashtag,
   FaChartBar,
-  FaUsers,
   FaThLarge
 } from "react-icons/fa";
 import { Footer } from './Footer';
@@ -105,13 +103,13 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                         </li>
                         <li>
                           <NavigationMenuLink asChild>
-                            <Link href="/features#review-management" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
+                            <Link href="/features#response-automation" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
                               <div className="flex items-center justify-center mb-2">
-                                <FaStar className="text-yellow-500" size={20} />
+                                <FaReply className="text-blue-500" size={20} />
                               </div>
-                              <div className="text-sm font-medium leading-none">Review Management</div>
+                              <div className="text-sm font-medium leading-none">Response Automation</div>
                               <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
-                                Centralize all your reviews
+                                Automate video replies
                               </p>
                             </Link>
                           </NavigationMenuLink>
@@ -125,19 +123,6 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                               <div className="text-sm font-medium leading-none">AI-Powered Responses</div>
                               <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
                                 Generate responses instantly
-                              </p>
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
-                        <li>
-                          <NavigationMenuLink asChild>
-                            <Link href="/features#competitor-tracking" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
-                              <div className="flex items-center justify-center mb-2">
-                                <FaBinoculars className="text-blue-500" size={20} />
-                              </div>
-                              <div className="text-sm font-medium leading-none">Competitor Tracking</div>
-                              <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
-                                Stay ahead of competition
                               </p>
                             </Link>
                           </NavigationMenuLink>
@@ -168,27 +153,14 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                             </Link>
                           </NavigationMenuLink>
                         </li>
-                        <li>
-                          <NavigationMenuLink asChild>
-                            <Link href="/features#team-collaboration" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
-                              <div className="flex items-center justify-center mb-2">
-                                <FaUsers className="text-purple-500" size={20} />
-                              </div>
-                              <div className="text-sm font-medium leading-none">Team Collaboration</div>
-                              <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
-                                Work together seamlessly
-                              </p>
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
                         <li className="flex flex-col space-y-2 p-3">
                           <Button asChild className="bg-green-600 hover:bg-green-700 text-white text-xs h-8">
-                            <Link href="/join-waitlist">
+                            <Link href="/demo">
                               Request Demo
                             </Link>
                           </Button>
                           <Button asChild variant="outline" className="text-xs h-8 border-green-600 text-green-600 hover:bg-green-50">
-                            <Link href="/#early-access-form">
+                            <Link href="/#hero">
                               Get Early Access
                             </Link>
                           </Button>
@@ -215,7 +187,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                   
                   <NavigationMenuItem>
                     <Button asChild className="bg-green-600 hover:bg-green-700 text-white">
-                      <Link href="/join-waitlist">
+                      <Link href="/demo">
                         Request Demo
                       </Link>
                     </Button>
@@ -283,7 +255,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
               </Link>
               <div className="px-3 py-2">
                 <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
-                  <Link href="/join-waitlist">
+                  <Link href="/demo">
                     Request Demo
                   </Link>
                 </Button>

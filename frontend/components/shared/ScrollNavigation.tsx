@@ -11,10 +11,9 @@ interface Section {
 }
 
 const sections: Section[] = [
-  { id: 'hero', name: 'Home' },
-  { id: 'features', name: 'Everything You Need to Manage Your Online Reputation' },
-  { id: 'vision', name: 'Our Vision' },
-  { id: 'early-access-form', name: 'Ready to Transform Your Online Reputation?' }
+  { id: 'hero', name: 'Home & Early Access' },
+  { id: 'features', name: 'Everything You Need for Creator Success' },
+  { id: 'vision', name: 'Our Vision' }
 ];
 
 export function ScrollNavigation() {

@@ -4,12 +4,10 @@ import React from 'react';
 import Link from 'next/link';
 import { motion, LazyMotion, domAnimation, useInView } from "framer-motion";
 import { 
-  FaStar,
+  FaReply,         // Reply icon for response automation
   FaBrain,         // AI brain for intelligent responses
-  FaBinoculars,    // Binoculars for competitor tracking
   FaHashtag,       // Social media hashtag
   FaChartBar,      // Analytics charts
-  FaUsers,         // Team collaboration
   FaInstagram,     // Instagram icon
   FaFacebook,      // Facebook icon
   FaTwitter,       // Twitter icon
@@ -28,40 +26,28 @@ interface Feature {
 
 const features: Feature[] = [
   {
-    icon: FaStar,
-    iconColor: 'text-yellow-500', // Gold for star ratings
-    title: 'Review Management',
-    description: 'Centralize all reviews from Google, TrustPilot, Social Media platforms and more into one intelligent inbox.',
+    icon: FaReply,
+    iconColor: 'text-blue-500', // Blue for replies/communication
+    title: 'Response Automation',
+    description: 'Automate replies to comments on your reels/videos and direct messages centrally on TikTok, YouTube and Instagram.',
   },
   {
     icon: FaBrain,
     iconColor: 'text-purple-500', // Purple for AI intelligence
     title: 'AI Responses',
-    description: 'Generate personalized responses in your brand voice using AI.',
-  },
-  {
-    icon: FaBinoculars,
-    iconColor: 'text-blue-500', // Blue for observation/tracking
-    title: 'Competitor Tracking',
-    description: 'Monitor and benchmark against local competitors to stay ahead of the competition.',
+    description: 'Generate personalized responses in your tone and voice using Repruv AI.',
   },
   {
     icon: FaHashtag,
     iconColor: 'text-pink-500', // Pink for social media
     title: 'Social Monitoring',
-    description: 'Track mentions and feedback across social media platforms.',
+    description: 'Track text sentiment, @ mentions and hashtags and keep ontop of what people are saying about you on social media.',
   },
   {
     icon: FaChartBar,
     iconColor: 'text-green-500', // Green for growth/analytics
     title: 'Analytics & Reports',
-    description: 'Get actionable insights with comprehensive reporting and analytics derived from your review data.',
-  },
-  {
-    icon: FaUsers,
-    iconColor: 'text-purple-500', // Purple for team/collaboration
-    title: 'Team Collaboration',
-    description: 'Work collaboratively with task assignments, role-based permissions and automation workflows.',
+    description: 'Get actionable insights with comprehensive reporting and analytics derived from your chat and response data.',
   },
 ];
 
@@ -87,7 +73,7 @@ export function Features() {
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             <motion.h2 
-              className="text-3xl md:text-4xl font-bold brand-text mb-4 font-['Poppins',sans-serif]"
+              className="text-2xl md:text-3xl font-bold brand-text mb-4 font-['Poppins',sans-serif]"
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ duration: 0.6, delay: 0.3 }}
@@ -95,7 +81,7 @@ export function Features() {
               Everything You Need to Manage Your Online Reputation
             </motion.h2>
             <motion.p 
-              className="text-lg text-primary-dark max-w-2xl mx-auto font-['Poppins',sans-serif] font-bold"
+              className="text-base text-primary-dark max-w-2xl mx-auto font-['Poppins',sans-serif] font-bold"
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ duration: 0.6, delay: 0.5 }}
@@ -105,7 +91,7 @@ export function Features() {
           </motion.div>
           
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto"
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : { opacity: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
@@ -131,8 +117,8 @@ export function Features() {
                 }}
                 className="card-background p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer group relative overflow-hidden"
               >
-                {/* Social Media Background Icons for Review Management */}
-                {feature.title === 'Review Management' && (
+                {/* Social Media Background Icons for Response Automation */}
+                {feature.title === 'Response Automation' && (
                   <div className="absolute inset-0 opacity-5 pointer-events-none">
                     <FaInstagram className="absolute top-4 right-4 text-pink-500" size={24} />
                     <FaFacebook className="absolute top-16 right-12 text-blue-600" size={20} />
@@ -159,7 +145,7 @@ export function Features() {
                     />
                   </motion.div>
                   <motion.h3 
-                    className="text-xl font-semibold text-primary-dark mb-2 font-['Poppins',sans-serif]"
+                    className="text-xl font-semibold text-primary-dark mb-2 font-['Poppins',sans-serif] text-center"
                     initial={{ opacity: 0 }}
                     animate={isInView ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ delay: 0.8 + (index * 0.1), duration: 0.5 }}

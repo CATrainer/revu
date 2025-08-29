@@ -29,7 +29,6 @@ const plans = [
 			'Google + Social monitoring',
 			'2,000 AI responses/month',
 			'Advanced analytics',
-			'Competitor tracking',
 			'Priority support',
 		],
 	},
