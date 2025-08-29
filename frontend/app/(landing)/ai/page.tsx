@@ -136,7 +136,7 @@ function AIContent() {
             <Link href="/join-waitlist">Try AI Response Generator</Link>
           </Button>
           <Button size="lg" variant="secondary" className="button-secondary" asChild>
-            <Link href="/join-waitlist">Join Waitlist</Link>
+            <Link href="/demo">Watch Demo</Link>
           </Button>
         </motion.div>
       </motion.section>
@@ -367,7 +367,7 @@ function SEOContent() {
             <Link href="/join-waitlist">Get Early Access</Link>
           </Button>
           <Button size="lg" variant="outline" className="button-secondary" asChild>
-            <Link href="/join-waitlist">Join Waitlist</Link>
+            <Link href="/demo">See How It Works</Link>
           </Button>
         </motion.div>
       </motion.section>

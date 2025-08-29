@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { useInView } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Users, Building2, Briefcase, Target } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, Briefcase, Target } from 'lucide-react';
 
 export function SocialProof() {
   const ref = useRef<HTMLDivElement>(null);
@@ -17,10 +17,10 @@ export function SocialProof() {
       icon: Target,
       content: {
         text: [
-          "At Repruv, we believe every creator, brand, and business deserves an authentic and manageable online reputation. In today's digital world, feedback shapes decisions — and managing it shouldn't consume your time.",
-          "Repruv empowers users to monitor, analyze, respond, engage, protect, and report on reviews and social feedback, using AI to streamline tasks while keeping your unique voice. By transforming feedback into actionable insights and advocacy, we help build trust, strengthen relationships, and drive growth."
+          "At Repruv, we believe every creator deserves authentic engagement without the time drain. In today's digital world, comments and messages shape your community — managing them shouldn't consume your creativity.",
+          "Repruv empowers creators to automate responses to comments and direct messages across TikTok, YouTube, and Instagram, using AI that sounds like you. Transform engagement into growth while staying true to your voice."
         ],
-        quote: "Your reputation, managed intelligently. Your voice, amplified authentically.",
+        quote: "Your responses, automated intelligently. Your voice, amplified authentically.",
         attribution: "— The Repruv Team"
       }
     },
@@ -30,11 +30,11 @@ export function SocialProof() {
       icon: Users,
       content: {
         bullets: [
-          "Save 10+ hrs/week replying to comments & mentions with AI.",
+          "Save 10+ hrs/week responding to comments & DMs with AI.",
           "Protect your personal brand reputation across all platforms.",
           "Spot negative feedback instantly with real-time alerts.",
           "Build stronger engagement = up to 3x more loyal followers.",
-          "One dashboard to handle YouTube, TikTok, Instagram, Twitter & more."
+          "One dashboard to handle YouTube, TikTok, Instagram responses & more."
         ],
         quote: "Grow your audience authentically while staying true to your voice.",
         attribution: "— Built for Creators"
@@ -46,30 +46,14 @@ export function SocialProof() {
       icon: Briefcase,
       content: {
         bullets: [
-          "Manage multiple client reputations from one hub.",
-          "Scale operations with AI-powered responses (faster + consistent).",
-          "Benchmark against competitors with automated insights.",
-          "Deliver clear ROI via advanced analytics & branded reports.",
-          "Reduce team workload by 40% with automation & workflows."
+          "Manage multiple creator accounts from one central hub.",
+          "Scale creator engagement with AI that matches each creator's voice.",
+          "Monitor all your creators' mentions and comments in real-time.",
+          "Deliver growth reports showing engagement metrics & follower gains.",
+          "Reduce response management workload by 60% across your roster."
         ],
-        quote: "Scale your agency services with intelligent automation.",
+        quote: "Scale creator management with intelligent automation.",
         attribution: "— Agency Partners"
-      }
-    },
-    {
-      id: 'businesses',
-      title: 'For Brands/Businesses',
-      icon: Building2,
-      content: {
-        bullets: [
-          "Centralize reviews from Google, TrustPilot, TripAdvisor & beyond.",
-          "Boost star ratings by 20–30% through faster, authentic responses.",
-          "Identify & report fake reviews instantly.",
-          "Monitor social buzz to catch PR issues before they escalate.",
-          "Turn customer feedback into actionable insights for growth."
-        ],
-        quote: "Enterprise reputation management that scales with your business.",
-        attribution: "— Business Solutions"
       }
     }
   ];
@@ -117,7 +101,7 @@ export function SocialProof() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.5 }}
-                className="text-3xl md:text-4xl font-bold brand-text font-['Poppins',sans-serif]"
+                className="text-3xl md:text-4xl lg:text-5xl font-bold brand-text font-['Poppins',sans-serif]"
               >
                 {currentAvatar.title}
               </motion.h2>
@@ -238,7 +222,7 @@ export function SocialProof() {
                 transition={{ duration: 0.6, delay: 0.3 }}
                 className="lg:pl-8"
               >
-                <div className="text-lg text-primary-dark leading-relaxed space-y-6 font-['Poppins',sans-serif] font-bold">
+                <div className="text-base text-primary-dark leading-relaxed space-y-4 font-['Poppins',sans-serif]">
                   {currentAvatar.content.text ? (
                     // Default card with paragraphs
                     currentAvatar.content.text.map((paragraph, index) => (
@@ -254,7 +238,7 @@ export function SocialProof() {
                   ) : (
                     // Avatar cards with bullet points
                     <motion.ul
-                      className="space-y-4"
+                      className="space-y-3"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5, delay: 0.4 }}
@@ -268,12 +252,12 @@ export function SocialProof() {
                           className="flex items-start gap-3"
                         >
                           <motion.div
-                            className="w-2 h-2 bg-[var(--brand-primary)] rounded-full mt-3 flex-shrink-0"
+                            className="w-2 h-2 bg-[var(--brand-primary)] rounded-full mt-2 flex-shrink-0"
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{ duration: 0.3, delay: 0.6 + (index * 0.1) }}
                           />
-                          <span className="text-base leading-relaxed">{bullet}</span>
+                          <span className="text-sm leading-relaxed">{bullet}</span>
                         </motion.li>
                       ))}
                     </motion.ul>
@@ -284,10 +268,10 @@ export function SocialProof() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.6, delay: 0.6 }}
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-[var(--muted)] to-[var(--secondary)] dark:from-[var(--secondary)] dark:to-[var(--muted)] p-6 rounded-lg border-l-4 border-[var(--brand-primary)]"
+                    className="bg-gradient-to-r from-[var(--muted)] to-[var(--secondary)] dark:from-[var(--secondary)] dark:to-[var(--muted)] p-4 rounded-lg border-l-4 border-[var(--brand-primary)]"
                   >
                     <motion.p 
-                      className="text-xl font-bold text-primary-dark mb-2 font-['Poppins',sans-serif]"
+                      className="text-base font-semibold text-primary-dark mb-2 font-['Poppins',sans-serif]"
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.4, delay: 0.8 }}
@@ -295,7 +279,7 @@ export function SocialProof() {
                       &ldquo;{currentAvatar.content.quote}&rdquo;
                     </motion.p>
                     <motion.p 
-                      className="text-sm text-primary-dark italic font-['Poppins',sans-serif] font-bold"
+                      className="text-xs text-primary-dark italic font-['Poppins',sans-serif]"
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.4, delay: 1 }}

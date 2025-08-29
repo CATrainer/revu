@@ -12,12 +12,10 @@ interface Section {
 
 const sections: Section[] = [
   { id: 'hero', name: 'Hero' },
-  { id: 'review-management', name: 'Review Management' },
+  { id: 'response-automation', name: 'Response Automation' },
   { id: 'ai-responses', name: 'AI-Powered Responses' },
-  { id: 'competitor-tracking', name: 'Competitor Tracking' },
   { id: 'social-monitoring', name: 'Social Monitoring' },
-  { id: 'analytics-and-reports', name: 'Analytics & Reports' },
-  { id: 'team-collaboration', name: 'Team Collaboration' }
+  { id: 'analytics-and-reports', name: 'Analytics & Reports' }
 ];
 
 export function FeaturesScrollNavigation() {

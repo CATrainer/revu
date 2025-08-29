@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronUp } from 'lucide-react';
 
 interface Section {
   id: string;
@@ -12,172 +11,186 @@ interface Section {
 
 const sections: Section[] = [
   { id: 'hero', name: 'Home' },
-  { id: 'features', name: 'Everything You Need to Manage Your Online Reputation' },
-  { id: 'vision', name: 'Our Vision' },
-  { id: 'early-access-form', name: 'Ready to Transform Your Online Reputation?' }
+  { id: 'features', name: 'Features' },
+  { id: 'vision', name: 'Vision' }
 ];
 
 export function ScrollNavigation() {
   const [currentSection, setCurrentSection] = useState(0);
-  const [isAtEnd, setIsAtEnd] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY + window.innerHeight / 2;
-      
-      // Find current section based on scroll position
-      for (let i = sections.length - 1; i >= 0; i--) {
-        const element = document.getElementById(sections[i].id);
-        if (element && element.offsetTop <= scrollPosition) {
-          setCurrentSection(i);
-          break;
-        }
-      }
+    let ticking = false;
 
-      // Check if we're at the end (last section)
-      setIsAtEnd(currentSection >= sections.length - 1);
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollPosition = window.scrollY + window.innerHeight / 2;
+          
+          // Show navigation after scrolling a bit
+          setIsVisible(window.scrollY > 200);
+          
+          // Find current section based on scroll position with buffer
+          for (let i = sections.length - 1; i >= 0; i--) {
+            const element = document.getElementById(sections[i].id);
+            if (element && element.offsetTop - 100 <= scrollPosition) {
+              setCurrentSection(i);
+              break;
+            }
+          }
+          
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Initial check
 
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [currentSection]);
+  }, []);
 
-  const handleNavigation = () => {
-    if (isAtEnd) {
-      // Go back to top
-      const heroSection = document.getElementById('hero');
-      if (heroSection) {
-        heroSection.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }
-    } else {
-      // Go to next section
-      const nextSectionIndex = Math.min(currentSection + 1, sections.length - 1);
-      const nextSection = document.getElementById(sections[nextSectionIndex].id);
-      
-      if (nextSection) {
-        nextSection.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }
+  const scrollToSection = (index: number) => {
+    const element = document.getElementById(sections[index].id);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50"
-    >
-      {/* Container for proper alignment */}
-      <div className="relative flex flex-col items-center">
-        {/* Main navigation button positioned over 3rd indicator */}
-        <motion.button
-          onClick={handleNavigation}
-          whileHover={{ scale: 1.05, y: -2 }}
-          whileTap={{ scale: 0.95 }}
-          className="bg-[var(--brand-primary-solid)] hover:bg-[var(--brand-primary-solid-hover)] text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 group flex items-center justify-center mb-3"
-          aria-label={isAtEnd ? 'Back to Top' : `Section ${currentSection + 1}`}
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 20 }}
+          className="fixed right-6 top-1/2 transform -translate-y-1/2 z-50"
         >
-          {/* Progress indicator with number */}
-          <div className="w-8 h-8 relative">
-            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 32 32">
-              <circle
-                cx="16"
-                cy="16"
-                r="14"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                opacity="0.3"
-              />
-              <motion.circle
-                cx="16"
-                cy="16"
-                r="14"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeDasharray="88"
-                initial={{ strokeDashoffset: 88 }}
-                animate={{ 
-                  strokeDashoffset: isAtEnd ? 0 : 88 - (currentSection / (sections.length - 1)) * 88
-                }}
-                transition={{ duration: 0.5 }}
-                className="text-white"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              {isAtEnd ? (
-                <motion.div
-                  animate={{ 
-                    y: [0, -2, 0]
-                  }}
-                  transition={{ 
-                    duration: 1.5, 
-                    repeat: Infinity, 
-                    ease: "easeInOut" 
-                  }}
-                >
-                  <ChevronUp className="w-4 h-4 text-white" />
-                </motion.div>
-              ) : (
-                <span className="text-xs font-bold text-white">
-                  {currentSection + 1}
-                </span>
-              )}
-            </div>
-          </div>
-        </motion.button>
-
-        {/* Back to top text for section 5 */}
-        <AnimatePresence>
-          {isAtEnd && (
+          {/* Main Navigation Container */}
+          <div className="relative">
+            {/* Vertical Progress Track */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 w-0.5 h-full bg-gradient-to-b from-transparent via-gray-300 to-transparent dark:via-gray-600 opacity-30" />
+            
+            {/* Active Progress Line */}
             <motion.div
+              className="absolute left-1/2 transform -translate-x-1/2 w-0.5 bg-gradient-to-b from-[var(--brand-primary-solid)] to-[var(--brand-secondary-solid)] shadow-sm"
+              initial={{ height: 0, top: 0 }}
+              animate={{ 
+                height: `${(100 / Math.max(1, sections.length - 1)) * currentSection}%`,
+                top: '0%'
+              }}
+              transition={{ 
+                duration: 0.8, 
+                ease: [0.25, 0.1, 0.25, 1],
+                type: "tween"
+              }}
+            />
+
+            {/* Navigation Dots */}
+            <div className="relative flex flex-col space-y-8">
+              {sections.map((section, index) => (
+                <div key={section.id} className="relative flex items-center group">
+                  {/* Section Label */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 15, scale: 0.9 }}
+                    whileHover={{ opacity: 1, x: 0, scale: 1 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="absolute right-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                  >
+                    <div className="relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap">
+                        {section.name}
+                      </span>
+                      {/* Enhanced Tooltip Arrow */}
+                      <div className="absolute left-full top-1/2 transform -translate-y-1/2">
+                        <div className="w-0 h-0 border-l-[8px] border-l-white/95 dark:border-l-gray-900/95 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent" />
+                        <div className="absolute -left-px top-0 w-0 h-0 border-l-[8px] border-l-gray-200/50 dark:border-l-gray-700/50 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent" />
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Navigation Dot */}
+                  <motion.button
+                    onClick={() => scrollToSection(index)}
+                    className="relative flex items-center justify-center w-6 h-6 transition-all duration-200"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                  >
+                    {/* Outer Ring */}
+                    <motion.div
+                      className={`absolute inset-0 rounded-full border transition-all duration-200 ${
+                        index === currentSection
+                          ? 'border-[var(--brand-primary-solid)] bg-[var(--brand-primary-solid)]/10'
+                          : 'border-gray-300 dark:border-gray-600 group-hover:border-[var(--brand-primary-solid)]/60'
+                      }`}
+                      animate={{
+                        scale: index === currentSection ? 1 : 0.85,
+                        borderWidth: index === currentSection ? 2 : 1
+                      }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                    />
+                    
+                    {/* Inner Dot */}
+                    <motion.div
+                      className={`relative w-2 h-2 rounded-full transition-colors duration-200 ${
+                        index === currentSection
+                          ? 'bg-[var(--brand-primary-solid)] shadow-sm'
+                          : 'bg-gray-400 dark:bg-gray-500 group-hover:bg-[var(--brand-primary-solid)]'
+                      }`}
+                      animate={{
+                        scale: index === currentSection ? 1.1 : 1,
+                      }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                    />
+                    
+                    {/* Active Pulse Effect */}
+                    {index === currentSection && (
+                      <motion.div
+                        className="absolute inset-0 rounded-full border border-[var(--brand-primary-solid)]/30"
+                        animate={{
+                          scale: [1, 1.8],
+                          opacity: [0.4, 0]
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeOut",
+                          repeatDelay: 0.5
+                        }}
+                      />
+                    )}
+                  </motion.button>
+                </div>
+              ))}
+            </div>
+
+            {/* Floating Progress Indicator */}
+            <motion.div
+              className="absolute -bottom-8 left-1/2 transform -translate-x-1/2"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap"
+              transition={{ delay: 0.2, duration: 0.3, ease: "easeOut" }}
             >
-              <span className="text-xs text-[var(--brand-primary-solid)] font-medium bg-white px-2 py-1 rounded shadow-sm">
-                Back to Top
-              </span>
+              <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+                <motion.span
+                  className="text-xs font-bold text-[var(--brand-primary-solid)]"
+                  key={currentSection}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  {currentSection + 1}/{sections.length}
+                </motion.span>
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Section indicators - positioned so 3rd indicator aligns with main button */}
-        <motion.div 
-          className="flex justify-center space-x-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          {sections.map((_, index) => (
-            <motion.div
-              key={index}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                index <= currentSection 
-                  ? 'bg-[var(--brand-primary-solid)]' 
-                  : 'bg-[var(--brand-primary-solid)] opacity-30'
-              }`}
-              whileHover={{ scale: 1.2 }}
-              onClick={() => {
-                const section = document.getElementById(sections[index].id);
-                if (section) {
-                  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-              }}
-              style={{ cursor: 'pointer' }}
-            />
-          ))}
+          </div>
         </motion.div>
-      </div>
-    </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -20,7 +20,6 @@ celery_app = Celery(
         "app.tasks.analytics",
         "app.tasks.email",
         "app.tasks.automation",
-    "app.tasks.demo",
     ],
 )
 
@@ -82,21 +81,11 @@ celery_app.conf.beat_schedule = {
         "task": "app.tasks.automation.process_all_rules",
         "schedule": crontab(minute="*/5"),  # Every 5 minutes
     },
-    # Simulate demo activity every 5 minutes
-    "simulate-demo-activity": {
-        "task": "app.tasks.demo.simulate_ongoing_activity",
-        "schedule": crontab(minute="*/5"),
-    },
     
     # Clean up old data monthly
     "cleanup-old-data": {
         "task": "app.tasks.analytics.cleanup_old_data",
         "schedule": crontab(hour=3, minute=0, day_of_month=1),  # First day of month at 3 AM
-    },
-    # Cleanup expired demo users daily
-    "cleanup-expired-demo-users": {
-        "task": "app.tasks.demo.cleanup_expired_demo_users",
-        "schedule": crontab(hour=4, minute=0),
     },
 }
 

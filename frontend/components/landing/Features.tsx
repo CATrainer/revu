@@ -4,18 +4,27 @@ import React from 'react';
 import Link from 'next/link';
 import { motion, LazyMotion, domAnimation, useInView } from "framer-motion";
 import { 
-  FaStar,
+  FaReply,         // Reply icon for response automation
   FaBrain,         // AI brain for intelligent responses
-  FaBinoculars,    // Binoculars for competitor tracking
   FaHashtag,       // Social media hashtag
   FaChartBar,      // Analytics charts
-  FaUsers,         // Team collaboration
   FaInstagram,     // Instagram icon
-  FaFacebook,      // Facebook icon
-  FaTwitter,       // Twitter icon
+  FaTwitter,       // X (Twitter) icon
   FaYoutube,       // YouTube icon
   FaLinkedin,      // LinkedIn icon
-  FaTiktok         // TikTok icon
+  FaTiktok,        // TikTok icon
+  FaReddit,        // Reddit icon
+  FaRobot,         // Robot/AI icon
+  FaCog,           // Settings/gear icon for AI
+  FaMicrochip,     // Microchip for AI technology
+  FaLightbulb,     // Light bulb for AI intelligence
+  FaCode,          // Code icon for AI development
+  FaChartLine,     // Line chart for analytics
+  FaChartPie,      // Pie chart for data visualization
+  FaTable,         // Table for reports
+  FaFileAlt,       // Document/report icon
+  FaCalculator,    // Calculator for analytics
+  FaArrowUp        // Arrow up for growth metrics
 } from "react-icons/fa";
 import { IconType } from "react-icons";
 
@@ -28,40 +37,28 @@ interface Feature {
 
 const features: Feature[] = [
   {
-    icon: FaStar,
-    iconColor: 'text-yellow-500', // Gold for star ratings
-    title: 'Review Management',
-    description: 'Centralize all reviews from Google, TrustPilot, Social Media platforms and more into one intelligent inbox.',
+    icon: FaReply,
+    iconColor: 'text-blue-500', // Blue for replies/communication
+    title: 'Response Automation',
+    description: 'Automate replies to comments on your reels/videos and direct messages centrally on TikTok, YouTube and Instagram.',
   },
   {
     icon: FaBrain,
     iconColor: 'text-purple-500', // Purple for AI intelligence
     title: 'AI Responses',
-    description: 'Generate personalized responses in your brand voice using AI.',
-  },
-  {
-    icon: FaBinoculars,
-    iconColor: 'text-blue-500', // Blue for observation/tracking
-    title: 'Competitor Tracking',
-    description: 'Monitor and benchmark against local competitors to stay ahead of the competition.',
+    description: 'Generate personalized responses in your tone and voice using Repruv AI.',
   },
   {
     icon: FaHashtag,
     iconColor: 'text-pink-500', // Pink for social media
     title: 'Social Monitoring',
-    description: 'Track mentions and feedback across social media platforms.',
+    description: 'Track text sentiment, @ mentions and hashtags and keep ontop of what people are saying about you on social media.',
   },
   {
     icon: FaChartBar,
     iconColor: 'text-green-500', // Green for growth/analytics
     title: 'Analytics & Reports',
-    description: 'Get actionable insights with comprehensive reporting and analytics derived from your review data.',
-  },
-  {
-    icon: FaUsers,
-    iconColor: 'text-purple-500', // Purple for team/collaboration
-    title: 'Team Collaboration',
-    description: 'Work collaboratively with task assignments, role-based permissions and automation workflows.',
+    description: 'Get actionable insights with comprehensive reporting and analytics derived from your chat and response data.',
   },
 ];
 
@@ -87,25 +84,25 @@ export function Features() {
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             <motion.h2 
-              className="text-3xl md:text-4xl font-bold brand-text mb-4 font-['Poppins',sans-serif]"
+              className="text-3xl md:text-4xl lg:text-5xl font-bold brand-text mb-4 font-['Poppins',sans-serif]"
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              Everything You Need to Manage Your Online Reputation
+              Everything You Need to Manage Your Community Engagement
             </motion.h2>
             <motion.p 
-              className="text-lg text-primary-dark max-w-2xl mx-auto font-['Poppins',sans-serif] font-bold"
+              className="text-lg md:text-xl text-primary-dark max-w-2xl mx-auto font-['Poppins',sans-serif] font-bold"
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ duration: 0.6, delay: 0.5 }}
             >
-              Powerful features designed to save you time and grow your business
+              Powerful features designed to save you time and grow your audience&nbsp;⚡.
             </motion.p>
           </motion.div>
           
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto"
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : { opacity: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
@@ -131,19 +128,75 @@ export function Features() {
                 }}
                 className="card-background p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer group relative overflow-hidden"
               >
-                {/* Social Media Background Icons for Review Management */}
-                {feature.title === 'Review Management' && (
-                  <div className="absolute inset-0 opacity-5 pointer-events-none">
-                    <FaInstagram className="absolute top-4 right-4 text-pink-500" size={24} />
-                    <FaFacebook className="absolute top-16 right-12 text-blue-600" size={20} />
-                    <FaTwitter className="absolute top-8 right-24 text-blue-400" size={18} />
-                    <FaYoutube className="absolute bottom-16 right-8 text-red-500" size={22} />
-                    <FaLinkedin className="absolute bottom-8 right-20 text-blue-700" size={16} />
-                    <FaTiktok className="absolute bottom-4 right-32 text-black" size={20} />
-                    <FaInstagram className="absolute bottom-12 left-8 text-pink-500" size={18} />
-                    <FaFacebook className="absolute top-12 left-4 text-blue-600" size={24} />
-                    <FaTwitter className="absolute bottom-20 left-16 text-blue-400" size={16} />
-                    <FaYoutube className="absolute top-20 left-12 text-red-500" size={20} />
+                {/* Social Media Background Icons for Response Automation */}
+                {feature.title === 'Response Automation' && (
+                  <div className="absolute inset-0 opacity-15 pointer-events-none">
+                    <FaYoutube className="absolute top-4 right-4 text-red-500" size={36} />
+                    <FaInstagram className="absolute top-16 right-12 text-pink-500" size={32} />
+                    <FaTiktok className="absolute top-8 right-24 text-black" size={28} />
+                    <FaReddit className="absolute bottom-16 right-8 text-orange-500" size={34} />
+                    <FaLinkedin className="absolute bottom-8 right-20 text-blue-700" size={28} />
+                    <FaTwitter className="absolute bottom-4 right-32 text-blue-400" size={32} />
+                    <FaInstagram className="absolute bottom-12 left-8 text-pink-500" size={30} />
+                    <FaYoutube className="absolute top-12 left-4 text-red-500" size={36} />
+                    <FaTiktok className="absolute bottom-20 left-16 text-black" size={26} />
+                    <FaLinkedin className="absolute top-20 left-12 text-blue-700" size={32} />
+                    <FaReddit className="absolute bottom-6 left-24 text-orange-500" size={30} />
+                    <FaTwitter className="absolute top-28 left-32 text-blue-400" size={28} />
+                  </div>
+                )}
+
+                {/* AI Background Icons for AI Responses */}
+                {feature.title === 'AI Responses' && (
+                  <div className="absolute inset-0 opacity-15 pointer-events-none">
+                    <FaRobot className="absolute top-4 right-4 text-blue-500" size={36} />
+                    <FaBrain className="absolute top-16 right-12 text-purple-500" size={32} />
+                    <FaMicrochip className="absolute top-8 right-24 text-green-500" size={28} />
+                    <FaLightbulb className="absolute bottom-16 right-8 text-yellow-500" size={34} />
+                    <FaCog className="absolute bottom-8 right-20 text-gray-600" size={28} />
+                    <FaCode className="absolute bottom-4 right-32 text-indigo-500" size={32} />
+                    <FaRobot className="absolute bottom-12 left-8 text-blue-500" size={30} />
+                    <FaBrain className="absolute top-12 left-4 text-purple-500" size={36} />
+                    <FaMicrochip className="absolute bottom-20 left-16 text-green-500" size={26} />
+                    <FaLightbulb className="absolute top-20 left-12 text-yellow-500" size={32} />
+                    <FaCog className="absolute bottom-6 left-24 text-gray-600" size={30} />
+                    <FaCode className="absolute top-28 left-32 text-indigo-500" size={28} />
+                  </div>
+                )}
+
+                {/* Social Media Background Icons for Social Monitoring */}
+                {feature.title === 'Social Monitoring' && (
+                  <div className="absolute inset-0 opacity-15 pointer-events-none">
+                    <FaYoutube className="absolute top-4 right-4 text-red-500" size={36} />
+                    <FaInstagram className="absolute top-16 right-12 text-pink-500" size={32} />
+                    <FaTiktok className="absolute top-8 right-24 text-black" size={28} />
+                    <FaReddit className="absolute bottom-16 right-8 text-orange-500" size={34} />
+                    <FaLinkedin className="absolute bottom-8 right-20 text-blue-700" size={28} />
+                    <FaTwitter className="absolute bottom-4 right-32 text-blue-400" size={32} />
+                    <FaInstagram className="absolute bottom-12 left-8 text-pink-500" size={30} />
+                    <FaYoutube className="absolute top-12 left-4 text-red-500" size={36} />
+                    <FaTiktok className="absolute bottom-20 left-16 text-black" size={26} />
+                    <FaLinkedin className="absolute top-20 left-12 text-blue-700" size={32} />
+                    <FaReddit className="absolute bottom-6 left-24 text-orange-500" size={30} />
+                    <FaTwitter className="absolute top-28 left-32 text-blue-400" size={28} />
+                  </div>
+                )}
+
+                {/* Analytics Background Icons for Analytics & Reports */}
+                {feature.title === 'Analytics & Reports' && (
+                  <div className="absolute inset-0 opacity-15 pointer-events-none">
+                    <FaChartLine className="absolute top-4 right-4 text-blue-500" size={36} />
+                    <FaChartBar className="absolute top-16 right-12 text-green-500" size={32} />
+                    <FaChartPie className="absolute top-8 right-24 text-purple-500" size={28} />
+                    <FaFileAlt className="absolute bottom-16 right-8 text-orange-500" size={34} />
+                    <FaTable className="absolute bottom-8 right-20 text-indigo-500" size={28} />
+                    <FaCalculator className="absolute bottom-4 right-32 text-gray-600" size={32} />
+                    <FaChartLine className="absolute bottom-12 left-8 text-blue-500" size={30} />
+                    <FaChartBar className="absolute top-12 left-4 text-green-500" size={36} />
+                    <FaChartPie className="absolute bottom-20 left-16 text-purple-500" size={26} />
+                    <FaFileAlt className="absolute top-20 left-12 text-orange-500" size={32} />
+                    <FaTable className="absolute bottom-6 left-24 text-indigo-500" size={30} />
+                    <FaArrowUp className="absolute top-28 left-32 text-emerald-500" size={28} />
                   </div>
                 )}
                 
@@ -159,7 +212,7 @@ export function Features() {
                     />
                   </motion.div>
                   <motion.h3 
-                    className="text-xl font-semibold text-primary-dark mb-2 font-['Poppins',sans-serif]"
+                    className="text-xl font-semibold text-primary-dark mb-2 font-['Poppins',sans-serif] text-center"
                     initial={{ opacity: 0 }}
                     animate={isInView ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ delay: 0.8 + (index * 0.1), duration: 0.5 }}
