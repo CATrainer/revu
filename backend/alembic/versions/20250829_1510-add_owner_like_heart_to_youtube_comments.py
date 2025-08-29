@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = 'add_owner_like_heart_to_youtube_comments'
+revision = '20250829_1510'
 down_revision = '20250829_0010'
 branch_labels = None
 depends_on = None
