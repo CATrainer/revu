@@ -202,6 +202,7 @@ export function useDisconnectYouTube(connectionId: string | undefined) {
     onSuccess: () => {
       if (!connectionId) return;
       qc.invalidateQueries({ queryKey: keys.connection(connectionId) });
+  qc.invalidateQueries({ queryKey: keys.connections });
       qc.removeQueries({ queryKey: keys.videos(connectionId, { limit: 50, offset: 0, newestFirst: true, publishedAfter: undefined, search: undefined }) });
     },
   });

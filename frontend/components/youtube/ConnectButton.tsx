@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { useYouTubeConnection, useYouTubeConnections, useInitiateYouTubeConnection } from '@/hooks/useYouTube';
+import { useYouTubeConnection, useYouTubeConnections, useInitiateYouTubeConnection, useDisconnectYouTube } from '@/hooks/useYouTube';
 
 interface ConnectButtonProps {
   connectionId?: string; // if present, we'll show status; otherwise we start connect flow
@@ -15,6 +15,8 @@ export default function ConnectButton({ connectionId, className }: ConnectButton
   const { data: status, isLoading: statusLoading } = useYouTubeConnection(connectionId || '');
   const { data: connections, isLoading: connectionsLoading } = useYouTubeConnections();
   const init = useInitiateYouTubeConnection();
+  const disconnectTargetId = connectionId || (connections && connections[0]?.id) || undefined;
+  const disconnect = useDisconnectYouTube(disconnectTargetId);
 
   const onConnect = async () => {
     setError(null);
@@ -35,9 +37,12 @@ export default function ConnectButton({ connectionId, className }: ConnectButton
   if (connectionId && status && !statusLoading) {
     return (
       <div className={className}>
-        <div className="flex items-center gap-2">
-          <span className="inline-block h-2 w-2 rounded-full bg-green-500" aria-hidden />
-          <span className="text-sm">YouTube connected</span>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-green-500" aria-hidden />
+            <span className="text-sm">YouTube connected</span>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => disconnect.mutate()} disabled={disconnect.isPending}>Disconnect</Button>
         </div>
         {status.lastSyncedAt && (
           <div className="mt-1 text-xs text-muted-foreground">Last synced: {new Date(status.lastSyncedAt).toLocaleString()}</div>
@@ -51,9 +56,12 @@ export default function ConnectButton({ connectionId, className }: ConnectButton
   if (existing && !connectionsLoading) {
     return (
       <div className={className}>
-        <div className="flex items-center gap-2">
-          <span className="inline-block h-2 w-2 rounded-full bg-green-500" aria-hidden />
-          <span className="text-sm">YouTube connected</span>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-green-500" aria-hidden />
+            <span className="text-sm">YouTube connected</span>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => disconnect.mutate()} disabled={disconnect.isPending}>Disconnect</Button>
         </div>
         {existing.lastSyncedAt && (
           <div className="mt-1 text-xs text-muted-foreground">Last synced: {new Date(existing.lastSyncedAt).toLocaleString()}</div>
