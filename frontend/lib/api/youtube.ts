@@ -202,6 +202,78 @@ export async function fetchComments(args: {
   }));
 }
 
+// 4a) Fetch channel-wide comments feed (optionally parents only) with video context
+export async function fetchChannelComments(args: {
+  connectionId: string;
+  limit?: number;
+  offset?: number;
+  newestFirst?: boolean;
+  parentsOnly?: boolean;
+  token?: string;
+}): Promise<Array<YouTubeComment & { video: YouTubeVideo }>> {
+  const qs = toQuery({
+    connection_id: args.connectionId,
+    limit: args.limit,
+    offset: args.offset,
+    newest_first: args.newestFirst,
+    parents_only: args.parentsOnly,
+  });
+  const res = await fetch(`${API_BASE}/youtube/comments${qs}`, {
+    method: 'GET',
+    headers: {
+      ...jsonHeaders(),
+      ...authHeader(args.token),
+    },
+    cache: 'no-store',
+  });
+  const raw = await handleResponse<Array<{
+    id: string;
+    comment_id: string;
+    author_name?: string | null;
+    author_channel_id?: string | null;
+    content?: string | null;
+    published_at?: string | null;
+    like_count?: number | null;
+    reply_count?: number | null;
+    parent_comment_id?: string | null;
+    is_channel_owner_comment: boolean;
+    video: {
+      id: string;
+      video_id: string;
+      title?: string | null;
+      thumbnail_url?: string | null;
+      published_at?: string | null;
+      view_count?: number | null;
+      like_count?: number | null;
+      comment_count?: number | null;
+      duration?: string | null;
+    };
+  }>>(res);
+  return raw.map((c) => ({
+    id: c.id,
+    commentId: c.comment_id,
+    authorName: c.author_name ?? null,
+    authorChannelId: c.author_channel_id ?? null,
+    content: c.content ?? null,
+    publishedAt: c.published_at ?? null,
+    likeCount: c.like_count ?? null,
+    replyCount: c.reply_count ?? null,
+    parentCommentId: c.parent_comment_id ?? null,
+    isChannelOwnerComment: Boolean(c.is_channel_owner_comment),
+    video: {
+      id: c.video.id,
+      videoId: c.video.video_id,
+      title: c.video.title ?? null,
+      thumbnailUrl: c.video.thumbnail_url ?? null,
+      publishedAt: c.video.published_at ?? null,
+      viewCount: c.video.view_count ?? null,
+      likeCount: c.video.like_count ?? null,
+      commentCount: c.video.comment_count ?? null,
+      duration: c.video.duration ?? null,
+    },
+  }));
+}
+
 // 5) Post a reply to a comment
 export interface CommentReplyResponse {
   id?: string;

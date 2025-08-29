@@ -21,6 +21,8 @@ const keys = {
     ['yt', 'videos', connectionId, params] as const,
   comments: (connectionId: string, videoId: string, params: { limit?: number; offset?: number; newestFirst?: boolean }) =>
     ['yt', 'comments', connectionId, videoId, params] as const,
+  channelComments: (connectionId: string, params: { limit?: number; offset?: number; newestFirst?: boolean; parentsOnly?: boolean }) =>
+    ['yt', 'comments', 'channel', connectionId, params] as const,
   search: (connectionId: string, query: string, params: { limit?: number; offset?: number }) =>
     ['yt', 'search', connectionId, query, params] as const,
 };
@@ -112,6 +114,26 @@ export function useComments(args: {
   enabled,
   staleTime: 15_000,
   placeholderData: keepPreviousData,
+  });
+}
+
+// 3a) Channel-wide comments feed
+export function useChannelComments(args: {
+  connectionId: string | undefined;
+  limit?: number;
+  offset?: number;
+  newestFirst?: boolean;
+  parentsOnly?: boolean;
+}) {
+  const { connectionId, limit = 50, offset = 0, newestFirst = true, parentsOnly = false } = args;
+  const enabled = Boolean(connectionId);
+  const params = useMemo(() => ({ limit, offset, newestFirst, parentsOnly }), [limit, offset, newestFirst, parentsOnly]);
+  return useQuery<Array<YouTubeComment & { video: YouTubeVideo }>>({
+    queryKey: keys.channelComments(connectionId || 'none', params),
+    queryFn: () => import('@/lib/api/youtube').then(m => m.fetchChannelComments({ connectionId: connectionId!, limit, offset, newestFirst, parentsOnly })),
+    enabled,
+    staleTime: 15_000,
+    placeholderData: keepPreviousData,
   });
 }
 

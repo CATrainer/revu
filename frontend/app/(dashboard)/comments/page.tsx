@@ -7,7 +7,7 @@ import ConnectButton from '@/components/youtube/ConnectButton';
 import SyncStatus from '@/components/youtube/SyncStatus';
 import CommentList from '@/components/youtube/CommentList';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { useVideos, useVideoSearch } from '@/hooks/useYouTube';
+import { useVideos, useVideoSearch, useChannelComments } from '@/hooks/useYouTube';
 import { listConnections } from '@/lib/api/youtube';
 import type { YouTubeVideo } from '@/types/youtube';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -18,6 +18,7 @@ export default function CommentsPage() {
   const [loadingConn, setLoadingConn] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'all' | 'byVideo'>('byVideo');
 
   // On mount, try to find an existing connection and store it.
   useEffect(() => {
@@ -76,11 +77,23 @@ export default function CommentsPage() {
 
       {connectionId && (
         <div className="space-y-6">
-          {/* Search + Videos grid */}
+          {/* Toggle + Search + Content */}
           <Card className="card-background border-[var(--border)]">
             <CardHeader>
               <div className="flex items-center justify-between gap-3">
-                <CardTitle className="text-primary-dark">Your videos</CardTitle>
+                <div className="flex items-center gap-3">
+                  <CardTitle className="text-primary-dark">Comments</CardTitle>
+                  <div className="inline-flex rounded-md border border-[var(--border)] overflow-hidden">
+                    <button
+                      className={`px-3 py-1.5 text-sm ${viewMode === 'byVideo' ? 'bg-primary text-white' : ''}`}
+                      onClick={() => setViewMode('byVideo')}
+                    >By video</button>
+                    <button
+                      className={`px-3 py-1.5 text-sm ${viewMode === 'all' ? 'bg-primary text-white' : ''}`}
+                      onClick={() => setViewMode('all')}
+                    >All</button>
+                  </div>
+                </div>
                 <div className="w-full max-w-md ml-auto">
                   <label className="sr-only" htmlFor="video-search">Search videos</label>
                   <input
@@ -88,21 +101,24 @@ export default function CommentsPage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by title or description…"
+                    placeholder={viewMode === 'all' ? 'Search videos (for selecting modal)…' : 'Search by title or description…'}
                     className="w-full rounded-md border border-[var(--border)] bg-background px-3 py-2 text-sm text-primary-dark placeholder:text-secondary-dark focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              {vidsLoading && (
+              {viewMode === 'byVideo' && vidsLoading && (
                 <div className="text-sm text-secondary-dark flex items-center gap-2"><LoadingSpinner size="small" /> Loading…</div>
               )}
-              {/* If query present, show search results; else show paged grid */}
-              {searchQuery.trim() ? (
-                <SearchResults connectionId={connectionId} query={searchQuery} onSelect={setSelectedVideo} selectedId={selectedVideo?.videoId || null} />
+              {viewMode === 'byVideo' ? (
+                searchQuery.trim() ? (
+                  <SearchResults connectionId={connectionId} query={searchQuery} onSelect={setSelectedVideo} selectedId={selectedVideo?.videoId || null} />
+                ) : (
+                  <VideosGrid connectionId={connectionId} onSelect={setSelectedVideo} selectedId={selectedVideo?.videoId || null} />
+                )
               ) : (
-                <VideosGrid connectionId={connectionId} onSelect={setSelectedVideo} selectedId={selectedVideo?.videoId || null} />
+                <AllCommentsFeed connectionId={connectionId} onSelectVideo={setSelectedVideo} />
               )}
             </CardContent>
           </Card>
@@ -283,6 +299,55 @@ function SearchResults({ connectionId, query, onSelect, selectedId }: { connecti
           </div>
         </button>
       ))}
+    </div>
+  );
+}
+
+function AllCommentsFeed({ connectionId, onSelectVideo }: { connectionId: string; onSelectVideo: (v: YouTubeVideo) => void }) {
+  const [page, setPage] = useState(0);
+  const pageSize = 30;
+  const { data, isLoading, isFetching, isError, error } = useChannelComments({ connectionId, limit: pageSize, offset: page * pageSize, newestFirst: true, parentsOnly: true });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-16 rounded-md border border-[var(--border)] bg-muted animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+  if (isError) return <div className="text-destructive">{(error as Error)?.message ?? 'Failed to load comments feed'}</div>;
+  const items = data ?? [];
+  if (!items.length) return <div className="text-secondary-dark text-sm">No comments found.</div>;
+
+  return (
+    <div>
+      <div className="divide-y">
+        {items.map((it) => (
+          <button
+            key={it.id}
+            onClick={() => onSelectVideo(it.video)}
+            className="w-full text-left py-3 flex items-start gap-3 hover:bg-muted/50"
+          >
+            <div className="relative h-16 w-28 flex-shrink-0 rounded border border-[var(--border)] overflow-hidden bg-muted">
+              {it.video.thumbnailUrl ? (
+                <Image src={it.video.thumbnailUrl} alt={it.video.title || 'Thumbnail'} fill className="object-cover" />
+              ) : null}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-primary-dark line-clamp-1">{it.video.title || it.video.videoId}</div>
+              <div className="text-xs text-secondary-dark">{it.authorName || 'Unknown'} • {it.publishedAt ? new Date(it.publishedAt).toLocaleString() : ''}</div>
+              <div className="mt-1 text-sm line-clamp-2">{it.content || ''}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+      <div className="mt-4 flex items-center justify-between">
+        <Button variant="outline" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0 || isFetching}>Prev</Button>
+        <div className="text-sm text-muted-foreground flex items-center gap-2">Page {page + 1}{isFetching && <LoadingSpinner size="small" />}</div>
+        <Button variant="outline" onClick={() => setPage((p) => p + 1)} disabled={isFetching || (items && items.length < pageSize)}>Next</Button>
+      </div>
     </div>
   );
 }

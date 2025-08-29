@@ -188,3 +188,33 @@ class YouTubeCommentRepository:
         )
         result = await self.session.execute(q)
         return result.scalars().all()
+
+    async def get_channel_comments(
+        self,
+        *,
+        channel_id: UUID,
+        limit: int = 50,
+        offset: int = 0,
+        newest_first: bool = True,
+        parents_only: bool = False,
+    ) -> Sequence[tuple[YouTubeComment, YouTubeVideo]]:
+        """Fetch comments across all videos for a given channel/connection.
+
+        Returns a sequence of (YouTubeComment, YouTubeVideo) tuples to allow
+        the caller to include video metadata alongside each comment in the feed.
+        """
+        order_clause = desc(YouTubeComment.published_at) if newest_first else YouTubeComment.published_at
+        conditions = [YouTubeVideo.channel_id == channel_id]
+        if parents_only:
+            conditions.append(YouTubeComment.parent_comment_id.is_(None))
+
+        q = (
+            select(YouTubeComment, YouTubeVideo)
+            .join(YouTubeVideo, YouTubeVideo.id == YouTubeComment.video_id)
+            .where(and_(*conditions))
+            .order_by(order_clause)
+            .limit(limit)
+            .offset(offset)
+        )
+        res = await self.session.execute(q)
+        return res.all()

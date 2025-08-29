@@ -93,6 +93,28 @@ async def get_video_comments(
     )
 
 
+@router.get("/comments")
+async def get_channel_comments_feed(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+    connection_id: UUID = Query(..., description="YouTube connection ID"),
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    newest_first: bool = Query(True),
+    parents_only: bool = Query(False),
+) -> list[dict[str, Any]]:
+    service = YouTubeService(db)
+    return await service.get_channel_comments(
+        user_id=current_user.id,
+        connection_id=connection_id,
+        limit=limit,
+        offset=offset,
+        newest_first=newest_first,
+        parents_only=parents_only,
+    )
+
+
 @router.post("/comments/{comment_id}/reply")
 async def post_comment_reply(
     *,

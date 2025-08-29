@@ -203,6 +203,58 @@ class YouTubeService:
             for c in comments
         ]
 
+    async def get_channel_comments(
+        self,
+        *,
+        user_id: UUID,
+        connection_id: UUID,
+        limit: int = 50,
+        offset: int = 0,
+        newest_first: bool = True,
+        parents_only: bool = False,
+    ) -> List[Dict[str, Any]]:
+        """Return a channel-wide comments feed (optionally only top-level)."""
+        conns = await self.conn_repo.get_user_connections(user_id)
+        if not any(c.id == connection_id for c in conns):
+            return []
+
+        rows = await self.comment_repo.get_channel_comments(
+            channel_id=connection_id,
+            limit=limit,
+            offset=offset,
+            newest_first=newest_first,
+            parents_only=parents_only,
+        )
+        items: List[Dict[str, Any]] = []
+        for c, v in rows:
+            items.append(
+                {
+                    "id": str(c.id),
+                    "comment_id": c.comment_id,
+                    "author_name": c.author_name,
+                    "author_channel_id": c.author_channel_id,
+                    "content": c.content,
+                    "published_at": c.published_at,
+                    "like_count": c.like_count,
+                    "reply_count": c.reply_count,
+                    "parent_comment_id": c.parent_comment_id,
+                    "is_channel_owner_comment": c.is_channel_owner_comment,
+                    # Video context
+                    "video": {
+                        "id": str(v.id),
+                        "video_id": v.video_id,
+                        "title": v.title,
+                        "thumbnail_url": v.thumbnail_url,
+                        "published_at": v.published_at,
+                        "view_count": v.view_count,
+                        "like_count": v.like_count,
+                        "comment_count": v.comment_count,
+                        "duration": v.duration,
+                    },
+                }
+            )
+        return items
+
     async def reply_to_comment(
         self,
         *,
