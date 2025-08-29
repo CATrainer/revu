@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import ConnectButton from '@/components/youtube/ConnectButton';
@@ -19,6 +19,8 @@ export default function CommentsPage() {
   const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'all' | 'byVideo'>('byVideo');
+  const [parentsOnly, setParentsOnly] = useState(true);
+  const [newestFirst, setNewestFirst] = useState(true);
 
   // On mount, try to find an existing connection and store it.
   useEffect(() => {
@@ -46,7 +48,7 @@ export default function CommentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-primary-dark">YouTube Comments</h1>
+          <h1 className="text-2xl font-bold text-primary-dark">Comments</h1>
           <p className="mt-1 text-secondary-dark">Manage comments and see video metrics side by side.</p>
         </div>
         {connectionId ? (
@@ -82,7 +84,7 @@ export default function CommentsPage() {
             <CardHeader>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <CardTitle className="text-primary-dark">Comments</CardTitle>
+                  <CardTitle className="text-primary-dark">Content</CardTitle>
                   <div className="inline-flex rounded-md border border-[var(--border)] overflow-hidden">
                     <button
                       className={`px-3 py-1.5 text-sm ${viewMode === 'byVideo' ? 'bg-primary text-white' : ''}`}
@@ -94,7 +96,19 @@ export default function CommentsPage() {
                     >All</button>
                   </div>
                 </div>
-                <div className="w-full max-w-md ml-auto">
+                <div className="w-full max-w-md ml-auto flex items-center gap-3">
+                  {viewMode === 'all' && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <label className="flex items-center gap-1">
+                        <input type="checkbox" className="accent-primary" checked={parentsOnly} onChange={(e) => setParentsOnly(e.target.checked)} />
+                        Parents only
+                      </label>
+                      <label className="flex items-center gap-1">
+                        <input type="checkbox" className="accent-primary" checked={newestFirst} onChange={(e) => setNewestFirst(e.target.checked)} />
+                        Newest first
+                      </label>
+                    </div>
+                  )}
                   <label className="sr-only" htmlFor="video-search">Search videos</label>
                   <input
                     id="video-search"
@@ -118,7 +132,7 @@ export default function CommentsPage() {
                   <VideosGrid connectionId={connectionId} onSelect={setSelectedVideo} selectedId={selectedVideo?.videoId || null} />
                 )
               ) : (
-                <AllCommentsFeed connectionId={connectionId} onSelectVideo={setSelectedVideo} />
+                <AllCommentsFeed connectionId={connectionId} onSelectVideo={setSelectedVideo} parentsOnly={parentsOnly} newestFirst={newestFirst} />
               )}
             </CardContent>
           </Card>
@@ -305,10 +319,44 @@ function SearchResults({ connectionId, query, onSelect, selectedId }: { connecti
   );
 }
 
-function AllCommentsFeed({ connectionId, onSelectVideo }: { connectionId: string; onSelectVideo: (v: YouTubeVideo) => void }) {
-  const [page, setPage] = useState(0);
+function AllCommentsFeed({ connectionId, onSelectVideo, parentsOnly, newestFirst }: { connectionId: string; onSelectVideo: (v: YouTubeVideo) => void; parentsOnly: boolean; newestFirst: boolean }) {
   const pageSize = 30;
-  const { data, isLoading, isFetching, isError, error } = useChannelComments({ connectionId, limit: pageSize, offset: page * pageSize, newestFirst: true, parentsOnly: true });
+  const [offset, setOffset] = useState(0);
+  const [items, setItems] = useState<ReturnType<typeof useChannelComments>['data']>([]);
+  const loaderRef = useRef<HTMLDivElement | null>(null);
+
+  const { data, isLoading, isFetching, isError, error } = useChannelComments({ connectionId, limit: pageSize, offset, newestFirst, parentsOnly });
+
+  useEffect(() => {
+    // Reset list when filters change
+    setItems([]);
+    setOffset(0);
+  }, [connectionId, parentsOnly, newestFirst]);
+
+  useEffect(() => {
+    if (data && data.length) {
+      setItems((prev) => {
+        // Avoid duplicates by commentId
+        const seen = new Set(prev?.map((p) => p.id));
+        const merged = [...(prev || [])];
+        for (const d of data) if (!seen.has(d.id)) merged.push(d);
+        return merged;
+      });
+    }
+  }, [data]);
+
+  useEffect(() => {
+    const node = loaderRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver((entries) => {
+      const first = entries[0];
+      if (first.isIntersecting && !isFetching) {
+        setOffset((o) => o + pageSize);
+      }
+    }, { root: null, rootMargin: '200px', threshold: 0 });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [isFetching]);
 
   if (isLoading) {
     return (
@@ -320,8 +368,7 @@ function AllCommentsFeed({ connectionId, onSelectVideo }: { connectionId: string
     );
   }
   if (isError) return <div className="text-destructive">{(error as Error)?.message ?? 'Failed to load comments feed'}</div>;
-  const items = data ?? [];
-  if (!items.length) return <div className="text-secondary-dark text-sm">No comments found.</div>;
+  if (!items || items.length === 0) return <div className="text-secondary-dark text-sm">No comments found.</div>;
 
   return (
     <div>
@@ -345,10 +392,8 @@ function AllCommentsFeed({ connectionId, onSelectVideo }: { connectionId: string
           </button>
         ))}
       </div>
-      <div className="mt-4 flex items-center justify-between">
-        <Button variant="outline" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0 || isFetching}>Prev</Button>
-        <div className="text-sm text-muted-foreground flex items-center gap-2">Page {page + 1}{isFetching && <LoadingSpinner size="small" />}</div>
-        <Button variant="outline" onClick={() => setPage((p) => p + 1)} disabled={isFetching || (items && items.length < pageSize)}>Next</Button>
+      <div ref={loaderRef} className="py-6 flex items-center justify-center text-muted-foreground text-sm">
+        {isFetching ? <><LoadingSpinner size="small" /> <span className="ml-2">Loading more…</span></> : <span>Scroll to load more</span>}
       </div>
     </div>
   );
