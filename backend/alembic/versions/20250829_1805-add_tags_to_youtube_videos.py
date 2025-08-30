@@ -1,7 +1,7 @@
 """add tags to youtube_videos
 
-Revision ID: add_tags_yt_videos_20250829_1805
-Revises: 20250829_1510-add_owner_like_heart_to_youtube_comments
+Revision ID: 20250829_1805
+Revises: 20250829_1510
 Create Date: 2025-08-29 18:05:00
 """
 
@@ -13,8 +13,8 @@ from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
-revision = 'add_tags_yt_videos_20250829_1805'
-down_revision = 'add_owner_like_heart_to_youtube_comments'
+revision = '20250829_1805'
+down_revision = '20250829_1510'
 branch_labels = None
 depends_on = None
 

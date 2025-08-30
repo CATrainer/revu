@@ -4,7 +4,7 @@ import { useMemo, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { useComments, useCommentReply, useToggleCommentHeart, useToggleCommentLike } from '@/hooks/useYouTube';
+import { useComments, useCommentReply, useToggleCommentHeart, useToggleCommentLike, useDeleteComment } from '@/hooks/useYouTube';
 import type { YouTubeComment } from '@/types/youtube';
 
 interface CommentListProps {
@@ -37,6 +37,7 @@ function CommentItem({
   displayReplies = true,
   onToggleHeart,
   onToggleLike,
+  onDelete,
 }: {
   comment: YouTubeComment;
   replies: YouTubeComment[];
@@ -47,6 +48,7 @@ function CommentItem({
   displayReplies?: boolean;
   onToggleHeart: (id: string, value: boolean) => void;
   onToggleLike: (id: string, value: boolean) => void;
+  onDelete: (id: string) => void;
 }) {
   const [text, setText] = useState('');
   const [showReplies, setShowReplies] = useState(true);
@@ -85,6 +87,13 @@ function CommentItem({
               onClick={() => onToggleLike(comment.commentId, !comment.likedByOwner)}
             >
               <span>👍</span> {comment.likedByOwner ? 'Liked' : 'Like'}
+            </button>
+            <button
+              className="hover:underline text-destructive"
+              title="Delete comment"
+              onClick={() => onDelete(comment.commentId)}
+            >
+              Delete
             </button>
             {displayReplies && typeof comment.replyCount === 'number' && comment.replyCount > 0 && (
               <button className="hover:underline" onClick={() => setShowReplies((v) => !v)}>
@@ -146,6 +155,7 @@ export default function CommentList({ connectionId, videoId, pageSize = 50, clas
   const reply = useCommentReply(connectionId, videoId);
   const heartMut = useToggleCommentHeart(connectionId, videoId);
   const likeMut = useToggleCommentLike(connectionId, videoId);
+  const delMut = useDeleteComment(connectionId, videoId);
 
   const { parents, childrenByParent } = useMemo(() => {
     const list = data ?? [];
@@ -239,6 +249,9 @@ export default function CommentList({ connectionId, videoId, pageSize = 50, clas
 
   return (
     <div className={`${className ?? ''} flex flex-col min-h-0`}>
+      <div className="text-xs text-muted-foreground mb-3">
+        Note: Heart and Like are local-only markers for your workflow. The YouTube Data API does not expose endpoints to heart or like comments, so these do not change anything on YouTube.
+      </div>
     {/* Render with controlled reply state */}
   {content === null ? (
         <div className="divide-y">
@@ -254,6 +267,11 @@ export default function CommentList({ connectionId, videoId, pageSize = 50, clas
         displayReplies={!parentsOnly}
         onToggleHeart={(id, value) => heartMut.mutate({ commentId: id, value })}
         onToggleLike={(id, value) => likeMut.mutate({ commentId: id, value })}
+        onDelete={(id) => {
+          if (confirm('Delete this comment on YouTube? This cannot be undone.')) {
+            delMut.mutate({ commentId: id });
+          }
+        }}
             />
           ))}
         </div>

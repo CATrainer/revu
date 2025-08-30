@@ -212,3 +212,10 @@ class YouTubeAPIWrapper:
             scopes=WRITE_SCOPES,
             call_fn=lambda c: c.post_comment_reply(parent_comment_id=parent_comment_id, text=text),
         )
+
+    async def delete_comment(self, *, comment_id: str) -> None:
+        await self._run(
+            operation="comments.delete",
+            scopes=WRITE_SCOPES,
+            call_fn=lambda c: c.delete_comment(comment_id=comment_id),
+        )

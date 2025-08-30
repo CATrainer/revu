@@ -168,6 +168,12 @@ class YouTubeAPIClient:
         request = self.service.comments().insert(part="snippet", body=body)
         return self._execute(request)
 
+    def delete_comment(self, *, comment_id: str) -> None:
+        """Delete a comment by ID. Returns None on success (HTTP 204)."""
+        request = self.service.comments().delete(id=comment_id)
+        # _execute will raise on error; we ignore the response body for 204
+        self._execute(request)
+
     # ---- Internal helpers ----
     def _execute(self, request):
         """Execute a googleapiclient request and map well-known errors to our exceptions."""
