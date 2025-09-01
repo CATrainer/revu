@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
+from datetime import datetime, timezone, timedelta
+import os
 from typing import Any, Dict, List, Optional, Tuple
 
 from loguru import logger
@@ -39,6 +41,94 @@ class QueueItem:
 class BatchProcessor:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+
+    # ---- Configuration helpers ----
+    def get_batch_size(self) -> int:
+        """Determine batch size dynamically.
+
+        - In TESTING_MODE, use max(BATCH_SIZE_MIN, SAFETY_CHECK_BATCH_MIN) but never exceed 5
+        - Otherwise default to 5 (API limit we chose earlier)
+        """
+        testing = os.getenv("TESTING_MODE", "false").lower() == "true"
+        if testing:
+            try:
+                bmin = int(os.getenv("BATCH_SIZE_MIN", "1"))
+            except Exception:
+                bmin = 1
+            try:
+                smin = int(os.getenv("SAFETY_CHECK_BATCH_MIN", "2"))
+            except Exception:
+                smin = 2
+            size = max(1, min(5, max(bmin, smin)))
+            return size
+        return 5
+
+    async def _get_last_batch_time(self) -> datetime | None:
+        """Return most recent last_batch_processed_at across the queue."""
+        res = await self.session.execute(
+            text("""
+                SELECT MAX(last_batch_processed_at)
+                FROM comments_queue
+            """)
+        )
+        return res.scalar()
+
+    async def _oldest_pending_age_seconds(self) -> int:
+        res = await self.session.execute(
+            text(
+                """
+                SELECT EXTRACT(EPOCH FROM (now() - MIN(created_at)))::int
+                FROM comments_queue
+                WHERE status = 'pending'
+                """
+            )
+        )
+        val = res.scalar()
+        return int(val or 0)
+
+    async def _pending_count(self) -> int:
+        res = await self.session.execute(
+            text("SELECT COUNT(1) FROM comments_queue WHERE status = 'pending'")
+        )
+        return int(res.scalar() or 0)
+
+    async def should_process_batch(self) -> tuple[bool, str]:
+        """Decide if a batch should be processed now.
+
+        Returns (should_process, reason)
+        - reason in {"size", "timeout_oldest", "timeout_last_batch", "no"}
+        """
+        # env controls
+        try:
+            wait_max = int(os.getenv("BATCH_WAIT_MAX_SECONDS", "120"))
+        except Exception:
+            wait_max = 120
+        size_min = 0
+        try:
+            size_min = int(os.getenv("BATCH_SIZE_MIN", "1"))
+        except Exception:
+            size_min = 1
+
+        pending = await self._pending_count()
+        if pending <= 0:
+            return False, "no"
+
+        if pending >= max(1, size_min):
+            return True, "size"
+
+        oldest_age = await self._oldest_pending_age_seconds()
+        if oldest_age >= max(1, wait_max):
+            return True, "timeout_oldest"
+
+        last_batch = await self._get_last_batch_time()
+        if not last_batch:
+            # if we've never processed, allow after a grace period of 5 minutes
+            # but also allow immediate when at least one pending exists
+            return True, "timeout_last_batch"
+        if datetime.now(timezone.utc) - last_batch > timedelta(minutes=5):
+            return True, "timeout_last_batch"
+
+        return False, "no"
 
     async def get_pending_comments(self, limit: int = 5) -> List[QueueItem]:
         """Return up to `limit` pending comments ordered by priority desc, then created_at asc."""
@@ -84,9 +174,10 @@ class BatchProcessor:
             groups.setdefault(key, []).append(it)
         # return batches of up to 5 in each group
         batches: List[List[QueueItem]] = []
+        max_batch = self.get_batch_size()
         for _, arr in groups.items():
-            for i in range(0, len(arr), 5):
-                batches.append(arr[i : i + 5])
+            for i in range(0, len(arr), max_batch):
+                batches.append(arr[i : i + max_batch])
         return batches
 
     async def process_batch(self, items: List[QueueItem]) -> List[Dict[str, Any]]:
@@ -182,6 +273,10 @@ class BatchProcessor:
         processed = 0
         batches_run = 0
         while batches_run < max_batches:
+            should, reason = await self.should_process_batch()
+            if not should:
+                break
+
             pending = await self.get_pending_comments(limit=50)
             if not pending:
                 break
@@ -189,9 +284,33 @@ class BatchProcessor:
             if not groups:
                 break
             for group in groups:
-                # Only process up to 5 at a time
-                subset = group[:5]
+                # Only process up to configured size at a time
+                subset = group[: self.get_batch_size()]
                 results = await self.process_batch(subset)
+                # Mark last_batch_processed_at for attempted items (track timing even if individual calls fail)
+                try:
+                    ids = [it.queue_id for it in subset]
+                    if ids:
+                        # Build a VALUES list for uuid ids
+                        values = ",".join([f"(CAST(:id{i} AS uuid))" for i in range(len(ids))])
+                        params = {f"id{i}": str(v) for i, v in enumerate(ids)}
+                        await self.session.execute(
+                            text(
+                                f"""
+                                UPDATE comments_queue cq
+                                SET last_batch_processed_at = now()
+                                FROM (VALUES {values}) AS v(id)
+                                WHERE cq.id = v.id
+                                """
+                            ),
+                            params,
+                        )
+                        await self.session.commit()
+                except Exception:
+                    try:
+                        await self.session.rollback()
+                    except Exception:
+                        pass
                 # Count successes
                 for r in results:
                     if isinstance(r, dict) and r.get("response_text"):
@@ -201,5 +320,5 @@ class BatchProcessor:
                 await asyncio.sleep(delay_seconds)
                 if batches_run >= max_batches:
                     break
-        logger.info("Batch cycle complete: processed={} batches={}", processed, batches_run)
+        logger.info("Batch cycle complete: processed={} batches={} (trigger={})", processed, batches_run, reason)
         return processed
