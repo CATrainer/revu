@@ -32,8 +32,116 @@ from app.services.claude_service import ClaudeService
 from sqlalchemy import text
 from app.services.comment_classifier import create_fingerprint
 from app.core.config import settings
+from app.services.safety_validator import quick_safety_check
 
 router = APIRouter()
+
+# Buffer for deferred AI safety validation
+SAFETY_BUFFER: List[Dict[str, Any]] = []
+SAFETY_BATCH_SIZE = 10
+
+
+async def _run_ai_safety_batch(db: AsyncSession) -> None:
+    """Run AI safety validation for up to SAFETY_BATCH_SIZE buffered items.
+
+    Each item: { queue_id: str, response_text: str, original_comment: str }
+    Updates ai_responses: passed_safety, safety_checked_at, safety_notes.
+    """
+    if not SAFETY_BUFFER:
+        return
+    batch = SAFETY_BUFFER[:SAFETY_BATCH_SIZE]
+    del SAFETY_BUFFER[: len(batch)]
+
+    if not batch:
+        return
+
+    # Build prompt for Claude to validate all
+    system_prompt = (
+        "You are a strict safety validator for YouTube replies. For each item, decide if the AI response is appropriate, "
+        "on-topic with the original comment, and safe. Consider harassment, hate, sexual content, self-harm, PII, scams, "
+        "external links, and dangerous instructions. Return ONLY JSON: {\"items\": [{\"queue_id\": str, \"is_safe\": bool, \"reason\": str}]}"
+    )
+    numbered = []
+    for i, it in enumerate(batch, start=1):
+        qid = it.get("queue_id")
+        oc = (it.get("original_comment") or "").replace("\n", " ")
+        rt = (it.get("response_text") or "").replace("\n", " ")
+        numbered.append(f"{i}. queue_id={qid}\nOriginal: {oc}\nResponse: {rt}")
+    user_prompt = (
+        "Validate the following items and return JSON with an items array as specified.\n\n"
+        + "\n\n".join(numbered)
+    )
+
+    claude = ClaudeService()
+    if not getattr(claude, "client", None):
+        # Can't run AI validation; leave pending
+        return
+
+    try:
+        model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-3-5-sonnet-latest"
+        resp = claude.client.messages.create(
+            model=model,
+            max_tokens=getattr(settings, "CLAUDE_MAX_TOKENS", None) or int(os.getenv("CLAUDE_MAX_TOKENS", "300")),
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}],
+            temperature=0.0,
+        )
+        content = getattr(resp, "content", None)
+        if isinstance(content, list) and content:
+            first = content[0]
+            text_out = getattr(first, "text", None) or (first.get("text") if isinstance(first, dict) else None)
+        else:
+            text_out = getattr(resp, "output_text", None)
+    except Exception as e:
+        logger.exception("Claude safety batch error: {}", e)
+        return
+
+    data = _extract_json(text_out or "")
+    if not isinstance(data, dict):
+        return
+    items = data.get("items")
+    if not isinstance(items, list):
+        return
+
+    # Build VALUES mapping for updates
+    updates: List[Dict[str, Any]] = []
+    for it in items:
+        try:
+            qid = str(it.get("queue_id"))
+            is_safe = bool(it.get("is_safe", False))
+            reason = str(it.get("reason", ""))
+            if qid:
+                updates.append({"qid": qid, "safe": is_safe, "notes": reason})
+        except Exception:
+            continue
+
+    if not updates:
+        return
+
+    # Construct dynamic SQL to update ai_responses joined by queue_id
+    values_clause = ",".join([f"(:qid{i}, :safe{i}, :notes{i})" for i in range(len(updates))])
+    params: Dict[str, Any] = {}
+    for i, u in enumerate(updates):
+        params[f"qid{i}"] = u["qid"]
+        params[f"safe{i}"] = u["safe"]
+        params[f"notes{i}"] = u["notes"]
+
+    await db.execute(
+        text(
+            f"""
+            UPDATE ai_responses ar
+            SET passed_safety = v.safe,
+                safety_checked_at = now(),
+                safety_notes = v.notes
+            FROM (
+                VALUES {values_clause}
+            ) AS v(queue_id, safe, notes)
+            WHERE ar.queue_id::text = v.queue_id
+            """
+        ),
+        params,
+    )
+    await db.commit()
 
 
 @router.post("/generate-response", response_model=GenerateResponseResponse)
@@ -159,17 +267,33 @@ async def generate_response(
         except Exception as e:
             logger.exception("Failed to store response in cache: {}", e)
 
+    # Safety: quick check first
+    quick_ok, quick_reason = quick_safety_check(ai_text)
+
     # Store into ai_responses and complete queue
     try:
-        await db.execute(
-            text(
-                """
-                INSERT INTO ai_responses (queue_id, response_text, passed_safety, safety_checked_at, created_at)
-                VALUES (:qid, :rtxt, false, now(), now())
-                """
-            ),
-            {"qid": str(queue_id), "rtxt": ai_text},
-        )
+        if not quick_ok:
+            # Fail fast: mark unsafe with reason
+            await db.execute(
+                text(
+                    """
+                    INSERT INTO ai_responses (queue_id, response_text, passed_safety, safety_checked_at, safety_notes, created_at)
+                    VALUES (:qid, :rtxt, false, now(), :notes, now())
+                    """
+                ),
+                {"qid": str(queue_id), "rtxt": ai_text, "notes": f"quick_fail:{quick_reason}"},
+            )
+        else:
+            # Defer AI safety; mark pending (no safety_checked_at yet)
+            await db.execute(
+                text(
+                    """
+                    INSERT INTO ai_responses (queue_id, response_text, passed_safety, safety_notes, created_at)
+                    VALUES (:qid, :rtxt, false, :notes, now())
+                    """
+                ),
+                {"qid": str(queue_id), "rtxt": ai_text, "notes": "pending_ai"},
+            )
         await db.execute(
             text("UPDATE comments_queue SET status = 'completed', processed_at = now() WHERE id = :qid"),
             {"qid": queue_id},
@@ -179,6 +303,16 @@ async def generate_response(
         logger.exception("Failed to persist AI response: {}", e)
         await db.rollback()
         raise HTTPException(status_code=500, detail="Failed to store AI response")
+
+    # If quick OK, enqueue for AI safety; run batch if threshold reached
+    if quick_ok:
+        SAFETY_BUFFER.append({
+            "queue_id": str(queue_id),
+            "response_text": ai_text,
+            "original_comment": yt.comment_text,
+        })
+        if len(SAFETY_BUFFER) >= SAFETY_BATCH_SIZE:
+            await _run_ai_safety_batch(db)
 
     return GenerateResponseResponse(
         response_text=ai_text,
@@ -529,30 +663,52 @@ async def batch_generate(
         else:
             response_items.append(BatchGenerateItem(comment_id=cid, error="no_response"))
 
-    # Insert ai_responses for those generated
+    # Insert ai_responses for those generated with safety quick checks
     if to_complete_ids:
         placeholders3 = ",".join([f":cid{i}" for i in range(len(to_complete_ids))])
         params3 = {f"cid{i}": x for i, x in enumerate(to_complete_ids)}
 
-        # Build per-row inserts using a VALUES table from selected queue rows
+        # Evaluate quick safety per item and prepare VALUES with notes
+        values_rows: List[str] = []
+        insert_params: Dict[str, Any] = {**params3}
+        safety_enqueue: List[Dict[str, Any]] = []
+        for i, cid in enumerate(to_complete_ids):
+            resp_txt = results_map.get(cid, "")
+            ok, reason = quick_safety_check(resp_txt)
+            values_rows.append(f"(:v_qid{i}, :v_txt{i}, :v_safe{i}, :v_checked{i}, :v_notes{i})")
+            insert_params[f"v_txt{i}"] = resp_txt
+            # lookup queue_id by comment_id using by_comment_id
+            qid = str(by_comment_id[cid]["queue_id"]) if cid in by_comment_id else None
+            insert_params[f"v_qid{i}"] = qid
+            if ok:
+                insert_params[f"v_safe{i}"] = False  # pending AI validation
+                insert_params[f"v_checked{i}"] = None
+                insert_params[f"v_notes{i}"] = "pending_ai"
+                # enqueue for AI safety batch
+                safety_enqueue.append({
+                    "queue_id": qid,
+                    "response_text": resp_txt,
+                    "original_comment": by_comment_id[cid]["content"],
+                })
+            else:
+                insert_params[f"v_safe{i}"] = False
+                insert_params[f"v_checked{i}"] = "now()"  # handled specially below
+                insert_params[f"v_notes{i}"] = f"quick_fail:{reason}"
+
+        # Build INSERT selecting from VALUES; handle safety_checked_at with NULLIF to map "now()" token
         await db.execute(
             text(
                 f"""
-                INSERT INTO ai_responses (queue_id, response_text, passed_safety, safety_checked_at, created_at)
-                SELECT cq.id, COALESCE(rtxt_map.response_text, ''), false, now(), now()
-                FROM comments_queue cq
-                JOIN (
-                    VALUES {','.join(['(:v_id'+str(i)+', :v_txt'+str(i)+')' for i in range(len(to_complete_ids))])}
-                ) AS rtxt_map(comment_id, response_text)
-                ON rtxt_map.comment_id = cq.comment_id
-                WHERE cq.comment_id IN ({placeholders3})
+                INSERT INTO ai_responses (queue_id, response_text, passed_safety, safety_checked_at, safety_notes, created_at)
+                SELECT v.queue_id::uuid, v.response_text, v.safe, 
+                       CASE WHEN v.checked = 'now()' THEN now() ELSE NULL END,
+                       v.notes, now()
+                FROM (
+                    VALUES {','.join(values_rows)}
+                ) AS v(queue_id, response_text, safe, checked, notes)
                 """
             ),
-            {
-                **params3,
-                **{f"v_id{i}": cid for i, cid in enumerate(to_complete_ids)},
-                **{f"v_txt{i}": results_map[cid] for i, cid in enumerate(to_complete_ids)},
-            },
+            insert_params,
         )
 
         # Mark completed
@@ -568,6 +724,13 @@ async def batch_generate(
         )
 
     await db.commit()
+
+    # Enqueue quick-safe items for AI safety and run batch if threshold reached
+    if to_complete_ids:
+        for enq in safety_enqueue:
+            SAFETY_BUFFER.append(enq)
+        if len(SAFETY_BUFFER) >= SAFETY_BATCH_SIZE:
+            await _run_ai_safety_batch(db)
 
     return BatchGenerateResponse(
         items=response_items,
