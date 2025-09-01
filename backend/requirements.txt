@@ -46,6 +46,8 @@ prometheus-client==0.21.0
 
 # AI & NLP
 openai==1.12.0
+# Anthropic Claude SDK
+anthropic==0.29.0
 # tiktoken==0.6.0  # Uncomment if needed for token counting
 
 # Cloud Storage

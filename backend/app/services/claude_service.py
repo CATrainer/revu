@@ -5,7 +5,11 @@ from __future__ import annotations
 import os
 from typing import Optional
 
-from anthropic import Anthropic, APIError  # type: ignore
+try:
+    from anthropic import Anthropic, APIError  # type: ignore
+except Exception:  # ImportError or other runtime import issues
+    Anthropic = None  # type: ignore
+    APIError = Exception  # type: ignore
 
 from app.core.config import settings
 from loguru import logger
@@ -19,7 +23,11 @@ class ClaudeService:
         api_key = os.getenv("CLAUDE_API_KEY", getattr(settings, "CLAUDE_API_KEY", None))
         if not api_key:
             logger.warning("CLAUDE_API_KEY not set; ClaudeService will return None for generations")
-        self.client = Anthropic(api_key=api_key) if api_key else None
+        if Anthropic is None:
+            logger.warning("anthropic SDK not installed; ClaudeService disabled")
+            self.client = None
+        else:
+            self.client = Anthropic(api_key=api_key) if api_key else None
 
     def generate_response(self, comment_text: str, channel_name: str, video_title: str) -> Optional[str]:
         """Generate a short, friendly YouTube comment reply.
