@@ -14,6 +14,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from typing import Literal, Tuple
+import hashlib
 
 
 Classification = Literal["spam", "simple_positive", "question", "feedback", "negative"]
@@ -150,3 +151,31 @@ def classify_comment(comment_text: str) -> Tuple[Classification, int]:
 
     score = _priority_for(cls, len(text))
     return (cls, score)
+
+
+def create_fingerprint(comment_text: str) -> str:
+    """Create a normalized fingerprint for caching similar comments.
+
+    Steps:
+    1) Lowercase
+    2) Remove numbers and special characters (keep letters and spaces)
+    3) Collapse extra whitespace
+    4) Remove common stopwords (e.g., "the", "a", "is")
+    5) Return a SHA-256 hex digest of the cleaned text
+    """
+    text = (comment_text or "").lower()
+    # Keep only lowercase letters and spaces
+    text = re.sub(r"[^a-z\s]", " ", text)
+    # Collapse whitespace
+    text = re.sub(r"\s+", " ", text).strip()
+    if not text:
+        return hashlib.sha256(b"").hexdigest()
+
+    # Minimal stopword set; extend as needed
+    stopwords = {
+        "the", "a", "an", "is", "are", "am", "to", "and", "or", "of", "in", "on", "for", "with",
+        "it", "this", "that", "you", "your", "i", "we", "they", "he", "she", "be", "was", "were",
+    }
+    tokens = [t for t in text.split(" ") if t and t not in stopwords]
+    cleaned = " ".join(tokens)
+    return hashlib.sha256(cleaned.encode("utf-8")).hexdigest()
