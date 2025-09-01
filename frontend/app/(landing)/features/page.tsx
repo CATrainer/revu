@@ -227,9 +227,9 @@ export default function FeaturesPage() {
                         </div>
                         <span className="text-xs text-gray-500">{i}m ago</span>
                       </div>
-                      <p className="text-xs text-gray-600 mb-2">"Love your content! How do I get started?"</p>
+                      <p className="text-xs text-gray-600 mb-2">&quot;Love your content! How do I get started?&quot;</p>
                       <div className="bg-blue-50 rounded p-2">
-                        <p className="text-xs text-blue-700">"Thank you! Check out our beginner's guide in our bio link 🎯"</p>
+                        <p className="text-xs text-blue-700">&quot;Thank you! Check out our beginner&#39;s guide in our bio link 🎯&quot;</p>
                       </div>
                     </div>
                   ))}

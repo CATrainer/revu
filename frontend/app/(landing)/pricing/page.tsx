@@ -1,8 +1,7 @@
 'use client';
 import { Pricing } from '@/components/landing/Pricing';
-import { Badge } from '@/components/ui/badge';
-import { motion, LazyMotion, domAnimation, useInView, AnimatePresence } from "framer-motion";
-import { ChevronDown, Users, Zap, Shield, PoundSterling, Target, Headphones, CreditCard } from 'lucide-react';
+import { motion, LazyMotion, domAnimation, useInView } from "framer-motion";
+import { ChevronDown, Users, Zap, Shield, Target, Headphones, CreditCard } from 'lucide-react';
 import React from 'react';
 
 const faqCategories = [
