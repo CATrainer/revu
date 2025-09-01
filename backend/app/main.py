@@ -7,6 +7,7 @@ including middleware, routers, and event handlers.
 
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+import asyncio
 
 from fastapi import FastAPI, Request, status, HTTPException
 
@@ -68,12 +69,28 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     # Initialize other services here (Redis, etc.)
 
+    # Start background polling task
+    from app.background_tasks import run_polling_cycle
+    stop_event = asyncio.Event()
+    polling_task = asyncio.create_task(run_polling_cycle(interval_seconds=60, stop_event=stop_event))
+    app.state._polling_stop_event = stop_event
+    app.state._polling_task = polling_task
+
     yield
 
     # Shutdown
     logger.info("Shutting down application")
 
     # Cleanup tasks here
+    try:
+        stop_event = getattr(app.state, "_polling_stop_event", None)
+        task = getattr(app.state, "_polling_task", None)
+        if stop_event is not None:
+            stop_event.set()
+        if task is not None:
+            await task
+    except Exception as e:
+        logger.warning(f"Error stopping polling task: {e}")
 
 
 # Create the FastAPI application
