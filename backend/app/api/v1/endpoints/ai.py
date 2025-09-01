@@ -33,6 +33,7 @@ from sqlalchemy import text
 from app.services.comment_classifier import create_fingerprint
 from app.core.config import settings
 from app.services.safety_validator import quick_safety_check
+from app.services.youtube_service import YouTubeService
 
 router = APIRouter()
 
@@ -736,3 +737,168 @@ async def batch_generate(
         items=response_items,
         metadata={"source": "youtube", "count": len(to_complete_ids)},
     )
+
+
+# ---------------- Approval queue endpoints ----------------
+
+@router.get("/pending-approvals")
+async def list_pending_approvals(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Return AI responses that are waiting for approval (safety-passed, not yet approved)."""
+    res = await db.execute(
+        text(
+            """
+            SELECT ar.id, ar.queue_id, ar.response_text, ar.passed_safety, ar.safety_checked_at,
+                   cq.comment_id, cq.channel_id, cq.video_id, cq.content, ar.created_at
+            FROM ai_responses ar
+            JOIN comments_queue cq ON cq.id = ar.queue_id
+            WHERE ar.approved_at IS NULL AND ar.passed_safety = TRUE
+            ORDER BY ar.created_at ASC
+            """
+        )
+    )
+    rows = res.fetchall()
+    return [
+        {
+            "response_id": str(r[0]),
+            "queue_id": str(r[1]),
+            "response_text": r[2],
+            "passed_safety": bool(r[3]),
+            "safety_checked_at": r[4],
+            "comment_id": r[5],
+            "channel_id": str(r[6]),
+            "video_id": str(r[7]),
+            "comment_text": r[8],
+            "created_at": r[9],
+        }
+        for r in rows
+    ]
+
+
+@router.post("/approve/{response_id}")
+async def approve_response(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    response_id: str,
+):
+    """Approve a response and post it to YouTube as a reply."""
+    # Load response and queue context
+    res = await db.execute(
+        text(
+            """
+            SELECT ar.id, ar.queue_id, ar.response_text, ar.approved_at,
+                   cq.comment_id, cq.channel_id
+            FROM ai_responses ar
+            JOIN comments_queue cq ON cq.id = ar.queue_id
+            WHERE ar.id = :rid
+            """
+        ),
+        {"rid": response_id},
+    )
+    row = res.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="response not found")
+    if row[3] is not None:
+        raise HTTPException(status_code=409, detail="response already approved")
+
+    queue_id = str(row[1])
+    response_text = row[2] or ""
+    parent_comment_id = row[4]
+    channel_id = row[5]
+
+    # Post reply via YouTubeService; ownership check enforced inside
+    yt = YouTubeService(db)
+    try:
+        await yt.reply_to_comment(
+            user_id=current_user.id,
+            connection_id=channel_id,
+            parent_comment_id=parent_comment_id,
+            text=response_text,
+        )
+    except Exception as e:
+        # Don't mark approved on post failure
+        raise HTTPException(status_code=502, detail=f"post failed: {e}")
+
+    # Mark approved and posted
+    await db.execute(
+        text(
+            """
+            UPDATE ai_responses
+            SET approved_at = now(), posted_at = now()
+            WHERE id = :rid
+            """
+        ),
+        {"rid": response_id},
+    )
+    await db.execute(
+        text("UPDATE comments_queue SET status = 'completed', processed_at = now() WHERE id = :qid"),
+        {"qid": queue_id},
+    )
+    await db.commit()
+    return {"status": "approved"}
+
+
+@router.post("/reject/{response_id}")
+async def reject_response(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    response_id: str,
+):
+    """Reject a response; it will not be posted."""
+    res = await db.execute(
+        text("SELECT id, approved_at FROM ai_responses WHERE id = :rid"),
+        {"rid": response_id},
+    )
+    row = res.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="response not found")
+    if row[1] is not None:
+        raise HTTPException(status_code=409, detail="already approved")
+    await db.execute(
+        text(
+            """
+            UPDATE ai_responses SET safety_notes = 'rejected_by_user', safety_checked_at = COALESCE(safety_checked_at, now())
+            WHERE id = :rid
+            """
+        ),
+        {"rid": response_id},
+    )
+    await db.commit()
+    return {"status": "rejected"}
+
+
+@router.put("/edit-response/{response_id}")
+async def edit_response_text(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    response_id: str,
+    payload: Dict[str, Any],
+):
+    """Edit the response text before approval.
+
+    Body: { "response_text": string }
+    """
+    new_text = (payload or {}).get("response_text")
+    if not isinstance(new_text, str) or not new_text.strip():
+        raise HTTPException(status_code=400, detail="response_text is required")
+    res = await db.execute(
+        text("SELECT id, approved_at FROM ai_responses WHERE id = :rid"),
+        {"rid": response_id},
+    )
+    row = res.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="response not found")
+    if row[1] is not None:
+        raise HTTPException(status_code=409, detail="already approved")
+    await db.execute(
+        text("UPDATE ai_responses SET response_text = :txt, safety_notes = 'edited_by_user' WHERE id = :rid"),
+        {"txt": new_text.strip(), "rid": response_id},
+    )
+    await db.commit()
+    return {"status": "updated"}

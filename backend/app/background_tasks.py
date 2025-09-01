@@ -12,6 +12,8 @@ from loguru import logger
 
 from app.core.database import get_async_session
 from app.services.polling_service import PollingService
+from app.services.automation_engine import AutomationEngine, Comment as AutoComment
+from sqlalchemy import text
 
 
 async def _poll_once() -> int:
@@ -88,3 +90,137 @@ async def run_polling_cycle(interval_seconds: int = 60, stop_event: Optional[asy
                 pass
     finally:
         logger.info("Background polling loop stopped")
+
+
+async def run_automation_cycle(interval_seconds: int = 300, stop_event: Optional[asyncio.Event] = None) -> None:
+    """Continuously run automation every `interval_seconds` seconds.
+
+    For each channel with active automation rules:
+    - Get pending comments for that channel
+    - Evaluate all active rules per comment
+    - Execute the highest priority matching rule (rules are already ordered by priority in engine)
+    - Respect per-rule response limits (response_limit_per_run) and a global safeguard
+    - If requires_approval is false and action is generate_response, auto-post to YouTube
+    """
+    logger.info("Starting automation loop (interval={}s)", interval_seconds)
+    try:
+        while True:
+            if stop_event and stop_event.is_set():
+                logger.info("Stop signal received; exiting automation loop")
+                break
+
+            async for session in get_async_session():
+                try:
+                    # Fetch channels that have any enabled automation rules
+                    res = await session.execute(
+                        text(
+                            """
+                            SELECT DISTINCT channel_id
+                            FROM automation_rules
+                            WHERE enabled = true
+                            """
+                        )
+                    )
+                    channels = [r[0] for r in res.fetchall()]
+                    if not channels:
+                        break
+
+                    engine = AutomationEngine(session)
+
+                    for cid in channels:
+                        # Load rules first to get limits and approval flags
+                        rules = await engine.get_active_rules(channel_id=cid)
+                        if not rules:
+                            continue
+
+                        # Determine per-run limit: min of rule-specific limits if provided, else default 20
+                        # We cannot read limits from our Rule dataclass (doesn't include it), so fetch from table quickly
+                        limits_res = await session.execute(
+                            text(
+                                """
+                                SELECT COALESCE(MIN(NULLIF(response_limit_per_run, 0)), 20),
+                                       BOOL_OR(NOT COALESCE(require_approval, false))
+                                FROM automation_rules
+                                WHERE channel_id = :cid AND enabled = true
+                                """
+                            ),
+                            {"cid": str(cid)},
+                        )
+                        row = limits_res.first()
+                        max_responses = int(row[0] or 20)
+                        any_auto_post = bool(row[1] or False)
+
+                        # Get pending comments for this channel ordered by priority
+                        pending_res = await session.execute(
+                            text(
+                                """
+                                SELECT id, comment_id, channel_id, video_id, content, classification, author_channel_id, author_name
+                                FROM comments_queue
+                                WHERE channel_id = :cid AND status = 'pending'
+                                ORDER BY priority DESC, created_at ASC
+                                LIMIT 100
+                                """
+                            ),
+                            {"cid": str(cid)},
+                        )
+                        pending = [
+                            AutoComment(
+                                id=str(r[0]),
+                                comment_id=str(r[1]),
+                                channel_id=str(r[2]),
+                                video_id=str(r[3]),
+                                content=str(r[4] or ""),
+                                classification=(r[5] or None),
+                                author_channel_id=(r[6] or None),
+                                author_name=(r[7] or None),
+                            )
+                            for r in pending_res.fetchall()
+                        ]
+
+                        executed = 0
+                        for c in pending:
+                            if executed >= max_responses:
+                                break
+                            # Evaluate and execute highest priority matching rule: rules are already sorted in engine.get_active_rules
+                            for r in rules:
+                                try:
+                                    if engine.evaluate_rule(c, r):
+                                        ok = await engine.execute_action(comment=c, action=r.action)
+                                        if ok:
+                                            executed += 1
+                                            # Optional: auto-post if no approval required and action is generate_response
+                                            if any_auto_post and (r.action or {}).get("type") == "generate_response":
+                                                # Mark queue row as ready to post by setting status to 'processing' (YouTube posting handled elsewhere)
+                                                await session.execute(
+                                                    text(
+                                                        """
+                                                        UPDATE comments_queue
+                                                        SET status = 'processing', updated_at = now()
+                                                        WHERE id = :qid
+                                                        """
+                                                    ),
+                                                    {"qid": c.id},
+                                                )
+                                            break  # do not evaluate other rules for this comment
+                                except Exception:
+                                    logger.exception("Automation evaluate/execute failed for comment {}", c.id)
+                        if executed:
+                            await session.commit()
+                except Exception:
+                    logger.exception("Automation iteration failed")
+                finally:
+                    break
+
+            # Sleep or exit early
+            try:
+                if stop_event:
+                    await asyncio.wait_for(stop_event.wait(), timeout=interval_seconds)
+                    if stop_event.is_set():
+                        logger.info("Stop signal received during automation sleep; exiting loop")
+                        break
+                else:
+                    await asyncio.sleep(interval_seconds)
+            except asyncio.TimeoutError:
+                pass
+    finally:
+        logger.info("Automation loop stopped")
