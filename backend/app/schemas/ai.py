@@ -32,6 +32,22 @@ class GenerateResponseResponse(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
+class BatchGenerateRequest(BaseModel):
+    """Batch request with up to 5 YouTube comment IDs."""
+    comment_ids: List[str] = Field(..., min_items=1, max_items=5)
+
+
+class BatchGenerateItem(BaseModel):
+    comment_id: str
+    response_text: Optional[str] = None
+    error: Optional[str] = None
+
+
+class BatchGenerateResponse(BaseModel):
+    items: List[BatchGenerateItem]
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
 class BrandVoiceUpdate(BaseModel):
     """Update brand voice settings."""
     brand_voice: Optional[Dict[str, Any]] = None

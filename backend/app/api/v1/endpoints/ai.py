@@ -4,8 +4,11 @@ AI endpoints.
 AI-powered response generation and brand voice management.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 from uuid import UUID
+import json
+import re
+import os
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,12 +21,17 @@ from app.models.location import Location
 from app.schemas.ai import (
     GenerateResponseResponse,
     GenerateYouTubeCommentRequest,
+    BatchGenerateRequest,
+    BatchGenerateResponse,
+    BatchGenerateItem,
     BrandVoiceUpdate,
     BrandVoiceResponse,
 )
 from loguru import logger
 from app.services.claude_service import ClaudeService
 from sqlalchemy import text
+from app.services.comment_classifier import create_fingerprint
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -63,17 +71,52 @@ async def generate_response(
         logger.exception("Failed to upsert into comments_queue: {}", e)
         raise HTTPException(status_code=500, detail="Failed to enqueue comment")
 
-    # Generate response via Claude
-    claude = ClaudeService()
+    # Create fingerprint and attempt cache hit
+    fp = create_fingerprint(yt.comment_text)
+    from_cache = False
+    ai_text = None
     try:
-        ai_text = claude.generate_response(
-            comment_text=yt.comment_text,
-            channel_name=str(yt.channel_id),
-            video_title=yt.video_title,
+        cache_row = await db.execute(
+            text(
+                """
+                SELECT response_template
+                FROM response_cache
+                WHERE fingerprint = :fp AND (expires_at IS NULL OR expires_at > now())
+                LIMIT 1
+                """
+            ),
+            {"fp": fp},
         )
+        row = cache_row.first()
+        if row and row[0]:
+            ai_text = row[0]
+            from_cache = True
+            # Increment usage and update last_used_at
+            await db.execute(
+                text(
+                    """
+                    UPDATE response_cache
+                    SET usage_count = usage_count + 1, last_used_at = now()
+                    WHERE fingerprint = :fp
+                    """
+                ),
+                {"fp": fp},
+            )
     except Exception as e:
-        logger.exception("Claude generation error: {}", e)
-        ai_text = None
+        logger.exception("Cache lookup failed: {}", e)
+
+    # If no cache, generate response via Claude
+    if not ai_text:
+        claude = ClaudeService()
+        try:
+            ai_text = claude.generate_response(
+                comment_text=yt.comment_text,
+                channel_name=str(yt.channel_id),
+                video_title=yt.video_title,
+            )
+        except Exception as e:
+            logger.exception("Claude generation error: {}", e)
+            ai_text = None
 
     if not ai_text:
         # Update queue to failed
@@ -83,6 +126,38 @@ async def generate_response(
         )
         await db.commit()
         raise HTTPException(status_code=502, detail="AI generation failed")
+
+    # If newly generated (not from cache), store in response_cache with 30-day expiry
+    if not from_cache and ai_text:
+        try:
+            # Try update first
+            await db.execute(
+                text(
+                    """
+                    UPDATE response_cache
+                    SET response_template = :rtxt,
+                        last_used_at = now(),
+                        expires_at = now() + interval '30 days'
+                    WHERE fingerprint = :fp
+                    """
+                ),
+                {"fp": fp, "rtxt": ai_text},
+            )
+            # Insert if it does not exist
+            await db.execute(
+                text(
+                    """
+                    INSERT INTO response_cache (fingerprint, response_template, usage_count, last_used_at, expires_at)
+                    SELECT :fp, :rtxt, 1, now(), now() + interval '30 days'
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM response_cache WHERE fingerprint = :fp
+                    )
+                    """
+                ),
+                {"fp": fp, "rtxt": ai_text},
+            )
+        except Exception as e:
+            logger.exception("Failed to store response in cache: {}", e)
 
     # Store into ai_responses and complete queue
     try:
@@ -289,3 +364,212 @@ async def train_brand_voice(
         "status": "pending",
         "estimated_time": "2-3 minutes",
     }
+
+
+def _extract_json(text: str) -> Optional[Dict[str, Any]]:
+    """Try to parse JSON from a model response, tolerating code fences or prose.
+
+    Returns a dict on success, else None.
+    """
+    if not text:
+        return None
+    # Strip code fences if present
+    fenced = re.search(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", text, re.IGNORECASE)
+    blob = fenced.group(1) if fenced else text
+    # Find first JSON object if extra prose surrounds it
+    first_obj = re.search(r"\{[\s\S]*\}", blob)
+    candidate = first_obj.group(0) if first_obj else blob
+    try:
+        return json.loads(candidate)
+    except Exception:
+        return None
+
+
+@router.post("/batch-generate", response_model=BatchGenerateResponse)
+async def batch_generate(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    request: BatchGenerateRequest,
+):
+    """Batch-generate AI replies for up to 5 YouTube comments in one Claude call.
+
+    Steps:
+    - Fetch comments from comments_queue by IDs.
+    - Build one prompt with numbered comments.
+    - Ask Claude for JSON: { "items": [{ "comment_id": str, "response_text": str }, ...] }
+    - Persist ai_responses and mark queue rows completed.
+    - Return all generated responses.
+    """
+    # Deduplicate and enforce max via schema; still ensure at runtime
+    raw_ids: List[str] = list(dict.fromkeys(request.comment_ids))
+    if not raw_ids:
+        raise HTTPException(status_code=400, detail="comment_ids is required")
+    if len(raw_ids) > 5:
+        raise HTTPException(status_code=400, detail="Maximum of 5 comment_ids allowed")
+
+    # Build a safe IN clause with bound parameters
+    placeholders = ",".join([f":id{i}" for i in range(len(raw_ids))])
+    params = {f"id{i}": cid for i, cid in enumerate(raw_ids)}
+
+    # Fetch queue rows
+    result = await db.execute(
+        text(
+            f"""
+            SELECT id, comment_id, content, channel_id, video_id
+            FROM comments_queue
+            WHERE comment_id IN ({placeholders})
+            """
+        ),
+        params,
+    )
+    rows = result.fetchall()
+    by_comment_id = {r[1]: {"queue_id": r[0], "content": r[2], "channel_id": r[3], "video_id": r[4]} for r in rows}
+
+    found_ids = [cid for cid in raw_ids if cid in by_comment_id]
+    missing_ids = [cid for cid in raw_ids if cid not in by_comment_id]
+
+    if not found_ids:
+        # Nothing to process
+        return BatchGenerateResponse(
+            items=[BatchGenerateItem(comment_id=cid, error="not_found") for cid in raw_ids],
+            metadata={"source": "youtube", "count": 0},
+        )
+
+    # Mark found queue rows as processing
+    placeholders2 = ",".join([f":pid{i}" for i in range(len(found_ids))])
+    params2 = {f"pid{i}": cid for i, cid in enumerate(found_ids)}
+    await db.execute(
+        text(
+            f"""
+            UPDATE comments_queue
+            SET status = 'processing', processed_at = now()
+            WHERE comment_id IN ({placeholders2})
+            """
+        ),
+        params2,
+    )
+
+    # Compose the prompt
+    numbered = []
+    for idx, cid in enumerate(found_ids, start=1):
+        content = by_comment_id[cid]["content"] or ""
+        content = content.strip().replace("\n", " ")
+        numbered.append(f"{idx}. id={cid}: {content}")
+
+    system_prompt = (
+        "You write brief, friendly, professional replies to YouTube comments. "
+        "Return ONLY valid compact JSON. No extra text. Keep each reply under 2 sentences."
+    )
+    user_prompt = (
+        "Reply to each numbered comment below. Return a JSON object with an 'items' array, "
+        "where each item has: {\"comment_id\": string, \"response_text\": string}.\n\n"
+        + "\n".join(numbered)
+    )
+
+    # Call Claude directly for batch
+    claude = ClaudeService()
+    if not getattr(claude, "client", None):
+        raise HTTPException(status_code=502, detail="AI service is unavailable")
+
+    model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-3-5-sonnet-latest"
+
+    try:
+        resp = claude.client.messages.create(
+            model=model,
+            max_tokens=getattr(settings, "CLAUDE_MAX_TOKENS", None) or int(os.getenv("CLAUDE_MAX_TOKENS", "400")),
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}],
+            temperature=0.2,
+        )
+        content = getattr(resp, "content", None)
+        if isinstance(content, list) and content:
+            first = content[0]
+            text_out = getattr(first, "text", None) or (first.get("text") if isinstance(first, dict) else None)
+        else:
+            text_out = getattr(resp, "output_text", None)
+    except Exception as e:
+        logger.exception("Claude batch generation error: {}", e)
+        text_out = None
+
+    if not text_out:
+        # Mark as failed
+        await db.execute(
+            text(
+                f"""
+                UPDATE comments_queue SET status = 'failed', processed_at = now()
+                WHERE comment_id IN ({placeholders2})
+                """
+            ),
+            params2,
+        )
+        await db.commit()
+        raise HTTPException(status_code=502, detail="AI generation failed")
+
+    data = _extract_json(text_out)
+    results_map: Dict[str, str] = {}
+    if data and isinstance(data, dict):
+        items = data.get("items")
+        if isinstance(items, list):
+            for it in items:
+                cid = (it or {}).get("comment_id")
+                rtxt = (it or {}).get("response_text")
+                if isinstance(cid, str) and isinstance(rtxt, str):
+                    results_map[cid] = rtxt
+
+    # Prepare response items for all requested IDs
+    response_items: List[BatchGenerateItem] = []
+    to_complete_ids: List[str] = []
+    for cid in raw_ids:
+        if cid in results_map and cid in by_comment_id:
+            response_items.append(BatchGenerateItem(comment_id=cid, response_text=results_map[cid]))
+            to_complete_ids.append(cid)
+        elif cid in missing_ids:
+            response_items.append(BatchGenerateItem(comment_id=cid, error="not_found"))
+        else:
+            response_items.append(BatchGenerateItem(comment_id=cid, error="no_response"))
+
+    # Insert ai_responses for those generated
+    if to_complete_ids:
+        placeholders3 = ",".join([f":cid{i}" for i in range(len(to_complete_ids))])
+        params3 = {f"cid{i}": x for i, x in enumerate(to_complete_ids)}
+
+        # Build per-row inserts using a VALUES table from selected queue rows
+        await db.execute(
+            text(
+                f"""
+                INSERT INTO ai_responses (queue_id, response_text, passed_safety, safety_checked_at, created_at)
+                SELECT cq.id, COALESCE(rtxt_map.response_text, ''), false, now(), now()
+                FROM comments_queue cq
+                JOIN (
+                    VALUES {','.join(['(:v_id'+str(i)+', :v_txt'+str(i)+')' for i in range(len(to_complete_ids))])}
+                ) AS rtxt_map(comment_id, response_text)
+                ON rtxt_map.comment_id = cq.comment_id
+                WHERE cq.comment_id IN ({placeholders3})
+                """
+            ),
+            {
+                **params3,
+                **{f"v_id{i}": cid for i, cid in enumerate(to_complete_ids)},
+                **{f"v_txt{i}": results_map[cid] for i, cid in enumerate(to_complete_ids)},
+            },
+        )
+
+        # Mark completed
+        await db.execute(
+            text(
+                f"""
+                UPDATE comments_queue
+                SET status = 'completed', processed_at = now()
+                WHERE comment_id IN ({placeholders3})
+                """
+            ),
+            params3,
+        )
+
+    await db.commit()
+
+    return BatchGenerateResponse(
+        items=response_items,
+        metadata={"source": "youtube", "count": len(to_complete_ids)},
+    )
