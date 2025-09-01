@@ -36,6 +36,7 @@ from app.services.safety_validator import quick_safety_check, schedule_safety_ch
 from app.services.youtube_service import YouTubeService
 from datetime import timedelta
 from app.services.batch_processor import BatchProcessor, QueueItem
+from app.utils import debug_log
 
 router = APIRouter()
 
@@ -186,6 +187,9 @@ async def generate_response(
     fp = create_fingerprint(yt.comment_text)
     from_cache = False
     ai_text = None
+    # Debug: start cache lookup
+    if os.getenv("TESTING_MODE", "false").lower() == "true":
+        debug_log.add("cache.lookup.start", {"fp": fp, "comment_len": len(yt.comment_text or "")})
     try:
         # Isolate cache lookup and usage increment in a SAVEPOINT so failures don't abort the main tx
         async with db.begin_nested():
@@ -205,6 +209,8 @@ async def generate_response(
             if row and row[0]:
                 ai_text = row[0]
                 from_cache = True
+                if os.getenv("TESTING_MODE", "false").lower() == "true":
+                    debug_log.add("cache.hit", {"fp": fp, "len": len(ai_text or "")})
                 # Increment usage and update last_used_at
                 await db.execute(
                     text(
@@ -216,6 +222,9 @@ async def generate_response(
                     ),
                     {"fp": fp},
                 )
+            else:
+                if os.getenv("TESTING_MODE", "false").lower() == "true":
+                    debug_log.add("cache.miss", {"fp": fp})
     except Exception as e:
         logger.exception("Cache lookup failed: {}", e)
 
@@ -309,6 +318,9 @@ async def generate_response(
                 )
         except Exception as e:
             logger.exception("Failed to store response in cache: {}", e)
+        else:
+            if os.getenv("TESTING_MODE", "false").lower() == "true":
+                debug_log.add("cache.store", {"fp": fp, "len": len(ai_text or "")})
     elif from_cache:
         # Count cache hit and generated response
         try:
@@ -366,6 +378,8 @@ async def generate_response(
             response_text=ai_text,
             original_comment=yt.comment_text,
         )
+        if os.getenv("TESTING_MODE", "false").lower() == "true":
+            debug_log.add("safety.enqueue", {"queue_id": str(queue_id)})
 
     return GenerateResponseResponse(
         response_text=ai_text,

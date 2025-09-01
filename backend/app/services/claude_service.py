@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from loguru import logger
 from app.utils.reliability import async_retry, CircuitBreaker
+from app.utils import debug_log
 
 
 PRICE_USD_PER_MTOKENS: Dict[str, Dict[str, float]] = {
@@ -92,7 +93,7 @@ class ClaudeService:
                                   context={"channel_id": channel_id, "from_cache": from_cache})
             return None
 
-    # Compose a concise, safe prompt
+        # Compose a concise, safe prompt
         system_prompt = (
             "You are a helpful assistant writing brief, friendly, and professional replies to YouTube comments. "
             "Keep replies under 2 sentences, positive, and aligned with the creator's tone. Avoid emojis unless appropriate."
@@ -127,6 +128,18 @@ class ClaudeService:
             return False
 
         try:
+            # Debug: log outgoing request in testing mode
+            if os.getenv("TESTING_MODE", "false").lower() == "true":
+                debug_log.add(
+                    "claude.request",
+                    {
+                        "model": model_used,
+                        "max_tokens": int(os.getenv("CLAUDE_MAX_TOKENS", "200")),
+                        "len_comment": len(comment_text or ""),
+                        "channel_id": channel_id,
+                        "from_cache": bool(from_cache),
+                    },
+                )
             # Prefer configured model; fallback to a widely available latest model name
             resp = await async_retry(
                 lambda: _run_in_thread(_call_sync),
@@ -153,6 +166,15 @@ class ClaudeService:
             status_code = 200
 
             self._breaker.record_success()
+            # Debug: log response preview in testing mode
+            if os.getenv("TESTING_MODE", "false").lower() == "true":
+                debug_log.add(
+                    "claude.response",
+                    {
+                        "status": "ok" if result_text else "empty",
+                        "preview": (result_text or "")[:200],
+                    },
+                )
             return result_text
         except APIError as e:  # anthropic-specific error
             logger.error(f"Claude APIError: {e}")
@@ -161,6 +183,11 @@ class ClaudeService:
             self._breaker.record_failure()
             await self._log_error(db, service="claude", op="messages.create", code=status_code, message=str(e),
                                   context={"channel_id": channel_id})
+            if os.getenv("TESTING_MODE", "false").lower() == "true":
+                debug_log.add(
+                    "claude.response",
+                    {"status": "error", "code": status_code, "message": str(e)[:200]},
+                )
             return None
         except Exception as e:  # generic fallback
             logger.exception(f"Claude generation failed: {e}")
@@ -169,6 +196,11 @@ class ClaudeService:
             self._breaker.record_failure()
             await self._log_error(db, service="claude", op="messages.create", code=500, message=str(e),
                                   context={"channel_id": channel_id})
+            if os.getenv("TESTING_MODE", "false").lower() == "true":
+                debug_log.add(
+                    "claude.response",
+                    {"status": "exception", "message": str(e)[:200]},
+                )
             return None
         finally:
             # Always log usage when an API call was attempted
@@ -217,30 +249,6 @@ class ClaudeService:
             except Exception:
                 logger.exception("Failed to update response_metrics after Claude generation")
 
-    async def _log_error(self, db: AsyncSession, *, service: str, op: str, code: Optional[int], message: str, context: Optional[Dict[str, Any]] = None) -> None:
-        try:
-            await db.execute(
-                text(
-                    """
-                    INSERT INTO error_logs (service_name, operation, error_code, message, context, created_at)
-                    VALUES (:svc, :op, :code, :msg, :ctx, now())
-                    """
-                ),
-                {"svc": service, "op": op, "code": code, "msg": message, "ctx": context or {}},
-            )
-            await db.commit()
-        except Exception:
-            logger.exception("Failed to write error_logs entry")
-            try:
-                await db.rollback()
-            except Exception:
-                pass
-
-# Small helper to run sync function in a thread for async_retry
-import asyncio
-async def _run_in_thread(fn):
-    return await asyncio.to_thread(fn)
-
     @staticmethod
     async def increment_metrics(
         db: AsyncSession,
@@ -283,3 +291,28 @@ async def _run_in_thread(fn):
                 await db.rollback()
             except Exception:
                 pass
+
+    async def _log_error(self, db: AsyncSession, *, service: str, op: str, code: Optional[int], message: str, context: Optional[Dict[str, Any]] = None) -> None:
+        try:
+            await db.execute(
+                text(
+                    """
+                    INSERT INTO error_logs (service_name, operation, error_code, message, context, created_at)
+                    VALUES (:svc, :op, :code, :msg, :ctx, now())
+                    """
+                ),
+                {"svc": service, "op": op, "code": code, "msg": message, "ctx": context or {}},
+            )
+            await db.commit()
+        except Exception:
+            logger.exception("Failed to write error_logs entry")
+            try:
+                await db.rollback()
+            except Exception:
+                pass
+
+# Small helper to run sync function in a thread for async_retry
+import asyncio
+
+async def _run_in_thread(fn):
+    return await asyncio.to_thread(fn)

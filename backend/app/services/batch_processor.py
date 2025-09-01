@@ -27,6 +27,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.utils.reliability import async_retry
 from sqlalchemy import text as sql_text
+from app.utils import debug_log
 
 
 @dataclass
@@ -229,6 +230,19 @@ class BatchProcessor:
         for _, arr in groups.items():
             for i in range(0, len(arr), max_batch):
                 batches.append(arr[i : i + max_batch])
+        if os.getenv("TESTING_MODE", "false").lower() == "true":
+            try:
+                debug_log.add(
+                    "batch.groups",
+                    {
+                        "pending": len(items),
+                        "groups": len(groups),
+                        "batches": len(batches),
+                        "batch_size": max_batch,
+                    },
+                )
+            except Exception:
+                pass
         return batches
 
     async def process_batch(self, items: List[QueueItem]) -> List[Dict[str, Any]]:
@@ -337,6 +351,11 @@ class BatchProcessor:
             for group in groups:
                 # Only process up to configured size at a time
                 subset = group[: self.get_batch_size()]
+                if os.getenv("TESTING_MODE", "false").lower() == "true":
+                    debug_log.add(
+                        "batch.process.start",
+                        {"size": len(subset), "reason": reason, "ids": [it.comment_id for it in subset]},
+                    )
                 results = await self.process_batch(subset)
                 # Mark last_batch_processed_at for attempted items (track timing even if individual calls fail)
                 try:
@@ -366,6 +385,11 @@ class BatchProcessor:
                 for r in results:
                     if isinstance(r, dict) and r.get("response_text"):
                         processed += 1
+                if os.getenv("TESTING_MODE", "false").lower() == "true":
+                    debug_log.add(
+                        "batch.process.done",
+                        {"size": len(subset), "processed": processed, "results": len(results)},
+                    )
                 batches_run += 1
                 # Delay between batches to respect rate limits
                 await asyncio.sleep(delay_seconds)

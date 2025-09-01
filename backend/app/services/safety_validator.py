@@ -22,6 +22,7 @@ from sqlalchemy import text
 from loguru import logger
 
 from app.services.claude_service import ClaudeService
+from app.utils import debug_log
 
 # Basic profanity list (non-exhaustive, adjustable)
 _PROFANITY = {
@@ -203,6 +204,8 @@ async def schedule_safety_check(
             "original_comment": original_comment,
         }
     )
+    if os.getenv("TESTING_MODE", "false").lower() == "true":
+        debug_log.add("safety.enqueue", {"queue_id": str(queue_id), "size": len(_SAFETY_BUFFER)})
     if _FIRST_ENQUEUED_AT is None:
         _FIRST_ENQUEUED_AT = datetime.now(timezone.utc)
 
@@ -221,6 +224,8 @@ async def schedule_safety_check(
         reason = "timeout"
 
     if reason:
+        if os.getenv("TESTING_MODE", "false").lower() == "true":
+            debug_log.add("safety.flush", {"size": len(_SAFETY_BUFFER), "reason": reason})
         await _run_ai_safety_batch(db, trigger_reason=reason)
 
 
@@ -338,3 +343,11 @@ async def _run_ai_safety_batch(db: AsyncSession, *, trigger_reason: str) -> None
         round(duration, 3),
         trigger_reason,
     )
+    if os.getenv("TESTING_MODE", "false").lower() == "true":
+        try:
+            debug_log.add(
+                "safety.batch.done",
+                {"size": len(batch), "duration_s": round(duration, 3), "reason": trigger_reason, "updates": len(updates)},
+            )
+        except Exception:
+            pass

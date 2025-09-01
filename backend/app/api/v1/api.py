@@ -12,6 +12,8 @@ from app.api.v1.endpoints import (
     ai,
     analytics,
     auth,
+    debug,
+    test_utils,
     automation,
     youtube_auth,
     youtube_content,
@@ -74,6 +76,18 @@ api_router.include_router(
     automation.router,
     prefix="/automation",
     tags=["automation"],
+)
+
+api_router.include_router(
+    test_utils.router,
+    prefix="/test",
+    tags=["test"],
+)
+
+api_router.include_router(
+    debug.router,
+    prefix="/debug",
+    tags=["debug"],
 )
 
 api_router.include_router(
