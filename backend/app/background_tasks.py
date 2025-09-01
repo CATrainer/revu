@@ -11,6 +11,7 @@ from typing import Optional
 from loguru import logger
 
 from app.core.database import get_async_session
+from app.core.config import settings
 from app.services.polling_service import PollingService
 from app.services.automation_engine import AutomationEngine, Comment as AutoComment
 from sqlalchemy import text
@@ -224,3 +225,134 @@ async def run_automation_cycle(interval_seconds: int = 300, stop_event: Optional
                 pass
     finally:
         logger.info("Automation loop stopped")
+
+
+async def cleanup_stale_comments(interval_seconds: int = 600, stop_event: Optional[asyncio.Event] = None) -> None:
+    """Every 10 minutes, process 'stuck' pending comments older than 10 minutes.
+
+    Behavior:
+    - Only runs if there are pending comments.
+    - Finds comments with status='pending' and created_at <= now() - 10 minutes.
+    - Processes them individually via the /api/ai/generate-response endpoint.
+    - Logs warnings for visibility.
+    - If an item fails 3 times in this cleaner, mark it failed in comments_queue.
+
+    This is a safety net; the main batch processor should handle most items.
+    """
+    logger.info("Starting stale comments cleanup loop (interval={}s)", interval_seconds)
+    try:
+        while True:
+            if stop_event and stop_event.is_set():
+                logger.info("Stop signal received; exiting cleanup loop")
+                break
+
+            async for session in get_async_session():
+                try:
+                    # Quick existence check to avoid extra work when empty
+                    res = await session.execute(text("SELECT COUNT(1) FROM comments_queue WHERE status = 'pending'"))
+                    total_pending = int(res.scalar() or 0)
+                    if total_pending <= 0:
+                        break
+
+                    # Select stale pending items older than 10 minutes
+                    stale_res = await session.execute(
+                        text(
+                            """
+                            SELECT id, comment_id, channel_id, video_id, content
+                            FROM comments_queue
+                            WHERE status = 'pending' AND created_at <= now() - interval '10 minutes'
+                            ORDER BY created_at ASC
+                            LIMIT 50
+                            """
+                        )
+                    )
+                    stale_items = stale_res.fetchall()
+                    if not stale_items:
+                        break
+
+                    logger.warning("Cleanup: found {} stale pending comments", len(stale_items))
+
+                    # Prepare HTTP client to call our own API
+                    import os
+                    base_url = getattr(settings, "PUBLIC_API_BASE", None) or os.getenv("PUBLIC_API_BASE") or "http://localhost:8000"
+                    try:
+                        import httpx  # type: ignore
+                    except Exception:
+                        logger.error("httpx not installed; skipping stale cleanup calls")
+                        break
+
+                    async with httpx.AsyncClient(timeout=30.0) as client:
+                        for r in stale_items:
+                            qid, comment_id, channel_id, video_id, content = r
+                            try:
+                                payload = {
+                                    "channel_id": str(channel_id),
+                                    "video_id": str(video_id),
+                                    "comment_id": str(comment_id),
+                                    "comment_text": str(content or ""),
+                                    "video_title": "",
+                                }
+                                url = f"{base_url}/api/ai/generate-response"
+                                headers = {}
+                                token = os.getenv("INTERNAL_API_TOKEN") or os.getenv("API_AUTH_TOKEN")
+                                if token:
+                                    headers["Authorization"] = f"Bearer {token}"
+                                resp = await client.post(url, json=payload, headers=headers)
+                                if resp.status_code != 200:
+                                    logger.warning("Cleanup: generate-response non-200 for {} ({}): {}", comment_id, qid, resp.status_code)
+                                    # Increment failure count and mark failed after 3 attempts
+                                    await session.execute(
+                                        text(
+                                            """
+                                            UPDATE comments_queue
+                                            SET failure_count = failure_count + 1,
+                                                last_error_code = 500,
+                                                last_error_message = 'cleanup_generate_failed',
+                                                last_error_at = now(),
+                                                status = CASE WHEN failure_count + 1 >= 3 THEN 'failed' ELSE status END
+                                            WHERE id = :qid
+                                            """
+                                        ),
+                                        {"qid": str(qid)},
+                                    )
+                                else:
+                                    logger.warning("Cleanup: processed stale comment {} ({})", comment_id, qid)
+                            except Exception as e:
+                                logger.warning("Cleanup: exception processing {} ({}): {}", comment_id, qid, str(e))
+                                try:
+                                    await session.execute(
+                                        text(
+                                            """
+                                            UPDATE comments_queue
+                                            SET failure_count = failure_count + 1,
+                                                last_error_code = 500,
+                                                last_error_message = 'cleanup_exception',
+                                                last_error_at = now(),
+                                                status = CASE WHEN failure_count + 1 >= 3 THEN 'failed' ELSE status END
+                                            WHERE id = :qid
+                                            """
+                                        ),
+                                        {"qid": str(qid)},
+                                    )
+                                except Exception:
+                                    logger.exception("Cleanup: failed to update failure_count for {} ({})", comment_id, qid)
+
+                    await session.commit()
+                except Exception:
+                    logger.exception("Cleanup: iteration failed")
+                finally:
+                    break
+
+            # Sleep or exit early
+            try:
+                if stop_event:
+                    await asyncio.wait_for(stop_event.wait(), timeout=interval_seconds)
+                    if stop_event.is_set():
+                        logger.info("Stop signal received during cleanup sleep; exiting loop")
+                        break
+                else:
+                    await asyncio.sleep(interval_seconds)
+            except asyncio.TimeoutError:
+                pass
+    finally:
+        logger.info("Stale comments cleanup loop stopped")

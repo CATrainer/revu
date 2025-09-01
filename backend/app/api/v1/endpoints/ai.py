@@ -32,7 +32,7 @@ from app.services.claude_service import ClaudeService
 from sqlalchemy import text
 from app.services.comment_classifier import create_fingerprint
 from app.core.config import settings
-from app.services.safety_validator import quick_safety_check
+from app.services.safety_validator import quick_safety_check, schedule_safety_check
 from app.services.youtube_service import YouTubeService
 from datetime import timedelta
 from app.services.batch_processor import BatchProcessor, QueueItem
@@ -358,15 +358,14 @@ async def generate_response(
         await db.rollback()
         raise HTTPException(status_code=500, detail="Failed to store AI response")
 
-    # If quick OK, enqueue for AI safety; run batch if threshold reached
+    # If quick OK, enqueue for AI safety via batched scheduler
     if quick_ok:
-        SAFETY_BUFFER.append({
-            "queue_id": str(queue_id),
-            "response_text": ai_text,
-            "original_comment": yt.comment_text,
-        })
-        if len(SAFETY_BUFFER) >= SAFETY_BATCH_SIZE:
-            await _run_ai_safety_batch(db)
+        await schedule_safety_check(
+            db,
+            queue_id=str(queue_id),
+            response_text=ai_text,
+            original_comment=yt.comment_text,
+        )
 
     return GenerateResponseResponse(
         response_text=ai_text,
@@ -835,12 +834,15 @@ async def batch_generate(
         )
         await db.commit()
 
-    # Enqueue quick-safe items for AI safety and run batch if threshold reached
+    # Enqueue quick-safe items for AI safety via batched scheduler
     if to_complete_ids:
         for enq in safety_enqueue:
-            SAFETY_BUFFER.append(enq)
-        if len(SAFETY_BUFFER) >= SAFETY_BATCH_SIZE:
-            await _run_ai_safety_batch(db)
+            await schedule_safety_check(
+                db,
+                queue_id=str(enq.get("queue_id")),
+                response_text=str(enq.get("response_text") or ""),
+                original_comment=str(enq.get("original_comment") or ""),
+            )
 
     return BatchGenerateResponse(
         items=response_items,
@@ -1095,3 +1097,134 @@ async def edit_response_text(
     )
     await db.commit()
     return {"status": "updated"}
+
+
+@router.get("/queue-status")
+async def queue_status(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Return current queue metrics and batch-processing estimates.
+
+    Response:
+    {
+      pending_by_classification: { cls: count, ... },
+      oldest_pending_age_seconds: int,
+      estimated_seconds_to_next_batch: int | None,
+      last_batch: { time: datetime | None, size: int | None },
+      mode: "testing" | "production",
+      average_processing_time_seconds: float | None
+    }
+    """
+    # 1) Pending by classification
+    res = await db.execute(
+        text(
+            """
+            SELECT COALESCE(classification, 'unknown') AS cls, COUNT(*)
+            FROM comments_queue
+            WHERE status = 'pending'
+            GROUP BY 1
+            ORDER BY 2 DESC
+            """
+        )
+    )
+    rows = res.fetchall()
+    pending_by_classification = {str(r[0]): int(r[1] or 0) for r in rows}
+
+    # Helper: total pending
+    res2 = await db.execute(text("SELECT COUNT(*) FROM comments_queue WHERE status = 'pending'"))
+    pending_total = int(res2.scalar() or 0)
+
+    # 2) Oldest pending age in seconds
+    res3 = await db.execute(
+        text(
+            """
+            SELECT COALESCE(EXTRACT(EPOCH FROM (now() - MIN(created_at)))::int, 0)
+            FROM comments_queue
+            WHERE status = 'pending'
+            """
+        )
+    )
+    oldest_age = int(res3.scalar() or 0)
+
+    # 3) Estimated time until next batch processing
+    try:
+        wait_max = int(os.getenv("BATCH_WAIT_MAX_SECONDS", "120"))
+    except Exception:
+        wait_max = 120
+    try:
+        size_min = int(os.getenv("BATCH_SIZE_MIN", "1"))
+    except Exception:
+        size_min = 1
+
+    # Last batch time
+    res4 = await db.execute(text("SELECT MAX(last_batch_processed_at) FROM comments_queue"))
+    last_batch_time = res4.scalar()
+
+    # Compute remaining seconds for each trigger path
+    estimated_seconds = None
+    if pending_total <= 0:
+        estimated_seconds = None
+    else:
+        # Size trigger
+        if pending_total >= max(1, size_min):
+            estimated_seconds = 0
+        else:
+            # Time triggers
+            rem_oldest = max(0, wait_max - oldest_age)
+            rem_last = None
+            if last_batch_time is not None:
+                from datetime import datetime, timezone, timedelta
+                rem_last = int(
+                    max(
+                        0,
+                        (last_batch_time + timedelta(minutes=5) - datetime.now(timezone.utc)).total_seconds(),
+                    )
+                )
+            # Choose the sooner of the time-based triggers if both exist
+            candidates = [rem_oldest]
+            if rem_last is not None:
+                candidates.append(rem_last)
+            estimated_seconds = min(candidates) if candidates else None
+
+    # 4) Last batch process time and size
+    last_batch_size = None
+    if last_batch_time is not None:
+        res5 = await db.execute(
+            text(
+                """
+                SELECT COUNT(*)
+                FROM comments_queue
+                WHERE last_batch_processed_at = :t
+                """
+            ),
+            {"t": last_batch_time},
+        )
+        last_batch_size = int(res5.scalar() or 0)
+
+    # 5) Current mode
+    mode = "testing" if os.getenv("TESTING_MODE", "false").lower() == "true" else "production"
+
+    # 6) Average processing time per comment
+    res6 = await db.execute(
+        text(
+            """
+            SELECT AVG(EXTRACT(EPOCH FROM (processed_at - created_at)))
+            FROM comments_queue
+            WHERE status = 'completed' AND processed_at IS NOT NULL
+            """
+        )
+    )
+    avg_proc = res6.scalar()
+    average_processing_time_seconds = float(avg_proc) if avg_proc is not None else None
+
+    return {
+        "pending_by_classification": pending_by_classification,
+        "pending_total": pending_total,
+        "oldest_pending_age_seconds": oldest_age,
+        "estimated_seconds_to_next_batch": estimated_seconds,
+        "last_batch": {"time": last_batch_time, "size": last_batch_size},
+        "mode": mode,
+        "average_processing_time_seconds": average_processing_time_seconds,
+    }

@@ -130,6 +130,57 @@ class BatchProcessor:
 
         return False, "no"
 
+    async def get_wait_time(self) -> int:
+        """Compute recommended wait time (seconds) until next batch check.
+
+        Rules:
+        1) Return 0 if batch minimum is reached.
+        2) In testing mode: cap at 30s for any pending comments.
+        3) In production: graduated waits
+           - 60s for 3+ pending (but under minimum)
+           - 180s for 1-2 pending
+           - 300s for 0 pending
+        4) Subtract age of oldest pending comment to avoid long waits.
+        5) Off-peak hours (22:00–06:00 UTC): be more aggressive (50% of baseline, min 5s).
+        """
+        # Config
+        testing = os.getenv("TESTING_MODE", "false").lower() == "true"
+        try:
+            size_min = int(os.getenv("BATCH_SIZE_MIN", "1"))
+        except Exception:
+            size_min = 1
+
+        pending = await self._pending_count()
+
+        # 1) If batch min reached, no wait
+        if pending >= max(1, size_min):
+            return 0
+
+        oldest_age = await self._oldest_pending_age_seconds() if pending > 0 else 0
+
+        # Determine baseline
+        if testing:
+            # 2) Testing: max 30s when anything pending (or 30s otherwise)
+            base = 30 if pending > 0 else 30
+        else:
+            # 3) Production graduated waits
+            if pending >= 3:
+                base = 60
+            elif pending >= 1:
+                base = 180
+            else:
+                base = 300
+
+            # 5) Off-peak adjustment (22:00–06:00 UTC)
+            now = datetime.now(timezone.utc)
+            hour = now.hour
+            if hour >= 22 or hour < 6:
+                base = max(5, int(base * 0.5))
+
+        # 4) Adjust by how long the oldest item has already waited
+        wait = max(0, int(base - oldest_age))
+        return wait
+
     async def get_pending_comments(self, limit: int = 5) -> List[QueueItem]:
         """Return up to `limit` pending comments ordered by priority desc, then created_at asc."""
         res = await self.session.execute(
