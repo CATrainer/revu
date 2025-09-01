@@ -20,16 +20,25 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create enum type for status
-    status_enum = sa.Enum(
-        "pending",
-        "processing",
-        "completed",
-        "failed",
-        "ignored",
-        name="comments_queue_status",
+    # Create enum type for status (idempotent)
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_type WHERE typname = 'comments_queue_status'
+            ) THEN
+                CREATE TYPE comments_queue_status AS ENUM ('pending','processing','completed','failed','ignored');
+            END IF;
+        END
+        $$;
+        """
     )
-    status_enum.create(op.get_bind(), checkfirst=True)
+
+    status_enum = postgresql.ENUM(
+        'pending', 'processing', 'completed', 'failed', 'ignored',
+        name='comments_queue_status', create_type=False
+    )
 
     # Create table
     op.create_table(
@@ -83,12 +92,4 @@ def downgrade() -> None:
     op.drop_table("comments_queue")
 
     # Then drop enum type
-    status_enum = sa.Enum(
-        "pending",
-        "processing",
-        "completed",
-        "failed",
-        "ignored",
-        name="comments_queue_status",
-    )
-    status_enum.drop(op.get_bind(), checkfirst=True)
+    op.execute("DROP TYPE IF EXISTS comments_queue_status")
