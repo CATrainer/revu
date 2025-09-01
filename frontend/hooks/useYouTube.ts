@@ -15,6 +15,7 @@ import {
 } from '@/lib/api/youtube';
 import type { YouTubeVideo, YouTubeComment, SyncStatus, YouTubeConnection } from '@/types/youtube';
 import { listConnections } from '@/lib/api/youtube';
+import { generateYouTubeCommentResponse } from '@/lib/api/ai';
 
 // Keys
 const keys = {
@@ -28,6 +29,7 @@ const keys = {
     ['yt', 'comments', 'channel', connectionId, params] as const,
   search: (connectionId: string, query: string, params: { limit?: number; offset?: number }) =>
     ['yt', 'search', connectionId, query, params] as const,
+  ai: (commentId: string) => ['ai', 'yt-comment', commentId] as const,
 };
 
 // 1) Connection status hook
@@ -52,6 +54,13 @@ export function useVideoSearch(args: { connectionId: string | undefined; query: 
     enabled,
     staleTime: 30_000,
     placeholderData: keepPreviousData,
+  });
+}
+
+// AI: generate response for a specific comment
+export function useGenerateAIResponse() {
+  return useMutation({
+    mutationFn: generateYouTubeCommentResponse,
   });
 }
 

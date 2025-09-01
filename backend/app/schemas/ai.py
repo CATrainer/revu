@@ -16,6 +16,15 @@ class GenerateResponseRequest(BaseModel):
     max_length: Optional[int] = Field(None, ge=50, le=1000)
 
 
+class GenerateYouTubeCommentRequest(BaseModel):
+    """Request to generate an AI response for a YouTube comment."""
+    comment_id: str
+    comment_text: str
+    channel_id: UUID
+    video_id: UUID
+    video_title: str
+
+
 class GenerateResponseResponse(BaseModel):
     """AI-generated response."""
     response_text: str

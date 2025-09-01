@@ -4,12 +4,13 @@ import { useMemo, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { useComments, useCommentReply, useToggleCommentHeart, useToggleCommentLike, useDeleteComment } from '@/hooks/useYouTube';
+import { useComments, useCommentReply, useToggleCommentHeart, useToggleCommentLike, useDeleteComment, useGenerateAIResponse } from '@/hooks/useYouTube';
 import type { YouTubeComment } from '@/types/youtube';
+import type { YouTubeVideo } from '@/types/youtube';
 
 interface CommentListProps {
-  connectionId: string;
-  videoId: string;
+  connectionId: string; // used as channel_id UUID (backend uses youtube_connections.id)
+  video: YouTubeVideo;  // need video.id (UUID) and title for AI endpoint
   pageSize?: number; // applies to top-level fetch; replies are grouped from fetched set
   className?: string;
   sortBy?: 'newest' | 'oldest' | 'most_liked' | 'most_replies';
@@ -38,6 +39,8 @@ function CommentItem({
   onToggleHeart,
   onToggleLike,
   onDelete,
+  onGenerate,
+  ai,
 }: {
   comment: YouTubeComment;
   replies: YouTubeComment[];
@@ -49,6 +52,8 @@ function CommentItem({
   onToggleHeart: (id: string, value: boolean) => void;
   onToggleLike: (id: string, value: boolean) => void;
   onDelete: (id: string) => void;
+  onGenerate: () => void;
+  ai: { isLoading: boolean; error: string | null; text: string | null; copied: boolean; onCopy: () => void };
 }) {
   const [text, setText] = useState('');
   const [showReplies, setShowReplies] = useState(true);
@@ -95,12 +100,42 @@ function CommentItem({
             >
               Delete
             </button>
+            <button
+              className="hover:underline text-primary"
+              title="Generate AI Response"
+              onClick={onGenerate}
+              disabled={ai.isLoading}
+            >
+              {ai.isLoading ? (
+                <span className="inline-flex items-center gap-1"><LoadingSpinner size="small" /> Generating…</span>
+              ) : (
+                'Generate AI Response'
+              )}
+            </button>
             {displayReplies && typeof comment.replyCount === 'number' && comment.replyCount > 0 && (
               <button className="hover:underline" onClick={() => setShowReplies((v) => !v)}>
                 {showReplies ? 'Hide' : 'Show'} {comment.replyCount} repl{comment.replyCount === 1 ? 'y' : 'ies'}
               </button>
             )}
           </div>
+          {/* AI response display */}
+          {ai.error && (
+            <div className="mt-2 text-xs text-destructive">{ai.error}</div>
+          )}
+          {ai.text && (
+            <div className="mt-3 p-3 rounded-md border border-[var(--border)] bg-muted/40">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="text-xs font-medium text-secondary-dark">AI suggestion</div>
+                <button
+                  className="text-xs px-2 py-1 rounded border border-[var(--border)] hover:bg-muted"
+                  onClick={ai.onCopy}
+                >
+                  {ai.copied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+              <div className="whitespace-pre-wrap text-sm">{ai.text}</div>
+            </div>
+          )}
           {isOpen && (
             <div className="mt-3 space-y-2">
               <Textarea
@@ -146,16 +181,20 @@ function CommentItem({
   );
 }
 
-export default function CommentList({ connectionId, videoId, pageSize = 50, className, sortBy = 'newest', parentsOnly = false, unansweredOnly = false, query = '' }: CommentListProps) {
+export default function CommentList({ connectionId, video, pageSize = 50, className, sortBy = 'newest', parentsOnly = false, unansweredOnly = false, query = '' }: CommentListProps) {
   const [page, setPage] = useState(0);
   const offset = page * pageSize;
   const newestFirst = sortBy === 'oldest' ? false : true;
 
+  const videoId = video.videoId; // YouTube videoId for fetching comments
   const { data, isLoading, isFetching, isError, error } = useComments({ connectionId, videoId, limit: pageSize, offset, newestFirst });
   const reply = useCommentReply(connectionId, videoId);
   const heartMut = useToggleCommentHeart(connectionId, videoId);
   const likeMut = useToggleCommentLike(connectionId, videoId);
   const delMut = useDeleteComment(connectionId, videoId);
+  const aiMut = useGenerateAIResponse();
+
+  const [aiState, setAiState] = useState<Record<string, { loading: boolean; error: string | null; text: string | null; copied: boolean }>>({});
 
   const { parents, childrenByParent } = useMemo(() => {
     const list = data ?? [];
@@ -271,6 +310,38 @@ export default function CommentList({ connectionId, videoId, pageSize = 50, clas
           if (confirm('Delete this comment on YouTube? This cannot be undone.')) {
             delMut.mutate({ commentId: id });
           }
+        }}
+        onGenerate={async () => {
+          setAiState((s) => ({ ...s, [c.commentId]: { loading: true, error: null, text: null, copied: false } }));
+          try {
+            const res = await aiMut.mutateAsync({
+              comment_id: c.commentId,
+              comment_text: c.content || '',
+              channel_id: connectionId,
+              video_id: video.id, // backend expects DB UUID
+              video_title: video.title || video.videoId,
+            });
+            setAiState((s) => ({ ...s, [c.commentId]: { loading: false, error: null, text: res.response_text, copied: false } }));
+          } catch (e: unknown) {
+            const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message?: unknown }).message) : 'Failed to generate response';
+            setAiState((s) => ({ ...s, [c.commentId]: { loading: false, error: msg, text: null, copied: false } }));
+          }
+        }}
+        ai={{
+          isLoading: Boolean(aiState[c.commentId]?.loading),
+          error: aiState[c.commentId]?.error || null,
+          text: aiState[c.commentId]?.text || null,
+          copied: Boolean(aiState[c.commentId]?.copied),
+          onCopy: () => {
+            const text = aiState[c.commentId]?.text;
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => {
+              setAiState((s) => ({ ...s, [c.commentId]: { ...(s[c.commentId] || { loading: false, error: null, text, copied: false }), text, copied: true } }));
+              setTimeout(() => {
+                setAiState((s) => ({ ...s, [c.commentId]: { ...(s[c.commentId] || { loading: false, error: null, text, copied: false }), text, copied: false } }));
+              }, 1500);
+            });
+          },
         }}
             />
           ))}

@@ -15,13 +15,15 @@ from app.core.database import get_async_session
 from app.core.security import get_current_active_user
 from app.models.user import User, UserMembership
 from app.models.location import Location
-from app.models.review import Review
 from app.schemas.ai import (
-    GenerateResponseRequest,
     GenerateResponseResponse,
+    GenerateYouTubeCommentRequest,
     BrandVoiceUpdate,
     BrandVoiceResponse,
 )
+from loguru import logger
+from app.services.claude_service import ClaudeService
+from sqlalchemy import text
 
 router = APIRouter()
 
@@ -31,11 +33,83 @@ async def generate_response(
     *,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
-    request: GenerateResponseRequest,
+    request: GenerateYouTubeCommentRequest,
 ):
-    """
-    Generate an AI response for a review.
-    """
+    """Generate an AI response for a YouTube comment and persist queue/response."""
+    yt: GenerateYouTubeCommentRequest = request
+    # Upsert into comments_queue on unique comment_id and mark processing
+    try:
+        result = await db.execute(
+            text(
+                """
+                INSERT INTO comments_queue (channel_id, video_id, comment_id, content, status, priority, created_at)
+                VALUES (:channel_id, :video_id, :comment_id, :content, 'processing', 0, now())
+                ON CONFLICT (comment_id) DO UPDATE SET status = EXCLUDED.status, content = EXCLUDED.content
+                RETURNING id
+                """
+            ),
+            {
+                "channel_id": str(yt.channel_id),
+                "video_id": str(yt.video_id),
+                "comment_id": yt.comment_id,
+                "content": yt.comment_text,
+            },
+        )
+        queue_row = result.first()
+        if queue_row is None:
+            raise RuntimeError("Failed to upsert comments_queue row")
+        queue_id = queue_row[0]
+    except Exception as e:
+        logger.exception("Failed to upsert into comments_queue: {}", e)
+        raise HTTPException(status_code=500, detail="Failed to enqueue comment")
+
+    # Generate response via Claude
+    claude = ClaudeService()
+    try:
+        ai_text = claude.generate_response(
+            comment_text=yt.comment_text,
+            channel_name=str(yt.channel_id),
+            video_title=yt.video_title,
+        )
+    except Exception as e:
+        logger.exception("Claude generation error: {}", e)
+        ai_text = None
+
+    if not ai_text:
+        # Update queue to failed
+        await db.execute(
+            text("UPDATE comments_queue SET status = 'failed', processed_at = now() WHERE id = :qid"),
+            {"qid": queue_id},
+        )
+        await db.commit()
+        raise HTTPException(status_code=502, detail="AI generation failed")
+
+    # Store into ai_responses and complete queue
+    try:
+        await db.execute(
+            text(
+                """
+                INSERT INTO ai_responses (queue_id, response_text, passed_safety, safety_checked_at, created_at)
+                VALUES (:qid, :rtxt, false, now(), now())
+                """
+            ),
+            {"qid": str(queue_id), "rtxt": ai_text},
+        )
+        await db.execute(
+            text("UPDATE comments_queue SET status = 'completed', processed_at = now() WHERE id = :qid"),
+            {"qid": queue_id},
+        )
+        await db.commit()
+    except Exception as e:
+        logger.exception("Failed to persist AI response: {}", e)
+        await db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to store AI response")
+
+    return GenerateResponseResponse(
+        response_text=ai_text,
+        alternatives=[],
+        metadata={"source": "youtube"},
+    )
     # Get review and verify access
     result = await db.execute(
         select(Review, Location)

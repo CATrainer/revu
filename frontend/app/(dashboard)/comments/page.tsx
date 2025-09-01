@@ -194,7 +194,7 @@ export default function CommentsPage() {
                         <CardContent className="flex-1 overflow-y-auto px-4 min-h-0">
                           <CommentList
                             connectionId={connectionId}
-                            videoId={selectedVideo.videoId}
+                            video={selectedVideo}
                             className="py-4"
                             sortBy={videoSortBy}
                             parentsOnly={videoParentsOnly}
