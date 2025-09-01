@@ -351,3 +351,38 @@ async def get_classification_counts(
         {"start": start},
     )
     return [{"classification": r[0], "count": int(r[1] or 0)} for r in rows.fetchall()]
+
+
+@router.get("/reliability/overview")
+async def get_reliability_overview(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    limit: int = 25,
+):
+    """Return DLQ totals and recent error logs for quick diagnostics."""
+    dlq_res = await db.execute(text("SELECT COUNT(*) FROM comments_dead_letter"))
+    dlq_total = int(dlq_res.scalar() or 0)
+
+    err_res = await db.execute(
+        text(
+            """
+            SELECT service_name, operation, error_code, message, created_at
+            FROM error_logs
+            ORDER BY created_at DESC
+            LIMIT :lim
+            """
+        ),
+        {"lim": int(max(1, min(limit, 100)))},
+    )
+    recent = [
+        {
+            "service": r[0],
+            "operation": r[1],
+            "code": r[2],
+            "message": r[3],
+            "at": r[4].isoformat() if r[4] else None,
+        }
+        for r in err_res.fetchall()
+    ]
+    return {"dlq_total": dlq_total, "recent_errors": recent}

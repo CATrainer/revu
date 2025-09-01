@@ -23,6 +23,8 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.utils.reliability import async_retry
+from sqlalchemy import text as sql_text
 
 
 @dataclass
@@ -45,7 +47,7 @@ class BatchProcessor:
                 """
                 SELECT id, comment_id, COALESCE(content, ''), classification, COALESCE(priority, 0)
                 FROM comments_queue
-                WHERE status = 'pending'
+                WHERE status = 'pending' AND (next_attempt_at IS NULL OR next_attempt_at <= now())
                 ORDER BY priority DESC, created_at ASC
                 LIMIT :lim
                 """
@@ -106,17 +108,64 @@ class BatchProcessor:
 
         payload = {"comment_ids": ids}
         url = f"{base_url}/api/ai/batch-generate"
-        try:
+        async def _call_once():
             async with httpx.AsyncClient(timeout=30.0) as client:
-                resp = await client.post(url, json=payload)
-                if resp.status_code != 200:
-                    logger.error("Batch endpoint failed: {} - {}", resp.status_code, resp.text)
-                    return [{"comment_id": cid, "error": f"http_{resp.status_code}"} for cid in ids]
-                data = resp.json()
-                items_out = data.get("items", []) if isinstance(data, dict) else []
-                return items_out
+                return await client.post(url, json=payload)
+
+        def _should_retry(e: BaseException) -> bool:
+            import httpx  # type: ignore
+            if isinstance(e, httpx.HTTPStatusError):
+                code = e.response.status_code
+                return code in (429, 500, 502, 503, 504)
+            return isinstance(e, httpx.TransportError)
+
+        try:
+            resp = await async_retry(
+                lambda: _call_once(),
+                retries=3,
+                base_delay=0.5,
+                max_delay=4.0,
+                should_retry=lambda e: _should_retry(e),
+            )
+            if resp.status_code != 200:
+                try:
+                    # log to error_logs
+                    await self.session.execute(
+                        sql_text(
+                            """
+                            INSERT INTO error_logs (service_name, operation, error_code, message, context, created_at)
+                            VALUES ('batch_processor', 'batch-generate', :code, :msg, :ctx, now())
+                            """
+                        ),
+                        {
+                            "code": int(resp.status_code),
+                            "msg": "non_200_response",
+                            "ctx": {"ids": ids, "body": payload},
+                        },
+                    )
+                    await self.session.commit()
+                except Exception:
+                    pass
+                logger.error("Batch endpoint failed: {} - {}", resp.status_code, getattr(resp, 'text', ''))
+                return [{"comment_id": cid, "error": f"http_{resp.status_code}"} for cid in ids]
+            data = resp.json()
+            items_out = data.get("items", []) if isinstance(data, dict) else []
+            return items_out
         except Exception as e:
             logger.exception("Batch call exception: {}", e)
+            try:
+                await self.session.execute(
+                    sql_text(
+                        """
+                        INSERT INTO error_logs (service_name, operation, error_code, message, context, created_at)
+                        VALUES ('batch_processor', 'batch-generate', 0, :msg, :ctx, now())
+                        """
+                    ),
+                    {"msg": str(e), "ctx": {"ids": ids}},
+                )
+                await self.session.commit()
+            except Exception:
+                pass
             return [{"comment_id": cid, "error": "exception"} for cid in ids]
 
     async def run_batch_cycle(self, *, max_batches: int = 20, delay_seconds: float = 2.0) -> int:

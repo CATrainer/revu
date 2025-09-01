@@ -21,6 +21,7 @@ from app.services.token_manager import TokenManager
 from app.services.youtube_api_wrapper import YouTubeAPIWrapper
 from app.workers.sync_worker import process_channel_sync, process_incremental_sync, sync_recent_comments
 from app.services.sync_service import SyncService
+from app.utils.cache import async_ttl_cache
 
 
 READONLY_SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"]
@@ -100,6 +101,16 @@ class YouTubeService:
         return bool(deleted)
 
     # ---- Reads ----
+    @async_ttl_cache(15.0, key_builder=lambda self, **kwargs: (
+        'get_user_videos',
+        str(kwargs.get('connection_id')),
+        int(kwargs.get('limit', 50)),
+        int(kwargs.get('offset', 0)),
+        bool(kwargs.get('newest_first', True)),
+        str(kwargs.get('published_after') or ''),
+        str(kwargs.get('search') or ''),
+        tuple(kwargs.get('tags') or ()),
+    ))
     async def get_user_videos(
         self,
         *,
@@ -211,6 +222,14 @@ class YouTubeService:
             for c in comments
         ]
 
+    @async_ttl_cache(10.0, key_builder=lambda self, **kwargs: (
+        'get_channel_comments',
+        str(kwargs.get('connection_id')),
+        int(kwargs.get('limit', 50)),
+        int(kwargs.get('offset', 0)),
+        bool(kwargs.get('newest_first', True)),
+        bool(kwargs.get('parents_only', False)),
+    ))
     async def get_channel_comments(
         self,
         *,

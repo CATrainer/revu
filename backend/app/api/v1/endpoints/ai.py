@@ -34,6 +34,7 @@ from app.services.comment_classifier import create_fingerprint
 from app.core.config import settings
 from app.services.safety_validator import quick_safety_check
 from app.services.youtube_service import YouTubeService
+from datetime import timedelta
 
 router = APIRouter()
 
@@ -231,12 +232,44 @@ async def generate_response(
             ai_text = None
 
     if not ai_text:
-        # Update queue to failed
-        await db.execute(
-            text("UPDATE comments_queue SET status = 'failed', processed_at = now() WHERE id = :qid"),
-            {"qid": queue_id},
-        )
-        await db.commit()
+        # Update queue failure, increment counters and schedule retry with backoff; DLQ after threshold
+        try:
+            # increment failure_count and set last_error
+            await db.execute(
+                text(
+                    """
+                    UPDATE comments_queue
+                    SET failure_count = failure_count + 1,
+                        status = CASE WHEN failure_count + 1 >= 5 THEN 'failed' ELSE 'pending' END,
+                        last_error_code = 502,
+                        last_error_message = 'ai_generation_failed',
+                        last_error_at = now(),
+                        next_attempt_at = CASE WHEN failure_count + 1 < 5 THEN now() + (interval '30 seconds' * POWER(2, failure_count)) ELSE NULL END,
+                        processed_at = now()
+                    WHERE id = :qid
+                    RETURNING failure_count, status
+                    """
+                ),
+                {"qid": queue_id},
+            )
+            # If reached terminal failure, move to DLQ
+            row = await db.execute(text("SELECT failure_count, status, comment_id, channel_id FROM comments_queue WHERE id = :qid"), {"qid": queue_id})
+            r = row.first()
+            if r and int(r[0] or 0) >= 5 and str(r[1]) == 'failed':
+                await db.execute(
+                    text(
+                        """
+                        INSERT INTO comments_dead_letter (queue_id, channel_id, comment_id, reason, error_code, error_message, created_at)
+                        SELECT id, channel_id, comment_id, 'ai_generation_failed', 502, 'Claude returned no text', now()
+                        FROM comments_queue WHERE id = :qid
+                        """
+                    ),
+                    {"qid": queue_id},
+                )
+            await db.commit()
+        except Exception:
+            logger.exception("Failed to update queue failure/ DLQ")
+            await db.rollback()
         raise HTTPException(status_code=502, detail="AI generation failed")
 
     # If newly generated (not from cache), store in response_cache with 30-day expiry
@@ -642,12 +675,32 @@ async def batch_generate(
         text_out = None
 
     if not text_out:
-        # Mark as failed
+        # Mark each as failure with backoff; DLQ if threshold reached
         await db.execute(
             text(
                 f"""
-                UPDATE comments_queue SET status = 'failed', processed_at = now()
+                UPDATE comments_queue
+                SET failure_count = failure_count + 1,
+                    status = CASE WHEN failure_count + 1 >= 5 THEN 'failed' ELSE 'pending' END,
+                    last_error_code = 502,
+                    last_error_message = 'ai_batch_generation_failed',
+                    last_error_at = now(),
+                    next_attempt_at = CASE WHEN failure_count + 1 < 5 THEN now() + (interval '30 seconds' * POWER(2, failure_count)) ELSE NULL END,
+                    processed_at = now()
                 WHERE comment_id IN ({placeholders2})
+                """
+            ),
+            params2,
+        )
+        # Insert into DLQ for those that reached threshold in this update
+        await db.execute(
+            text(
+                f"""
+                INSERT INTO comments_dead_letter (queue_id, channel_id, comment_id, reason, error_code, error_message, created_at)
+                SELECT cq.id, cq.channel_id, cq.comment_id, 'ai_generation_failed', 502, 'Claude batch returned no text', now()
+                FROM comments_queue cq
+                WHERE cq.comment_id IN ({placeholders2}) AND cq.failure_count >= 5 AND cq.status = 'failed'
+                ON CONFLICT DO NOTHING
                 """
             ),
             params2,
@@ -669,6 +722,7 @@ async def batch_generate(
     # Prepare response items for all requested IDs
     response_items: List[BatchGenerateItem] = []
     to_complete_ids: List[str] = []
+    no_response_ids: List[str] = []
     for cid in raw_ids:
         if cid in results_map and cid in by_comment_id:
             response_items.append(BatchGenerateItem(comment_id=cid, response_text=results_map[cid]))
@@ -677,6 +731,7 @@ async def batch_generate(
             response_items.append(BatchGenerateItem(comment_id=cid, error="not_found"))
         else:
             response_items.append(BatchGenerateItem(comment_id=cid, error="no_response"))
+            no_response_ids.append(cid)
 
     # Insert ai_responses for those generated with safety quick checks
     if to_complete_ids:
@@ -739,6 +794,40 @@ async def batch_generate(
         )
 
     await db.commit()
+
+    # For items that received no response, revert from processing and schedule retry/backoff
+    if no_response_ids:
+        placeholders4 = ",".join([f":nid{i}" for i in range(len(no_response_ids))])
+        params4 = {f"nid{i}": x for i, x in enumerate(no_response_ids)}
+        await db.execute(
+            text(
+                f"""
+                UPDATE comments_queue
+                SET failure_count = failure_count + 1,
+                    status = CASE WHEN failure_count + 1 >= 5 THEN 'failed' ELSE 'pending' END,
+                    last_error_code = 500,
+                    last_error_message = 'no_response_for_item',
+                    last_error_at = now(),
+                    next_attempt_at = CASE WHEN failure_count + 1 < 5 THEN now() + (interval '30 seconds' * POWER(2, failure_count)) ELSE NULL END,
+                    processed_at = now()
+                WHERE comment_id IN ({placeholders4})
+                """
+            ),
+            params4,
+        )
+        await db.execute(
+            text(
+                f"""
+                INSERT INTO comments_dead_letter (queue_id, channel_id, comment_id, reason, error_code, error_message, created_at)
+                SELECT cq.id, cq.channel_id, cq.comment_id, 'ai_no_response', 500, 'Claude did not return an item', now()
+                FROM comments_queue cq
+                WHERE cq.comment_id IN ({placeholders4}) AND cq.failure_count >= 5 AND cq.status = 'failed'
+                ON CONFLICT DO NOTHING
+                """
+            ),
+            params4,
+        )
+        await db.commit()
 
     # Enqueue quick-safe items for AI safety and run batch if threshold reached
     if to_complete_ids:

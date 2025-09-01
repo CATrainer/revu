@@ -20,6 +20,7 @@ from app.core.config import settings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from loguru import logger
+from app.utils.reliability import async_retry, CircuitBreaker
 
 
 PRICE_USD_PER_MTOKENS: Dict[str, Dict[str, float]] = {
@@ -57,6 +58,10 @@ class ClaudeService:
             self.client = None
         else:
             self.client = Anthropic(api_key=api_key) if api_key else None
+        # Simple process-level circuit breaker for Claude
+        self._breaker = CircuitBreaker(threshold=int(os.getenv("CLAUDE_CB_THRESHOLD", "5")),
+                                       cooldown=float(os.getenv("CLAUDE_CB_COOLDOWN", "60")),
+                                       half_open_max=1)
 
     async def generate_response(
         self,
@@ -73,6 +78,18 @@ class ClaudeService:
         Returns the model text or None on error.
         """
         if not self.client:
+            return None
+
+        # Circuit breaker short-circuit
+        if not self._breaker.allow_request():
+            logger.warning("Claude circuit open; short-circuiting request")
+            # Log as error event but without making an API call
+            await self._log_error(db,
+                                  service="claude",
+                                  op="messages.create",
+                                  code=503,
+                                  message="circuit_open",
+                                  context={"channel_id": channel_id, "from_cache": from_cache})
             return None
 
     # Compose a concise, safe prompt
@@ -93,14 +110,30 @@ class ClaudeService:
         tokens_in = 0
         tokens_out = 0
         model_used = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-3-5-sonnet-latest"
-        try:
-            # Prefer configured model; fallback to a widely available latest model name
-            resp = self.client.messages.create(
+        def _call_sync():
+            return self.client.messages.create(  # type: ignore[union-attr]
                 model=model_used,
                 max_tokens=getattr(settings, "CLAUDE_MAX_TOKENS", None) or int(os.getenv("CLAUDE_MAX_TOKENS", "200")),
                 system=system_prompt,
                 messages=[{"role": "user", "content": user_prompt}],
                 temperature=0.3,
+            )
+
+        def _should_retry(e: BaseException) -> bool:
+            # Retry anthropic APIError 429/5xx and generic transient errors
+            code = getattr(e, "status_code", None)
+            if isinstance(e, Exception) and code in (429, 500, 502, 503, 504):
+                return True
+            return False
+
+        try:
+            # Prefer configured model; fallback to a widely available latest model name
+            resp = await async_retry(
+                lambda: _run_in_thread(_call_sync),
+                retries=int(os.getenv("CLAUDE_MAX_RETRIES", "3")),
+                base_delay=float(os.getenv("CLAUDE_RETRY_BASE_DELAY", "0.5")),
+                max_delay=float(os.getenv("CLAUDE_RETRY_MAX_DELAY", "6.0")),
+                should_retry=_should_retry,
             )
             # Anthropic responses contain content blocks; extract first text block
             content = resp.content if hasattr(resp, "content") else None
@@ -119,16 +152,23 @@ class ClaudeService:
             tokens_out = _estimate_tokens(result_text or "")
             status_code = 200
 
+            self._breaker.record_success()
             return result_text
         except APIError as e:  # anthropic-specific error
             logger.error(f"Claude APIError: {e}")
             status_code = getattr(e, "status_code", 500) or 500
             result_text = None
+            self._breaker.record_failure()
+            await self._log_error(db, service="claude", op="messages.create", code=status_code, message=str(e),
+                                  context={"channel_id": channel_id})
             return None
         except Exception as e:  # generic fallback
             logger.exception(f"Claude generation failed: {e}")
             status_code = 500
             result_text = None
+            self._breaker.record_failure()
+            await self._log_error(db, service="claude", op="messages.create", code=500, message=str(e),
+                                  context={"channel_id": channel_id})
             return None
         finally:
             # Always log usage when an API call was attempted
@@ -172,6 +212,26 @@ class ClaudeService:
                     await ClaudeService.increment_metrics(db, channel_id=channel_id, delta_generated=1)
             except Exception:
                 logger.exception("Failed to update response_metrics after Claude generation")
+
+    async def _log_error(self, db: AsyncSession, *, service: str, op: str, code: Optional[int], message: str, context: Optional[Dict[str, Any]] = None) -> None:
+        try:
+            await db.execute(
+                text(
+                    """
+                    INSERT INTO error_logs (service_name, operation, error_code, message, context, created_at)
+                    VALUES (:svc, :op, :code, :msg, :ctx, now())
+                    """
+                ),
+                {"svc": service, "op": op, "code": code, "msg": message, "ctx": context or {}},
+            )
+            await db.commit()
+        except Exception:
+            logger.exception("Failed to write error_logs entry")
+
+# Small helper to run sync function in a thread for async_retry
+import asyncio
+async def _run_in_thread(fn):
+    return await asyncio.to_thread(fn)
 
     @staticmethod
     async def increment_metrics(

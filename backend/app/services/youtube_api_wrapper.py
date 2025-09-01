@@ -11,8 +11,13 @@ import random
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from googleapiclient.errors import HttpError
+try:
+    from googleapiclient.errors import HttpError  # type: ignore
+except Exception:  # pragma: no cover - fallback when package missing in type env
+    class HttpError(Exception):  # type: ignore
+        pass
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text as sql_text
 
 from app.services.token_manager import TokenManager
 from app.services.youtube_client import YouTubeAPIClient
@@ -89,8 +94,21 @@ class YouTubeAPIWrapper:
                 attempts += 1
                 continue
 
-            except QuotaExceededError:
-                # Do not retry on quota exceeded
+            except QuotaExceededError as e:
+                # Do not retry on quota exceeded; log structured error
+                try:
+                    await self.session.execute(
+                        sql_text(
+                            """
+                            INSERT INTO error_logs (service_name, operation, error_code, message, context, created_at)
+                            VALUES ('youtube', :op, 429, :msg, :ctx, now())
+                            """
+                        ),
+                        {"op": operation, "msg": str(e), "ctx": {"connection_id": str(self.connection_id)}},
+                    )
+                    await self.session.commit()
+                except Exception:
+                    pass
                 raise
 
             except HttpError as e:
@@ -99,19 +117,62 @@ class YouTubeAPIWrapper:
                     status = e.resp.status  # type: ignore[attr-defined]
 
                 if status in (429, 500, 503) and attempts < self.max_retries:
-                    await asyncio.sleep(delay + random.uniform(0, max(0.0, delay / 2)))
+                    # Honor Retry-After when present for rate limits
+                    wait = delay + random.uniform(0, max(0.0, delay / 2))
+                    try:
+                        retry_after = None
+                        if hasattr(e, 'resp') and hasattr(e.resp, 'headers'):
+                            retry_after = e.resp.headers.get('Retry-After')  # type: ignore[attr-defined]
+                        if retry_after:
+                            wait = max(wait, float(retry_after))
+                    except Exception:
+                        pass
+                    await asyncio.sleep(wait)
                     delay = min(delay * 2.0, self.max_delay)
                     attempts += 1
                     continue
+                # Terminal failure: log
+                try:
+                    await self.session.execute(
+                        sql_text(
+                            """
+                            INSERT INTO error_logs (service_name, operation, error_code, message, context, created_at)
+                            VALUES ('youtube', :op, :code, :msg, :ctx, now())
+                            """
+                        ),
+                        {
+                            "op": operation,
+                            "code": int(status or 0),
+                            "msg": str(e),
+                            "ctx": {"connection_id": str(self.connection_id)},
+                        },
+                    )
+                    await self.session.commit()
+                except Exception:
+                    pass
                 raise
 
-            except Exception:
+            except Exception as e:
                 # Retry generic transient failures a few times
                 if attempts < self.max_retries:
                     await asyncio.sleep(delay)
                     delay = min(delay * 2.0, self.max_delay)
                     attempts += 1
                     continue
+                # Log terminal generic error
+                try:
+                    await self.session.execute(
+                        sql_text(
+                            """
+                            INSERT INTO error_logs (service_name, operation, error_code, message, context, created_at)
+                            VALUES ('youtube', :op, 0, :msg, :ctx, now())
+                            """
+                        ),
+                        {"op": operation, "msg": str(e), "ctx": {"connection_id": str(self.connection_id)}},
+                    )
+                    await self.session.commit()
+                except Exception:
+                    pass
                 raise
 
     # ---- High-level methods (mirror YouTubeAPIClient) ----
