@@ -23,8 +23,11 @@ def upgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
 
+    table_names = inspector.get_table_names()
+    table_exists = "automation_rules" in table_names
+
     # Create table if it doesn't already exist (idempotent)
-    if "automation_rules" not in inspector.get_table_names():
+    if not table_exists:
         op.create_table(
             "automation_rules",
             sa.Column(
@@ -54,17 +57,98 @@ def upgrade() -> None:
             sa.ForeignKeyConstraint(["channel_id"], ["youtube_connections.id"], ondelete="CASCADE"),
             sa.PrimaryKeyConstraint("id"),
         )
+    else:
+        # Ensure required columns exist when table pre-exists
+        existing_cols = {c["name"] for c in inspector.get_columns("automation_rules")}
+        # channel_id
+        if "channel_id" not in existing_cols:
+            op.add_column(
+                "automation_rules",
+                sa.Column("channel_id", postgresql.UUID(as_uuid=True), nullable=True),
+            )
+        # name
+        if "name" not in existing_cols:
+            op.add_column(
+                "automation_rules",
+                sa.Column("name", sa.String(length=255), nullable=True),
+            )
+        # enabled
+        if "enabled" not in existing_cols:
+            op.add_column(
+                "automation_rules",
+                sa.Column("enabled", sa.Boolean(), nullable=True, server_default=sa.true()),
+            )
+        # trigger_conditions
+        if "trigger_conditions" not in existing_cols:
+            op.add_column(
+                "automation_rules",
+                sa.Column(
+                    "trigger_conditions",
+                    postgresql.JSONB(astext_type=sa.Text()),
+                    nullable=True,
+                    server_default=sa.text("'{}'::jsonb"),
+                ),
+            )
+        # actions
+        if "actions" not in existing_cols:
+            op.add_column(
+                "automation_rules",
+                sa.Column(
+                    "actions",
+                    postgresql.JSONB(astext_type=sa.Text()),
+                    nullable=True,
+                    server_default=sa.text("'[]'::jsonb"),
+                ),
+            )
+        # response_limit_per_run
+        if "response_limit_per_run" not in existing_cols:
+            op.add_column(
+                "automation_rules",
+                sa.Column("response_limit_per_run", sa.Integer(), nullable=True),
+            )
+        # require_approval
+        if "require_approval" not in existing_cols:
+            op.add_column(
+                "automation_rules",
+                sa.Column("require_approval", sa.Boolean(), nullable=True, server_default=sa.false()),
+            )
+        # priority
+        if "priority" not in existing_cols:
+            op.add_column(
+                "automation_rules",
+                sa.Column("priority", sa.Integer(), nullable=True, server_default=sa.text("0")),
+            )
+
+        # Ensure FK exists if channel_id present
+        existing_fks = inspector.get_foreign_keys("automation_rules")
+        has_channel_fk = any(
+            ("channel_id" in fk.get("constrained_columns", [])) and fk.get("referred_table") == "youtube_connections"
+            for fk in existing_fks
+        )
+        if ("channel_id" in {c["name"] for c in inspector.get_columns("automation_rules")}) and not has_channel_fk:
+            op.create_foreign_key(
+                "fk_automation_rules_channel_id_youtube_connections",
+                "automation_rules",
+                "youtube_connections",
+                ["channel_id"],
+                ["id"],
+                ondelete="CASCADE",
+            )
 
     # Helpful indexes for lookups and ordering (idempotent)
-    op.execute(
-        "CREATE INDEX IF NOT EXISTS idx_automation_rules_channel ON automation_rules (channel_id)"
-    )
-    op.execute(
-        "CREATE INDEX IF NOT EXISTS idx_automation_rules_priority ON automation_rules (priority)"
-    )
-    op.execute(
-        "CREATE INDEX IF NOT EXISTS idx_automation_rules_channel_enabled ON automation_rules (channel_id, enabled)"
-    )
+    # Only create if columns exist
+    idx_names = {idx["name"] for idx in inspector.get_indexes("automation_rules")}
+    cols_now = {c["name"] for c in inspector.get_columns("automation_rules")}
+    if {"channel_id"}.issubset(cols_now) and "idx_automation_rules_channel" not in idx_names:
+        op.create_index("idx_automation_rules_channel", "automation_rules", ["channel_id"])
+    if {"priority"}.issubset(cols_now) and "idx_automation_rules_priority" not in idx_names:
+        op.create_index("idx_automation_rules_priority", "automation_rules", ["priority"])
+    if {"channel_id", "enabled"}.issubset(cols_now) and "idx_automation_rules_channel_enabled" not in idx_names:
+        op.create_index(
+            "idx_automation_rules_channel_enabled",
+            "automation_rules",
+            ["channel_id", "enabled"],
+        )
 
 
 def downgrade() -> None:
