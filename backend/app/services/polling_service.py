@@ -145,7 +145,19 @@ class PollingService:
             last_checked: Optional[datetime] = row[0] if row else None
             logger.info("Polling comments for channel {cid}; last_checked={ts}", cid=str(channel_id), ts=str(last_checked))
 
-            # 2) Get recent videos (limit to latest 50 by published date)
+            # 2) Ensure recent videos are present via YouTube integration, then get recent videos
+            try:
+                sync = SyncService(self.session, channel_id)
+                synced_videos = await sync.sync_new_videos(last_checked)
+                logger.debug(
+                    "Synced {n} new videos for channel {cid} before polling comments",
+                    n=int(synced_videos or 0),
+                    cid=str(channel_id),
+                )
+            except Exception:
+                logger.exception("Failed syncing recent videos for channel {cid}", cid=str(channel_id))
+
+            # Now read from DB (limit to latest 50 by published date)
             vids_res = await self.session.execute(
                 text(
                     """
