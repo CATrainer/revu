@@ -35,6 +35,7 @@ from app.core.config import settings
 from app.services.safety_validator import quick_safety_check
 from app.services.youtube_service import YouTubeService
 from datetime import timedelta
+from app.services.batch_processor import BatchProcessor, QueueItem
 
 router = APIRouter()
 
@@ -848,6 +849,90 @@ async def batch_generate(
 
 
 # ---------------- Approval queue endpoints ----------------
+
+@router.post("/force-process")
+async def force_process_pending(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """TESTING ONLY: Immediately process all pending comments in batches.
+
+    - Requires TESTING_MODE=true in environment.
+    - Bypasses normal wait/size thresholds and processes grouped batches until none remain.
+    - Returns a detailed summary of successes and failures.
+    """
+    # Guard: only allow in testing mode
+    testing = os.getenv("TESTING_MODE", "false").lower() == "true"
+    if not testing:
+        raise HTTPException(status_code=403, detail="Not allowed outside testing mode")
+
+    bp = BatchProcessor(db)
+
+    total_processed = 0
+    total_attempted = 0
+    batches = 0
+    details: List[Dict[str, Any]] = []
+
+    while True:
+        pending = await bp.get_pending_comments(limit=200)
+        if not pending:
+            break
+        groups = bp.group_comments(pending)
+        if not groups:
+            break
+        for group in groups:
+            subset = group[: bp.get_batch_size()]
+            if not subset:
+                continue
+            results = await bp.process_batch(subset)
+            # Mark last_batch_processed_at for attempted items
+            try:
+                ids = [it.queue_id for it in subset]
+                if ids:
+                    values = ",".join([f"(CAST(:id{i} AS uuid))" for i in range(len(ids))])
+                    params = {f"id{i}": str(v) for i, v in enumerate(ids)}
+                    await db.execute(
+                        text(
+                            f"""
+                                UPDATE comments_queue cq
+                                SET last_batch_processed_at = now()
+                                FROM (VALUES {values}) AS v(id)
+                                WHERE cq.id = v.id
+                            """
+                        ),
+                        params,
+                    )
+                    await db.commit()
+            except Exception:
+                try:
+                    await db.rollback()
+                except Exception:
+                    pass
+
+            # Summarize results
+            for r in results:
+                cid = r.get("comment_id") if isinstance(r, dict) else None
+                if isinstance(r, dict) and r.get("response_text"):
+                    total_processed += 1
+                    total_attempted += 1
+                    details.append({"comment_id": cid, "status": "ok"})
+                else:
+                    total_attempted += 1
+                    err = (r.get("error") if isinstance(r, dict) else "unknown_error")
+                    details.append({"comment_id": cid, "status": "error", "error": err})
+
+            batches += 1
+
+    return {
+        "status": "ok",
+        "trigger": "force",
+        "processed": total_processed,
+        "attempted": total_attempted,
+        "batches": batches,
+        "batch_size": bp.get_batch_size(),
+        "details": details,
+    }
 
 @router.get("/pending-approvals")
 async def list_pending_approvals(
