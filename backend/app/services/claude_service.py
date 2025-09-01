@@ -37,7 +37,7 @@ class ClaudeService:
         if not self.client:
             return None
 
-        # Compose a concise, safe prompt
+    # Compose a concise, safe prompt
         system_prompt = (
             "You are a helpful assistant writing brief, friendly, and professional replies to YouTube comments. "
             "Keep replies under 2 sentences, positive, and aligned with the creator's tone. Avoid emojis unless appropriate."
@@ -50,11 +50,11 @@ class ClaudeService:
         )
 
         try:
-            # Prefer configured model name when available; fallback sensible default
-            model = getattr(settings, "CLAUDE_MODEL", None) or "claude-3-5-sonnet-20240620"
+            # Prefer configured model; fallback to a widely available latest model name
+            model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-3-5-sonnet-latest"
             resp = self.client.messages.create(
                 model=model,
-                max_tokens=getattr(settings, "CLAUDE_MAX_TOKENS", 200),
+                max_tokens=getattr(settings, "CLAUDE_MAX_TOKENS", None) or int(os.getenv("CLAUDE_MAX_TOKENS", "200")),
                 system=system_prompt,
                 messages=[{"role": "user", "content": user_prompt}],
                 temperature=0.3,

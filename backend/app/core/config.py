@@ -98,6 +98,11 @@ class Settings(BaseSettings):
     OPENAI_MAX_TOKENS: int = 500
     OPENAI_TEMPERATURE: float = 0.7
 
+    # Claude (Anthropic)
+    CLAUDE_API_KEY: Optional[str] = None
+    CLAUDE_MODEL: Optional[str] = None
+    CLAUDE_MAX_TOKENS: int = 500
+
     # YouTube / OAuth (optional)
     YOUTUBE_API_KEY: Optional[str] = None
     OAUTH_REDIRECT_URI: Optional[str] = None
