@@ -142,7 +142,7 @@ class PollingService:
                 {"cid": str(channel_id)},
             )
             row = res.first()
-            last_checked: Optional[datetime] = row[1] if False else (row[0] if row else None)
+            last_checked: Optional[datetime] = row[0] if row else None
             logger.info("Polling comments for channel {cid}; last_checked={ts}", cid=str(channel_id), ts=str(last_checked))
 
             # 2) Get recent videos (limit to latest 50 by published date)
