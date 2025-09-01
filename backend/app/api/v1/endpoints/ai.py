@@ -186,32 +186,35 @@ async def generate_response(
     from_cache = False
     ai_text = None
     try:
-        cache_row = await db.execute(
-            text(
-                """
-                SELECT response_template
-                FROM response_cache
-                WHERE fingerprint = :fp AND (expires_at IS NULL OR expires_at > now())
-                LIMIT 1
-                """
-            ),
-            {"fp": fp},
-        )
-        row = cache_row.first()
-        if row and row[0]:
-            ai_text = row[0]
-            from_cache = True
-            # Increment usage and update last_used_at
-            await db.execute(
+        # Isolate cache lookup and usage increment in a SAVEPOINT so failures don't abort the main tx
+        async with db.begin_nested():
+            cache_row = await db.execute(
                 text(
                     """
-                    UPDATE response_cache
-                    SET usage_count = usage_count + 1, last_used_at = now()
-                    WHERE fingerprint = :fp
+                    SELECT response_template
+                    FROM response_cache
+                    WHERE fingerprint = CAST(:fp AS varchar(128))
+                      AND (expires_at IS NULL OR expires_at > now())
+                    LIMIT 1
                     """
                 ),
                 {"fp": fp},
             )
+            row = cache_row.first()
+            if row and row[0]:
+                ai_text = row[0]
+                from_cache = True
+                # Increment usage and update last_used_at
+                await db.execute(
+                    text(
+                        """
+                        UPDATE response_cache
+                        SET usage_count = usage_count + 1, last_used_at = now()
+                        WHERE fingerprint = CAST(:fp AS varchar(128))
+                        """
+                    ),
+                    {"fp": fp},
+                )
     except Exception as e:
         logger.exception("Cache lookup failed: {}", e)
 
@@ -275,32 +278,34 @@ async def generate_response(
     # If newly generated (not from cache), store in response_cache with 30-day expiry
     if not from_cache and ai_text:
         try:
-            # Try update first
-            await db.execute(
-                text(
-                    """
-                    UPDATE response_cache
-                    SET response_template = :rtxt,
-                        last_used_at = now(),
-                        expires_at = now() + interval '30 days'
-                    WHERE fingerprint = :fp
-                    """
-                ),
-                {"fp": fp, "rtxt": ai_text},
-            )
-            # Insert if it does not exist
-            await db.execute(
-                text(
-                    """
-                    INSERT INTO response_cache (fingerprint, response_template, usage_count, last_used_at, expires_at)
-                    SELECT :fp, :rtxt, 1, now(), now() + interval '30 days'
-                    WHERE NOT EXISTS (
-                        SELECT 1 FROM response_cache WHERE fingerprint = :fp
-                    )
-                    """
-                ),
-                {"fp": fp, "rtxt": ai_text},
-            )
+            # Isolate cache writes in a nested transaction (SAVEPOINT) so failures don't abort the main tx
+            async with db.begin_nested():
+            # Try update first (cast param to match varchar column)
+                await db.execute(
+                    text(
+                        """
+                        UPDATE response_cache
+                        SET response_template = :rtxt,
+                            last_used_at = now(),
+                            expires_at = now() + interval '30 days'
+                        WHERE fingerprint = CAST(:fp AS varchar(128))
+                        """
+                    ),
+                    {"fp": fp, "rtxt": ai_text},
+                )
+            # Insert if it does not exist; cast param everywhere to avoid ambiguous parameter typing
+                await db.execute(
+                    text(
+                        """
+                        INSERT INTO response_cache (fingerprint, response_template, usage_count, last_used_at, expires_at)
+                        SELECT CAST(:fp AS varchar(128)), :rtxt, 1, now(), now() + interval '30 days'
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM response_cache WHERE fingerprint = CAST(:fp AS varchar(128))
+                        )
+                        """
+                    ),
+                    {"fp": fp, "rtxt": ai_text},
+                )
         except Exception as e:
             logger.exception("Failed to store response in cache: {}", e)
     elif from_cache:
@@ -326,7 +331,7 @@ async def generate_response(
                 text(
                     """
                     INSERT INTO ai_responses (queue_id, response_text, passed_safety, safety_checked_at, safety_notes, created_at)
-                    VALUES (:qid, :rtxt, false, now(), :notes, now())
+                    VALUES (CAST(:qid AS uuid), :rtxt, false, now(), :notes, now())
                     """
                 ),
                 {"qid": str(queue_id), "rtxt": ai_text, "notes": f"quick_fail:{quick_reason}"},
@@ -337,7 +342,7 @@ async def generate_response(
                 text(
                     """
                     INSERT INTO ai_responses (queue_id, response_text, passed_safety, safety_notes, created_at)
-                    VALUES (:qid, :rtxt, false, :notes, now())
+                    VALUES (CAST(:qid AS uuid), :rtxt, false, :notes, now())
                     """
                 ),
                 {"qid": str(queue_id), "rtxt": ai_text, "notes": "pending_ai"},

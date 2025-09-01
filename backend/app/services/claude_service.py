@@ -205,6 +205,10 @@ class ClaudeService:
                 await db.commit()
             except Exception:  # don't break main flow due to logging
                 logger.exception("Failed to log api_usage for Claude call")
+                try:
+                    await db.rollback()
+                except Exception:
+                    pass
 
             # Increment daily metrics for generations (only on success and not from cache)
             try:
@@ -227,6 +231,10 @@ class ClaudeService:
             await db.commit()
         except Exception:
             logger.exception("Failed to write error_logs entry")
+            try:
+                await db.rollback()
+            except Exception:
+                pass
 
 # Small helper to run sync function in a thread for async_retry
 import asyncio
@@ -271,3 +279,7 @@ async def _run_in_thread(fn):
             await db.commit()
         except Exception:
             logger.exception("Failed to upsert into response_metrics")
+            try:
+                await db.rollback()
+            except Exception:
+                pass

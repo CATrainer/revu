@@ -108,7 +108,10 @@ class YouTubeAPIWrapper:
                     )
                     await self.session.commit()
                 except Exception:
-                    pass
+                    try:
+                        await self.session.rollback()
+                    except Exception:
+                        pass
                 raise
 
             except HttpError as e:
@@ -149,7 +152,10 @@ class YouTubeAPIWrapper:
                     )
                     await self.session.commit()
                 except Exception:
-                    pass
+                    try:
+                        await self.session.rollback()
+                    except Exception:
+                        pass
                 raise
 
             except Exception as e:
@@ -172,7 +178,10 @@ class YouTubeAPIWrapper:
                     )
                     await self.session.commit()
                 except Exception:
-                    pass
+                    try:
+                        await self.session.rollback()
+                    except Exception:
+                        pass
                 raise
 
     # ---- High-level methods (mirror YouTubeAPIClient) ----

@@ -145,7 +145,10 @@ class BatchProcessor:
                     )
                     await self.session.commit()
                 except Exception:
-                    pass
+                    try:
+                        await self.session.rollback()
+                    except Exception:
+                        pass
                 logger.error("Batch endpoint failed: {} - {}", resp.status_code, getattr(resp, 'text', ''))
                 return [{"comment_id": cid, "error": f"http_{resp.status_code}"} for cid in ids]
             data = resp.json()
@@ -165,7 +168,10 @@ class BatchProcessor:
                 )
                 await self.session.commit()
             except Exception:
-                pass
+                try:
+                    await self.session.rollback()
+                except Exception:
+                    pass
             return [{"comment_id": cid, "error": "exception"} for cid in ids]
 
     async def run_batch_cycle(self, *, max_batches: int = 20, delay_seconds: float = 2.0) -> int:
