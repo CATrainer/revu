@@ -12,6 +12,7 @@ from app.api.v1.endpoints import (
     ai,
     analytics,
     auth,
+    automation,
     youtube_auth,
     youtube_content,
     platforms,
@@ -70,6 +71,12 @@ api_router.include_router(
 )
 
 api_router.include_router(
+    automation.router,
+    prefix="/automation",
+    tags=["automation"],
+)
+
+api_router.include_router(
     analytics.router,
     prefix="/analytics",
     tags=["analytics"],
@@ -98,6 +105,14 @@ api_router.include_router(
     youtube_content.router,
     prefix="/youtube",
     tags=["youtube"],
+)
+
+from app.api.v1.endpoints import polling as polling_endpoints
+
+api_router.include_router(
+    polling_endpoints.router,
+    prefix="/polling",
+    tags=["polling"],
 )
 
 
