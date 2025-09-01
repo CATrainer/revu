@@ -18,6 +18,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.youtube_service import YouTubeService  # existing high-level service (for future use)
 from app.services.sync_service import SyncService  # used to sync comments
+from app.services.comment_classifier import classify_comment
+from app.services.template_responses import get_template_response
 from loguru import logger
 
 
@@ -199,7 +201,7 @@ class PollingService:
                         )
                         SELECT :cid, :vid, nc.comment_id, nc.author_name, nc.author_channel_id, nc.content, 'pending', 0, now()
                         FROM new_comments nc
-                        RETURNING id
+                        RETURNING id, comment_id, content
                         """
                     )
                     insert_res = await self.session.execute(
@@ -211,6 +213,44 @@ class PollingService:
                     total_enqueued += added
                     if added:
                         logger.debug("Enqueued {n} new comments for video {vid}", n=added, vid=youtube_video_id)
+
+                    # Classify and update queue rows; generate template responses if available
+                    for row in inserted_rows:
+                        try:
+                            qid = row[0]
+                            _cid = row[1]  # external youtube comment id (unused here but handy for logs)
+                            content = row[2] or ""
+
+                            cls, prio = classify_comment(content)
+                            # Update queue with classification/priority; ignore spam
+                            await self.session.execute(
+                                text(
+                                    """
+                                    UPDATE comments_queue
+                                    SET classification = :cls,
+                                        priority = :prio,
+                                        status = CASE WHEN :cls = 'spam' THEN 'ignored' ELSE status END,
+                                        updated_at = now()
+                                    WHERE id = :qid
+                                    """
+                                ),
+                                {"cls": cls, "prio": int(prio), "qid": str(qid)},
+                            )
+
+                            # If a simple template exists (e.g., for simple_positive), store as an approved ai_response
+                            tpl = await get_template_response(classification=cls, channel_id=channel_id)
+                            if tpl:
+                                await self.session.execute(
+                                    text(
+                                        """
+                                        INSERT INTO ai_responses (queue_id, response_text, passed_safety, safety_checked_at, approved_at)
+                                        VALUES (:qid, :text, TRUE, now(), now())
+                                        """
+                                    ),
+                                    {"qid": str(qid), "text": tpl},
+                                )
+                        except Exception:
+                            logger.exception("Failed to classify/enrich queue row {qid} (video {vid})", qid=str(row[0]), vid=youtube_video_id)
                 except Exception:
                     logger.exception("Failed polling/enqueue for video {vid} (channel {cid})", vid=v[1], cid=str(channel_id))
                     # continue with next video
