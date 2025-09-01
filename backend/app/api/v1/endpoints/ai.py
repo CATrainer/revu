@@ -218,10 +218,13 @@ async def generate_response(
     if not ai_text:
         claude = ClaudeService()
         try:
-            ai_text = claude.generate_response(
+            ai_text = await claude.generate_response(
+                db=db,
+                channel_id=str(yt.channel_id),
                 comment_text=yt.comment_text,
                 channel_name=str(yt.channel_id),
                 video_title=yt.video_title,
+                from_cache=False,
             )
         except Exception as e:
             logger.exception("Claude generation error: {}", e)
@@ -267,6 +270,17 @@ async def generate_response(
             )
         except Exception as e:
             logger.exception("Failed to store response in cache: {}", e)
+    elif from_cache:
+        # Count cache hit and generated response
+        try:
+            await ClaudeService.increment_metrics(
+                db,
+                channel_id=str(yt.channel_id),
+                delta_generated=1,
+                delta_cache_hits=1,
+            )
+        except Exception:
+            logger.exception("Failed to update metrics for cache hit")
 
     # Safety: quick check first
     quick_ok, quick_reason = quick_safety_check(ai_text)
