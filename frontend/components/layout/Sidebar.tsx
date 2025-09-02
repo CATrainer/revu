@@ -4,13 +4,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Inbox, Users, ChartPie, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BarChart3, Inbox, Users, ChartPie, Settings, ChevronLeft, ChevronRight, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useMemo } from 'react';
 
 const baseNav = [
   { name: 'Home', href: '/dashboard', icon: BarChart3 },
   { name: 'Comments', href: '/comments', icon: Inbox },
+  { name: 'Automation', href: '/dashboard/automation', icon: Bot },
   { name: 'Socials', href: '/socials', icon: Users },
   { name: 'Analytics', href: '/analytics', icon: ChartPie },
   { name: 'Settings', href: '/settings', icon: Settings },

@@ -104,6 +104,11 @@ export function Header({ onMenuClick }: HeaderProps) {
               <Image src="/logo/mark.png" alt="Repruv" width={32} height={32} className="h-8 w-8" priority />
               {/* Location selector appears only when relevant (org/agency or demo agency) */}
               <LocationSelector />
+              <button
+                className="ml-2 text-xs px-2 py-1 rounded border border-[var(--border)] hover-background"
+                onClick={() => router.push('/dashboard/automation')}
+                title="Open Automation"
+              >Automation</button>
             </div>
             <div className="hidden sm:block lg:hidden ml-4">
               <LocationSelector />

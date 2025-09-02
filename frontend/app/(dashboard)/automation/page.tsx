@@ -9,6 +9,8 @@ import { api } from '@/lib/api';
 import Link from 'next/link';
 import RulesList from '@/components/automation/RulesList';
 import RuleBuilder from '@/components/automation/RuleBuilder';
+import AutomationNav from '@/components/automation/AutomationNav';
+import { useSearchParams } from 'next/navigation';
 
 type PollingConfig = {
   channel_id: string | null;
@@ -49,6 +51,7 @@ async function fetchApprovalsCount(): Promise<number> {
 
 export default function AutomationPage() {
   const qc = useQueryClient();
+  const search = useSearchParams();
   const { data: polling, isLoading: loadingPolling } = useQuery({ queryKey: ['polling-config'], queryFn: fetchPolling });
   const channelId = polling?.channel_id ?? null;
   const { data: today, refetch: refetchToday } = useQuery({
@@ -79,8 +82,14 @@ export default function AutomationPage() {
   const interval = polling?.polling_interval_minutes ?? 15;
 
   // Tab state
-  const tabs = ['Active Rules', 'Create Rule', 'Approval Queue', 'Analytics'] as const;
-  const [tab, setTab] = useState<typeof tabs[number]>('Active Rules');
+  type Tab = 'Active Rules' | 'Create Rule' | 'Approval Queue' | 'Analytics';
+  const tabParam = (search.get('tab') || '').toLowerCase();
+  const tabFromUrl: Tab = tabParam === 'create' ? 'Create Rule' : tabParam === 'analytics' ? 'Analytics' : 'Active Rules';
+  const [tab, setTab] = useState<Tab>(tabFromUrl);
+
+  useEffect(() => {
+    setTab(tabFromUrl);
+  }, [tabFromUrl]);
 
   // Create rule dialog state
   // Create Rule handled in RuleBuilder
@@ -150,18 +159,8 @@ export default function AutomationPage() {
         </CardContent>
       </Card>
 
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-2">
-        {tabs.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`text-sm px-3 py-1 rounded border ${tab === t ? 'bg-primary text-white border-primary' : 'bg-white border-gray-200'}`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+  {/* Tabs with links */}
+  <AutomationNav />
 
       {/* Panels */}
       {tab === 'Active Rules' && (
@@ -170,6 +169,9 @@ export default function AutomationPage() {
             <CardTitle>Active Rules</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="mb-3 text-sm text-muted-foreground">
+              Need to approve items? Go to <Link href="/dashboard/automation/approvals" className="underline">Approval Queue</Link>.
+            </div>
             <RulesList />
           </CardContent>
         </Card>
@@ -179,16 +181,7 @@ export default function AutomationPage() {
         <RuleBuilder />
       )}
 
-      {tab === 'Approval Queue' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Approval Queue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm">Go to <Link href="/dashboard/approvals" className="underline">Approvals</Link> to review and approve responses.</div>
-          </CardContent>
-        </Card>
-      )}
+  {/* Approval Queue tab now links directly via AutomationNav to /dashboard/automation/approvals */}
 
       {tab === 'Analytics' && (
         <Card>
