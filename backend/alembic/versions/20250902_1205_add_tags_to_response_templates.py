@@ -9,7 +9,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "20250902_1205"
-down_revision = "20250902_0003"
+down_revision = "20250902_0004"
 branch_labels = None
 depends_on = None
 
@@ -20,7 +20,8 @@ def upgrade() -> None:
     if inspector.has_table("response_templates"):
         cols = {c.get("name") for c in inspector.get_columns("response_templates")}
         if "tags" not in cols:
-            op.add_column("response_templates", sa.Column("tags", postgresql.ARRAY(sa.String()), nullable=True, server_default=sa.text("'{}'")))
+            # Add nullable column without default to avoid rewrite on large tables
+            op.add_column("response_templates", sa.Column("tags", postgresql.ARRAY(sa.String()), nullable=True))
 
 
 def downgrade() -> None:
