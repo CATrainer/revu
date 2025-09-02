@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,32 +7,107 @@ from sqlalchemy import text
 from app.core.database import get_async_session
 from app.core.security import get_current_active_user
 from app.models.user import User
+from app.services.nl_rule_parser import NaturalLanguageRuleParser, COMMON_PATTERNS
+from app.services.approval_queue import ApprovalQueueService
 
 router = APIRouter()
 
 
+def _validate_rule_payload(payload: Dict[str, Any], *, for_update: bool = False) -> Dict[str, Any]:
+    name = (payload.get("name") or "").strip()
+    if not for_update and not name:
+        raise HTTPException(status_code=400, detail="name is required")
+
+    # JSON fields
+    trigger_conditions = payload.get("trigger_conditions")
+    if trigger_conditions is not None and not isinstance(trigger_conditions, dict):
+        raise HTTPException(status_code=400, detail="trigger_conditions must be an object")
+    actions = payload.get("actions")
+    if actions is not None and not isinstance(actions, (list, dict)):
+        raise HTTPException(status_code=400, detail="actions must be a list or object")
+
+    require_approval = payload.get("require_approval")
+    if require_approval is not None and not isinstance(require_approval, bool):
+        raise HTTPException(status_code=400, detail="require_approval must be boolean")
+
+    response_limit_per_run = payload.get("response_limit_per_run")
+    if response_limit_per_run is not None:
+        try:
+            response_limit_per_run = int(response_limit_per_run)
+            if response_limit_per_run < 0:
+                raise ValueError()
+        except Exception:
+            raise HTTPException(status_code=400, detail="response_limit_per_run must be a non-negative integer")
+
+    priority = payload.get("priority")
+    if priority is not None:
+        try:
+            priority = int(priority)
+        except Exception:
+            raise HTTPException(status_code=400, detail="priority must be an integer")
+
+    return {
+        "name": name if name else None,
+        "trigger_conditions": trigger_conditions,
+        "actions": actions,
+        "require_approval": require_approval,
+        "response_limit_per_run": response_limit_per_run,
+        "priority": priority,
+    }
+
+
 @router.get("/rules")
 async def list_rules(
-    *, db: AsyncSession = Depends(get_async_session), current_user: User = Depends(get_current_active_user)
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    channel_id: Optional[str] = None,
+    enabled: Optional[bool] = None,
+    q: Optional[str] = None,
+    include_deleted: bool = False,
+    limit: int = 100,
+    offset: int = 0,
 ) -> List[Dict[str, Any]]:
-    res = await db.execute(
-        text(
-            """
-            SELECT id, name, enabled, priority
-            FROM automation_rules
-            ORDER BY priority DESC, name ASC
-            """
-        )
-    )
-    rows = res.fetchall()
+    """List rules with optional filtering by channel, enabled, and name/condition query.
+
+    Soft-deleted rules (trigger_conditions._deleted=true) are excluded by default.
+    """
+    clauses = ["1=1"]
+    params: Dict[str, Any] = {"limit": max(1, min(500, int(limit))), "offset": max(0, int(offset))}
+    if channel_id:
+        clauses.append("channel_id::text = :cid")
+        params["cid"] = str(channel_id)
+    if enabled is not None:
+        clauses.append("enabled = :en")
+        params["en"] = bool(enabled)
+    if not include_deleted:
+        # Exclude rows where trigger_conditions contains {"_deleted": "true"|true}
+        clauses.append("NOT (trigger_conditions ? '_deleted' AND trigger_conditions->>'_deleted' = 'true')")
+    if q:
+        clauses.append("(LOWER(name) LIKE :q OR LOWER(COALESCE(trigger_conditions::text,'')) LIKE :q)")
+        params["q"] = f"%{q.lower()}%"
+
+    sql = f"""
+        SELECT id, name, enabled, priority, channel_id
+        FROM automation_rules
+        WHERE {' AND '.join(clauses)}
+        ORDER BY priority DESC, updated_at DESC NULLS LAST, name ASC
+        LIMIT :limit OFFSET :offset
+    """
+    res = await db.execute(text(sql), params)
+    rows = res.fetchall() or []
     out: List[Dict[str, Any]] = []
     for r in rows:
-        out.append({
-            "id": str(r[0]),
-            "name": r[1],
-            "enabled": bool(r[2]),
-            "priority": int(r[3]) if r[3] is not None else 0,
-        })
+        m = r._mapping if hasattr(r, "_mapping") else None
+        out.append(
+            {
+                "id": str((m["id"] if m else r[0])),
+                "name": (m["name"] if m else r[1]),
+                "enabled": bool(m["enabled"] if m else r[2]),
+                "priority": int(m["priority"] if m else (r[3] if r[3] is not None else 0)),
+                "channel_id": str(m["channel_id"] if m else r[4]) if (m and m.get("channel_id")) or (not m and r[4]) else None,
+            }
+        )
     return out
 
 
@@ -56,9 +131,9 @@ async def create_rule(
       priority?: int
     }
     """
-    name = (payload.get("name") or "").strip()
-    if not name:
-        return {"error": "name is required"}
+    # Validation
+    v = _validate_rule_payload(payload)
+    name = v["name"]  # not None here
 
     # Determine channel_id
     channel_id: Optional[str] = payload.get("channel_id")
@@ -78,36 +153,34 @@ async def create_rule(
     if not channel_id:
         return {"error": "channel_id is required"}
 
-    classification = payload.get("classification")
-    action_raw = (payload.get("action") or "generate").lower()
-    action_map = {
-        "generate": "generate_response",
-        "delete": "delete_comment",
-        "flag": "flag_for_review",
-    }
-    action_type = action_map.get(action_raw, "generate_response")
-    require_approval = bool(payload.get("require_approval", False))
-    response_limit_per_run = payload.get("response_limit_per_run")
-    try:
-        response_limit_per_run = int(response_limit_per_run) if response_limit_per_run is not None else None
-    except Exception:
-        response_limit_per_run = None
-    priority = payload.get("priority")
-    try:
-        priority = int(priority) if priority is not None else 0
-    except Exception:
-        priority = 0
-
-    trigger_conditions = {"classification": classification} if classification else {}
-    actions = [{"type": action_type}]
+    # Prepare fields (support both old fields and new JSON inputs)
+    trigger_conditions = v["trigger_conditions"]
+    if trigger_conditions is None:
+        classification = payload.get("classification")
+        trigger_conditions = {"classification": classification} if classification else {}
+    actions = v["actions"]
+    if actions is None:
+        action_raw = (payload.get("action") or "generate").lower()
+        action_map = {"generate": "generate_response", "delete": "delete_comment", "flag": "flag_for_review"}
+        actions = [{"type": action_map.get(action_raw, "generate_response")}]
+    # Derive canonical single action dict to populate new 'action' column
+    if isinstance(actions, list):
+        action_obj = actions[0] if actions and isinstance(actions[0], dict) else {}
+    elif isinstance(actions, dict):
+        action_obj = actions
+    else:
+        action_obj = {}
+    require_approval = bool(v["require_approval"]) if v["require_approval"] is not None else bool(payload.get("require_approval", False))
+    response_limit_per_run = v["response_limit_per_run"]
+    priority = v["priority"] if v["priority"] is not None else 0
 
     res = await db.execute(
         text(
             """
-            INSERT INTO automation_rules (
-              channel_id, name, enabled, trigger_conditions, actions, response_limit_per_run, require_approval, priority
-            )
-            VALUES (:cid, :name, TRUE, :conds, :acts, :limit, :require, :prio)
+                        INSERT INTO automation_rules (
+                            channel_id, name, enabled, trigger_conditions, actions, conditions, action, response_limit_per_run, require_approval, priority
+                        )
+                        VALUES (:cid, :name, TRUE, :conds, :acts, :conds, :act, :limit, :require, :prio)
             RETURNING id, name, enabled, priority
             """
         ),
@@ -116,6 +189,7 @@ async def create_rule(
             "name": name,
             "conds": trigger_conditions,
             "acts": actions,
+                        "act": action_obj,
             "limit": response_limit_per_run,
             "require": require_approval,
             "prio": priority,
@@ -162,4 +236,895 @@ async def set_rule_enabled(
         "name": row[1],
         "enabled": bool(row[2]),
         "priority": int(row[3]) if row[3] is not None else 0,
+    }
+
+
+@router.put("/rules/{rule_id}")
+async def update_rule(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    rule_id: str,
+    payload: Dict[str, Any],
+):
+    v = _validate_rule_payload(payload, for_update=True)
+    # Build dynamic SET clause
+    sets: List[str] = ["updated_at = now()"]
+    params: Dict[str, Any] = {"rid": rule_id}
+    if v["name"] is not None:
+        sets.append("name = :name")
+        params["name"] = v["name"]
+    if v["trigger_conditions"] is not None:
+        sets.append("trigger_conditions = :conds::jsonb")
+        sets.append("conditions = :conds::jsonb")
+        params["conds"] = v["trigger_conditions"]
+    if v["actions"] is not None:
+        sets.append("actions = :acts::jsonb")
+        # derive single action obj
+        acts_val = v["actions"]
+        if isinstance(acts_val, list):
+            action_obj = acts_val[0] if acts_val and isinstance(acts_val[0], dict) else {}
+        elif isinstance(acts_val, dict):
+            action_obj = acts_val
+        else:
+            action_obj = {}
+        sets.append("action = :act::jsonb")
+        params["acts"] = acts_val
+        params["act"] = action_obj
+    if v["require_approval"] is not None:
+        sets.append("require_approval = :req")
+        params["req"] = bool(v["require_approval"])
+    if v["response_limit_per_run"] is not None:
+        sets.append("response_limit_per_run = :rlim")
+        params["rlim"] = int(v["response_limit_per_run"])
+    if v["priority"] is not None:
+        sets.append("priority = :prio")
+        params["prio"] = int(v["priority"])
+
+    if len(sets) == 1:
+        raise HTTPException(status_code=400, detail="No updatable fields provided")
+
+    res = await db.execute(
+        text(
+            f"""
+            UPDATE automation_rules
+            SET {', '.join(sets)}
+            WHERE id = :rid
+            RETURNING id, name, enabled, priority
+            """
+        ),
+        params,
+    )
+    row = res.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Rule not found")
+    await db.commit()
+    return {
+        "id": str(row[0]),
+        "name": row[1],
+        "enabled": bool(row[2]),
+        "priority": int(row[3]) if row[3] is not None else 0,
+    }
+
+
+@router.delete("/rules/{rule_id}")
+async def soft_delete_rule(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    rule_id: str,
+):
+    """Soft delete a rule by flagging trigger_conditions._deleted=true and disabling it."""
+    res = await db.execute(
+        text(
+            """
+            UPDATE automation_rules
+            SET
+              enabled = FALSE,
+              trigger_conditions = jsonb_set(COALESCE(trigger_conditions, '{}'::jsonb), '{_deleted}', 'true'::jsonb, true),
+              conditions = jsonb_set(COALESCE(conditions, '{}'::jsonb), '{_deleted}', 'true'::jsonb, true),
+              updated_at = now()
+            WHERE id = :rid
+            RETURNING id
+            """
+        ),
+        {"rid": rule_id},
+    )
+    row = res.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Rule not found")
+    await db.commit()
+    return {"status": "ok", "id": str(row[0])}
+
+
+@router.post("/rules/{rule_id}/toggle")
+async def toggle_rule(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    rule_id: str,
+    payload: Optional[Dict[str, Any]] = None,
+):
+    """Enable/disable a rule. If payload.enabled provided, set to that; else toggle."""
+    enabled = None if not payload else payload.get("enabled")
+    if enabled is None:
+        res = await db.execute(text("SELECT enabled FROM automation_rules WHERE id = :rid"), {"rid": rule_id})
+        row = res.first()
+        if not row:
+            raise HTTPException(status_code=404, detail="Rule not found")
+        new_val = not bool(row[0])
+    else:
+        new_val = bool(enabled)
+
+    res = await db.execute(
+        text(
+            """
+            UPDATE automation_rules SET enabled = :en, updated_at = now() WHERE id = :rid
+            RETURNING id, name, enabled, priority
+            """
+        ),
+        {"en": new_val, "rid": rule_id},
+    )
+    row = res.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Rule not found")
+    await db.commit()
+    return {
+        "id": str(row[0]),
+        "name": row[1],
+        "enabled": bool(row[2]),
+        "priority": int(row[3]) if row[3] is not None else 0,
+    }
+
+
+@router.post("/rules/{rule_id}/duplicate")
+async def duplicate_rule(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    rule_id: str,
+):
+    # Fetch source
+    res = await db.execute(
+        text(
+            """
+            SELECT channel_id, name, trigger_conditions, actions, conditions, action, response_limit_per_run, require_approval, priority
+            FROM automation_rules
+            WHERE id = :rid
+            """
+        ),
+        {"rid": rule_id},
+    )
+    row = res.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Rule not found")
+
+    m = row._mapping if hasattr(row, "_mapping") else None
+    channel_id = str(m["channel_id"] if m else row[0])
+    name = (m["name"] if m else row[1]) or "Untitled"
+    conds = (m["conditions"] if m and m.get("conditions") is not None else (m["trigger_conditions"] if m else row[2])) or {}
+    # Remove soft-delete flag if present
+    if isinstance(conds, dict) and conds.get("_deleted"):
+        conds = {k: v for k, v in conds.items() if k != "_deleted"}
+    # Prefer single action dict if present
+    act = (m["action"] if m and m.get("action") is not None else (m["actions"] if m else row[3])) or {}
+    # If "act" is a list, take first dict
+    if isinstance(act, list):
+        act_obj = act[0] if act and isinstance(act[0], dict) else {}
+        acts = act
+    elif isinstance(act, dict):
+        act_obj = act
+        acts = [act_obj]
+    else:
+        act_obj = {}
+        acts = []
+    resp_lim = m["response_limit_per_run"] if m else row[6]
+    require = bool(m["require_approval"] if m else row[7])
+    prio = int(m["priority"] if m else (row[8] if row[8] is not None else 0))
+
+    # Insert clone (disabled by default)
+    res2 = await db.execute(
+        text(
+            """
+            INSERT INTO automation_rules (channel_id, name, enabled, trigger_conditions, actions, conditions, action, response_limit_per_run, require_approval, priority)
+            VALUES (:cid, :name, FALSE, :conds::jsonb, :acts::jsonb, :conds::jsonb, :act::jsonb, :rlim, :req, :prio)
+            RETURNING id, name, enabled, priority
+            """
+        ),
+        {
+            "cid": channel_id,
+            "name": f"{name} (copy)",
+            "conds": conds,
+            "acts": acts,
+            "act": act_obj,
+            "rlim": resp_lim,
+            "req": require,
+            "prio": prio,
+        },
+    )
+    new_row = res2.first()
+    await db.commit()
+    return {
+        "id": str(new_row[0]),
+        "name": new_row[1],
+        "enabled": bool(new_row[2]),
+        "priority": int(new_row[3]) if new_row[3] is not None else 0,
+    }
+
+
+@router.post("/rules/parse-natural")
+async def parse_natural_rule(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+):
+    """Parse a natural-language rule into structured config, suggest improvements and similar rules, and optionally save.
+
+    Request body:
+    - text or description: str (required)
+    - channel_id: str (optional, inferred if missing)
+    - confirm: bool (optional, default false)
+    - name: str (required if confirm=true)
+    - overrides/modifications: object to tweak parsed rule before save; keys: conditions, action, limits, timing, scope,
+      require_approval, response_limit_per_run, priority, enabled.
+    """
+    text_input = (payload.get("text") or payload.get("description") or "").strip()
+    if not text_input:
+        raise HTTPException(status_code=400, detail="text is required")
+
+    # Determine channel_id (for logging and similar rule suggestions)
+    channel_id: Optional[str] = payload.get("channel_id")
+    if not channel_id:
+        res = await db.execute(
+            text("SELECT channel_id FROM polling_config ORDER BY updated_at DESC NULLS LAST LIMIT 1")
+        )
+        row = res.first()
+        if row and row[0]:
+            channel_id = str(row[0])
+
+    parser = NaturalLanguageRuleParser()
+    # Use a safe fallback for channel_id in parser logging
+    parser_channel_id = channel_id or "00000000-0000-0000-0000-000000000000"
+    parse_res = await parser.parse_user_input(db, channel_id=parser_channel_id, text_input=text_input)
+    rule = parse_res.rule or {}
+    improvements = await parser.suggest_improvements(db, channel_id=parser_channel_id, rule=rule) if rule else []
+
+    # Apply user overrides if provided
+    overrides = payload.get("overrides") or payload.get("modifications") or {}
+    def merge_dict(base: Dict[str, Any], upd: Any) -> Dict[str, Any]:
+        if isinstance(upd, dict):
+            out = dict(base)
+            out.update(upd)
+            return out
+        return base
+
+    preview = {
+        "conditions": merge_dict(rule.get("conditions", {}), overrides.get("conditions")),
+        "action": merge_dict(rule.get("action", {}), overrides.get("action")),
+        "limits": merge_dict(rule.get("limits", {}), overrides.get("limits")),
+        "timing": merge_dict(rule.get("timing", {}), overrides.get("timing")),
+        "scope": merge_dict(rule.get("scope", {}), overrides.get("scope")),
+        "require_approval": bool(overrides.get("require_approval", rule.get("require_approval", False))),
+    }
+    response_limit_per_run = overrides.get("response_limit_per_run")
+    try:
+        response_limit_per_run = int(response_limit_per_run) if response_limit_per_run is not None else None
+    except Exception:
+        raise HTTPException(status_code=400, detail="response_limit_per_run must be integer if provided")
+    priority = overrides.get("priority")
+    try:
+        priority = int(priority) if priority is not None else 0
+    except Exception:
+        raise HTTPException(status_code=400, detail="priority must be integer if provided")
+    enable_on_save = bool(overrides.get("enabled", False))
+
+    # Suggest similar rules (avoid duplicates) only if we have channel_id
+    similar_rules: List[Dict[str, Any]] = []
+    if channel_id:
+        res = await db.execute(
+            text(
+                """
+                SELECT id, name, enabled, priority, conditions, action
+                FROM automation_rules
+                WHERE channel_id = :cid
+                """
+            ),
+            {"cid": str(channel_id)},
+        )
+        rows = res.fetchall() or []
+        p_cls = (preview.get("conditions", {}) or {}).get("classification")
+        p_kws = set((preview.get("conditions", {}) or {}).get("keywords") or [])
+        p_act = (preview.get("action", {}) or {}).get("type")
+        scored: List[Tuple[int, Dict[str, Any]]] = []
+        for r in rows:
+            m = r._mapping if hasattr(r, "_mapping") else None
+            conds = (m["conditions"] if m else r[4]) or {}
+            act = (m["action"] if m else r[5]) or {}
+            score = 0
+            if p_cls and conds.get("classification") == p_cls:
+                score += 2
+            kws = set(conds.get("keywords") or [])
+            score += min(3, len(p_kws.intersection(kws)))
+            if p_act and (act.get("type") == p_act):
+                score += 2
+            if score >= 2:
+                scored.append(
+                    (
+                        score,
+                        {
+                            "id": str(m["id"] if m else r[0]),
+                            "name": (m["name"] if m else r[1]),
+                            "enabled": bool(m["enabled"] if m else r[2]),
+                            "priority": int(m["priority"] if m else (r[3] or 0)),
+                            "similarity": score,
+                        },
+                    )
+                )
+        similar_rules = [x[1] for x in sorted(scored, key=lambda t: t[0], reverse=True)[:3]]
+
+    # If confirm requested, save the rule now (disabled by default unless explicitly enabled)
+    if bool(payload.get("confirm")):
+        if not channel_id:
+            raise HTTPException(status_code=400, detail="channel_id is required to save a rule")
+        name = (payload.get("name") or payload.get("rule_name") or "").strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="name is required when confirm=true")
+        # Prepare legacy and new columns
+        # Legacy trigger_conditions/actions
+        trigger_conditions = preview["conditions"]
+        acts_list: List[Dict[str, Any]]
+        if isinstance(preview.get("action"), dict) and preview["action"]:
+            acts_list = [preview["action"]]
+        elif isinstance(overrides.get("actions"), list):
+            acts_list = [a for a in overrides.get("actions") if isinstance(a, dict)]
+        else:
+            acts_list = []
+
+        res = await db.execute(
+            text(
+                """
+                INSERT INTO automation_rules (
+                  channel_id, name, enabled, trigger_conditions, actions, conditions, action, response_limit_per_run, require_approval, priority
+                )
+                VALUES (:cid, :name, :enabled, :conds, :acts, :conds, :act, :limit, :require, :prio)
+                RETURNING id, name, enabled, priority
+                """
+            ),
+            {
+                "cid": str(channel_id),
+                "name": name,
+                "enabled": bool(enable_on_save),
+                "conds": trigger_conditions,
+                "acts": acts_list,
+                "act": (preview.get("action") or {}),
+                "limit": response_limit_per_run,
+                "require": bool(preview.get("require_approval", False)),
+                "prio": int(priority or 0),
+            },
+        )
+        row = res.first()
+        await db.commit()
+        return {
+            "saved": True,
+            "record": {
+                "id": str(row[0]),
+                "name": row[1],
+                "enabled": bool(row[2]),
+                "priority": int(row[3] or 0),
+            },
+            "parsed_rule": preview,
+            "improvements": improvements,
+            "similar_rules": similar_rules,
+        }
+
+    # Not saving: return preview for review
+    response: Dict[str, Any] = {
+        "saved": False,
+        "parsed_rule": preview,
+        "improvements": improvements,
+        "similar_rules": similar_rules,
+        "message": "Review parsed_rule. Call again with confirm=true and name to save, optionally with overrides.",
+    }
+    if not rule:
+        response["examples"] = [{"name": ex["name"], "nl": ex["nl"], "rule": ex["rule"]} for ex in COMMON_PATTERNS]
+        response["note"] = "Parsing was inconclusive; examples included to guide your phrasing."
+    return response
+
+
+@router.post("/rules/{rule_id}/test")
+async def test_rule(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    rule_id: str,
+    payload: Optional[Dict[str, Any]] = None,
+):
+    """Run a rule against recent comments (no side-effects) and return a dry-run report.
+
+    Body (optional):
+    - sample_size: int (default 50, max 200)
+    - status: 'any'|'pending'|'processing'|'completed'|'failed'|'ignored' (default 'any')
+    """
+    body = payload or {}
+    sample_size = body.get("sample_size")
+    try:
+        sample_size = int(sample_size) if sample_size is not None else 50
+    except Exception:
+        raise HTTPException(status_code=400, detail="sample_size must be an integer")
+    sample_size = max(1, min(200, sample_size))
+    status = (body.get("status") or "any").lower()
+
+    # Fetch rule
+    res = await db.execute(
+        text(
+            """
+            SELECT id, channel_id, name, enabled, conditions, action, trigger_conditions, actions,
+                   require_approval, response_limit_per_run, priority
+            FROM automation_rules
+            WHERE id = :rid
+            """
+        ),
+        {"rid": rule_id},
+    )
+    row = res.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Rule not found")
+    m = row._mapping if hasattr(row, "_mapping") else None
+    channel_id = str(m["channel_id"] if m else row[1])
+    name = (m["name"] if m else row[2])
+    enabled = bool(m["enabled"] if m else row[3])
+    conds = (m["conditions"] if m and m.get("conditions") is not None else (m["trigger_conditions"] if m else row[6])) or {}
+    act = (m["action"] if m and m.get("action") is not None else (m["actions"] if m else row[7])) or {}
+    if isinstance(act, list):
+        act = act[0] if act and isinstance(act[0], dict) else {}
+    action_type = (act or {}).get("type") or "generate_response"
+    require_approval = bool(m["require_approval"] if m else row[8])
+    resp_limit = m["response_limit_per_run"] if m else row[9]
+    priority = int(m["priority"] if m else (row[10] or 0))
+
+    # Fetch recent comments for this channel
+    where = ["channel_id = :cid"]
+    params = {"cid": channel_id, "lim": sample_size}
+    if status != "any":
+        where.append("status = :st")
+        params["st"] = status
+    comments_sql = f"""
+        SELECT id, comment_id, video_id, content, classification, author_channel_id, author_name, created_at
+        FROM comments_queue
+        WHERE {' AND '.join(where)}
+        ORDER BY created_at DESC
+        LIMIT :lim
+    """
+    cres = await db.execute(text(comments_sql), params)
+    rows = cres.fetchall() or []
+
+    def match_keywords(text_val: str, keywords: List[str]) -> List[str]:
+        t = (text_val or "").lower()
+        found: List[str] = []
+        for kw in keywords or []:
+            if kw and kw.lower() in t:
+                found.append(kw)
+        return found
+
+    def author_status_matches(author_channel_id: Optional[str], expected: str) -> Tuple[bool, Optional[str]]:
+        if not expected or expected == "any":
+            return True, None
+        if expected == "owner":
+            return (str(author_channel_id or "") == str(channel_id)), None
+        # subscriber/new aren't supported with current data
+        if expected in {"subscriber", "new"}:
+            return False, "unsupported condition with current data"
+        return False, None
+
+    results: List[Dict[str, Any]] = []
+    actions_breakdown: Dict[str, int] = {"generate_response": 0, "delete_comment": 0, "flag_for_review": 0}
+    for r in rows:
+        cm = r._mapping if hasattr(r, "_mapping") else None
+        content = (cm["content"] if cm else r[3]) or ""
+        classification = (cm["classification"] if cm else r[4])
+        a_ch = (cm["author_channel_id"] if cm else r[5])
+
+        # Evaluate condition-by-condition
+        c = conds or {}
+        cls_expected = c.get("classification")
+        cls_match = (str(classification or "").lower() == str(cls_expected or "").lower()) if cls_expected else True
+        kws_expected = c.get("keywords") or []
+        kws_matched = match_keywords(content, kws_expected) if kws_expected else []
+        kws_match = True if not kws_expected else bool(kws_matched)
+        astatus_expected = str(c.get("author_status") or "")
+        astatus_ok, astatus_reason = author_status_matches(a_ch, astatus_expected)
+
+        matched = bool(cls_match and kws_match and astatus_ok)
+        would_action = action_type if matched else None
+        if matched and would_action in actions_breakdown:
+            actions_breakdown[would_action] += 1
+
+        results.append(
+            {
+                "comment_id": str(cm["comment_id"] if cm else r[1]),
+                "preview": (content[:140] + ("…" if len(content) > 140 else "")),
+                "classification": classification,
+                "matched": matched,
+                "would_action": would_action,
+                "matched_conditions": {
+                    "classification": {"expected": cls_expected, "match": cls_match},
+                    "keywords": {"expected": kws_expected, "matched": kws_matched},
+                    "author_status": {"expected": astatus_expected or None, "match": astatus_ok, "note": astatus_reason},
+                },
+                "created_at": cm["created_at"] if cm else r[7],
+            }
+        )
+
+    # Estimate API costs if active
+    est_cost = 0.0
+    total_actions = sum(actions_breakdown.values())
+    if action_type == "generate_response" and total_actions:
+        avg_cost = 0.0
+        try:
+            avg_res = await db.execute(
+                text(
+                    """
+                    SELECT COALESCE(AVG(estimated_cost_usd), 0)
+                    FROM api_usage_log
+                    WHERE service_name = 'claude' AND endpoint = 'messages.create' AND estimated_cost_usd > 0
+                          AND created_at >= now() - interval '7 days'
+                    """
+                )
+            )
+            avg_cost = float(avg_res.scalar() or 0.0)
+        except Exception:
+            avg_cost = 0.0
+        if avg_cost <= 0:
+            avg_cost = 0.004  # fallback nominal per-generation estimate
+        est_cost = round(avg_cost * total_actions, 6)
+
+    # Identify potential issues/conflicts
+    issues: List[str] = []
+    if not (conds or {}).get("classification") and not (conds or {}).get("keywords"):
+        issues.append("Rule has no classification or keywords; it's very broad and may match too many comments.")
+    if action_type == "delete_comment" and not require_approval:
+        issues.append("Delete action without approval: ensure safety checks are sufficient or enable require_approval.")
+    if isinstance(resp_limit, int) and resp_limit >= 0 and total_actions > resp_limit:
+        issues.append("Predicted matches exceed response_limit_per_run; consider tightening conditions or raising the limit.")
+
+    # Conflicts with other enabled rules (same channel)
+    conf_res = await db.execute(
+        text(
+            """
+            SELECT id, name, conditions, action, priority
+            FROM automation_rules
+            WHERE channel_id = :cid AND enabled = true AND id <> :rid
+            """
+        ),
+        {"cid": channel_id, "rid": rule_id},
+    )
+    conflicts: List[Dict[str, Any]] = []
+    p_cls = (conds or {}).get("classification")
+    p_kws = set((conds or {}).get("keywords") or [])
+    for r in conf_res.fetchall() or []:
+        mm = r._mapping if hasattr(r, "_mapping") else None
+        c2 = (mm["conditions"] if mm else r[2]) or {}
+        a2 = (mm["action"] if mm else r[3]) or {}
+        score = 0
+        if p_cls and c2.get("classification") == p_cls:
+            score += 2
+        kws2 = set(c2.get("keywords") or [])
+        overlap = p_kws.intersection(kws2)
+        score += min(3, len(overlap))
+        if score >= 2 and (a2.get("type") != action_type or priority == int(mm["priority"] if mm else (r[4] or 0))):
+            conflicts.append(
+                {
+                    "id": str(mm["id"] if mm else r[0]),
+                    "name": (mm["name"] if mm else r[1]),
+                    "priority": int(mm["priority"] if mm else (r[4] or 0)),
+                    "action_type": a2.get("type"),
+                    "overlap_keywords": sorted(list(overlap)),
+                }
+            )
+
+    # Suggestions
+    suggestions: List[str] = []
+    if total_actions > (resp_limit or 0) and (resp_limit or 0) > 0:
+        suggestions.append("Consider raising response_limit_per_run or narrowing keywords/classification to reduce volume.")
+    if action_type == "generate_response" and not ((act or {}).get("config") or {}).get("template"):
+        suggestions.append("Add a response template for consistent tone and brevity.")
+    if not (conds or {}).get("author_status"):
+        suggestions.append("If relevant, set author_status (owner/subscriber/new/any) to refine targeting.")
+    if not (conds or {}).get("keywords") and (conds or {}).get("classification"):
+        suggestions.append("Add a few keywords to focus the rule on specific topics.")
+    if action_type == "delete_comment" and not require_approval:
+        suggestions.append("Enable require_approval for delete action, or ensure strong safety validation thresholds.")
+
+    return {
+        "rule_summary": {
+            "id": str(m["id"] if m else row[0]),
+            "name": name,
+            "enabled": enabled,
+            "action_type": action_type,
+            "priority": priority,
+            "require_approval": require_approval,
+            "response_limit_per_run": resp_limit,
+        },
+        "tested_count": len(rows),
+        "predicted_matches": total_actions,
+        "actions_breakdown": actions_breakdown,
+        "estimated_api_cost_usd": est_cost,
+        "results": results,
+        "issues": issues,
+        "conflicts": conflicts,
+        "suggestions": suggestions,
+    }
+
+
+# --------------------
+# Approval Management
+# --------------------
+
+def _normalize_sort(sort: Optional[str]) -> str:
+    # Allow known columns only; default priority desc, created_at asc
+    if not sort:
+        return "priority:desc,created_at:asc"
+    parts: List[str] = []
+    for seg in str(sort).split(","):
+        seg = seg.strip()
+        if not seg:
+            continue
+        if ":" in seg:
+            col, direction = seg.split(":", 1)
+        else:
+            col, direction = seg, "asc"
+        col = col.strip()
+        direction = direction.strip().lower()
+        if col not in {"priority", "created_at", "updated_at"}:
+            continue
+        if direction not in {"asc", "desc"}:
+            direction = "asc"
+        parts.append(f"{col} {direction.upper()}")
+    return ", ".join(parts) or "priority DESC, created_at ASC"
+
+
+@router.get("/approvals")
+async def list_approvals(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    channel_id: Optional[str] = None,
+    status: Optional[str] = "pending",
+    min_priority: Optional[int] = None,
+    q: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    sort: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Get approval items with filtering, pagination, and sorting.
+
+    - Filters: channel_id, status (pending/approved/rejected/auto_approved/any), min_priority, text search in payload
+    - Pagination: limit/offset
+    - Sorting: sort="priority:desc,created_at:asc" (allowed cols: priority, created_at, updated_at)
+    """
+    svc = ApprovalQueueService()
+    # Ensure table exists (idempotent)
+    await svc._ensure_table(db)  # private but safe and contained
+
+    limit = max(1, min(200, int(limit)))
+    offset = max(0, int(offset))
+    order_by = _normalize_sort(sort)
+
+    where = ["1=1"]
+    params: Dict[str, Any] = {"limit": limit, "offset": offset}
+    if channel_id:
+        where.append("channel_id = :cid")
+        params["cid"] = str(channel_id)
+    st = (status or "").lower() if status else None
+    if st and st != "any":
+        where.append("status = :st")
+        params["st"] = st
+    if isinstance(min_priority, int):
+        where.append("priority >= :minp")
+        params["minp"] = int(min_priority)
+    if q:
+        where.append("payload::text ILIKE :q")
+        params["q"] = f"%{q}%"
+
+    sql = f"""
+        SELECT id, channel_id, response_id, payload, priority, status, created_at, updated_at, auto_approve_after, approved_at, approved_by, reason, urgency
+        FROM approval_queue
+        WHERE {' AND '.join(where)}
+        ORDER BY {order_by}
+        LIMIT :limit OFFSET :offset
+    """
+    rows = (await db.execute(text(sql), params)).fetchall() or []
+
+    # total count
+    count_sql = f"SELECT COUNT(1) FROM approval_queue WHERE {' AND '.join(where)}"
+    total = int((await db.execute(text(count_sql), params)).scalar() or 0)
+
+    out: List[Dict[str, Any]] = []
+    for r in rows:
+        m = r._mapping if hasattr(r, "_mapping") else None
+        out.append(
+            {
+                "id": str(m["id"] if m else r[0]),
+                "channel_id": (m.get("channel_id") if m else r[1]) or None,
+                "response_id": (m.get("response_id") if m else r[2]) or None,
+                "payload": (m.get("payload") if m else r[3]) or {},
+                "priority": int(m.get("priority") if m else r[4] or 0),
+                "status": (m.get("status") if m else r[5]) or "pending",
+                "created_at": m.get("created_at") if m else r[6],
+                "updated_at": m.get("updated_at") if m else r[7],
+                "auto_approve_after": m.get("auto_approve_after") if m else r[8],
+                "approved_at": m.get("approved_at") if m else r[9],
+                "approved_by": m.get("approved_by") if m else r[10],
+                "reason": m.get("reason") if m else r[11],
+                "urgency": bool(m.get("urgency") if m else r[12] or False),
+            }
+        )
+
+    return {"items": out, "total": total, "limit": limit, "offset": offset}
+
+
+@router.post("/approvals/bulk-approve")
+async def approvals_bulk_approve(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+):
+    ids = payload.get("ids") or payload.get("approval_ids") or []
+    if not isinstance(ids, list) or not ids:
+        raise HTTPException(status_code=400, detail="ids array is required")
+    approved_by = (payload.get("approved_by") or getattr(current_user, "email", None) or getattr(current_user, "id", None))
+    reason = payload.get("reason")
+    svc = ApprovalQueueService()
+    count = await svc.bulk_approve(db, response_ids=[str(x) for x in ids], approved_by=str(approved_by) if approved_by else None, approval_reason=reason)
+    return {"approved": count}
+
+
+@router.post("/approvals/bulk-reject")
+async def approvals_bulk_reject(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+):
+    ids = payload.get("ids") or payload.get("approval_ids") or []
+    if not isinstance(ids, list) or not ids:
+        raise HTTPException(status_code=400, detail="ids array is required")
+    reason = payload.get("reason") or "rejected"
+
+    # Ensure table exists
+    await ApprovalQueueService()._ensure_table(db)
+
+    res = await db.execute(
+        text(
+            """
+            UPDATE approval_queue
+            SET status = 'rejected', approved_at = now(), approved_by = COALESCE(:by, approved_by), reason = :reason, updated_at = now()
+            WHERE id = ANY(:ids)
+            RETURNING id
+            """
+        ),
+        {
+            "ids": [str(x) for x in ids],
+            "by": getattr(current_user, "email", None) or getattr(current_user, "id", None),
+            "reason": reason,
+        },
+    )
+    count = len(res.fetchall() or [])
+    await db.commit()
+    return {"rejected": count}
+
+
+@router.put("/approvals/{approval_id}")
+async def update_approval(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    approval_id: str,
+    payload: Dict[str, Any],
+):
+    """Edit approval item before approval. Allows updating payload (response), priority, auto_approve_after, and reason.
+    Does not change status here.
+    """
+    await ApprovalQueueService()._ensure_table(db)
+
+    sets: List[str] = ["updated_at = now()"]
+    params: Dict[str, Any] = {"id": approval_id}
+    if "payload" in payload:
+        if not isinstance(payload.get("payload"), (dict, list, str)):
+            raise HTTPException(status_code=400, detail="payload must be object, list or string")
+        sets.append("payload = :p::jsonb")
+        pval = payload.get("payload")
+        if isinstance(pval, str):
+            pval = {"response_text": pval}
+        params["p"] = pval
+    if "priority" in payload:
+        try:
+            params["prio"] = int(payload.get("priority"))
+        except Exception:
+            raise HTTPException(status_code=400, detail="priority must be integer")
+        sets.append("priority = :prio")
+    if "auto_approve_after" in payload:
+        # expect ISO timestamp string; let DB cast
+        params["auto"] = payload.get("auto_approve_after")
+        sets.append("auto_approve_after = :auto")
+    if "reason" in payload:
+        params["reason"] = payload.get("reason")
+        sets.append("reason = :reason")
+
+    if len(sets) == 1:
+        raise HTTPException(status_code=400, detail="No updatable fields provided")
+
+    res = await db.execute(
+        text(
+            f"""
+            UPDATE approval_queue
+            SET {', '.join(sets)}
+            WHERE id = :id
+            RETURNING id
+            """
+        ),
+        params,
+    )
+    row = res.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Approval not found")
+    await db.commit()
+    return {"status": "ok", "id": str(row[0])}
+
+
+@router.get("/approvals/stats")
+async def approval_stats(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    channel_id: Optional[str] = None,
+    days: int = 30,
+):
+    """Return approval rate statistics for the recent period (default 30 days)."""
+    await ApprovalQueueService()._ensure_table(db)
+    try:
+        days = max(1, min(365, int(days)))
+    except Exception:
+        days = 30
+
+    where = ["created_at >= now() - (:days || ' days')::interval"]
+    params: Dict[str, Any] = {"days": days}
+    if channel_id:
+        where.append("channel_id = :cid")
+        params["cid"] = str(channel_id)
+
+    # totals by status
+    sql = f"""
+        SELECT status, COUNT(1) as cnt
+        FROM approval_queue
+        WHERE {' AND '.join(where)}
+        GROUP BY status
+    """
+    rows = (await db.execute(text(sql), params)).fetchall() or []
+    by_status: Dict[str, int] = {str(r[0]): int(r[1]) for r in rows}
+    total = sum(by_status.values())
+    approved = by_status.get("approved", 0) + by_status.get("auto_approved", 0)
+    rejected = by_status.get("rejected", 0)
+    pending = by_status.get("pending", 0)
+    rate = (approved / total) if total else 0.0
+
+    # Avg approval time for approved/auto_approved
+    t_sql = f"""
+        SELECT EXTRACT(EPOCH FROM AVG(approved_at - created_at))
+        FROM approval_queue
+        WHERE {' AND '.join(where)} AND status IN ('approved','auto_approved') AND approved_at IS NOT NULL
+    """
+    avg_seconds = float((await db.execute(text(t_sql), params)).scalar() or 0.0)
+
+    return {
+        "window_days": days,
+        "total": total,
+        "approved": approved,
+        "rejected": rejected,
+        "pending": pending,
+        "approval_rate": round(rate, 4),
+        "avg_approval_time_seconds": int(avg_seconds),
+        "by_status": by_status,
     }
