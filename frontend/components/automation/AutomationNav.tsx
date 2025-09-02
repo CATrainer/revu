@@ -6,13 +6,13 @@ export default function AutomationNav() {
   const pathname = usePathname();
   const params = useSearchParams();
   const tab = (params.get('tab') || 'rules').toLowerCase();
-  const isApprovals = pathname?.startsWith('/dashboard/automation/approvals');
+  const isApprovals = pathname?.startsWith('/automation/approvals');
 
   const items = [
-    { key: 'rules', label: 'Active Rules', href: '/dashboard/automation?tab=rules' },
-    { key: 'create', label: 'Create Rule', href: '/dashboard/automation?tab=create' },
-    { key: 'approvals', label: 'Approval Queue', href: '/dashboard/automation/approvals' },
-    { key: 'analytics', label: 'Analytics', href: '/dashboard/automation?tab=analytics' },
+  { key: 'rules', label: 'Active Rules', href: '/automation?tab=rules' },
+  { key: 'create', label: 'Create Rule', href: '/automation?tab=create' },
+  { key: 'approvals', label: 'Approval Queue', href: '/automation/approvals' },
+  { key: 'analytics', label: 'Analytics', href: '/automation?tab=analytics' },
   ] as const;
 
   const activeKey = isApprovals ? 'approvals' : (tab === 'create' ? 'create' : (tab === 'analytics' ? 'analytics' : 'rules'));

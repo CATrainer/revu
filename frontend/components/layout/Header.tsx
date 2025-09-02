@@ -106,7 +106,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               <LocationSelector />
               <button
                 className="ml-2 text-xs px-2 py-1 rounded border border-[var(--border)] hover-background"
-                onClick={() => router.push('/dashboard/automation')}
+                onClick={() => router.push('/automation')}
                 title="Open Automation"
               >Automation</button>
             </div>

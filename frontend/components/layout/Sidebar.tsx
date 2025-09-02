@@ -11,7 +11,7 @@ import { useState, useMemo } from 'react';
 const baseNav = [
   { name: 'Home', href: '/dashboard', icon: BarChart3 },
   { name: 'Comments', href: '/comments', icon: Inbox },
-  { name: 'Automation', href: '/dashboard/automation', icon: Bot },
+  { name: 'Automation', href: '/automation', icon: Bot },
   { name: 'Socials', href: '/socials', icon: Users },
   { name: 'Analytics', href: '/analytics', icon: ChartPie },
   { name: 'Settings', href: '/settings', icon: Settings },

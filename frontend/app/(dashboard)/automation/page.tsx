@@ -170,7 +170,7 @@ export default function AutomationPage() {
           </CardHeader>
           <CardContent>
             <div className="mb-3 text-sm text-muted-foreground">
-              Need to approve items? Go to <Link href="/dashboard/automation/approvals" className="underline">Approval Queue</Link>.
+              Need to approve items? Go to <Link href="/automation/approvals" className="underline">Approval Queue</Link>.
             </div>
             <RulesList />
           </CardContent>
@@ -181,7 +181,7 @@ export default function AutomationPage() {
         <RuleBuilder />
       )}
 
-  {/* Approval Queue tab now links directly via AutomationNav to /dashboard/automation/approvals */}
+  {/* Approval Queue tab now links directly via AutomationNav to /automation/approvals */}
 
       {tab === 'Analytics' && (
         <Card>
