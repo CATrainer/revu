@@ -18,8 +18,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "20250902_0001-add_rule_executions_table"
-down_revision = "20250901_1335-add_comments_queue_batch_and_stale_indexes"
+revision = "20250902_0001"
+down_revision = "20250901_1335"
 branch_labels = None
 depends_on = None
 
