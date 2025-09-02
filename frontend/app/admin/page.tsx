@@ -95,23 +95,14 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-primary-dark">Admin</h1>
-          <p className="text-secondary-dark text-sm">Manage access and personas. Total users: {users.length}</p>
-        </div>
+      {/* Top controls */}
+      <div className="flex items-center justify-between">
+        <p className="text-secondary-dark text-sm">Total users: {users.length}</p>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            className="border-[var(--border)]"
-            onClick={load}
-            disabled={loading}
-          >{loading ? 'Refreshing…' : 'Refresh'}</Button>
-          <Button
-            onClick={async () => { await logout(); router.push('/login'); }}
-            className="button-primary"
-          >Log out</Button>
+          <Button variant="outline" className="border-[var(--border)]" onClick={load} disabled={loading}>
+            {loading ? 'Refreshing…' : 'Refresh'}
+          </Button>
+          <Button onClick={async () => { await logout(); router.push('/login'); }} className="button-primary">Log out</Button>
         </div>
       </div>
 
@@ -151,7 +142,7 @@ export default function AdminPage() {
         </CardContent>
       </Card>
 
-      {/* Table */}
+  {/* Users Table */}
       <Card className="card-background">
         <CardContent className="p-0 overflow-x-auto">
           {loading ? (

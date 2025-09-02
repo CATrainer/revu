@@ -42,8 +42,8 @@ export default function AdminMetricsPage() {
   const { data: dbg } = useQuery({ queryKey: ['admin-debug'], queryFn: () => fetchDebugLogs(200), refetchInterval: 30_000 });
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Admin Metrics</h1>
+    <div className="space-y-6">
+      {/* Summary */}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
