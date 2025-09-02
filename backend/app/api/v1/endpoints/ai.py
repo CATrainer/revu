@@ -372,14 +372,34 @@ async def generate_response(
 
     # If quick OK, enqueue for AI safety via batched scheduler
     if quick_ok:
-        await schedule_safety_check(
-            db,
-            queue_id=str(queue_id),
-            response_text=ai_text,
-            original_comment=yt.comment_text,
-        )
-        if os.getenv("TESTING_MODE", "false").lower() == "true":
-            debug_log.add("safety.enqueue", {"queue_id": str(queue_id)})
+        try:
+            await schedule_safety_check(
+                db,
+                queue_id=str(queue_id),
+                response_text=ai_text,
+                original_comment=yt.comment_text,
+            )
+            if os.getenv("TESTING_MODE", "false").lower() == "true":
+                debug_log.add("safety.enqueue", {"queue_id": str(queue_id)})
+        except Exception as e:
+            logger.exception("Safety scheduling failed: {}", e)
+            # Best-effort error_logs entry; do not fail the main request
+            try:
+                await db.execute(
+                    text(
+                        """
+                        INSERT INTO error_logs (service_name, operation, error_code, message, context, created_at)
+                        VALUES ('ai', 'schedule_safety_check', 0, :msg, :ctx, now())
+                        """
+                    ),
+                    {"msg": str(e), "ctx": {"queue_id": str(queue_id)}},
+                )
+                await db.commit()
+            except Exception:
+                try:
+                    await db.rollback()
+                except Exception:
+                    pass
 
     return GenerateResponseResponse(
         response_text=ai_text,
