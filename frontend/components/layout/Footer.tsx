@@ -27,7 +27,7 @@ export function Footer() {
             </Link>
             <p className="text-sm text-[var(--muted-foreground)] max-w-xs">
 
-              AI-powered review management for modern businesses.
+              Your AI-Powered Creator Assistant.
             </p>
           </div>
           

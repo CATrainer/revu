@@ -6,7 +6,7 @@ import QueryProvider from '@/contexts/QueryProvider';
 
 export const metadata: Metadata = {
 
-  title: 'Repruv - AI-Powered Brand Management',
+  title: 'Repruv - Social Media Intelligence Platform',
 
   description: 'Manage reviews, monitor competitors, and grow your reputation with AI-powered insights',
 };

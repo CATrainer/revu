@@ -210,7 +210,7 @@ export function Hero() {
                         Get Early Access
                       </h3>
                       <p className="text-base text-primary-dark/80 dark:text-gray-300 font-['Poppins',sans-serif] font-medium mb-3">
-                        Start using AI-powered social media engagement that learns your voice and delivers actionable insights.
+                        Start using Repruv now. Use AI-Powered Automation to grow your audience.
                       </p>
                       <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
