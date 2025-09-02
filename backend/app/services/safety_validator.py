@@ -312,7 +312,11 @@ async def _run_ai_safety_batch(db: AsyncSession, *, trigger_reason: str) -> None
         return
 
     # Construct dynamic SQL to update ai_responses joined by queue_id
-    values_clause = ",".join([f"(:qid{i}, :safe{i}, :notes{i})" for i in range(len(updates))])
+    # Explicitly CAST to avoid ambiguous parameter typing in Postgres
+    values_clause = ",".join([
+        f"(CAST(:qid{i} AS text), CAST(:safe{i} AS boolean), CAST(:notes{i} AS text))"
+        for i in range(len(updates))
+    ])
     params: Dict[str, Any] = {}
     for i, u in enumerate(updates):
         params[f"qid{i}"] = u["qid"]

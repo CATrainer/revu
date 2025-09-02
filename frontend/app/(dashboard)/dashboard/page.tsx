@@ -3,7 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import ConnectButton from '@/components/youtube/ConnectButton';
-import TestingStatusWidget from '@/components/dashboard/TestingStatusWidget';
 
 export default function DashboardPage() {
   return (
@@ -24,7 +23,6 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-  <TestingStatusWidget />
         <Card className="dashboard-card hover-raise card-hover elevated">
           <CardHeader>
             <CardTitle className="text-primary-dark">Connect Instagram</CardTitle>
