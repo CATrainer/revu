@@ -857,6 +857,243 @@ async def test_rule(
     }
 
 
+@router.get("/rules/metrics")
+async def rules_metrics(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    rule_ids: Optional[str] = None,
+):
+    """Return per-rule metrics for today: triggers, success proxy, issues, status.
+
+    Query param:
+    - rule_ids: comma-separated ids; if omitted, metrics for all rules.
+    """
+    # Build rule selection
+    where = ["1=1"]
+    params: Dict[str, Any] = {}
+    if rule_ids:
+        ids = [s.strip() for s in str(rule_ids).split(",") if s.strip()]
+        if not ids:
+            return []
+        where.append("id = ANY(:ids)")
+        params["ids"] = ids
+
+    res = await db.execute(
+        text(
+            f"""
+            SELECT id, name, enabled, priority, conditions, action, require_approval
+            FROM automation_rules
+            WHERE {' AND '.join(where)}
+            """
+        ),
+        params,
+    )
+    rules = res.fetchall() or []
+    if not rules:
+        return []
+
+    out: List[Dict[str, Any]] = []
+    # Precompute today's boundary
+    # triggers per rule
+    for r in rules:
+        m = r._mapping if hasattr(r, "_mapping") else None
+        rid = str(m["id"] if m else r[0])
+        name = (m["name"] if m else r[1])
+        enabled = bool(m["enabled"] if m else r[2])
+        prio = int(m["priority"] if m else (r[3] or 0))
+        conds = (m["conditions"] if m else r[4]) or {}
+        act = (m["action"] if m else r[5]) or {}
+        if isinstance(act, list):
+            act = act[0] if act and isinstance(act[0], dict) else {}
+        atype = (act or {}).get("type") or "generate_response"
+        require_approval = bool(m["require_approval"] if m else (r[6] or False))
+
+        trig_row = await db.execute(
+            text(
+                """
+                SELECT COUNT(1)
+                FROM rule_executions
+                WHERE rule_id = :rid AND triggered_at >= date_trunc('day', now())
+                """
+            ),
+            {"rid": rid},
+        )
+        triggers_today = int(trig_row.scalar() or 0)
+
+        # Success proxy
+        successes = 0
+        if triggers_today > 0:
+            if atype == "generate_response":
+                # Consider approved or posted replies for matching comments today
+                srow = await db.execute(
+                    text(
+                        """
+                        WITH targets AS (
+                          SELECT DISTINCT comment_id
+                          FROM rule_executions
+                          WHERE rule_id = :rid AND triggered_at >= date_trunc('day', now())
+                        )
+                        SELECT COUNT(1)
+                        FROM ai_responses ar
+                        JOIN comments_queue cq ON cq.id = ar.queue_id
+                        JOIN targets t ON t.comment_id = cq.comment_id
+                        WHERE COALESCE(ar.posted_at, ar.approved_at, ar.created_at) >= date_trunc('day', now())
+                        """
+                    ),
+                    {"rid": rid},
+                )
+                successes = int(srow.scalar() or 0)
+            elif atype == "flag_for_review":
+                srow = await db.execute(
+                    text(
+                        """
+                        WITH targets AS (
+                          SELECT DISTINCT comment_id
+                          FROM rule_executions
+                          WHERE rule_id = :rid AND triggered_at >= date_trunc('day', now())
+                        )
+                        SELECT COUNT(1)
+                        FROM comments_queue cq
+                        JOIN targets t ON t.comment_id = cq.comment_id
+                        WHERE cq.status = 'needs_review' AND cq.updated_at >= date_trunc('day', now())
+                        """
+                    ),
+                    {"rid": rid},
+                )
+                successes = int(srow.scalar() or 0)
+            else:
+                # delete_comment: assume attempted equals success (no easy confirm yet)
+                successes = triggers_today
+
+        success_rate = float(successes) / float(triggers_today) if triggers_today else 0.0
+
+        # Issues
+        issues = 0
+        if not ((conds or {}).get("classification") or (conds or {}).get("keywords")):
+            issues += 1
+        if atype == "delete_comment" and not require_approval:
+            issues += 1
+        if isinstance(conds, dict) and conds.get("_deleted"):
+            issues += 1
+
+        status = "active" if enabled and issues == 0 else ("paused" if not enabled else "error")
+
+        out.append(
+            {
+                "id": rid,
+                "name": name,
+                "enabled": enabled,
+                "priority": prio,
+                "action_type": atype,
+                "triggers_today": triggers_today,
+                "success_rate": round(success_rate, 4),
+                "issues_count": issues,
+                "status": status,
+            }
+        )
+
+    return out
+
+
+@router.get("/today-stats")
+async def get_today_stats(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    channel_id: Optional[str] = None,
+):
+    """Return today's automation stats: responses generated/posted, deletes, flags, approvals."""
+    # Determine channel filter when provided
+    cid_clause = ""
+    params: Dict[str, Any] = {}
+    if channel_id:
+        cid_clause = " AND cq.channel_id = :cid"
+        params["cid"] = str(channel_id)
+
+    # Start of today (UTC)
+    # Using date_trunc('day', now()) for consistency in DB timezone
+    params["start"] = None  # placeholder not used as we embed date_trunc in SQL
+
+    # ai_responses joined to comments_queue for channel filter
+    q_gen = await db.execute(
+        text(
+            f"""
+            SELECT COUNT(1)
+            FROM ai_responses ar
+            JOIN comments_queue cq ON cq.id = ar.queue_id
+            WHERE ar.created_at >= date_trunc('day', now()){cid_clause}
+            """
+        ),
+        params,
+    )
+    responses_generated = int(q_gen.scalar() or 0)
+
+    q_post = await db.execute(
+        text(
+            f"""
+            SELECT COUNT(1)
+            FROM ai_responses ar
+            JOIN comments_queue cq ON cq.id = ar.queue_id
+            WHERE ar.posted_at IS NOT NULL AND ar.posted_at >= date_trunc('day', now()){cid_clause}
+            """
+        ),
+        params,
+    )
+    responses_posted = int(q_post.scalar() or 0)
+
+    # rule_executions for actions today
+    q_del = await db.execute(
+        text(
+            f"""
+            SELECT COUNT(1)
+            FROM rule_executions re
+            WHERE re.triggered_at >= date_trunc('day', now())
+              AND (re.action->>'type') = 'delete_comment'
+            """
+        )
+    )
+    deletes_attempted = int(q_del.scalar() or 0)
+
+    q_flag = await db.execute(
+        text(
+            f"""
+            SELECT COUNT(1)
+            FROM rule_executions re
+            WHERE re.triggered_at >= date_trunc('day', now())
+              AND (re.action->>'type') = 'flag_for_review'
+            """
+        )
+    )
+    flags_set = int(q_flag.scalar() or 0)
+
+    # approvals
+    # Ensure approval_queue exists
+    await ApprovalQueueService()._ensure_table(db)
+    q_pending = await db.execute(text("SELECT COUNT(1) FROM approval_queue WHERE status = 'pending'"))
+    approvals_pending = int(q_pending.scalar() or 0)
+    q_proc = await db.execute(
+        text(
+            """
+            SELECT COUNT(1)
+            FROM approval_queue
+            WHERE approved_at IS NOT NULL AND approved_at >= date_trunc('day', now())
+                  AND status IN ('approved','auto_approved','rejected')
+            """
+        )
+    )
+    approvals_processed = int(q_proc.scalar() or 0)
+
+    return {
+        "responses_generated": responses_generated,
+        "responses_posted": responses_posted,
+        "deletes_attempted": deletes_attempted,
+        "flags_set": flags_set,
+        "approvals_pending": approvals_pending,
+        "approvals_processed": approvals_processed,
+    }
+
+
 # --------------------
 # Approval Management
 # --------------------

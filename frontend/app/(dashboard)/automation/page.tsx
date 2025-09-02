@@ -1,33 +1,30 @@
-// frontend/app/(dashboard)/automation/page.tsx
 "use client";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { pushToast } from '@/components/ui/toast';
 import { api } from '@/lib/api';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+// Removed modal builder imports; RuleBuilder handles UI
+import Link from 'next/link';
+import RulesList from '@/components/automation/RulesList';
+import RuleBuilder from '@/components/automation/RuleBuilder';
 
 type PollingConfig = {
-  channel_id: string;
+  channel_id: string | null;
   polling_enabled: boolean;
   polling_interval_minutes: number;
   last_polled_at?: string | null;
   updated_at?: string | null;
 };
 
-type Stats = {
-  total_comments_processed: number;
+type TodayStats = {
   responses_generated: number;
-};
-
-type Rule = {
-  id: string;
-  name: string;
-  enabled: boolean;
-  priority: number;
+  responses_posted: number;
+  deletes_attempted: number;
+  flags_set: number;
+  approvals_pending: number;
+  approvals_processed: number;
 };
 
 async function fetchPolling(): Promise<PollingConfig> {
@@ -40,27 +37,40 @@ async function updatePolling(payload: Partial<PollingConfig>): Promise<PollingCo
   return data;
 }
 
-async function fetchStats(): Promise<Stats> {
-  const { data } = await api.get<Stats>('/polling/stats');
+async function fetchTodayStats(channel_id?: string | null): Promise<TodayStats> {
+  const { data } = await api.get<TodayStats>('/automation/today-stats', { params: channel_id ? { channel_id } : {} });
   return data;
 }
 
-async function fetchRules(): Promise<Rule[]> {
-  const { data } = await api.get<Rule[]>('/automation/rules');
-  return data;
+async function fetchApprovalsCount(): Promise<number> {
+  const { data } = await api.get<{ items: unknown[]; total: number }>('/automation/approvals', { params: { status: 'pending', limit: 1, offset: 0 } });
+  return data.total ?? 0;
 }
 
 export default function AutomationPage() {
   const qc = useQueryClient();
   const { data: polling, isLoading: loadingPolling } = useQuery({ queryKey: ['polling-config'], queryFn: fetchPolling });
-  const { data: stats } = useQuery({ queryKey: ['polling-stats'], queryFn: fetchStats, refetchInterval: 60_000 });
-  const { data: rules } = useQuery({ queryKey: ['automation-rules'], queryFn: fetchRules, refetchInterval: 60_000 });
+  const channelId = polling?.channel_id ?? null;
+  const { data: today, refetch: refetchToday } = useQuery({
+    queryKey: ['automation-today-stats', channelId],
+    queryFn: () => fetchTodayStats(channelId || undefined),
+    refetchInterval: 60_000,
+  });
+  const { data: approvalsTotal } = useQuery({
+    queryKey: ['approvals-count'],
+    queryFn: fetchApprovalsCount,
+    refetchInterval: 30_000,
+  });
+  // RulesList handles fetching rules and metrics internally
 
   const updateMut = useMutation({
     mutationFn: updatePolling,
     onSuccess: async () => {
-      pushToast('Polling settings updated', 'success');
-      await qc.invalidateQueries({ queryKey: ['polling-config'] });
+      pushToast('Automation settings updated', 'success');
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['polling-config'] }),
+        qc.invalidateQueries({ queryKey: ['automation-today-stats'] }),
+      ]);
     },
     onError: (e) => pushToast(`Failed to update: ${String((e as Error)?.message || e)}`, 'error'),
   });
@@ -68,73 +78,37 @@ export default function AutomationPage() {
   const enabled = polling?.polling_enabled ?? false;
   const interval = polling?.polling_interval_minutes ?? 15;
 
-  // Rule builder state
-  const [open, setOpen] = useState(false);
-  const [ruleName, setRuleName] = useState('');
-  const [classification, setClassification] = useState('');
-  const [action, setAction] = useState<'generate' | 'delete' | 'flag'>('generate');
-  const [requireApproval, setRequireApproval] = useState(false);
-  const [limit, setLimit] = useState<number | ''>('');
+  // Tab state
+  const tabs = ['Active Rules', 'Create Rule', 'Approval Queue', 'Analytics'] as const;
+  const [tab, setTab] = useState<typeof tabs[number]>('Active Rules');
 
-  const createRule = useMutation({
-    mutationFn: async () => {
-      const payload: {
-        name: string;
-        classification?: string;
-        action: 'generate' | 'delete' | 'flag';
-        require_approval: boolean;
-        response_limit_per_run?: number;
-        channel_id?: string | null;
-      } = {
-        name: ruleName,
-        classification: classification || undefined,
-        action,
-        require_approval: requireApproval,
-        response_limit_per_run: limit === '' ? undefined : Number(limit),
-        channel_id: polling?.channel_id,
-      };
-      const { data } = await api.post('/automation/rules', payload);
-      return data;
-    },
-    onSuccess: async () => {
-      pushToast('Rule created', 'success');
-      setOpen(false);
-      setRuleName('');
-      setClassification('');
-      setAction('generate');
-      setRequireApproval(false);
-      setLimit('');
-      await qc.invalidateQueries({ queryKey: ['automation-rules'] });
-    },
-    onError: (e) => pushToast(`Failed to create rule: ${String((e as Error)?.message || e)}`, 'error'),
-  });
+  // Create rule dialog state
+  // Create Rule handled in RuleBuilder
 
-  const toggleRule = useMutation({
-    mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
-      const { data } = await api.patch(`/automation/rules/${id}/enabled`, { enabled });
-      return data;
-    },
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ['automation-rules'] });
-    },
-    onError: (e) => pushToast(`Failed to update rule: ${String((e as Error)?.message || e)}`, 'error'),
-  });
+  // rule toggling handled inside RulesList
+
+  useEffect(() => {
+    refetchToday();
+  }, [enabled, interval, refetchToday]);
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Automation</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Automation</h1>
+        <Link href="/help#automation" className="text-sm underline">Help</Link>
+      </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Polling Settings</CardTitle>
+          <CardTitle>Automation Status</CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center gap-4">
+        <CardContent className="flex flex-wrap items-center gap-4">
           <Button
             variant={enabled ? 'default' : 'secondary'}
             onClick={() => updateMut.mutate({ polling_enabled: !enabled })}
             disabled={updateMut.isPending || loadingPolling}
           >
-            {enabled ? 'Disable Polling' : 'Enable Polling'}
+            {enabled ? 'Disable Automation' : 'Enable Automation'}
           </Button>
 
           <div className="flex items-center gap-2">
@@ -148,117 +122,114 @@ export default function AutomationPage() {
               {Array.from({ length: 12 }).map((_, i) => {
                 const val = (i + 1) * 5;
                 return (
-                  <option key={val} value={val}>
-                    {val} min
-                  </option>
+                  <option key={val} value={val}>{val} min</option>
                 );
               })}
             </select>
           </div>
 
-          <div className="text-xs text-muted-foreground ml-auto">
-            Last polled: {polling?.last_polled_at ? new Date(polling.last_polled_at).toLocaleString() : '—'}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Statistics</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-3 rounded border">
-            <div className="text-xs text-muted-foreground">Total comments processed</div>
-            <div className="text-xl font-semibold">{stats?.total_comments_processed ?? 0}</div>
-          </div>
-          <div className="p-3 rounded border">
-            <div className="text-xs text-muted-foreground">Responses generated</div>
-            <div className="text-xl font-semibold">{stats?.responses_generated ?? 0}</div>
-          </div>
-          <div className="p-3 rounded border">
-            <div className="text-xs text-muted-foreground">Polling interval</div>
-            <div className="text-xl font-semibold">{interval} min</div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Automation Rules</CardTitle>
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button>Create New Rule</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create Automation Rule</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <Label htmlFor="rule-name">Rule name</Label>
-                    <Input id="rule-name" value={ruleName} onChange={(e) => setRuleName(e.target.value)} placeholder="e.g., Reply to simple positives" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Trigger: classification</Label>
-                    <select className="border rounded px-2 py-1 w-full" value={classification} onChange={(e) => setClassification(e.target.value)}>
-                      <option value="">Any</option>
-                      <option value="simple_positive">Simple positive</option>
-                      <option value="question">Question</option>
-                      <option value="negative">Negative</option>
-                      <option value="spam">Spam</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Action</Label>
-                    <select className="border rounded px-2 py-1 w-full" value={action} onChange={(e) => setAction(e.target.value as 'generate' | 'delete' | 'flag')}>
-                      <option value="generate">Generate response</option>
-                      <option value="flag">Flag for review</option>
-                      <option value="delete">Delete comment</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input id="require-approval" type="checkbox" checked={requireApproval} onChange={(e) => setRequireApproval(e.target.checked)} />
-                    <Label htmlFor="require-approval">Requires approval</Label>
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="limit">Max responses per run</Label>
-                    <Input id="limit" type="number" min={1} placeholder="Optional" value={limit} onChange={(e) => setLimit(e.target.value === '' ? '' : Number(e.target.value))} />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="secondary" onClick={() => setOpen(false)} disabled={createRule.isPending}>Cancel</Button>
-                  <Button onClick={() => createRule.mutate()} disabled={!ruleName || createRule.isPending}>Save Rule</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {!rules?.length ? (
-            <div className="text-sm text-muted-foreground">No rules configured.</div>
-          ) : (
-            <div className="space-y-2">
-              {rules?.map((r) => (
-                <div key={r.id} className="p-3 rounded border flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">{r.name}</div>
-                    <div className="text-xs text-muted-foreground">Priority {r.priority}</div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className={`text-xs px-2 py-1 rounded border ${r.enabled ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
-                      {r.enabled ? 'Enabled' : 'Disabled'}
-                    </div>
-                    <Button size="sm" variant="outline" onClick={() => toggleRule.mutate({ id: r.id, enabled: !r.enabled })} disabled={toggleRule.isPending}>
-                      {r.enabled ? 'Disable' : 'Enable'}
-                    </Button>
-                  </div>
-                </div>
-              ))}
+          <div className="ml-auto flex items-center gap-3">
+            <div className="text-xs text-muted-foreground">Pending approvals</div>
+            <div className="px-2 py-1 text-xs rounded-full bg-amber-50 border border-amber-200 text-amber-900">
+              {approvalsTotal ?? 0}
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Today</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <Stat label="Generated" value={today?.responses_generated ?? 0} />
+          <Stat label="Posted" value={today?.responses_posted ?? 0} />
+          <Stat label="Deletes" value={today?.deletes_attempted ?? 0} />
+          <Stat label="Flags" value={today?.flags_set ?? 0} />
+          <Stat label="Approvals processed" value={today?.approvals_processed ?? 0} />
+        </CardContent>
+      </Card>
+
+      {/* Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {tabs.map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`text-sm px-3 py-1 rounded border ${tab === t ? 'bg-primary text-white border-primary' : 'bg-white border-gray-200'}`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {/* Panels */}
+      {tab === 'Active Rules' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Active Rules</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RulesList />
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === 'Create Rule' && (
+        <RuleBuilder />
+      )}
+
+      {tab === 'Approval Queue' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Approval Queue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm">Go to <Link href="/dashboard/approvals" className="underline">Approvals</Link> to review and approve responses.</div>
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === 'Analytics' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Analytics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm">See more in <Link href="/dashboard/analytics" className="underline">Analytics</Link>. Automation usage and LLM costs are tracked under Analytics → Usage.</div>
+          </CardContent>
+        </Card>
+      )}
+
+      <HelpSection />
     </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="p-3 rounded border">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-xl font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function HelpSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Help & Examples</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        <div>Examples:</div>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Reply to simple positive comments with a friendly thanks.</li>
+          <li>Flag comments containing certain keywords for manual review.</li>
+          <li>Delete obvious spam with links, with approvals required.</li>
+        </ul>
+        <div className="text-muted-foreground">Tip: Use approvals for sensitive actions. You can change the run interval to tune responsiveness.</div>
+      </CardContent>
+    </Card>
   );
 }
