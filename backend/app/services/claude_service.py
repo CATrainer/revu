@@ -8,7 +8,9 @@ import os
 import math
 import time
 from datetime import datetime, timezone, date
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Tuple
+from collections import defaultdict, deque
+import hashlib
 
 try:
     from anthropic import Anthropic, APIError  # type: ignore
@@ -63,6 +65,10 @@ class ClaudeService:
         self._breaker = CircuitBreaker(threshold=int(os.getenv("CLAUDE_CB_THRESHOLD", "5")),
                                        cooldown=float(os.getenv("CLAUDE_CB_COOLDOWN", "60")),
                                        half_open_max=1)
+        # Track last N responses per key to avoid repetition (process-local)
+        self._recent: Dict[str, deque[str]] = defaultdict(
+            lambda: deque(maxlen=int(os.getenv("RESPONSE_RECENT_BUFFER", "10")))
+        )
 
     async def generate_response(
         self,
@@ -248,6 +254,179 @@ class ClaudeService:
                     await ClaudeService.increment_metrics(db, channel_id=channel_id, delta_generated=1)
             except Exception:
                 logger.exception("Failed to update response_metrics after Claude generation")
+
+    # -------------------- Response variation API --------------------
+    def _style_instructions(self, style: str) -> str:
+        s = (style or "").strip().lower()
+        mapping = {
+            "professional": "Maintain a professional, concise tone. Avoid slang.",
+            "casual": "Use a casual, friendly tone with simple language.",
+            "friendly": "Be warm and friendly. Show appreciation.",
+            "enthusiastic": "Be upbeat and enthusiastic, but keep it natural and not over-the-top.",
+        }
+        return mapping.get(s, mapping["friendly"])  # default friendly
+
+    def _recent_key(self, base_template: str, style: str, custom_instructions: Optional[str]) -> str:
+        h = hashlib.sha1()
+        h.update((base_template or "").encode("utf-8"))
+        h.update(("::" + (style or "")).encode("utf-8"))
+        if custom_instructions:
+            h.update(("::" + custom_instructions).encode("utf-8"))
+        return h.hexdigest()
+
+    async def generate_varied_response(
+        self,
+        *,
+        base_template: str,
+        context: Dict[str, Any],
+        previous_responses: Optional[List[str]] = None,
+        style: str = "friendly",
+        custom_instructions: Optional[str] = None,
+        db: Optional[AsyncSession] = None,
+        channel_id: Optional[str] = None,
+    ) -> Optional[str]:
+        """Generate a response variant based on a base template and context.
+
+        Ensures uniqueness vs. recent and provided previous_responses while keeping tone.
+        Supports style flags: professional|casual|friendly|enthusiastic, and custom instructions.
+        """
+        if not self.client:
+            return None
+
+        # Circuit breaker guard
+        if not self._breaker.allow_request():
+            logger.warning("Claude circuit open; short-circuiting varied response request")
+            if db and channel_id:
+                await self._log_error(db, service="claude", op="varied.create", code=503, message="circuit_open",
+                                      context={"channel_id": channel_id})
+            return None
+
+        prev_set = set([(p or "").strip().lower() for p in (previous_responses or [])])
+        key = self._recent_key(base_template, style, custom_instructions)
+        prev_set.update([(p or "").strip().lower() for p in list(self._recent[key])])
+
+        model_used = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-3-5-sonnet-latest"
+        sys = (
+            "You adapt a base reply template into a unique variant while preserving tone and intent. "
+            "Keep it under 2 sentences, safe, and audience-appropriate. "
+            + self._style_instructions(style)
+        )
+        if custom_instructions:
+            sys += " " + str(custom_instructions)
+
+        base_and_ctx = {
+            "template": base_template,
+            "context": {k: (v if isinstance(v, (str, int, float, bool)) else str(v)) for k, v in (context or {}).items()},
+            "avoid": list(prev_set)[:10],
+        }
+
+        def _make_user_prompt(extra: Optional[str] = None) -> str:
+            return (
+                "Create a variant of the reply using the template and context. You may rephrase and reorder but keep meaning.\n"
+                "If provided, avoid outputs similar to the listed strings.\n"
+                f"DATA: {base_and_ctx}\n"
+                + (extra or "")
+                + "\nReturn only the final reply text."
+            )
+
+        def _call_sync(user_prompt: str):
+            return self.client.messages.create(  # type: ignore[union-attr]
+                model=model_used,
+                max_tokens=int(os.getenv("CLAUDE_MAX_TOKENS", "200")),
+                system=sys,
+                messages=[{"role": "user", "content": user_prompt}],
+                temperature=0.5,
+            )
+
+        def _should_retry(e: BaseException) -> bool:
+            code = getattr(e, "status_code", None)
+            return isinstance(e, Exception) and code in (429, 500, 502, 503, 504)
+
+        # up to 3 attempts to achieve uniqueness
+        attempt = 0
+        last_text: Optional[str] = None
+        try:
+            while attempt < 3:
+                attempt += 1
+                user_prompt = _make_user_prompt(
+                    None if attempt == 1 else "Make it more different from the 'avoid' list while keeping the same tone."
+                )
+                resp = await async_retry(
+                    lambda up=user_prompt: _run_in_thread(lambda: _call_sync(up)),
+                    retries=int(os.getenv("CLAUDE_MAX_RETRIES", "3")),
+                    base_delay=float(os.getenv("CLAUDE_RETRY_BASE_DELAY", "0.5")),
+                    max_delay=float(os.getenv("CLAUDE_RETRY_MAX_DELAY", "6.0")),
+                    should_retry=_should_retry,
+                )
+                content = getattr(resp, "content", None)
+                candidate: Optional[str] = None
+                if isinstance(content, list) and content:
+                    first = content[0]
+                    candidate = getattr(first, "text", None) or (first.get("text") if isinstance(first, dict) else None)
+                if not candidate:
+                    txt = getattr(resp, "output_text", None)
+                    candidate = txt or None
+                if candidate:
+                    norm = candidate.strip().lower()
+                    if norm and norm not in prev_set:
+                        last_text = candidate.strip()
+                        break
+                # else continue loop
+            if last_text:
+                # Update recent buffer
+                self._recent[key].append(last_text)
+                self._breaker.record_success()
+                return last_text
+            # If we get here, we failed uniqueness; return last attempt or None
+            self._breaker.record_success()
+            return candidate if candidate else None
+        except APIError as e:
+            logger.error(f"Claude APIError (varied): {e}")
+            self._breaker.record_failure()
+            if db and channel_id:
+                await self._log_error(db, service="claude", op="varied.create", code=getattr(e, "status_code", 500), message=str(e),
+                                      context={"channel_id": channel_id})
+            return None
+        except Exception as e:
+            logger.exception(f"Claude variation failed: {e}")
+            self._breaker.record_failure()
+            if db and channel_id:
+                await self._log_error(db, service="claude", op="varied.create", code=500, message=str(e),
+                                      context={"channel_id": channel_id})
+            return None
+
+    async def record_user_edit_feedback(
+        self,
+        db: AsyncSession,
+        *,
+        original_response: str,
+        edited_response: str,
+        edit_type: Optional[str] = None,
+        feedback_incorporated: bool = True,
+    ) -> None:
+        """Store user edit feedback for learning/optimization (automation_learning)."""
+        try:
+            await db.execute(
+                text(
+                    """
+                    INSERT INTO automation_learning (original_response, edited_response, edit_type, feedback_incorporated, created_at)
+                    VALUES (:orig, :edit, :etype, :inc, now())
+                    """
+                ),
+                {
+                    "orig": original_response,
+                    "edit": edited_response,
+                    "etype": (edit_type or None),
+                    "inc": bool(feedback_incorporated),
+                },
+            )
+            await db.commit()
+        except Exception:
+            logger.exception("Failed to record user edit feedback")
+            try:
+                await db.rollback()
+            except Exception:
+                pass
 
     @staticmethod
     async def increment_metrics(
