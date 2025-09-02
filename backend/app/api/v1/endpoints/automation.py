@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Tuple
+import json
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,8 +10,15 @@ from app.core.security import get_current_active_user
 from app.models.user import User
 from app.services.nl_rule_parser import NaturalLanguageRuleParser, COMMON_PATTERNS
 from app.services.approval_queue import ApprovalQueueService
+from app.services.template_engine import TemplateEngine
+from app.services.ab_testing import ABTestingService
+from app.services.rule_scheduler import RuleScheduler
 
 router = APIRouter()
+
+template_engine = TemplateEngine()
+ab_service = ABTestingService()
+rule_scheduler = RuleScheduler()
 
 
 def _validate_rule_payload(payload: Dict[str, Any], *, for_update: bool = False) -> Dict[str, Any]:
@@ -630,6 +638,47 @@ async def parse_natural_rule(
         response["examples"] = [{"name": ex["name"], "nl": ex["nl"], "rule": ex["rule"]} for ex in COMMON_PATTERNS]
         response["note"] = "Parsing was inconclusive; examples included to guide your phrasing."
     return response
+
+
+@router.post("/rules/schedule/preview")
+async def preview_rule_schedule(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+):
+    """Given a partial rule config (timing, limits, scope), compute whether it's active now
+    and the next eligible trigger time. Returns timestamps in UTC and a human string in local tz.
+
+    Expected payload example:
+    {"timing": {"timezone": "UTC", "days_of_week": [1,2], "hours": [{"start":9, "end":17}],
+      "delay_seconds": {"min": 5, "max": 30}, "blackouts": [{"start":"2025-12-24T00:00:00Z","end":"2025-12-26T23:59:59Z"}]},
+     "limits": {"per_minute": 10},
+     "scope": {"video_age_hours": {"min":0, "max":48}}}
+    """
+    rule = {
+        "timing": payload.get("timing") or {},
+        "limits": payload.get("limits") or {},
+        "scope": payload.get("scope") or {},
+    }
+    now_utc = None  # let scheduler use current time
+    active = rule_scheduler.is_schedule_active(rule, now_utc=now_utc)
+    next_time = rule_scheduler.next_eligible_time(rule, now_utc=now_utc)
+    tz_name = (rule.get("timing") or {}).get("timezone") or "UTC"
+    try:
+        from zoneinfo import ZoneInfo
+        local_tz = ZoneInfo(tz_name)
+    except Exception:
+        from datetime import timezone as _tz
+        local_tz = _tz.utc
+    local_str = next_time.astimezone(local_tz).strftime("%Y-%m-%d %H:%M:%S %Z")
+    return {
+        "active_now": bool(active.active),
+        "reason": active.reason,
+        "next_trigger_utc": next_time.isoformat(),
+        "next_trigger_local": local_str,
+        "timezone": tz_name,
+    }
 
 
 @router.post("/rules/{rule_id}/test")
@@ -1540,3 +1589,538 @@ async def approval_analytics(
         "most_edited": most_edited,
         "edits_by_category": edits_by_category,
     }
+
+
+# ---------------- Templates API ----------------
+
+@router.get("/templates")
+async def list_templates(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    try:
+        q = text(
+            """
+            SELECT id, COALESCE(name, 'Template') AS name, COALESCE(category, '') AS category,
+                   template_text,
+                   COALESCE(tags, '{}') AS tags,
+                   COALESCE(usage_count, 0) AS usage_count,
+                   created_at
+            FROM response_templates
+            ORDER BY usage_count DESC, created_at DESC NULLS LAST
+            """
+        )
+        rows = (await db.execute(q)).mappings().all()
+        has_tags = True
+    except Exception:
+        q = text(
+            """
+            SELECT id, COALESCE(name, 'Template') AS name, COALESCE(category, '') AS category,
+                   template_text,
+                   COALESCE(usage_count, 0) AS usage_count,
+                   created_at
+            FROM response_templates
+            ORDER BY usage_count DESC, created_at DESC NULLS LAST
+            """
+        )
+        rows = (await db.execute(q)).mappings().all()
+        has_tags = False
+    return [
+        {
+            "id": str(r.get("id")),
+            "name": r.get("name"),
+            "category": r.get("category"),
+            "template_text": r.get("template_text"),
+            "variables": None,
+            "tags": (r.get("tags") if has_tags else None),
+            "performance_score": None,
+            "usage_count": int(r.get("usage_count") or 0),
+            "created_at": r.get("created_at").isoformat() if r.get("created_at") else None,
+        }
+        for r in rows
+    ]
+
+
+@router.post("/templates")
+async def create_template(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+):
+    name = str(payload.get("name") or "Template")
+    category = payload.get("category")
+    text_tpl = str(payload.get("template_text") or "")
+    ok, invalid = template_engine.validate_template(text_tpl)
+    if not ok:
+        from fastapi.responses import JSONResponse  # scoped import to avoid top-level import
+        return JSONResponse({"error": "invalid_variables", "invalid": invalid}, status_code=400)
+    try:
+        await db.execute(
+            text(
+                """
+                INSERT INTO response_templates (name, category, template_text, tags, usage_count, created_at)
+                VALUES (:n, :c, :t, :tags, 0, now())
+                """
+            ),
+            {"n": name, "c": category, "t": text_tpl, "tags": payload.get("tags") or []},
+        )
+    except Exception:
+        await db.execute(
+            text(
+                """
+                INSERT INTO response_templates (name, category, template_text, usage_count, created_at)
+                VALUES (:n, :c, :t, 0, now())
+                """
+            ),
+            {"n": name, "c": category, "t": text_tpl},
+        )
+    await db.commit()
+    return {"saved": True}
+
+
+@router.put("/templates/{template_id}")
+async def update_template(
+    *,
+    template_id: str,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+):
+    text_tpl = str(payload.get("template_text") or "")
+    ok, invalid = template_engine.validate_template(text_tpl)
+    if not ok:
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"error": "invalid_variables", "invalid": invalid}, status_code=400)
+    try:
+        await db.execute(
+            text(
+                """
+                UPDATE response_templates
+                SET name = COALESCE(:n, name), category = :c, template_text = :t, tags = COALESCE(:tags, tags), updated_at = now()
+                WHERE id = :id
+                """
+            ),
+            {"id": template_id, "n": payload.get("name"), "c": payload.get("category"), "t": text_tpl, "tags": payload.get("tags")},
+        )
+    except Exception:
+        await db.execute(
+            text(
+                """
+                UPDATE response_templates
+                SET name = COALESCE(:n, name), category = :c, template_text = :t, updated_at = now()
+                WHERE id = :id
+                """
+            ),
+            {"id": template_id, "n": payload.get("name"), "c": payload.get("category"), "t": text_tpl},
+        )
+    await db.commit()
+    return {"updated": True}
+
+
+@router.delete("/templates/{template_id}")
+async def delete_template(
+    *,
+    template_id: str,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    await db.execute(text("DELETE FROM response_templates WHERE id = :id"), {"id": template_id})
+    await db.commit()
+    return {"deleted": True}
+
+
+@router.post("/templates/preview")
+async def preview_template(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+):
+    from fastapi.responses import JSONResponse
+    tpl = str(payload.get("template_text") or "")
+    data = payload.get("data") or {}
+    ok, invalid = template_engine.validate_template(tpl)
+    if not ok:
+        return JSONResponse({"error": "invalid_variables", "invalid": invalid}, status_code=400)
+    res = template_engine.parse_template(tpl, data)
+    return {"text": res.text, "variables_used": res.variables_used}
+
+
+@router.get("/templates/metrics")
+async def template_metrics(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    rows = (await db.execute(
+        text(
+            """
+            SELECT rt.id,
+                   COALESCE(rt.usage_count, 0) AS usage_count,
+                   COALESCE(stats.avg_engagement, 0.0) AS avg_engagement,
+                   COALESCE(stats.ctr, 0.0) AS ctr,
+                   COALESCE(stats.conversions, 0) AS conversions,
+                   COALESCE(stats.impressions, 0) AS impressions
+            FROM response_templates rt
+            LEFT JOIN (
+              SELECT
+                CASE WHEN position('::' in variant_id) > 0 THEN split_part(variant_id, '::', 2) ELSE variant_id END as variant,
+                SUM(COALESCE((engagement_metrics->>'conversions')::int,0)) AS conversions,
+                SUM(COALESCE((engagement_metrics->>'impressions')::int,0)) AS impressions,
+                AVG(COALESCE((engagement_metrics->>'engagement')::float, 0.0)) AS avg_engagement,
+                CASE WHEN SUM(COALESCE((engagement_metrics->>'impressions')::int,0)) > 0
+                     THEN SUM(COALESCE((engagement_metrics->>'conversions')::int,0))::float / NULLIF(SUM(COALESCE((engagement_metrics->>'impressions')::int,0)),0)
+                     ELSE 0.0 END AS ctr
+              FROM ab_test_results
+              GROUP BY 1
+            ) stats ON stats.variant = rt.id::text
+            """
+        )
+    )).mappings().all()
+    return [
+        {
+            "id": str(r.get("id")),
+            "usage_count": int(r.get("usage_count") or 0),
+            "avg_engagement": float(r.get("avg_engagement") or 0.0),
+            "ctr": float(r.get("ctr") or 0.0),
+            "conversions": int(r.get("conversions") or 0),
+            "impressions": int(r.get("impressions") or 0),
+        }
+        for r in rows
+    ]
+
+
+@router.post("/templates/import")
+async def import_templates(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+):
+    items = (payload or {}).get("templates") or []
+    for it in items:
+        try:
+            name = str(it.get("name") or "Template")
+            category = it.get("category")
+            text_tpl = str(it.get("template_text") or "")
+            ok, invalid = template_engine.validate_template(text_tpl)
+            if not ok:
+                continue
+            await db.execute(
+                text(
+                    """
+                    INSERT INTO response_templates (name, category, template_text, usage_count, created_at)
+                    VALUES (:n, :c, :t, :u, now())
+                    """
+                ),
+                {"n": name, "c": category, "t": text_tpl, "u": int(it.get("usage_count") or 0)},
+            )
+        except Exception:
+            continue
+    try:
+        await db.commit()
+    except Exception:
+        try:
+            await db.rollback()
+        except Exception:
+            pass
+    return {"imported": True}
+
+
+@router.get("/templates/export")
+async def export_templates(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    try:
+        rows = (await db.execute(text("SELECT id, name, category, template_text, tags, usage_count, created_at FROM response_templates"))).mappings().all()
+        with_tags = True
+    except Exception:
+        rows = (await db.execute(text("SELECT id, name, category, template_text, usage_count, created_at FROM response_templates"))).mappings().all()
+        with_tags = False
+    return {"templates": [
+        {
+            "id": str(r.get("id")),
+            "name": r.get("name"),
+            "category": r.get("category"),
+            "template_text": r.get("template_text"),
+            "tags": (r.get("tags") if with_tags else None),
+            "usage_count": int(r.get("usage_count") or 0),
+            "created_at": r.get("created_at").isoformat() if r.get("created_at") else None,
+        }
+        for r in rows
+    ]}
+
+
+@router.post("/templates/ab-tests")
+async def set_ab_tests_for_rules(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+):
+    body = payload or {}
+    rid = str(body.get("rule_id") or "")
+    test_id = str(body.get("test_id") or "default")
+    arr = body.get("variants") or []
+    if not isinstance(arr, list):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="variants must be a list")
+    if not rid:
+        row = (await db.execute(text("SELECT id FROM automation_rules ORDER BY priority DESC NULLS LAST LIMIT 1"))).first()
+        if not row:
+            from fastapi.responses import JSONResponse
+            return JSONResponse({"error": "no_rules"}, status_code=400)
+        rid = str(row[0])
+    row = (await db.execute(text("SELECT action FROM automation_rules WHERE id = :rid"), {"rid": rid})).first()
+    action: Dict[str, Any] = {}
+    if row and row[0] is not None:
+        try:
+            action = row[0] if isinstance(row[0], dict) else json.loads(row[0])
+        except Exception:
+            action = {}
+    tests = action.get("ab_tests") or {}
+    tests[test_id] = [
+        {"variant_id": str(v.get("variant_id") or "A"), "weight": float(v.get("weight") or 0.0), "template_id": v.get("template_id")}
+        for v in arr
+    ]
+    action["ab_tests"] = tests
+    await db.execute(text("UPDATE automation_rules SET action = :a::jsonb, updated_at = now() WHERE id = :rid"), {"a": json.dumps(action), "rid": rid})
+    await db.commit()
+    return {"saved": True, "rule_id": rid, "ab_tests": tests}
+
+
+# ---------------- A/B Tests Dashboard API ----------------
+
+@router.get("/ab-tests/active")
+async def list_active_ab_tests(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """List rules that have A/B tests configured, including variants and auto-opt flag."""
+    rows = (await db.execute(text("SELECT id, name, action FROM automation_rules ORDER BY updated_at DESC NULLS LAST"))).mappings().all()
+    items = []
+    for r in rows:
+        rid = str(r.get("id"))
+        name = r.get("name")
+        action = r.get("action")
+        try:
+            action = action if isinstance(action, dict) else (json.loads(action) if action else {})
+        except Exception:
+            action = {}
+        tests = (action or {}).get("ab_tests") or {}
+        if tests:
+            items.append({
+                "rule_id": rid,
+                "name": name,
+                "tests": tests,
+                "auto_optimize": bool((action or {}).get("ab_tests_auto_optimize")),
+            })
+    return {"items": items}
+
+
+@router.get("/ab-tests/{rule_id}/summary")
+async def ab_test_summary(
+    *,
+    rule_id: str,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    test_id: Optional[str] = None,
+    window_hours: Optional[int] = None,
+):
+    """Return per-variant performance stats and winner with significance for a rule/test.
+    Optional window_hours restricts to recent results.
+    """
+    # Optional time window filter
+    if window_hours and window_hours > 0:
+        rows = (await db.execute(
+            text(
+                """
+                SELECT variant_id, engagement_metrics
+                FROM ab_test_results
+                WHERE rule_id = :rid AND created_at >= now() - (:w || ' hours')::interval
+                """
+            ),
+            {"rid": rule_id, "w": int(window_hours)},
+        )).mappings().all()
+        # Temporarily stash rows in-memory and feed into calculator-like aggregator
+        def split_vid(v: str) -> Tuple[str, str]:
+            if "::" in v:
+                a, b = v.split("::", 1)
+                return a, b
+            return "default", v
+        grouped: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
+        for r in rows:
+            vid = r.get("variant_id") or "A"
+            t, v = split_vid(vid)
+            if test_id and t != test_id:
+                continue
+            grouped.setdefault(t, {}).setdefault(v, []).append(r.get("engagement_metrics") or {})
+        # Build stats
+        def to_stats(variants: Dict[str, List[Dict[str, Any]]]) -> Dict[str, Dict[str, float | int]]:
+            stats: Dict[str, Dict[str, float | int]] = {}
+            for v, ms in variants.items():
+                n = len(ms)
+                conv = sum(int((m or {}).get("conversions", 0)) for m in ms)
+                impr = sum(int((m or {}).get("impressions", 0)) for m in ms)
+                eng_vals = [float((m or {}).get("engagement", 0.0)) for m in ms if isinstance((m or {}).get("engagement"), (int, float))]
+                avg_eng = (sum(eng_vals) / len(eng_vals)) if eng_vals else 0.0
+                ctr = (conv / impr) if impr > 0 else 0.0
+                stats[v] = {"n": n, "conversions": conv, "impressions": impr, "ctr": ctr, "avg_engagement": avg_eng}
+            return stats
+        out: Dict[str, Any] = {}
+        for tid, variants in grouped.items():
+            stats = to_stats(variants)
+            # Determine winner using ABTestingService on full set (no window param available), but mimic logic here
+            # Prefer CTR else engagement
+            elig = {v: s for v, s in stats.items() if int(s.get("n", 0)) >= 20}
+            if not elig:
+                out[tid] = {"winner": None, "reason": "insufficient_data", "stats": stats}
+                continue
+            use_ctr = any(s.get("impressions", 0) for s in elig.values())
+            metric_key = "ctr" if use_ctr else "avg_engagement"
+            best_v = max(elig.items(), key=lambda kv: kv[1][metric_key])[0]
+            # compute p-value against next best using ABTestingService helpers
+            if use_ctr:
+                # find next best by ctr
+                next_v = max([(v, s) for v, s in elig.items() if v != best_v], key=lambda kv: kv[1][metric_key])[0] if len(elig) > 1 else None
+                if next_v:
+                    from app.services.ab_testing import ABTestingService as _ABS
+                    pval = _ABS._two_proportion_p_value(  # type: ignore
+                        int(elig[best_v]["conversions"]), int(elig[best_v]["impressions"]),
+                        int(elig[next_v]["conversions"]), int(elig[next_v]["impressions"]),
+                    )
+                else:
+                    pval = 0.0
+            else:
+                next_v = max([(v, s) for v, s in elig.items() if v != best_v], key=lambda kv: kv[1][metric_key])[0] if len(elig) > 1 else None
+                if next_v:
+                    # build arrays
+                    a = [float((m or {}).get("engagement", 0.0)) for m in grouped.get(tid, {}).get(best_v, [])]
+                    b = [float((m or {}).get("engagement", 0.0)) for m in grouped.get(tid, {}).get(next_v, [])]
+                    from app.services.ab_testing import ABTestingService as _ABS
+                    pval = _ABS._mean_diff_p_value(a, b)  # type: ignore
+                else:
+                    pval = 0.0
+            out[tid] = {"winner": best_v, "runner_up": next_v, "p_value": pval, "confidence": (1 - pval), "metric": metric_key, "stats": stats}
+        return out if (test_id is None) else (out.get(test_id) or {})
+    else:
+        # Use standard calculator on full dataset
+        res = await ab_service.calculate_winner(db, rule_id=rule_id, test_id=test_id)
+        # Attach confidence
+        for tid, obj in list(res.items()):
+            if isinstance(obj, dict) and obj.get("p_value") is not None:
+                obj["confidence"] = 1 - float(obj.get("p_value") or 0.0)
+        return res if (test_id is None) else (res.get(test_id) or {})
+
+
+@router.get("/ab-tests/{rule_id}/history")
+async def ab_test_history(
+    *,
+    rule_id: str,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    test_id: Optional[str] = None,
+    limit: int = 200,
+):
+    q = "SELECT variant_id, comment_id, engagement_metrics, created_at FROM ab_test_results WHERE rule_id = :rid"
+    params: Dict[str, Any] = {"rid": rule_id}
+    if test_id:
+        q += " AND variant_id LIKE :prefix"
+        params["prefix"] = f"{test_id}::%"
+    q += " ORDER BY created_at DESC LIMIT :lim"
+    params["lim"] = int(max(1, min(limit, 1000)))
+    rows = (await db.execute(text(q), params)).mappings().all()
+    return {"items": [
+        {
+            "variant_id": r.get("variant_id"),
+            "comment_id": r.get("comment_id"),
+            "metrics": r.get("engagement_metrics") or {},
+            "created_at": (r.get("created_at").isoformat() if r.get("created_at") else None),
+        }
+        for r in rows
+    ]}
+
+
+@router.get("/ab-tests/{rule_id}/export.csv")
+async def ab_test_export_csv(
+    *,
+    rule_id: str,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    test_id: Optional[str] = None,
+    since_hours: Optional[int] = None,
+):
+    q = "SELECT variant_id, comment_id, engagement_metrics, created_at FROM ab_test_results WHERE rule_id = :rid"
+    params: Dict[str, Any] = {"rid": rule_id}
+    if test_id:
+        q += " AND variant_id LIKE :prefix"
+        params["prefix"] = f"{test_id}::%"
+    if since_hours and since_hours > 0:
+        q += " AND created_at >= now() - (:w || ' hours')::interval"
+        params["w"] = int(since_hours)
+    q += " ORDER BY created_at DESC"
+    rows = (await db.execute(text(q), params)).all()
+    # build CSV
+    import io, csv
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["variant_id", "comment_id", "conversions", "impressions", "engagement", "created_at"])
+    for vid, cid, metrics, created_at in rows:
+        m = metrics or {}
+        writer.writerow([
+            vid,
+            cid,
+            int((m or {}).get("conversions", 0)),
+            int((m or {}).get("impressions", 0)),
+            float((m or {}).get("engagement", 0.0)),
+            created_at.isoformat() if created_at else "",
+        ])
+    from fastapi import Response
+    return Response(content=buf.getvalue(), media_type="text/csv", headers={
+        "Content-Disposition": f"attachment; filename=ab_test_{rule_id}.csv"
+    })
+
+
+@router.post("/ab-tests/{rule_id}/auto-optimize")
+async def ab_test_auto_optimize(
+    *,
+    rule_id: str,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    min_samples_per_variant: int = 50,
+    significance_threshold: float = 0.05,
+):
+    res = await ab_service.auto_optimize(
+        db,
+        rule_id=rule_id,
+        min_samples_per_variant=min_samples_per_variant,
+        significance_threshold=significance_threshold,
+    )
+    return res
+
+
+@router.post("/ab-tests/{rule_id}/auto-optimize/toggle")
+async def ab_test_toggle_auto_optimize(
+    *,
+    rule_id: str,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+):
+    enabled = bool((payload or {}).get("enabled"))
+    row = (await db.execute(text("SELECT action FROM automation_rules WHERE id = :rid"), {"rid": rule_id})).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="rule_not_found")
+    try:
+        action = row[0] if isinstance(row[0], dict) else json.loads(row[0])
+    except Exception:
+        action = {}
+    action["ab_tests_auto_optimize"] = enabled
+    await db.execute(text("UPDATE automation_rules SET action = :act::jsonb, updated_at = now() WHERE id = :rid"), {"act": json.dumps(action), "rid": rule_id})
+    await db.commit()
+    return {"enabled": enabled}

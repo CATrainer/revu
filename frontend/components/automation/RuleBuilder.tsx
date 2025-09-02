@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { pushToast } from '@/components/ui/toast';
 import { api } from '@/lib/api';
+import ScheduleBuilder, { type AdvancedTiming, type VideoAgeHours } from '@/components/automation/ScheduleBuilder';
 
 // Lightweight types for builder
 type PollingConfig = {
@@ -96,6 +97,11 @@ type Overrides = {
   enabled?: boolean;
 };
 
+type OverridesExt = Overrides & {
+  timing?: Overrides['timing'] | AdvancedTiming;
+  scope?: Overrides['scope'] & { video_age_hours?: VideoAgeHours };
+};
+
 function toOverrides(rule: VisualRule): Overrides {
   const overrides: Overrides = {
     conditions: {
@@ -142,16 +148,28 @@ export default function RuleBuilder() {
   const [lastSavedRuleId, setLastSavedRuleId] = useState<string | null>(null);
   const [parseData, setParseData] = useState<ParseNaturalResponse | null>(null);
   const [confidence, setConfidence] = useState<number | null>(null);
+  // Advanced schedule state (used by ScheduleBuilder)
+  const [advTiming, setAdvTiming] = useState<AdvancedTiming | undefined>(undefined);
+  const [videoAgeHours, setVideoAgeHours] = useState<VideoAgeHours | undefined>(undefined);
   const preview = useMemo(() => buildPreview(state), [state]);
 
   const parseAndSave = useMutation({
     mutationFn: async ({ confirm, name, enabled }: { confirm: boolean; name: string; enabled: boolean }) => {
-      const payload: { text: string; channel_id?: string; confirm: boolean; name: string; overrides: Overrides } = {
+      const base = toOverrides({ ...state, enabled });
+      // Merge advanced timing and video_age_hours into overrides if provided
+      const overrides: OverridesExt = { ...base } as OverridesExt;
+      if (advTiming) {
+        overrides.timing = { ...(base.timing || {}), ...(advTiming as AdvancedTiming) } as OverridesExt['timing'];
+      }
+      if (videoAgeHours) {
+        overrides.scope = { ...(base.scope || {}), video_age_hours: videoAgeHours } as OverridesExt['scope'];
+      }
+      const payload: { text: string; channel_id?: string; confirm: boolean; name: string; overrides: OverridesExt } = {
         text: preview,
         channel_id: channelId,
         confirm,
         name,
-        overrides: toOverrides({ ...state, enabled }),
+        overrides,
       };
       const { data } = await api.post('/automation/rules/parse-natural', payload);
       return data as { saved?: boolean; record?: { id?: string } };
@@ -403,6 +421,17 @@ export default function RuleBuilder() {
                   <Input placeholder="End HH:MM" value={state.timing?.end || ''} onChange={(e) => setState(s => ({ ...s, timing: { ...(s.timing || {}), end: e.target.value } }))} />
                 </div>
                 <Input placeholder="Days (comma separated, e.g., Mon,Fri)" value={(state.timing?.days || []).join(', ')} onChange={(e) => setState(s => ({ ...s, timing: { ...(s.timing || {}), days: e.target.value.split(',').map(x => x.trim()).filter(Boolean) } }))} />
+              </div>
+              {/* Advanced scheduler */}
+              <div className="mt-4">
+                <ScheduleBuilder
+                  value={advTiming}
+                  videoAgeHours={videoAgeHours}
+                  onChange={(t, ex) => {
+                    setAdvTiming(t);
+                    setVideoAgeHours(ex.video_age_hours);
+                  }}
+                />
               </div>
               <div className="flex items-center gap-2">
                 <input id="enabled" type="checkbox" checked={state.enabled} onChange={(e) => setState(s => ({ ...s, enabled: e.target.checked }))} />

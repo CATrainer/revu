@@ -22,11 +22,12 @@ class RuleScheduler:
     Time and limits evaluation for automation rules.
 
     Expected rule fields (JSON-friendly):
-      timing: {
+            timing: {
         timezone: "America/Los_Angeles",
         days_of_week: [0-6],            # 0=Monday ... 6=Sunday (ISO weekday-1)
         hours: [ {"start": 9, "end": 17} ],  # 24h ranges local to timezone
-        delay_seconds: {"min": 0, "max": 0}
+                delay_seconds: {"min": 0, "max": 0},
+                blackouts: [ {"start": "2025-12-24T00:00:00-08:00", "end": "2025-12-26T23:59:59-08:00"} ]
       }
       limits: {
         per_minute: 5,
@@ -35,8 +36,11 @@ class RuleScheduler:
         per_video: 20,
         concurrent: 3
       }
-      scope / conditions may also contain video_age constraints, e.g.:
-      scope: { video_age_days: { "min": 0, "max": 30 } }
+            scope / conditions may also contain video_age constraints, e.g.:
+            scope: {
+                video_age_days: { "min": 0, "max": 30 },
+                video_age_hours: { "min": 0, "max": 48 }  # optional, takes precedence if present
+            }
     """
 
     # 1) Is schedule active now (respect timezone, days, and hour ranges)
@@ -45,6 +49,7 @@ class RuleScheduler:
         tz_name = timing.get("timezone") or "UTC"
         days = timing.get("days_of_week") or list(range(0, 7))
         hours = timing.get("hours") or [{"start": 0, "end": 24}]
+        blackouts = timing.get("blackouts") or []
 
         now_utc = now_utc or datetime.now(timezone.utc)
         try:
@@ -56,6 +61,37 @@ class RuleScheduler:
             local_tz = timezone.utc
 
         local_now = now_utc.astimezone(local_tz)
+
+        # Blackout check (local time)
+        try:
+            for bo in blackouts:
+                s = bo.get("start")
+                e = bo.get("end")
+                if not s or not e:
+                    continue
+                # parse as ISO8601; allow dates without timezone (assume local_tz)
+                try:
+                    sdt = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+                except Exception:
+                    sdt = None
+                try:
+                    edt = datetime.fromisoformat(str(e).replace("Z", "+00:00"))
+                except Exception:
+                    edt = None
+                if sdt is None or edt is None:
+                    continue
+                # Ensure both are in same timezone for comparison
+                if sdt.tzinfo is None:
+                    sdt = sdt.replace(tzinfo=local_tz)
+                if edt.tzinfo is None:
+                    edt = edt.replace(tzinfo=local_tz)
+                lnow = local_now
+                # Compare in local tz
+                if sdt <= lnow <= edt:
+                    return ScheduleCheckResult(active=False, reason="blackout")
+        except Exception:
+            # Best-effort; ignore malformed blackout entries
+            pass
         # Python's isoweekday: Monday=1..Sunday=7, normalize to 0..6
         local_day = (local_now.isoweekday() - 1) % 7
         if local_day not in days:
@@ -79,8 +115,10 @@ class RuleScheduler:
     # 3) Check video age window
     def check_video_age_window(self, rule: Dict[str, Any], video: Dict[str, Any], *, now_utc: Optional[datetime] = None) -> bool:
         scope = (rule.get("scope") or {})
+        # Prefer hours if provided
+        hours_cfg = scope.get("video_age_hours") or {}
         age_cfg = scope.get("video_age_days") or {}
-        if not age_cfg:
+        if not hours_cfg and not age_cfg:
             return True
         vpub = video.get("published_at")
         if not vpub:
@@ -91,10 +129,17 @@ class RuleScheduler:
             except Exception:
                 return False
         now_utc = now_utc or datetime.now(timezone.utc)
-        age_days = (now_utc - vpub.astimezone(timezone.utc)).days
-        min_d = int(age_cfg.get("min", 0))
-        max_d = int(age_cfg.get("max", 10**9))
-        return (age_days >= min_d) and (age_days <= max_d)
+        delta = now_utc - vpub.astimezone(timezone.utc)
+        if hours_cfg:
+            age_hours = delta.total_seconds() / 3600.0
+            min_h = float(hours_cfg.get("min", 0))
+            max_h = float(hours_cfg.get("max", 10**9))
+            return (age_hours >= min_h) and (age_hours <= max_h)
+        else:
+            age_days = delta.days
+            min_d = int(age_cfg.get("min", 0))
+            max_d = int(age_cfg.get("max", 10**9))
+            return (age_days >= min_d) and (age_days <= max_d)
 
     # 4) Limits check across counters
     def is_within_limits(self, rule: Dict[str, Any], current_counts: Dict[str, int]) -> bool:
@@ -138,23 +183,51 @@ class RuleScheduler:
             tz_name = timing.get("timezone") or "UTC"
             hours = timing.get("hours") or [{"start": 0, "end": 24}]
             days = timing.get("days_of_week") or list(range(0, 7))
+            blackouts = timing.get("blackouts") or []
             try:
                 local_tz = ZoneInfo(tz_name) if ZoneInfo and tz_name else timezone.utc
             except Exception:
                 local_tz = timezone.utc
             lnow = candidate.astimezone(local_tz)
-            # iterate up to 8 days ahead to find a valid day/hour window
-            for add_days in range(0, 8):
+            # iterate up to 14 days ahead to find a valid day/hour window not in blackout
+            for add_days in range(0, 14):
                 day = (lnow.isoweekday() - 1 + add_days) % 7
                 if day not in days:
                     continue
-                # compute day start for that day
                 day_start = (lnow + timedelta(days=add_days)).replace(hour=0, minute=0, second=0, microsecond=0)
-                # choose first hour range start
-                rng = min(hours, key=lambda r: r.get("start", 0))
-                target = day_start.replace(hour=int(rng.get("start", 0)), minute=int((rng.get("start", 0) % 1) * 60))
-                candidate = target.astimezone(timezone.utc)
-                break
+                # Evaluate all hour ranges for the chosen day; pick the earliest that is not blacked out
+                sorted_hours = sorted(hours, key=lambda r: r.get("start", 0))
+                for rng in sorted_hours:
+                    h_start = float(rng.get("start", 0))
+                    hour = int(h_start)
+                    minute = int(round((h_start - hour) * 60))
+                    target_local = day_start.replace(hour=hour, minute=minute)
+                    # Skip if inside blackout
+                    in_blackout = False
+                    for bo in blackouts:
+                        s = bo.get("start")
+                        e = bo.get("end")
+                        if not s or not e:
+                            continue
+                        try:
+                            sdt = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+                            edt = datetime.fromisoformat(str(e).replace("Z", "+00:00"))
+                            if sdt.tzinfo is None:
+                                sdt = sdt.replace(tzinfo=local_tz)
+                            if edt.tzinfo is None:
+                                edt = edt.replace(tzinfo=local_tz)
+                            if sdt <= target_local <= edt:
+                                in_blackout = True
+                                break
+                        except Exception:
+                            continue
+                    if in_blackout:
+                        continue
+                    candidate = target_local.astimezone(timezone.utc)
+                    add_days = 999  # break outer loop
+                    break
+                if add_days == 999:
+                    break
 
         # Enforce basic limits by pushing to next time window if needed
         counts = current_counts or {}
