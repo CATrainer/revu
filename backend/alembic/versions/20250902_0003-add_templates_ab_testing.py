@@ -36,75 +36,138 @@ depends_on = None
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
     # response_templates
-    op.create_table(
-        "response_templates",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("rule_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("template_text", sa.Text(), nullable=False),
-        sa.Column("variables", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column("performance_score", sa.Float(), nullable=True),
-        sa.Column("usage_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
-    )
-    try:
-        op.create_foreign_key(
-            "fk_response_templates_rule",
+    if not inspector.has_table("response_templates"):
+        op.create_table(
             "response_templates",
-            "automation_rules",
-            ["rule_id"],
-            ["id"],
-            ondelete="SET NULL",
+            sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+            sa.Column("rule_id", postgresql.UUID(as_uuid=True), nullable=True),
+            sa.Column("template_text", sa.Text(), nullable=False),
+            sa.Column("variables", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+            sa.Column("performance_score", sa.Float(), nullable=True),
+            sa.Column("usage_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
         )
-    except Exception:
-        pass
-    op.create_index("ix_response_templates_rule_id", "response_templates", ["rule_id"], unique=False)
+        try:
+            op.create_foreign_key(
+                "fk_response_templates_rule",
+                "response_templates",
+                "automation_rules",
+                ["rule_id"],
+                ["id"],
+                ondelete="SET NULL",
+            )
+        except Exception:
+            pass
+        op.create_index("ix_response_templates_rule_id", "response_templates", ["rule_id"], unique=False)
+    else:
+        # ensure index exists
+        existing_indexes = {ix.get("name") for ix in inspector.get_indexes("response_templates")}
+        if "ix_response_templates_rule_id" not in existing_indexes:
+            op.create_index("ix_response_templates_rule_id", "response_templates", ["rule_id"], unique=False)
+        # ensure FK exists
+        existing_fks = {fk.get("name") for fk in inspector.get_foreign_keys("response_templates")}
+        if "fk_response_templates_rule" not in existing_fks:
+            try:
+                op.create_foreign_key(
+                    "fk_response_templates_rule",
+                    "response_templates",
+                    "automation_rules",
+                    ["rule_id"],
+                    ["id"],
+                    ondelete="SET NULL",
+                )
+            except Exception:
+                pass
 
     # ab_test_results
-    op.create_table(
-        "ab_test_results",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("rule_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("variant_id", sa.String(length=64), nullable=False),
-        sa.Column("comment_id", sa.String(length=128), nullable=True),
-        sa.Column("engagement_metrics", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
-    )
-    try:
-        op.create_foreign_key(
-            "fk_ab_test_results_rule",
+    if not inspector.has_table("ab_test_results"):
+        op.create_table(
             "ab_test_results",
-            "automation_rules",
-            ["rule_id"],
-            ["id"],
-            ondelete="SET NULL",
+            sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+            sa.Column("rule_id", postgresql.UUID(as_uuid=True), nullable=True),
+            sa.Column("variant_id", sa.String(length=64), nullable=False),
+            sa.Column("comment_id", sa.String(length=128), nullable=True),
+            sa.Column("engagement_metrics", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+            sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now""()")),
         )
-    except Exception:
-        pass
-    op.create_index("ix_ab_test_results_rule_id", "ab_test_results", ["rule_id"], unique=False)
+        try:
+            op.create_foreign_key(
+                "fk_ab_test_results_rule",
+                "ab_test_results",
+                "automation_rules",
+                ["rule_id"],
+                ["id"],
+                ondelete="SET NULL",
+            )
+        except Exception:
+            pass
+        op.create_index("ix_ab_test_results_rule_id", "ab_test_results", ["rule_id"], unique=False)
+    else:
+        existing_indexes = {ix.get("name") for ix in inspector.get_indexes("ab_test_results")}
+        if "ix_ab_test_results_rule_id" not in existing_indexes:
+            op.create_index("ix_ab_test_results_rule_id", "ab_test_results", ["rule_id"], unique=False)
+        existing_fks = {fk.get("name") for fk in inspector.get_foreign_keys("ab_test_results")}
+        if "fk_ab_test_results_rule" not in existing_fks:
+            try:
+                op.create_foreign_key(
+                    "fk_ab_test_results_rule",
+                    "ab_test_results",
+                    "automation_rules",
+                    ["rule_id"],
+                    ["id"],
+                    ondelete="SET NULL",
+                )
+            except Exception:
+                pass
 
     # automation_learning
-    op.create_table(
-        "automation_learning",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("original_response", sa.Text(), nullable=False),
-        sa.Column("edited_response", sa.Text(), nullable=True),
-        sa.Column("edit_type", sa.String(length=64), nullable=True),
-        sa.Column("feedback_incorporated", sa.Boolean(), nullable=False, server_default=sa.text("false")),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
-    )
+    if not inspector.has_table("automation_learning"):
+        op.create_table(
+            "automation_learning",
+            sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+            sa.Column("original_response", sa.Text(), nullable=False),
+            sa.Column("edited_response", sa.Text(), nullable=True),
+            sa.Column("edit_type", sa.String(length=64), nullable=True),
+            sa.Column("feedback_incorporated", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+            sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        )
 
 
 def downgrade() -> None:
-    op.drop_table("automation_learning")
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
+    if inspector.has_table("automation_learning"):
+        try:
+            op.drop_table("automation_learning")
+        except Exception:
+            pass
     try:
         op.drop_constraint("fk_ab_test_results_rule", "ab_test_results", type_="foreignkey")
     except Exception:
         pass
-    op.drop_index("ix_ab_test_results_rule_id", table_name="ab_test_results")
-    op.drop_table("ab_test_results")
+    try:
+        op.drop_index("ix_ab_test_results_rule_id", table_name="ab_test_results")
+    except Exception:
+        pass
+    if inspector.has_table("ab_test_results"):
+        try:
+            op.drop_table("ab_test_results")
+        except Exception:
+            pass
     try:
         op.drop_constraint("fk_response_templates_rule", "response_templates", type_="foreignkey")
     except Exception:
         pass
-    op.drop_index("ix_response_templates_rule_id", table_name="response_templates")
-    op.drop_table("response_templates")
+    try:
+        op.drop_index("ix_response_templates_rule_id", table_name="response_templates")
+    except Exception:
+        pass
+    if inspector.has_table("response_templates"):
+        try:
+            op.drop_table("response_templates")
+        except Exception:
+            pass
