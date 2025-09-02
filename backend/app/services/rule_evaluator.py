@@ -4,11 +4,16 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 import os
 import re
+import time
+from datetime import datetime, timezone, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 
 from app.services.claude_service import ClaudeService
 from app.utils.cache import async_ttl_cache
+from app.services.user_context import UserContextService
+from app.services.template_engine import TemplateEngine, ALLOWED_VARS, RenderResult
 
 
 @dataclass
@@ -38,6 +43,22 @@ class RuleEvaluator:
         self._claude = ClaudeService()
         # 10 minutes default TTL for AI eval caching
         self._ai_ttl = float(ai_ttl_seconds if ai_ttl_seconds is not None else float(os.getenv("AI_EVAL_TTL_SECONDS", "600")))
+        # Local TTL caches for advanced control and metrics
+        self._cache_ai: Dict[str, Tuple[float, Tuple[bool, float]]] = {}
+        self._cache_rule: Dict[str, Tuple[float, "EvaluationResult"]] = {}
+        self._cache_template: Dict[str, Tuple[float, RenderResult]] = {}
+        # metrics
+        self._metrics: Dict[str, int] = {
+            "ai_eval_hits": 0,
+            "ai_eval_misses": 0,
+            "rule_eval_hits": 0,
+            "rule_eval_misses": 0,
+            "template_hits": 0,
+            "template_misses": 0,
+        }
+        # helpers
+        self._user_ctx = UserContextService()
+        self._templ = TemplateEngine()
 
     # ---------- Built-in condition evaluators ----------
     @staticmethod
@@ -131,12 +152,22 @@ class RuleEvaluator:
         return ok, 0.7 if ok else 0.3
 
     # ---------- AI condition (cached) ----------
-    @async_ttl_cache(ttl_seconds=float(os.getenv("AI_EVAL_TTL_SECONDS", "600")))
     async def evaluate_ai_condition(self, db: AsyncSession, comment: Dict[str, Any], prompt: str, *, channel_id: str, channel_name: str = "", video_title: str = "") -> Tuple[bool, float]:
         """
         Uses Claude to judge if the comment satisfies a complex condition.
         Returns (match: bool, confidence: float [0..1]). Cached by args.
         """
+        # Build a similarity fingerprint for the comment to cache "similar" comments
+        key = self._ai_cache_key(comment.get("text") or "", prompt or "", channel_id or "")
+        # Check local cache first for metrics and control
+        now = time.time()
+        hit = False
+        item = self._cache_ai.get(key)
+        if item and item[0] > now:
+            self._metrics["ai_eval_hits"] += 1
+            hit = True
+            return item[1]
+        self._metrics["ai_eval_misses"] += 1
         # Compose a constrained prompt with yes/no and confidence.
         guidance = (
             "You are a classifier. Answer in strict JSON with keys: match (true/false) and confidence (0..1). "
@@ -176,7 +207,31 @@ class RuleEvaluator:
                 low = text.lower()
                 match = "yes" in low or "true" in low
                 conf = 0.6 if match else 0.4
-        return match, max(0.0, min(1.0, conf))
+        res = (match, max(0.0, min(1.0, conf)))
+        # store in local cache
+        self._cache_ai[key] = (now + self._ai_ttl, res)
+        return res
+
+    # Helper to normalize and fingerprint comment text for similarity
+    @staticmethod
+    def _normalize_text(text_in: str) -> str:
+        t = text_in.lower()
+        # strip urls, mentions, digits
+        t = re.sub(r"https?://\S+|www\.\S+", " ", t)
+        t = re.sub(r"[@#]\w+", " ", t)
+        t = re.sub(r"\d+", " ", t)
+        # collapse punctuation and whitespace
+        t = re.sub(r"[^a-z\s]", " ", t)
+        t = re.sub(r"\s+", " ", t).strip()
+        return t
+
+    @classmethod
+    def _ai_cache_key(cls, comment_text: str, prompt: str, channel_id: str) -> str:
+        norm = cls._normalize_text(comment_text)
+        tokens = norm.split()
+        # keep up to first 12 informative tokens for similarity banding
+        sig = " ".join(tokens[:12])
+        return f"ai:{channel_id}:{hash((sig, prompt.strip()[:120]))}"
 
     # ---------- Rule evaluation ----------
     async def evaluate_rule(self, db: AsyncSession, rule: Dict[str, Any], comment: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> EvaluationResult:
@@ -185,6 +240,35 @@ class RuleEvaluator:
         rule: expects keys 'conditions' (list of dicts) and optional 'logic' (string like "(1 AND 2) OR 3").
         condition dict: { id/index (implicit order), type, ...type-specific keys... }
         """
+        # Cached wrapper on top of core evaluation
+        key = self._rule_eval_key(rule, comment, context)
+        now = time.time()
+        item = self._cache_rule.get(key)
+        if item and item[0] > now:
+            self._metrics["rule_eval_hits"] += 1
+            return item[1]
+        self._metrics["rule_eval_misses"] += 1
+        result = await self._evaluate_rule_core(db, rule, comment, context)
+        ttl = float(os.getenv("RULE_EVAL_TTL_SECONDS", "300"))
+        self._cache_rule[key] = (now + ttl, result)
+        return result
+
+    @classmethod
+    def _rule_eval_key(cls, rule: Dict[str, Any], comment: Dict[str, Any], context: Optional[Dict[str, Any]]) -> str:
+        # rule fingerprint: id or name+logic+condition count
+        rid = str(rule.get("id") or rule.get("rule_id") or "")
+        logic = str(rule.get("logic") or "")
+        csum = hash(str(rule.get("conditions") or []))
+        # comment fingerprint: normalized text + basic flags
+        text_norm = cls._normalize_text(str(comment.get("text") or ""))
+        sig = " ".join(text_norm.split()[:12])
+        sent = str(comment.get("sentiment") or "")
+        sub = "1" if comment.get("author_subscribed") else "0"
+        ch = str((context or {}).get("channel_id") or "")
+        return f"re:{rid}:{hash((logic, csum))}:{ch}:{hash((sig, sent, sub))}"
+
+    async def _evaluate_rule_core(self, db: AsyncSession, rule: Dict[str, Any], comment: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> EvaluationResult:
+        """The original evaluate_rule logic (uncached)."""
         conditions: List[Dict[str, Any]] = rule.get("conditions") or []
         logic_str: str = rule.get("logic") or ""
 
@@ -226,7 +310,7 @@ class RuleEvaluator:
         conf_final = (
             sum(confidences[i - 1] for i in matched_ids) / max(1, len(matched_ids))
             if matched_ids
-            else min(confidences) if confidences else 0.5
+            else (min(confidences) if confidences else 0.5)
         )
         return EvaluationResult(matches=result_bool, confidence=round(conf_final, 3), matched_conditions=matched_ids)
 
@@ -263,6 +347,116 @@ class RuleEvaluator:
             return bool(eval(expr, {"__builtins__": {}}, {}))
         except Exception:
             return all(bools)
+
+    # ---------- Segments (cached) ----------
+    @async_ttl_cache(ttl_seconds=float(os.getenv("USER_SEGMENT_TTL_SECONDS", "3600")), key_builder=lambda self, db, user_channel_id: ("seg", user_channel_id))
+    async def get_user_segment_cached(self, db: AsyncSession, user_channel_id: str) -> Optional[str]:
+        """Cache user segment lookups for 1 hour."""
+        try:
+            ctx = await self._user_ctx.build_context(db, user_channel_id)
+            return ctx.segment
+        except Exception:
+            return None
+
+    # ---------- Template rendering cache ----------
+    def render_template_cached(self, template: str, context: Dict[str, Any]) -> RenderResult:
+        ttl = float(os.getenv("TEMPLATE_RENDER_TTL_SECONDS", "3600"))
+        key = self._template_key(template, context)
+        now = time.time()
+        item = self._cache_template.get(key)
+        if item and item[0] > now:
+            self._metrics["template_hits"] += 1
+            return item[1]
+        self._metrics["template_misses"] += 1
+        res = self._templ.parse_template(template, context)
+        self._cache_template[key] = (now + ttl, res)
+        return res
+
+    @staticmethod
+    def _template_key(template: str, context: Dict[str, Any]) -> str:
+        # Only include allowed variables to form cache key, keep it stable
+        key_vars: Dict[str, Any] = {}
+        for v in ALLOWED_VARS:
+            if v in context:
+                key_vars[v] = context[v]
+        # Limit size
+        js = str(sorted(key_vars.items()))[:512]
+        return f"tpl:{hash((template, js))}"
+
+    # ---------- Precompute & warming ----------
+    async def precompute_rule_matches(self, db: AsyncSession, rules: List[Dict[str, Any]], comments: List[Dict[str, Any]], *, channel_id: Optional[str] = None) -> int:
+        """Evaluate a grid of (rule, comment) to populate caches. Returns count warmed."""
+        count = 0
+        for r in rules:
+            ctx = {"channel_id": channel_id or ""}
+            for c in comments:
+                try:
+                    _ = await self.evaluate_rule(db, r, c, ctx)
+                    count += 1
+                except Exception:
+                    continue
+        return count
+
+    async def warm_cache_for_popular_rules(self, db: AsyncSession, *, hours: int = 24, top_n: int = 5, comments_limit: int = 100) -> Dict[str, Any]:
+        """Warm caches by selecting popular rules and recent comments."""
+        # Pick top rules by activity in rule_response_metrics
+        try:
+            rows = (await db.execute(
+                text(
+                    """
+                    SELECT rule_id, COUNT(1) AS n
+                    FROM rule_response_metrics
+                    WHERE created_at >= now() - (:h || ' hours')::interval AND rule_id IS NOT NULL
+                    GROUP BY rule_id
+                    ORDER BY n DESC
+                    LIMIT :lim
+                    """
+                ),
+                {"h": int(max(1, hours)), "lim": int(max(1, top_n))},
+            )).all()
+            rule_ids = [str(r[0]) for r in rows if r and r[0]]
+        except Exception:
+            rule_ids = []
+        # Load rules
+        rules: List[Dict[str, Any]] = []
+        if rule_ids:
+            res = await db.execute(text("SELECT id, name, conditions, action, priority FROM automation_rules WHERE id = ANY(:rids)"), {"rids": rule_ids})
+            for row in res:
+                rid, name, conditions, action, prio = row
+                rules.append({"id": str(rid), "name": name, "conditions": conditions or [], "action": action or {}, "priority": prio})
+        else:
+            res = await db.execute(text("SELECT id, name, conditions, action, priority FROM automation_rules ORDER BY priority DESC, updated_at DESC NULLS LAST LIMIT 5"))
+            for row in res:
+                rid, name, conditions, action, prio = row
+                rules.append({"id": str(rid), "name": name, "conditions": conditions or [], "action": action or {}, "priority": prio})
+        # Fetch recent comments to test against
+        comments: List[Dict[str, Any]] = []
+        try:
+            rows = (await db.execute(text("SELECT id, author_channel_id, text_display, like_count, published_at FROM youtube_comments ORDER BY published_at DESC NULLS LAST LIMIT :lim"), {"lim": int(max(1, comments_limit))})).mappings().all()
+            for r in rows:
+                comments.append({
+                    "id": r.get("id"),
+                    "text": r.get("text_display") or "",
+                    "author_subscribed": None,
+                    "created_at": r.get("published_at"),
+                    "video_published_at": None,
+                })
+        except Exception:
+            # If table missing, no-op
+            pass
+        warmed = await self.precompute_rule_matches(db, rules, comments)
+        return {"rules": len(rules), "comments": len(comments), "evaluations": warmed}
+
+    # ---------- Cache metrics ----------
+    def get_cache_stats(self) -> Dict[str, Any]:
+        def rate(h: int, m: int) -> float:
+            total = h + m
+            return (h / total) if total else 0.0
+        return {
+            "ai": {"hits": self._metrics["ai_eval_hits"], "misses": self._metrics["ai_eval_misses"], "hit_rate": rate(self._metrics["ai_eval_hits"], self._metrics["ai_eval_misses"])},
+            "rule": {"hits": self._metrics["rule_eval_hits"], "misses": self._metrics["rule_eval_misses"], "hit_rate": rate(self._metrics["rule_eval_hits"], self._metrics["rule_eval_misses"])},
+            "template": {"hits": self._metrics["template_hits"], "misses": self._metrics["template_misses"], "hit_rate": rate(self._metrics["template_hits"], self._metrics["template_misses"])},
+        }
 
     # ---------- Conflict detection & validation ----------
     def find_conflicts(self, new_rule: Dict[str, Any], existing_rules: List[Dict[str, Any]]) -> Dict[str, Any]:
