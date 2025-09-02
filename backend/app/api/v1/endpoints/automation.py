@@ -1365,3 +1365,178 @@ async def approval_stats(
         "avg_approval_time_seconds": int(avg_seconds),
         "by_status": by_status,
     }
+
+
+@router.get("/approvals/analytics")
+async def approval_analytics(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    channel_id: Optional[str] = None,
+    hours: int = 24,
+):
+    """Comprehensive analytics for approvals and edits.
+
+    Returns:
+    - totals: approved/rejected/pending/approval_rate/avg_approval_time_seconds
+    - time_series: [{ts, created, processed}] buckets per hour
+    - top_rules: rules generating most approvals
+    - most_edited: most frequently edited responses (if data available)
+    - edits_by_category: counts by edit_type (if data available)
+    """
+    await ApprovalQueueService()._ensure_table(db)
+    try:
+        hours = max(1, min(24 * 30, int(hours)))
+    except Exception:
+        hours = 24
+
+    where: List[str] = ["created_at >= now() - (:hours || ' hours')::interval"]
+    params: Dict[str, Any] = {"hours": hours}
+    if channel_id:
+        where.append("channel_id = :cid")
+        params["cid"] = str(channel_id)
+
+    # Totals and averages
+    rows = (await db.execute(text(f"""
+        SELECT status, COUNT(1) as cnt
+        FROM approval_queue
+        WHERE {' AND '.join(where)}
+        GROUP BY status
+    """), params)).fetchall() or []
+    by_status: Dict[str, int] = {str(r[0]): int(r[1]) for r in rows}
+    total = sum(by_status.values())
+    approved = by_status.get("approved", 0) + by_status.get("auto_approved", 0)
+    rejected = by_status.get("rejected", 0)
+    pending = by_status.get("pending", 0)
+    rate = (approved / total) if total else 0.0
+
+    avg_seconds = float((await db.execute(text(f"""
+        SELECT EXTRACT(EPOCH FROM AVG(approved_at - created_at))
+        FROM approval_queue
+        WHERE {' AND '.join(where)} AND status IN ('approved','auto_approved') AND approved_at IS NOT NULL
+    """), params)).scalar() or 0.0)
+
+    # Time series per hour for created and processed
+    ts_created = (await db.execute(text(f"""
+        SELECT date_trunc('hour', created_at) AS ts, COUNT(1)
+        FROM approval_queue
+        WHERE {' AND '.join(where)}
+        GROUP BY 1
+        ORDER BY 1
+    """), params)).fetchall() or []
+
+    where_proc = [w.replace("created_at", "approved_at") for w in where]
+    ts_processed = (await db.execute(text(f"""
+        SELECT date_trunc('hour', approved_at) AS ts, COUNT(1)
+        FROM approval_queue
+        WHERE {' AND '.join(where_proc)} AND status IN ('approved','auto_approved','rejected') AND approved_at IS NOT NULL
+        GROUP BY 1
+        ORDER BY 1
+    """), params)).fetchall() or []
+
+    def _merge_series(a_rows, b_rows):
+        amap: Dict[str, int] = {r[0].isoformat(): int(r[1]) for r in a_rows}
+        bmap: Dict[str, int] = {r[0].isoformat(): int(r[1]) for r in b_rows}
+        keys = sorted(set(amap.keys()) | set(bmap.keys()))
+        return [{"ts": k, "created": amap.get(k, 0), "processed": bmap.get(k, 0)} for k in keys]
+
+    time_series = _merge_series(ts_created, ts_processed)
+
+    # Top rules by approvals (use payload fields if present)
+    top_rules_rows = (await db.execute(text(f"""
+        SELECT COALESCE(payload->>'rule_id','') as rule_id,
+               COALESCE(payload->>'rule_name','') as rule_name,
+               COUNT(1) as approvals
+        FROM approval_queue
+        WHERE {' AND '.join(where_proc)} AND status IN ('approved','auto_approved') AND approved_at IS NOT NULL
+        GROUP BY 1,2
+        ORDER BY approvals DESC
+        LIMIT 10
+    """), params)).fetchall() or []
+    top_rules = [
+        {
+            "rule_id": str(r[0]) if r[0] else None,
+            "rule_name": str(r[1]) if r[1] else None,
+            "approvals": int(r[2]),
+        }
+        for r in top_rules_rows
+    ]
+
+    # Edits analytics (best-effort; table/columns may not exist)
+    edits_available = False
+    edits_type_available = False
+    try:
+        cols = (await db.execute(text(
+            """
+            SELECT column_name FROM information_schema.columns
+            WHERE table_name = 'automation_learning' AND column_name IN ('original_response','edited_response','edit_type','created_at')
+            """
+        ))).fetchall() or []
+        colset = {str(r[0]) for r in cols}
+        edits_available = {'original_response','edited_response','created_at'}.issubset(colset)
+        edits_type_available = 'edit_type' in colset
+    except Exception:
+        edits_available = False
+        edits_type_available = False
+
+    most_edited: List[Dict[str, Any]] = []
+    edits_by_category: List[Dict[str, Any]] = []
+    if edits_available:
+        try:
+            merows = (await db.execute(text(
+                """
+                SELECT md5(original_response) as orig_hash,
+                       COUNT(1) as edits,
+                       MIN(original_response) as sample_orig,
+                       MIN(edited_response) as sample_edit
+                FROM automation_learning
+                WHERE original_response IS NOT NULL AND edited_response IS NOT NULL
+                  AND created_at >= now() - (:hours || ' hours')::interval
+                GROUP BY 1
+                ORDER BY edits DESC
+                LIMIT 10
+                """
+            ), {"hours": hours})).fetchall() or []
+            most_edited = [
+                {
+                    "orig_hash": str(r[0]),
+                    "count": int(r[1]),
+                    "sample_orig": r[2],
+                    "sample_edit": r[3],
+                }
+                for r in merows
+            ]
+        except Exception:
+            most_edited = []
+
+    if edits_type_available:
+        try:
+            etrows = (await db.execute(text(
+                """
+                SELECT COALESCE(NULLIF(TRIM(edit_type), ''), 'unknown') as category, COUNT(1)
+                FROM automation_learning
+                WHERE edited_response IS NOT NULL AND created_at >= now() - (:hours || ' hours')::interval
+                GROUP BY 1
+                ORDER BY 2 DESC
+                LIMIT 20
+                """
+            ), {"hours": hours})).fetchall() or []
+            edits_by_category = [{"category": str(r[0]), "count": int(r[1])} for r in etrows]
+        except Exception:
+            edits_by_category = []
+
+    return {
+        "window_hours": hours,
+        "totals": {
+            "total": total,
+            "approved": approved,
+            "rejected": rejected,
+            "pending": pending,
+            "approval_rate": round(rate, 4),
+            "avg_approval_time_seconds": int(avg_seconds),
+        },
+        "time_series": time_series,
+        "top_rules": top_rules,
+        "most_edited": most_edited,
+        "edits_by_category": edits_by_category,
+    }

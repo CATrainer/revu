@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchPendingApprovals, approveResponse, rejectResponse, editResponse, PendingApprovalItem } from '@/lib/api/approvals';
+import { fetchPendingApprovals, approveResponse, rejectResponse, editResponse } from '@/lib/api/approvals';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
