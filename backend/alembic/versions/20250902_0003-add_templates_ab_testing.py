@@ -64,6 +64,10 @@ def upgrade() -> None:
         op.create_index("ix_response_templates_rule_id", "response_templates", ["rule_id"], unique=False)
     else:
         # ensure index exists
+        existing_columns = {c.get("name") for c in inspector.get_columns("response_templates")}
+        # ensure rule_id column exists before FKs/Indexes
+        if "rule_id" not in existing_columns:
+            op.add_column("response_templates", sa.Column("rule_id", postgresql.UUID(as_uuid=True), nullable=True))
         existing_indexes = {ix.get("name") for ix in inspector.get_indexes("response_templates")}
         if "ix_response_templates_rule_id" not in existing_indexes:
             op.create_index("ix_response_templates_rule_id", "response_templates", ["rule_id"], unique=False)
@@ -91,7 +95,7 @@ def upgrade() -> None:
             sa.Column("variant_id", sa.String(length=64), nullable=False),
             sa.Column("comment_id", sa.String(length=128), nullable=True),
             sa.Column("engagement_metrics", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-            sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now""()")),
+            sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
         )
         try:
             op.create_foreign_key(
@@ -106,6 +110,9 @@ def upgrade() -> None:
             pass
         op.create_index("ix_ab_test_results_rule_id", "ab_test_results", ["rule_id"], unique=False)
     else:
+        existing_columns = {c.get("name") for c in inspector.get_columns("ab_test_results")}
+        if "rule_id" not in existing_columns:
+            op.add_column("ab_test_results", sa.Column("rule_id", postgresql.UUID(as_uuid=True), nullable=True))
         existing_indexes = {ix.get("name") for ix in inspector.get_indexes("ab_test_results")}
         if "ix_ab_test_results_rule_id" not in existing_indexes:
             op.create_index("ix_ab_test_results_rule_id", "ab_test_results", ["rule_id"], unique=False)
