@@ -13,12 +13,16 @@ from app.services.approval_queue import ApprovalQueueService
 from app.services.template_engine import TemplateEngine
 from app.services.ab_testing import ABTestingService
 from app.services.rule_scheduler import RuleScheduler
+from app.services.automation_learning import AutomationLearningService
+from app.services.rule_performance import RulePerformanceService
 
 router = APIRouter()
 
 template_engine = TemplateEngine()
 ab_service = ABTestingService()
 rule_scheduler = RuleScheduler()
+learning_service = AutomationLearningService()
+perf_service = RulePerformanceService()
 
 
 def _validate_rule_payload(payload: Dict[str, Any], *, for_update: bool = False) -> Dict[str, Any]:
@@ -1891,6 +1895,284 @@ async def set_ab_tests_for_rules(
     await db.execute(text("UPDATE automation_rules SET action = :a::jsonb, updated_at = now() WHERE id = :rid"), {"a": json.dumps(action), "rid": rid})
     await db.commit()
     return {"saved": True, "rule_id": rid, "ab_tests": tests}
+@router.post("/feedback")
+async def record_feedback(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+):
+    """Record engagement feedback for automated responses and trigger learning.
+
+    Payload example:
+    {
+      "response_id": "yt_comment_id",
+      "rule_id": "<uuid>",
+      "platform": "youtube",
+      "likes": 3,
+      "replies": [ {"id": "...", "text": "..."}, ... ],
+      "metadata": { ... }
+    }
+    """
+    from fastapi.responses import JSONResponse
+    rid = (payload.get("rule_id") or None)
+    response_id = (payload.get("response_id") or "").strip()
+    platform = (payload.get("platform") or "youtube").lower()
+    likes = int(payload.get("likes") or 0)
+    replies = payload.get("replies") or []
+    metadata = payload.get("metadata") or {}
+    if not response_id:
+        return JSONResponse({"error": "missing_response_id"}, status_code=400)
+
+    # Ensure feedback table exists and store the raw payload
+    try:
+        await db.execute(text(
+            """
+            CREATE TABLE IF NOT EXISTS automation_feedback (
+              id bigserial PRIMARY KEY,
+              response_id varchar NOT NULL,
+              rule_id uuid NULL,
+              platform varchar NULL,
+              data jsonb NOT NULL,
+              created_at timestamptz NOT NULL DEFAULT now()
+            );
+            CREATE INDEX IF NOT EXISTS ix_automation_feedback_resp ON automation_feedback(response_id);
+            CREATE INDEX IF NOT EXISTS ix_automation_feedback_rule ON automation_feedback(rule_id);
+            """
+        ))
+    except Exception:
+        pass
+
+    await db.execute(
+        text("INSERT INTO automation_feedback (response_id, rule_id, platform, data) VALUES (:resp, :rid, :pf, :d::jsonb)"),
+        {"resp": response_id, "rid": rid, "pf": platform, "d": json.dumps(payload)},
+    )
+
+    # Derive engagement metrics snapshot for this event
+    replies_count = len(replies) if isinstance(replies, list) else 0
+    engagement = min(1.0, 0.01 * max(0, likes) + 0.1 * max(0, replies_count))
+    try:
+        await perf_service.record_response_metrics(
+            db,
+            rule_id=str(rid) if rid else None,
+            response_id=response_id,
+            metrics={"impressions": max(1, likes), "conversions": max(0, likes), "engagement": engagement, "replies": replies_count},
+            is_automated=True,
+        )
+    except Exception:
+        # Non-fatal
+        pass
+
+    # Update response quality score
+    quality_score = None
+    try:
+        qs = await learning_service.calculate_response_quality_score(db, response_id=response_id)
+        quality_score = float(qs.get("score") or 0.0)
+        await db.execute(
+            text("UPDATE rule_response_metrics SET engagement_metrics = jsonb_set(engagement_metrics, '{quality_score}', to_jsonb(:qs::float), true) WHERE response_id = :resp"),
+            {"qs": quality_score, "resp": response_id},
+        )
+        await db.commit()
+    except Exception:
+        try:
+            await db.rollback()
+        except Exception:
+            pass
+
+    # Identify simple problematic patterns
+    problem_flags: List[str] = []
+    if likes <= 0 and replies_count > 0:
+        problem_flags.append("low_likes_with_replies")
+    if replies_count >= 5:
+        problem_flags.append("reply_spike")
+    try:
+        if any(isinstance(r.get("text"), str) and "?" in r.get("text") for r in (replies or []) if isinstance(r, dict)):
+            problem_flags.append("follow_up_questions")
+    except Exception:
+        pass
+
+    # Trigger rule optimization suggestions when a rule is provided
+    suggestions: List[str] = []
+    if rid:
+        try:
+            sug = await learning_service.suggest_rule_improvements(db, rule_id=str(rid))
+            suggestions = list(sug.get("suggestions") or [])
+        except Exception:
+            suggestions = []
+
+    return {
+        "saved": True,
+        "response_id": response_id,
+        "quality_score": quality_score,
+        "problem_flags": problem_flags,
+        "suggestions": suggestions,
+    }
+
+
+# ---------------- Learning API ----------------
+
+@router.get("/learning/common-edits")
+async def learning_common_edits(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    rule_id: Optional[str] = None,
+):
+    if not rule_id:
+        # If no rule specified, compute across all rules (may be heavy)
+        rows = (await db.execute(text("SELECT DISTINCT rule_id FROM user_edits WHERE rule_id IS NOT NULL"))).all()
+        results = {}
+        for r in rows:
+            rid = str(r[0])
+            results[rid] = await learning_service.analyze_edits(db, rule_id=rid)
+        return {"items": results}
+    return await learning_service.analyze_edits(db, rule_id=rule_id)
+
+
+@router.get("/learning/suggestions")
+async def learning_suggestions(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    rule_id: str,
+):
+    return await learning_service.suggest_rule_improvements(db, rule_id=rule_id)
+
+
+@router.get("/learning/quality-distribution")
+async def learning_quality_distribution(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    rule_id: Optional[str] = None,
+    window_days: int = 30,
+):
+    since = text("now() - (:d || ' days')::interval")
+    base = "SELECT COALESCE((engagement_metrics->>'quality_score')::float, NULL) AS q FROM rule_response_metrics WHERE created_at >= "
+    q = base + f"{since.text}"
+    params: Dict[str, Any] = {"d": int(max(1, window_days))}
+    if rule_id:
+        q += " AND rule_id = :rid"
+        params["rid"] = rule_id
+    rows = (await db.execute(text(q), params)).all()
+    buckets = {"0-0.2": 0, "0.2-0.4": 0, "0.4-0.6": 0, "0.6-0.8": 0, "0.8-1.0": 0, "null": 0}
+    for r in rows:
+        v = r[0]
+        if v is None:
+            buckets["null"] += 1
+            continue
+        if v < 0.2:
+            buckets["0-0.2"] += 1
+        elif v < 0.4:
+            buckets["0.2-0.4"] += 1
+        elif v < 0.6:
+            buckets["0.4-0.6"] += 1
+        elif v < 0.8:
+            buckets["0.6-0.8"] += 1
+        else:
+            buckets["0.8-1.0"] += 1
+    return {"buckets": buckets, "total": len(rows)}
+
+
+@router.get("/learning/rule-trends")
+async def learning_rule_trends(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    rule_id: str,
+    days: int = 30,
+):
+    # Daily CTR and avg engagement for automated
+    rows = (await db.execute(
+        text(
+            """
+            SELECT date_trunc('day', created_at) AS day,
+                   SUM(COALESCE((engagement_metrics->>'impressions')::int,0)) AS impressions,
+                   SUM(COALESCE((engagement_metrics->>'conversions')::int,0)) AS conversions,
+                   AVG(COALESCE((engagement_metrics->>'engagement')::float,0.0)) AS avg_engagement
+            FROM rule_response_metrics
+            WHERE rule_id = :rid AND is_automated = TRUE AND created_at >= now() - (:d || ' days')::interval
+            GROUP BY day
+            ORDER BY day
+            """
+        ),
+        {"rid": rule_id, "d": int(max(1, days))},
+    )).mappings().all()
+    series = []
+    for r in rows:
+        imp = int(r.get("impressions") or 0)
+        conv = int(r.get("conversions") or 0)
+        series.append({
+            "day": (r.get("day").date().isoformat() if hasattr(r.get("day"), 'date') else str(r.get("day"))),
+            "ctr": (conv / imp) if imp > 0 else 0.0,
+            "avg_engagement": float(r.get("avg_engagement") or 0.0),
+        })
+    return {"rule_id": rule_id, "series": series}
+
+
+@router.get("/learning/template-performance")
+async def learning_template_performance(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    days: int = 30,
+):
+    # Variant-level (proxy for template) daily performance from ab_test_results
+    rows = (await db.execute(
+        text(
+            """
+            SELECT CASE WHEN position('::' in variant_id) > 0 THEN split_part(variant_id, '::', 2) ELSE variant_id END as variant,
+                   date_trunc('day', created_at) AS day,
+                   SUM(COALESCE((engagement_metrics->>'impressions')::int,0)) AS impressions,
+                   SUM(COALESCE((engagement_metrics->>'conversions')::int,0)) AS conversions,
+                   AVG(COALESCE((engagement_metrics->>'engagement')::float,0.0)) AS avg_engagement
+            FROM ab_test_results
+            WHERE created_at >= now() - (:d || ' days')::interval
+            GROUP BY variant, day
+            ORDER BY variant, day
+            """
+        ),
+        {"d": int(max(1, days))},
+    )).mappings().all()
+    out: Dict[str, List[Dict[str, Any]]] = {}
+    for r in rows:
+        imp = int(r.get("impressions") or 0)
+        conv = int(r.get("conversions") or 0)
+        out.setdefault(str(r.get("variant")), []).append({
+            "day": (r.get("day").date().isoformat() if hasattr(r.get("day"), 'date') else str(r.get("day"))),
+            "ctr": (conv / imp) if imp > 0 else 0.0,
+            "avg_engagement": float(r.get("avg_engagement") or 0.0),
+        })
+    return {"variants": out}
+
+
+@router.get("/learning/cost-per-success")
+async def learning_cost_per_success(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    rule_id: str,
+    window_days: int = 30,
+    cost_per_response: float = 0.005,
+):
+    since_days = int(max(1, window_days))
+    # Aggregate conversions and responses for the rule
+    row = (await db.execute(
+        text(
+            """
+            SELECT COUNT(*) AS n,
+                   SUM(COALESCE((engagement_metrics->>'conversions')::int,0)) AS conversions
+            FROM rule_response_metrics
+            WHERE rule_id = :rid AND is_automated = TRUE AND created_at >= now() - (:d || ' days')::interval
+            """
+        ),
+        {"rid": rule_id, "d": since_days},
+    )).first()
+    n = int(row[0] or 0) if row else 0
+    conv = int(row[1] or 0) if row else 0
+    api_cost = n * float(cost_per_response)
+    cps = (api_cost / conv) if conv > 0 else None
+    return {"rule_id": rule_id, "window_days": since_days, "responses": n, "conversions": conv, "api_cost_usd": api_cost, "cost_per_success_usd": cps}
 
 
 # ---------------- A/B Tests Dashboard API ----------------

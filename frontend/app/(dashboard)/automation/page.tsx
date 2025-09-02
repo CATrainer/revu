@@ -12,6 +12,7 @@ import RuleBuilder from '@/components/automation/RuleBuilder';
 import AutomationNav from '@/components/automation/AutomationNav';
 import TemplateManager from '@/components/automation/TemplateManager';
 import ABTestDashboard from '@/components/automation/ABTestDashboard';
+import LearningDashboard from '@/components/automation/LearningDashboard';
 import { useSearchParams } from 'next/navigation';
 
 type PollingConfig = {
@@ -84,9 +85,9 @@ export default function AutomationPage() {
   const interval = polling?.polling_interval_minutes ?? 15;
 
   // Tab state
-  type Tab = 'Active Rules' | 'Create Rule' | 'Templates' | 'A/B Tests' | 'Approval Queue' | 'Analytics';
+  type Tab = 'Active Rules' | 'Create Rule' | 'Templates' | 'A/B Tests' | 'Learning' | 'Approval Queue' | 'Analytics';
   const tabParam = (search.get('tab') || '').toLowerCase();
-  const tabFromUrl: Tab = tabParam === 'create' ? 'Create Rule' : tabParam === 'analytics' ? 'Analytics' : tabParam === 'templates' ? 'Templates' : tabParam === 'ab' ? 'A/B Tests' : 'Active Rules';
+  const tabFromUrl: Tab = tabParam === 'create' ? 'Create Rule' : tabParam === 'analytics' ? 'Analytics' : tabParam === 'templates' ? 'Templates' : tabParam === 'ab' ? 'A/B Tests' : tabParam === 'learning' ? 'Learning' : 'Active Rules';
   const [tab, setTab] = useState<Tab>(tabFromUrl);
 
   useEffect(() => {
@@ -201,6 +202,17 @@ export default function AutomationPage() {
           </CardHeader>
           <CardContent>
             <ABTestDashboard />
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === 'Learning' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Learning</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LearningDashboard />
           </CardContent>
         </Card>
       )}
