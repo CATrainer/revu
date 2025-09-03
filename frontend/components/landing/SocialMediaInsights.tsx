@@ -221,10 +221,10 @@ export function SocialMediaInsights() {
                     {platformLogos[item.platform as keyof typeof platformLogos]}
                   </div>
                   <div className="flex-1 space-y-2">
-                    <div className="text-xs text-secondary-dark">"{item.comment}"</div>
+                    <div className="text-xs text-secondary-dark">&quot;{item.comment}&quot;</div>
                     <div className="flex items-start space-x-2">
                       <Brain className="w-3 h-3 text-purple-500 mt-0.5 flex-shrink-0" />
-                      <div className="text-xs text-primary-dark italic">"{item.response}"</div>
+                      <div className="text-xs text-primary-dark italic">&quot;{item.response}&quot;</div>
                     </div>
                     <div className="text-xs text-secondary-dark opacity-70">{item.time}</div>
                   </div>
