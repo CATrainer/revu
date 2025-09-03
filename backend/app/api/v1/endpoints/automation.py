@@ -16,6 +16,9 @@ from app.services.rule_scheduler import RuleScheduler
 from app.services.automation_learning import AutomationLearningService
 from app.services.rule_performance import RulePerformanceService
 from app.services.prediction_engine import PredictionEngine
+from app.services.auto_learning import AutoLearningService
+from app.services.digest import DigestService
+from app.services.ab_monitor import ABTestMonitorService
 
 router = APIRouter()
 
@@ -25,6 +28,9 @@ rule_scheduler = RuleScheduler()
 learning_service = AutomationLearningService()
 perf_service = RulePerformanceService()
 predictor = PredictionEngine()
+auto_learning = AutoLearningService()
+digest_service = DigestService()
+ab_monitor_service = ABTestMonitorService()
 
 @router.post("/prepare-upload/suggestions")
 async def prepare_upload_suggestions(
@@ -1124,6 +1130,41 @@ async def rules_metrics(
         return []
 
     out: List[Dict[str, Any]] = []
+    # Ensure optional tables for suggestions/mutes exist (best-effort)
+    try:
+        await db.execute(text(
+            """
+            CREATE TABLE IF NOT EXISTS auto_learning_suggestions (
+                id BIGSERIAL PRIMARY KEY,
+                suggestion_type TEXT NOT NULL,
+                rule_id TEXT,
+                before JSONB,
+                after JSONB,
+                explanation TEXT,
+                why TEXT,
+                status TEXT DEFAULT 'pending',
+                require_approval BOOLEAN DEFAULT TRUE,
+                total_shown INTEGER DEFAULT 1,
+                total_accepted INTEGER DEFAULT 0,
+                total_rejected INTEGER DEFAULT 0,
+                created_at TIMESTAMPTZ DEFAULT now()
+            );
+            CREATE TABLE IF NOT EXISTS suggestion_mutes (
+                id BIGSERIAL PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                suggestion_type TEXT NOT NULL,
+                rule_id TEXT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            );
+            CREATE INDEX IF NOT EXISTS ix_suggestion_mutes_user ON suggestion_mutes(user_id);
+            """
+        ))
+        await db.commit()
+    except Exception:
+        try:
+            await db.rollback()
+        except Exception:
+            pass
     # Precompute today's boundary
     # triggers per rule
     for r in rules:
@@ -1209,6 +1250,49 @@ async def rules_metrics(
 
         status = "active" if enabled and issues == 0 else ("paused" if not enabled else "error")
 
+        # Compute suggestion badge info per rule (pending suggestions, excluding mutes for this user)
+        has_suggestions = False
+        predicted_savings_minutes = None
+        try:
+            # fetch mutes for this user
+            mutes = (await db.execute(text("SELECT suggestion_type, rule_id FROM suggestion_mutes WHERE user_id = :uid"), {"uid": str(current_user.id)})).mappings().all()
+            mute_types = {(m.get("suggestion_type"), m.get("rule_id")) for m in (mutes or [])}
+            # pending suggestions for this rule
+            srows = (await db.execute(text(
+                """
+                SELECT id, suggestion_type, before, after, why
+                FROM auto_learning_suggestions
+                WHERE status = 'pending' AND (rule_id = :rid OR rule_id IS NULL)
+                ORDER BY created_at DESC
+                LIMIT 10
+                """
+            ), {"rid": rid})).mappings().all() or []
+            # filter mutes
+            filtered = []
+            for s in srows:
+                key_any = (s.get("suggestion_type"), None)
+                key_rule = (s.get("suggestion_type"), rid)
+                if key_any in mute_types or key_rule in mute_types:
+                    continue
+                filtered.append(s)
+            if filtered:
+                has_suggestions = True
+                # crude savings estimate: if after toggles require_approval from True->False, assume 0.33m per trigger saved over a week
+                for s in filtered:
+                    try:
+                        aft = s.get("after") or {}
+                        bef = s.get("before") or {}
+                        before_req = bool((bef.get("require_approval") if isinstance(bef, dict) else False) or False)
+                        after_req = bool((aft.get("require_approval") if isinstance(aft, dict) else False) or False)
+                        if before_req and (after_req is False):
+                            est = int(round(triggers_today * 7 * 0.33))  # minutes/week
+                            predicted_savings_minutes = max(predicted_savings_minutes or 0, est)
+                    except Exception:
+                        pass
+        except Exception:
+            has_suggestions = False
+            predicted_savings_minutes = None
+
         out.append(
             {
                 "id": rid,
@@ -1220,10 +1304,332 @@ async def rules_metrics(
                 "success_rate": round(success_rate, 4),
                 "issues_count": issues,
                 "status": status,
+                "has_suggestions": has_suggestions,
+                "predicted_savings_minutes_per_week": predicted_savings_minutes,
             }
         )
 
     return out
+
+
+# -------------- Suggestions & Notifications API --------------
+
+@router.get("/suggestions/summary")
+async def suggestions_summary(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    limit: int = 10,
+):
+    """Aggregate optimization suggestions into quick wins and per-rule badges.
+
+    Returns { badges: [...], quick_wins: [...], unread_count: int, prefs: { weekly_digest_opt_in: bool } }
+    """
+    # Ensure tables
+    try:
+        await db.execute(text(
+            """
+            CREATE TABLE IF NOT EXISTS auto_learning_suggestions (
+                id BIGSERIAL PRIMARY KEY,
+                suggestion_type TEXT NOT NULL,
+                rule_id TEXT,
+                before JSONB,
+                after JSONB,
+                explanation TEXT,
+                why TEXT,
+                status TEXT DEFAULT 'pending',
+                require_approval BOOLEAN DEFAULT TRUE,
+                total_shown INTEGER DEFAULT 1,
+                total_accepted INTEGER DEFAULT 0,
+                total_rejected INTEGER DEFAULT 0,
+                created_at TIMESTAMPTZ DEFAULT now()
+            );
+            CREATE TABLE IF NOT EXISTS suggestion_mutes (
+                id BIGSERIAL PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                suggestion_type TEXT NOT NULL,
+                rule_id TEXT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            );
+            CREATE INDEX IF NOT EXISTS ix_suggestion_mutes_user ON suggestion_mutes(user_id);
+            CREATE TABLE IF NOT EXISTS notification_prefs (
+                user_id TEXT PRIMARY KEY,
+                weekly_digest_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            );
+            """
+        ))
+        await db.commit()
+    except Exception:
+        try:
+            await db.rollback()
+        except Exception:
+            pass
+
+    # Load mutes
+    mutes = (await db.execute(text("SELECT suggestion_type, rule_id FROM suggestion_mutes WHERE user_id = :uid"), {"uid": str(current_user.id)})).mappings().all() or []
+    mute_set = {(m.get("suggestion_type"), m.get("rule_id")) for m in mutes}
+
+    # Fetch pending suggestions
+    rows = (await db.execute(text(
+        """
+        SELECT id, suggestion_type, rule_id, before, after, explanation, why, require_approval, created_at
+        FROM auto_learning_suggestions
+        WHERE status = 'pending'
+        ORDER BY created_at DESC
+        LIMIT :limit
+        """
+    ), {"limit": max(1, min(50, int(limit))) })).mappings().all() or []
+
+    quick_wins: List[Dict[str, Any]] = []
+    badges_map: Dict[str, Dict[str, Any]] = {}
+
+    # Helper to estimate savings
+    async def estimate_minutes_per_week(s: Dict[str, Any]) -> Optional[int]:
+        try:
+            aft = s.get("after") or {}
+            bef = s.get("before") or {}
+            before_req = bool((bef.get("require_approval") if isinstance(bef, dict) else False) or False)
+            after_req = bool((aft.get("require_approval") if isinstance(aft, dict) else False) or False)
+            if before_req and (after_req is False):
+                # Estimate 0.33 min saved per approval avoided; project over 7 days using today's triggers
+                rid = s.get("rule_id")
+                if rid:
+                    trow = (await db.execute(text("SELECT COUNT(1) FROM rule_executions WHERE rule_id = :rid AND triggered_at >= date_trunc('day', now())"), {"rid": str(rid)})).scalar()
+                    triggers_today = int(trow or 0)
+                    return int(round(triggers_today * 7 * 0.33))
+                return 30
+        except Exception:
+            return None
+        return None
+
+    for r in rows:
+        key_any = (r.get("suggestion_type"), None)
+        key_rule = (r.get("suggestion_type"), r.get("rule_id"))
+        if key_any in mute_set or key_rule in mute_set:
+            continue
+        rid = r.get("rule_id")
+        # badges map
+        if rid:
+            bm = badges_map.get(rid) or {"rule_id": rid, "has_suggestions": False, "predicted_savings_minutes_per_week": None}
+            bm["has_suggestions"] = True
+            est = await estimate_minutes_per_week(r)
+            if est is not None:
+                bm["predicted_savings_minutes_per_week"] = max(bm.get("predicted_savings_minutes_per_week") or 0, est)
+            badges_map[rid] = bm
+
+        # quick wins list entry
+        est_min = await estimate_minutes_per_week(r)
+        # Craft friendlier titles for specific suggestion types
+        stype = r.get("suggestion_type") or "optimization"
+        title: str
+        if stype == "ab_test_winner":
+            # Try to pull winner and uplift from after._meta
+            try:
+                after = r.get("after") if isinstance(r.get("after"), dict) else (json.loads(r.get("after")) if r.get("after") else {})
+            except Exception:
+                after = {}
+            meta = (after or {}).get("_meta") or {}
+            winner = meta.get("winner") or "A"
+            uplift_pct = meta.get("uplift_pct")
+            metric = (meta.get("metric") or "engagement").replace("avg_", "")
+            if isinstance(uplift_pct, (int, float)):
+                title = f"We found a winner! Response {winner} gets {uplift_pct}% more {metric}. Switch to it?"
+            else:
+                title = f"We found a winner! Response {winner} performs better. Switch to it?"
+        else:
+            title = f"{stype.replace('_',' ').title()}" + (f" · Rule {rid}" if rid else "")
+
+        quick_wins.append({
+            "id": int(r.get("id")),
+            "rule_id": rid,
+            "title": title,
+            "description": r.get("why") or r.get("explanation") or "Suggested optimization",
+            "suggestion_type": stype,
+            "predicted_savings_minutes_per_week": est_min,
+            "require_approval": bool(r.get("require_approval") is not False),
+        })
+
+    # Prefs
+    pref_row = (await db.execute(text("SELECT weekly_digest_enabled FROM notification_prefs WHERE user_id = :uid"), {"uid": str(current_user.id)})).first()
+    weekly = bool(pref_row[0]) if pref_row and pref_row[0] is not None else False
+
+    return {
+        "badges": list(badges_map.values()),
+        "quick_wins": quick_wins[: limit],
+        "unread_count": len(quick_wins),
+        "prefs": {"weekly_digest_opt_in": weekly},
+    }
+
+
+@router.post("/suggestions/{suggestion_id}/accept")
+async def accept_suggestion(
+    *,
+    suggestion_id: int,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Mark suggestion accepted and enqueue an approval item to apply the change (never auto-apply)."""
+    # Fetch suggestion
+    row = (await db.execute(text("SELECT id, rule_id, before, after, explanation, why, suggestion_type FROM auto_learning_suggestions WHERE id = :id"), {"id": int(suggestion_id)})).mappings().first()
+    if not row:
+        raise HTTPException(status_code=404, detail="suggestion_not_found")
+    # Record outcome
+    try:
+        await auto_learning.record_suggestion_outcome(db, suggestion_id=int(suggestion_id), accepted=True)
+    except Exception:
+        pass
+    # If this is an A/B test-related suggestion, archive a snapshot for revert and history
+    try:
+        stype = (row.get("suggestion_type") or "").strip()
+        after = row.get("after") or {}
+        tid = ((after.get("_meta") or {}).get("test_id") or (after.get("action") or {}).get("_meta", {}).get("test_id"))
+        if stype in {"ab_test_winner", "ab_variant_pause"} and tid:
+            await db.execute(text(
+                """
+                CREATE TABLE IF NOT EXISTS ab_test_archives (
+                    id BIGSERIAL PRIMARY KEY,
+                    rule_id TEXT NOT NULL,
+                    test_id TEXT NOT NULL,
+                    snapshot JSONB NOT NULL,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+                );
+                """
+            ))
+            snap = {"suggestion_id": int(row.get("id")), "before": row.get("before") or {}, "after": row.get("after") or {}, "why": row.get("why"), "explanation": row.get("explanation")}
+            await db.execute(text("INSERT INTO ab_test_archives (rule_id, test_id, snapshot) VALUES (:rid, :tid, :snap::jsonb)"), {"rid": row.get("rule_id"), "tid": str(tid), "snap": json.dumps(snap)})
+            await db.commit()
+    except Exception:
+        try:
+            await db.rollback()
+        except Exception:
+            pass
+
+    # Enqueue approval to apply change
+    try:
+        payload = {
+            "kind": "apply_rule_optimization",
+            "suggestion_id": int(row.get("id")),
+            "rule_id": row.get("rule_id"),
+            "before": row.get("before") or {},
+            "after": row.get("after") or {},
+            "explanation": row.get("explanation"),
+            "why": row.get("why"),
+            "requested_by": str(current_user.id),
+        }
+        item = await ApprovalQueueService().add_to_queue(db, response=payload, priority=50, reason="Apply suggested optimization")
+        return {"queued": True, "approval_id": item.id}
+    except Exception:
+        return {"queued": False}
+
+
+@router.post("/suggestions/{suggestion_id}/reject")
+async def reject_suggestion(
+    *,
+    suggestion_id: int,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    try:
+        await auto_learning.record_suggestion_outcome(db, suggestion_id=int(suggestion_id), accepted=False)
+    except Exception:
+        pass
+    try:
+        await db.execute(text("UPDATE auto_learning_suggestions SET status = 'rejected' WHERE id = :id"), {"id": int(suggestion_id)})
+        await db.commit()
+    except Exception:
+        try:
+            await db.rollback()
+        except Exception:
+            pass
+    return {"rejected": True}
+
+
+@router.post("/suggestions/mute")
+async def mute_suggestions(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+):
+    """Mute a suggestion type, optionally scoped to a rule_id. Payload: { suggestion_type: str, rule_id?: str }"""
+    stype = (payload.get("suggestion_type") or "").strip()
+    rid = (payload.get("rule_id") or None)
+    if not stype:
+        raise HTTPException(status_code=400, detail="missing_suggestion_type")
+    try:
+        await db.execute(text(
+            """
+            CREATE TABLE IF NOT EXISTS suggestion_mutes (
+                id BIGSERIAL PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                suggestion_type TEXT NOT NULL,
+                rule_id TEXT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            );
+            """
+        ))
+        await db.execute(text("INSERT INTO suggestion_mutes (user_id, suggestion_type, rule_id) VALUES (:u, :t, :r)"), {"u": str(current_user.id), "t": stype, "r": rid})
+        await db.commit()
+    except Exception:
+        try:
+            await db.rollback()
+        except Exception:
+            pass
+    return {"muted": True}
+
+
+@router.get("/notifications/prefs")
+async def get_notification_prefs(*, db: AsyncSession = Depends(get_async_session), current_user: User = Depends(get_current_active_user)):
+    try:
+        await db.execute(text(
+            """
+            CREATE TABLE IF NOT EXISTS notification_prefs (
+                user_id TEXT PRIMARY KEY,
+                weekly_digest_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            );
+            """
+        ))
+        await db.commit()
+    except Exception:
+        try:
+            await db.rollback()
+        except Exception:
+            pass
+    row = (await db.execute(text("SELECT weekly_digest_enabled FROM notification_prefs WHERE user_id = :uid"), {"uid": str(current_user.id)})).first()
+    weekly = bool(row[0]) if row and row[0] is not None else False
+    return {"weekly_digest_opt_in": weekly}
+
+
+@router.post("/notifications/prefs")
+async def set_notification_prefs(*, db: AsyncSession = Depends(get_async_session), current_user: User = Depends(get_current_active_user), payload: Dict[str, Any]):
+    weekly = bool(payload.get("weekly_digest_opt_in") is True)
+    try:
+        await db.execute(text(
+            """
+            INSERT INTO notification_prefs (user_id, weekly_digest_enabled, updated_at)
+            VALUES (:uid, :w, now())
+            ON CONFLICT (user_id) DO UPDATE SET weekly_digest_enabled = EXCLUDED.weekly_digest_enabled, updated_at = now()
+            """
+        ), {"uid": str(current_user.id), "w": weekly})
+        await db.commit()
+    except Exception:
+        try:
+            await db.rollback()
+        except Exception:
+            pass
+    return {"weekly_digest_opt_in": weekly}
+
+
+@router.get("/notifications/digest-preview")
+async def notifications_digest_preview(*, db: AsyncSession = Depends(get_async_session), current_user: User = Depends(get_current_active_user)):
+    """Preview the weekly digest for the current user (text-only)."""
+    try:
+        preview = await digest_service.preview_for_user(db, user_id=str(current_user.id))
+    except Exception:
+        preview = {"subject": "Revu: Weekly digest", "body": "No items yet.", "items": []}
+    return preview
 
 
 @router.get("/today-stats")
@@ -2382,6 +2788,45 @@ async def list_active_ab_tests(
     return {"items": items}
 
 
+@router.get("/ab-tests/{rule_id}/archives")
+async def ab_test_archives(
+    *,
+    rule_id: str,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    test_id: Optional[str] = None,
+    limit: int = 50,
+):
+    # Ensure table exists
+    await db.execute(text(
+        """
+        CREATE TABLE IF NOT EXISTS ab_test_archives (
+            id BIGSERIAL PRIMARY KEY,
+            rule_id TEXT NOT NULL,
+            test_id TEXT NOT NULL,
+            snapshot JSONB NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+        """
+    ))
+    params: Dict[str, Any] = {"rid": rule_id, "lim": int(max(1, min(limit, 200)))}
+    q = "SELECT id, test_id, snapshot, created_at FROM ab_test_archives WHERE rule_id = :rid"
+    if test_id:
+        q += " AND test_id = :tid"
+        params["tid"] = test_id
+    q += " ORDER BY created_at DESC LIMIT :lim"
+    rows = (await db.execute(text(q), params)).mappings().all()
+    return {"items": [
+        {
+            "id": int(r.get("id")),
+            "test_id": r.get("test_id"),
+            "snapshot": r.get("snapshot") or {},
+            "created_at": (r.get("created_at").isoformat() if r.get("created_at") else None),
+        }
+        for r in rows
+    ]}
+
+
 @router.get("/ab-tests/{rule_id}/summary")
 async def ab_test_summary(
     *,
@@ -2561,6 +3006,122 @@ async def ab_test_auto_optimize(
         significance_threshold=significance_threshold,
     )
     return res
+
+
+@router.post("/ab-tests/{rule_id}/apply-winner")
+async def ab_test_apply_winner(
+    *,
+    rule_id: str,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    test_id: Optional[str] = None,
+    min_samples_per_variant: int = 50,
+    significance_threshold: float = 0.05,
+):
+    # Compute winner with significance
+    from app.services.ab_testing import ABTestingService
+    svc = ABTestingService()
+    analysis = await svc.calculate_winner(db, rule_id=rule_id, test_id=test_id, min_samples_per_variant=min_samples_per_variant)
+    res = analysis if test_id is None else {test_id: analysis}
+    # Pick the relevant record
+    key = test_id or next(iter(res.keys()), None)
+    if not key or key not in res:
+        raise HTTPException(status_code=400, detail="no_test_data")
+    obj = res[key]
+    if not obj.get("winner"):
+        raise HTTPException(status_code=400, detail="no_winner")
+    pval = float(obj.get("p_value", 1.0) or 1.0)
+    if pval > significance_threshold:
+        raise HTTPException(status_code=400, detail="not_significant")
+
+    # Load current action JSON to build a 100% winner payload while preserving other variants for revert
+    row = (await db.execute(text("SELECT action FROM automation_rules WHERE id = :rid"), {"rid": rule_id})).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="rule_not_found")
+    try:
+        action = row[0] if isinstance(row[0], dict) else json.loads(row[0])
+    except Exception:
+        action = {}
+    tests = (action or {}).get("ab_tests") or {}
+    if not tests:
+        raise HTTPException(status_code=400, detail="no_tests_configured")
+    tid = key
+    var_defs = [dict(v) for v in (tests.get(tid) or [])]
+    if not var_defs:
+        raise HTTPException(status_code=400, detail="no_variants")
+
+    winner = str(obj.get("winner"))
+    for v in var_defs:
+        v_id = str(v.get("variant_id") or "A")
+        v["weight"] = 1.0 if v_id == winner else 0.0
+
+    # Archive snapshot for revert
+    await db.execute(text(
+        """
+        CREATE TABLE IF NOT EXISTS ab_test_archives (
+            id BIGSERIAL PRIMARY KEY,
+            rule_id TEXT NOT NULL,
+            test_id TEXT NOT NULL,
+            snapshot JSONB NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+        """
+    ))
+    await db.execute(text(
+        "INSERT INTO ab_test_archives (rule_id, test_id, snapshot) VALUES (:rid, :tid, :snap::jsonb)"
+    ), {"rid": rule_id, "tid": tid, "snap": json.dumps({"before": action, "analysis": obj})})
+    await db.commit()
+
+    # Enqueue approval to apply winner
+    payload = {
+        "kind": "apply_ab_test_winner",
+        "rule_id": rule_id,
+        "test_id": tid,
+        "set_weights": {tid: var_defs},
+        "confidence": (1 - pval),
+        "metric": obj.get("metric"),
+        "stats": obj.get("stats"),
+        "note": "Switch to 100% winning variant; losing variant kept for revert.",
+        "requested_by": str(current_user.id),
+    }
+    item = await ApprovalQueueService().add_to_queue(db, response=payload, priority=70, reason="Apply A/B winner")
+    return {"queued": True, "approval_id": item.id}
+
+
+@router.post("/ab-tests/{rule_id}/revert/{archive_id}")
+async def ab_test_revert_from_archive(
+    *,
+    rule_id: str,
+    archive_id: int,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    row = (
+        await db.execute(
+            text("SELECT snapshot FROM ab_test_archives WHERE id = :id AND rule_id = :rid"),
+            {"id": int(archive_id), "rid": rule_id},
+        )
+    ).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="archive_not_found")
+    try:
+        snap = row[0] if isinstance(row[0], dict) else json.loads(row[0])
+    except Exception:
+        snap = {}
+    before = (snap or {}).get("before") or {}
+    action_before = (before or {}).get("action") or None
+    if not action_before:
+        raise HTTPException(status_code=400, detail="archive_missing_before_action")
+
+    payload = {
+        "kind": "revert_ab_test",
+        "rule_id": rule_id,
+        "action": action_before,
+        "note": "Revert to archived A/B test configuration",
+        "requested_by": str(current_user.id),
+    }
+    item = await ApprovalQueueService().add_to_queue(db, response=payload, priority=65, reason="Revert A/B config")
+    return {"queued": True, "approval_id": item.id}
 
 
 @router.post("/ab-tests/{rule_id}/auto-optimize/toggle")

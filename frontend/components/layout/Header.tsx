@@ -20,6 +20,7 @@ import { LocationSelector } from '@/components/dashboard/LocationSelector';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useStore } from '@/lib/store';
+import NotificationCenter from '@/components/shared/NotificationCenter';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -28,9 +29,8 @@ interface HeaderProps {
 export function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const { notifications, markNotificationsRead, markNotificationRead, notificationPrefs, badgeRespectsMute, setBadgeRespectsMute, alertHistory } = useStore();
+  const { notifications, markNotificationsRead, notificationPrefs, badgeRespectsMute, setBadgeRespectsMute, alertHistory } = useStore();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [showMuted, setShowMuted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAlertBanner, setShowAlertBanner] = useState(false);
   const personaLabel = user?.user_kind === 'business' ? 'Business' : 'Content';
@@ -49,7 +49,6 @@ export function Header({ onMenuClick }: HeaderProps) {
     }
   };
 
-  const items = notifications.items.map((n) => ({ id: n.id, title: n.title, message: n.message, time: new Date(n.createdAt).toLocaleTimeString(), unread: !n.read }));
   const unreadCount = (() => {
     if (!badgeRespectsMute) return notifications.unread;
     // compute unread excluding muted items by keyword/platform when possible
@@ -57,11 +56,11 @@ export function Header({ onMenuClick }: HeaderProps) {
     return notifications.items.filter((it) => {
       if (it.read) return false;
       const hay = `${it.title} ${it.message}`.toLowerCase();
-      if (notificationPrefs.muteKeywords.some(k => hay.includes(k.toLowerCase()))) return false;
+      if (notificationPrefs.muteKeywords.some((k: string) => hay.includes(k.toLowerCase()))) return false;
       // best-effort platform match from title
       if (notificationPrefs.mutedPlatforms.length) {
-        const mutedNames = notificationPrefs.mutedPlatforms.map(k => platformIdMap[k]);
-        if (mutedNames.some(name => it.title.includes(name))) return false;
+        const mutedNames = notificationPrefs.mutedPlatforms.map((k: string) => platformIdMap[k] || k);
+        if (mutedNames.some((name: string) => it.title.includes(name))) return false;
       }
       if (notificationPrefs.mode === 'Important only') {
         // heuristic: only count if title hints negative or priority
@@ -171,58 +170,17 @@ export function Header({ onMenuClick }: HeaderProps) {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align="end" 
-                className="w-80 card-background border-[var(--border)]"
+              <DropdownMenuContent
+                align="end"
+                className="w-96 card-background border-[var(--border)]"
               >
                 <DropdownMenuLabel className="text-primary-dark">Notifications</DropdownMenuLabel>
                 <div className="px-3 py-2 text-xs text-secondary-dark flex items-center justify-between">
                   <span>Badge respects mute</span>
                   <input type="checkbox" checked={badgeRespectsMute} onChange={(e) => setBadgeRespectsMute(e.target.checked)} />
                 </div>
-                <div className="px-3 -mt-2 pb-2 text-xs text-secondary-dark flex items-center justify-between">
-                  <span>Show muted items</span>
-                  <input type="checkbox" checked={showMuted} onChange={(e) => setShowMuted(e.target.checked)} />
-                </div>
                 <DropdownMenuSeparator className="bg-[var(--border)]" />
-                {items.length === 0 && (
-                  <div className="p-4 text-sm text-secondary-dark">No notifications</div>
-                )}
-        {items
-          .filter(n => {
-            if (showMuted) return true;
-            const hay = `${n.title} ${n.message}`.toLowerCase();
-            if (notificationPrefs.muteKeywords.some(k => hay.includes(k.toLowerCase()))) return false;
-            return true;
-          })
-          .map((notification) => (
-                  <DropdownMenuItem 
-                    key={notification.id} 
-                    className="flex flex-col items-start p-4 hover-background cursor-pointer"
-                    onClick={() => {
-                      // Route to minimal destinations
-                      const t = notification.title.toLowerCase();
-                      markNotificationRead(notification.id);
-                      if (t.includes('review') || t.includes('response') || t.includes('comment')) router.push('/comments');
-                      else if (t.includes('report') || t.includes('analytics')) router.push('/analytics');
-                    }}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <h4 className={`text-sm font-medium ${notification.unread ? 'text-primary-dark' : 'text-secondary-dark'}`}>
-                        {notification.title}
-                      </h4>
-                      {notification.unread && (
-                        <span className="h-2 w-2 bg-blue-500 rounded-full"></span>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-dark mt-1">
-                      {notification.message}
-                    </p>
-                    <span className="text-xs text-muted-dark mt-2">
-                      {notification.time}
-                    </span>
-                  </DropdownMenuItem>
-                ))}
+                <NotificationCenter />
               </DropdownMenuContent>
             </DropdownMenu>
 

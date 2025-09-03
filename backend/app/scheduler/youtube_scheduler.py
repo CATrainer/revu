@@ -28,6 +28,8 @@ from app.workers.sync_worker import (
 )
 from app.core.database import async_session_maker
 from app.services.early_warning import EarlyWarningService
+from app.services.digest import DigestService
+from app.services.ab_monitor import ABTestMonitorService
 
 
 async def _list_active_connections() -> list[YouTubeConnection]:
@@ -95,6 +97,27 @@ async def job_cleanup_expired_oauth_tokens() -> None:
         logger.exception("job_cleanup_expired_oauth_tokens failed: %s", e)
 
 
+async def job_generate_weekly_digests() -> None:
+    try:
+        svc = DigestService()
+        async with async_session_maker() as session:
+            n = await svc.generate_weekly_digests(session)
+            logger.info("Weekly digests generated: {n}", n=n)
+    except Exception as e:  # noqa: BLE001
+        logger.exception("job_generate_weekly_digests failed: %s", e)
+
+
+async def job_ab_test_monitor() -> None:
+    try:
+        svc = ABTestMonitorService()
+        async with async_session_maker() as session:
+            res = await svc.scan_and_generate_suggestions(session)
+            from loguru import logger as _l
+            _l.info("ABTestMonitor: processed={p} suggestions={s}", p=res.get("processed"), s=res.get("suggestions"))
+    except Exception as e:  # noqa: BLE001
+        logger.exception("job_ab_test_monitor failed: %s", e)
+
+
 def start_youtube_scheduler() -> AsyncIOScheduler:
     """Create and start the AsyncIO scheduler with configured jobs.
 
@@ -141,6 +164,28 @@ def start_youtube_scheduler() -> AsyncIOScheduler:
         name="Cleanup expired OAuth tokens",
         coalesce=True,
         misfire_grace_time=600,
+        max_instances=1,
+    )
+
+    # Run digest generator weekly; here we approximate with every 7 days
+    scheduler.add_job(
+        job_generate_weekly_digests,
+        IntervalTrigger(days=7),
+        id="weekly_digests",
+        name="Generate weekly digest entries",
+        coalesce=True,
+        misfire_grace_time=600,
+        max_instances=1,
+    )
+
+    # Monitor A/B tests frequently (e.g., every 10 minutes)
+    scheduler.add_job(
+        job_ab_test_monitor,
+        IntervalTrigger(minutes=10),
+        id="ab_test_monitor",
+        name="Scan A/B tests for significant winners",
+        coalesce=True,
+        misfire_grace_time=120,
         max_instances=1,
     )
 

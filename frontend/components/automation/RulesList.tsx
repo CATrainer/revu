@@ -17,6 +17,8 @@ export type RuleMetric = {
   success_rate: number; // 0..1
   issues_count: number;
   status: 'active' | 'paused' | 'error';
+  has_suggestions?: boolean;
+  predicted_savings_minutes_per_week?: number | null;
 };
 
 export type RulesListProps = {
@@ -158,6 +160,14 @@ export default function RulesList({ onEdit, onTest }: RulesListProps) {
                 <CardTitle className="text-base font-medium flex items-center gap-2">
                   {r.name}
                   {r.issues_count > 0 && <span title={`${r.issues_count} issues`} className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500" />}
+                  {r.has_suggestions && (
+                    <span
+                      title={r.predicted_savings_minutes_per_week ? `Quick win available · Could save ~${r.predicted_savings_minutes_per_week} min/week` : 'Quick win available'}
+                      className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800"
+                    >
+                      Quick win
+                    </span>
+                  )}
                 </CardTitle>
                 <div className="text-xs px-2 py-0.5 rounded border bg-white">Priority {r.priority}</div>
               </CardHeader>

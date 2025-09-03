@@ -22,6 +22,7 @@ type TestSummary = {
 type HistoryItem = { variant_id: string; comment_id?: string; metrics: { impressions?: number; conversions?: number; engagement?: number }; created_at?: string };
 
 type ActiveTest = { rule_id: string; name?: string; tests: Record<string, Array<{ variant_id: string; weight: number; template_id?: string }>>; auto_optimize?: boolean };
+type ArchiveItem = { id: number; test_id: string; snapshot: unknown; created_at?: string };
 
 export default function ABTestDashboard() {
   const qc = useQueryClient();
@@ -68,6 +69,19 @@ export default function ABTestDashboard() {
     refetchInterval: 60_000,
   });
 
+  const { data: archives, refetch: refetchArchives } = useQuery({
+    queryKey: ['ab-archives', selectedRule, selectedTest],
+    queryFn: async () => {
+      if (!selectedRule) return { items: [] as ArchiveItem[] };
+      const params: Record<string, string> = {};
+      if (selectedTest) params['test_id'] = selectedTest;
+      const { data } = await api.get<{ items: ArchiveItem[] }>(`/automation/ab-tests/${selectedRule}/archives`, { params });
+      return data;
+    },
+    enabled: !!selectedRule,
+    refetchInterval: 60_000,
+  });
+
   const toggleAutoMut = useMutation({
     mutationFn: async (enabled: boolean) => (await api.post(`/automation/ab-tests/${selectedRule}/auto-optimize/toggle`, { enabled })).data,
     onSuccess: async () => {
@@ -85,6 +99,31 @@ export default function ABTestDashboard() {
       await qc.invalidateQueries({ queryKey: ['ab-active'] });
     },
     onError: (e) => pushToast(`Run failed: ${String((e as Error)?.message || e)}`, 'error'),
+  });
+
+  const applyWinnerMut = useMutation({
+    mutationFn: async () => {
+      if (!selectedRule) return;
+      const params: Record<string, string> = {};
+      if (selectedTest) params['test_id'] = selectedTest;
+      return (await api.post(`/automation/ab-tests/${selectedRule}/apply-winner`, undefined, { params })).data;
+    },
+    onSuccess: async () => {
+      pushToast('Queued apply-winner for approval', 'success');
+      await refetchSummary();
+      await qc.invalidateQueries({ queryKey: ['ab-active'] });
+      await refetchArchives();
+    },
+    onError: (e) => pushToast(`Apply failed: ${String((e as Error)?.message || e)}`, 'error'),
+  });
+
+  const revertMut = useMutation({
+    mutationFn: async (archiveId: number) => (await api.post(`/automation/ab-tests/${selectedRule}/revert/${archiveId}`)).data,
+    onSuccess: async () => {
+      pushToast('Queued revert for approval', 'success');
+      await qc.invalidateQueries({ queryKey: ['ab-active'] });
+    },
+    onError: (e) => pushToast(`Revert failed: ${String((e as Error)?.message || e)}`, 'error'),
   });
 
   const exportCsv = () => {
@@ -204,6 +243,13 @@ export default function ABTestDashboard() {
                   </tbody>
                 </table>
               </div>
+              {/* Action bar: apply winner when significant */}
+              {s.winner && typeof s.confidence === 'number' && s.confidence >= 0.95 && (
+                <div className="mt-2">
+                  <Button size="sm" onClick={() => applyWinnerMut.mutate()} disabled={applyWinnerMut.isPending}>Apply Winner (100%)</Button>
+                  <span className="text-xs text-muted-foreground ml-2">Keeps losing variant for easy revert</span>
+                </div>
+              )}
             </div>
           ))}
         </CardContent>
@@ -239,6 +285,25 @@ export default function ABTestDashboard() {
               </tbody>
             </table>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Archives and revert */}
+      <Card>
+        <CardHeader><CardTitle className="text-base">Archives</CardTitle></CardHeader>
+        <CardContent>
+          {(archives?.items?.length || 0) === 0 ? (
+            <div className="text-sm text-muted-foreground">No archives yet.</div>
+          ) : (
+            <div className="space-y-2">
+              {(archives?.items || []).slice(0, 5).map((a) => (
+                <div key={a.id} className="p-2 rounded border flex items-center justify-between">
+                  <div className="text-sm">{a.created_at?.replace('T',' ').slice(0, 16)} • Test {a.test_id}</div>
+                  <Button size="sm" variant="outline" onClick={() => revertMut.mutate(a.id)} disabled={revertMut.isPending}>Revert to this</Button>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
