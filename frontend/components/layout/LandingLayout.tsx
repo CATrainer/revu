@@ -96,7 +96,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                                 All Features
                               </div>
                               <p className="text-xs leading-tight text-secondary-dark text-center mt-1">
-                                Discover how Repruv can transform your reputation management
+                                Discover how Repruv can power your community engagement
                               </p>
                             </Link>
                           </NavigationMenuLink>
