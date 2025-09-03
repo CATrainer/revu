@@ -12,9 +12,9 @@ interface Section {
 
 const sections: Section[] = [
   { id: 'hero', name: 'Hero' },
-  { id: 'response-automation', name: 'Response Automation' },
-  { id: 'ai-responses', name: 'AI-Powered Responses' },
+  { id: 'comment-automation', name: 'Comment Automation' },
   { id: 'social-monitoring', name: 'Social Monitoring' },
+  { id: 'ai-responses', name: 'AI Chatbot' },
   { id: 'analytics-and-reports', name: 'Analytics & Reports' }
 ];
 

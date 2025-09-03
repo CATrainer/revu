@@ -4,17 +4,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { useInView } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Users, Briefcase, Target } from 'lucide-react';
+import { VideoModal } from '@/components/ui/VideoModal';
 
 export function SocialProof() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { margin: "-100px" });
   const [currentCard, setCurrentCard] = useState(0);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [currentVideoId, setCurrentVideoId] = useState('');
 
   const avatarCards = [
     {
       id: 'default',
       title: 'Our Vision',
       icon: Target,
+      videoId: 'Vzg3Ltsmmw4',
       content: {
         text: [
           "At Repruv, we believe every creator deserves authentic engagement without the time drain. In today's digital world, comments and messages shape your community — managing them shouldn't consume your creativity.",
@@ -28,6 +32,7 @@ export function SocialProof() {
       id: 'creators',
       title: 'For Creators',
       icon: Users,
+      videoId: 'f8qaKONsEbU',
       content: {
         bullets: [
           "Save 10+ hrs/week responding to comments & DMs with AI.",
@@ -175,42 +180,139 @@ export function SocialProof() {
                 className="flex justify-center lg:justify-start"
               >
                 <motion.div 
-                  className="relative w-full max-w-md aspect-video bg-gradient-to-br from-[var(--muted)] to-[var(--secondary)] dark:from-[var(--secondary)] dark:to-[var(--muted)] rounded-xl shadow-lg flex items-center justify-center overflow-hidden"
+                  className="relative w-full max-w-md bg-gradient-to-br from-[var(--muted)] to-[var(--secondary)] dark:from-[var(--secondary)] dark:to-[var(--muted)] rounded-xl shadow-lg flex items-center justify-center overflow-hidden"
+                  style={{
+                    // Use consistent 16:9 aspect ratio for the container to maintain layout
+                    aspectRatio: '16/9',
+                  }}
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {/* Video Placeholder */}
+                  {/* Video Thumbnail with Play Button */}
                   <motion.div 
-                    className="text-center"
+                    className="w-full h-full cursor-pointer"
                     initial={{ opacity: 0, scale: 0.5 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.4, delay: 0.4 }}
+                    onClick={() => {
+                      if (currentAvatar.videoId) {
+                        setCurrentVideoId(currentAvatar.videoId);
+                        setVideoModalOpen(true);
+                      }
+                    }}
                   >
-                    <motion.div 
-                      className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] rounded-full flex items-center justify-center shadow-md"
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-                      </svg>
-                    </motion.div>
-                    <motion.p 
-                      className="text-sm text-gray-600 dark:text-gray-300 font-medium font-['Poppins',sans-serif]"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.6 }}
-                    >
-                      {currentAvatar.title} Video
-                    </motion.p>
-                    <motion.p 
-                      className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-['Poppins',sans-serif]"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.8 }}
-                    >
-                      Coming Soon
-                    </motion.p>
+                    {/* Enhanced YouTube Thumbnail with better loading states and play button */}
+                    <div className="relative w-full h-full">
+                      {currentAvatar.videoId ? (
+                        <>
+                          {/* Thumbnail Skeleton Loader - Shows while image loads */}
+                          <motion.div 
+                            className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 animate-pulse rounded-xl"
+                            initial={{ opacity: 1 }}
+                            animate={{ opacity: 0 }}
+                            transition={{ delay: 0.8, duration: 0.5 }}
+                          />
+                          
+                          {/* Optimized YouTube Thumbnail Loading with Smart Fallbacks */}
+                          <div 
+                            className={`w-full h-full flex items-center justify-center ${
+                              // For shorts (f8qaKONsEbU), create a centered container with proper aspect ratio and background
+                              currentAvatar.videoId === 'f8qaKONsEbU' ? 'relative bg-gradient-to-r from-black/5 to-black/10' : ''
+                            }`}
+                          >
+                            <img 
+                              src={`https://i.ytimg.com/vi/${currentAvatar.videoId}/maxresdefault.jpg`}
+                              alt={`${currentAvatar.title} video thumbnail`}
+                              className={`rounded-xl ${
+                                currentAvatar.videoId === 'f8qaKONsEbU' 
+                                ? 'w-auto h-full object-contain' 
+                                : 'w-full h-full object-cover'
+                              }`}
+                              loading="eager"
+                              style={{
+                                // For shorts, create a centered container with pillbox shape
+                                ...(currentAvatar.videoId === 'f8qaKONsEbU' ? {
+                                  maxHeight: '100%',
+                                  maxWidth: '56.25%', // Maintain aspect ratio but fit in container
+                                  margin: '0 auto',
+                                  objectPosition: 'center'
+                                } : {})
+                              }}
+                              onError={(e) => {
+                                // Enhanced fallback system with better quality progression
+                                const target = e.target as HTMLImageElement;
+                                if (target.src.includes('maxresdefault')) {
+                                  // First try sddefault (better than hqdefault for shorts)
+                                  target.src = `https://i.ytimg.com/vi/${currentAvatar.videoId}/sddefault.jpg`;
+                                } else if (target.src.includes('sddefault')) {
+                                  // Then try hqdefault
+                                  target.src = `https://i.ytimg.com/vi/${currentAvatar.videoId}/hqdefault.jpg`;
+                                } else if (target.src.includes('hqdefault')) {
+                                  // Then try mqdefault
+                                  target.src = `https://i.ytimg.com/vi/${currentAvatar.videoId}/mqdefault.jpg`;
+                                } else if (target.src.includes('mqdefault')) {
+                                  // Last resort: default thumbnail
+                                  target.src = `https://i.ytimg.com/vi/${currentAvatar.videoId}/default.jpg`;
+                                }
+                              }}
+                            />
+                          </div>
+                          
+                          {/* Enhanced Video Overlay with Animated Play Button */}
+                          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/50 hover:from-black/5 hover:to-black/40 transition-all duration-300 flex items-center justify-center rounded-xl">
+                            {/* Larger, more visible play button */}
+                            <motion.div 
+                              className="w-20 h-20 bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] rounded-full flex items-center justify-center shadow-lg"
+                              style={{ filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.3))' }}
+                              whileHover={{ scale: 1.1, rotate: 5 }}
+                              whileTap={{ scale: 0.95 }}
+                              initial={{ opacity: 0, scale: 0.5 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.2, duration: 0.4, type: "spring" }}
+                            >
+                              <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+                              </svg>
+                            </motion.div>
+                            
+                            {/* Enhanced video label */}
+                            <motion.div 
+                              className="absolute bottom-4 left-4 bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] px-4 py-2 rounded-full shadow-xl"
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.4, duration: 0.5 }}
+                              whileHover={{ scale: 1.05 }}
+                            >
+                              <p className="text-sm font-medium text-white flex items-center gap-1.5">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+                                </svg>
+                                Watch {currentAvatar.title === 'Our Vision' ? 'Vision' : 'Creator'} Video
+                              </p>
+                            </motion.div>
+                            
+                            {/* Shorts indicator if it's a YouTube short */}
+                            {currentAvatar.title === 'For Creators' && (
+                              <motion.div 
+                                className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full"
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.6 }}
+                              >
+                                <p className="text-xs font-bold text-white">YouTube Short</p>
+                              </motion.div>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-xl">
+                          <svg className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Video coming soon</p>
+                        </div>
+                      )}
+                    </div>
                   </motion.div>
                 </motion.div>
               </motion.div>
@@ -328,6 +430,14 @@ export function SocialProof() {
           ))}
         </motion.div>
       </div>
+      
+      {/* Video Modal for YouTube Videos */}
+      <VideoModal 
+        videoId={currentVideoId}
+        isOpen={videoModalOpen}
+        onClose={() => setVideoModalOpen(false)}
+        isShort={true}  // Setting to true since these are YouTube shorts
+      />
     </motion.section>
   );
 }

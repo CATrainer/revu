@@ -103,26 +103,13 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                         </li>
                         <li>
                           <NavigationMenuLink asChild>
-                            <Link href="/features#response-automation" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
+                            <Link href="/features#comment-automation" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
                               <div className="flex items-center justify-center mb-2">
                                 <FaReply className="text-blue-500" size={20} />
                               </div>
-                              <div className="text-sm font-medium leading-none">Response Automation</div>
+                              <div className="text-sm font-medium leading-none">Comment Automation</div>
                               <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
-                                Automate video replies
-                              </p>
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
-                        <li>
-                          <NavigationMenuLink asChild>
-                            <Link href="/features#ai-responses" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
-                              <div className="flex items-center justify-center mb-2">
-                                <FaBrain className="text-purple-500" size={20} />
-                              </div>
-                              <div className="text-sm font-medium leading-none">AI-Powered Responses</div>
-                              <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
-                                Generate responses instantly
+                                Automate replies to comments
                               </p>
                             </Link>
                           </NavigationMenuLink>
@@ -135,7 +122,20 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                               </div>
                               <div className="text-sm font-medium leading-none">Social Monitoring</div>
                               <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
-                                Track social mentions
+                                Monitor online mentions
+                              </p>
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                        <li>
+                          <NavigationMenuLink asChild>
+                            <Link href="/features#ai-responses" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
+                              <div className="flex items-center justify-center mb-2">
+                                <FaBrain className="text-purple-500" size={20} />
+                              </div>
+                              <div className="text-sm font-medium leading-none">AI Chatbot</div>
+                              <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
+                                Custom AI that knows your content
                               </p>
                             </Link>
                           </NavigationMenuLink>
@@ -148,7 +148,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                               </div>
                               <div className="text-sm font-medium leading-none">Analytics & Reports</div>
                               <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
-                                Comprehensive insights
+                                Actionable insights and metrics
                               </p>
                             </Link>
                           </NavigationMenuLink>

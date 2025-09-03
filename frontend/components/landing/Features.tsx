@@ -39,26 +39,26 @@ const features: Feature[] = [
   {
     icon: FaReply,
     iconColor: 'text-blue-500', // Blue for replies/communication
-    title: 'Response Automation',
-    description: 'Automate replies to comments on your reels/videos and direct messages centrally on TikTok, YouTube and Instagram.',
+    title: 'Comment Automation',
+    description: 'Automate replies to Comments on your Reels/Videos on YouTube and Instagram.',
   },
   {
     icon: FaBrain,
     iconColor: 'text-purple-500', // Purple for AI intelligence
-    title: 'AI Responses',
-    description: 'Generate personalized responses in your tone and voice using Repruv AI.',
+    title: 'AI Chatbot',
+    description: 'AI Chatbot that understands you and your community.',
   },
   {
     icon: FaHashtag,
     iconColor: 'text-pink-500', // Pink for social media
     title: 'Social Monitoring',
-    description: 'Track text sentiment, @ mentions and hashtags and keep ontop of what people are saying about you on social media.',
+    description: 'Keep on top of what people are saying about you on online.',
   },
   {
     icon: FaChartBar,
     iconColor: 'text-green-500', // Green for growth/analytics
     title: 'Analytics & Reports',
-    description: 'Get actionable insights with comprehensive reporting and analytics derived from your chat and response data.',
+    description: 'Get actionable insights with comprehensive reporting and analytics derived from your data',
   },
 ];
 
@@ -128,8 +128,8 @@ export function Features() {
                 }}
                 className="card-background p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer group relative overflow-hidden"
               >
-                {/* Social Media Background Icons for Response Automation */}
-                {feature.title === 'Response Automation' && (
+                {/* Social Media Background Icons for Comment Automation */}
+                {feature.title === 'Comment Automation' && (
                   <div className="absolute inset-0 opacity-15 pointer-events-none">
                     <FaYoutube className="absolute top-4 right-4 text-red-500" size={36} />
                     <FaInstagram className="absolute top-16 right-12 text-pink-500" size={32} />
@@ -146,8 +146,8 @@ export function Features() {
                   </div>
                 )}
 
-                {/* AI Background Icons for AI Responses */}
-                {feature.title === 'AI Responses' && (
+                {/* AI Background Icons for AI Chatbot */}
+                {feature.title === 'AI Chatbot' && (
                   <div className="absolute inset-0 opacity-15 pointer-events-none">
                     <FaRobot className="absolute top-4 right-4 text-blue-500" size={36} />
                     <FaBrain className="absolute top-16 right-12 text-purple-500" size={32} />

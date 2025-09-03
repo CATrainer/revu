@@ -348,3 +348,10 @@
 
 /* Typography smoothing & misc base polish */
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; font-feature-settings: "kern" 1, "liga" 1, "calt" 1; }
+
+/* Utility class to hide navigation indicators when video is playing */
+.hide-navigation-indicators {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

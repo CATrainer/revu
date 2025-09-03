@@ -4,28 +4,58 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Inbox, Users, ChartPie, Settings, ChevronLeft, ChevronRight, Bot } from 'lucide-react';
+import { BarChart3, Inbox, Brain, Users, TrendingUp, ChartPie, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useMemo } from 'react';
+import { useStore } from '@/lib/store';
 
 const baseNav = [
-  { name: 'Home', href: '/dashboard', icon: BarChart3 },
-  { name: 'Comments', href: '/comments', icon: Inbox },
-  { name: 'Automation', href: '/automation', icon: Bot },
-  { name: 'Socials', href: '/socials', icon: Users },
+  { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
+  { name: 'Engagement Hub', href: '/engagement', icon: Inbox },
+  { name: 'Pulse Monitor', href: '/pulse', icon: TrendingUp },
+  { name: 'Competitors', href: '/competitors', icon: Users },
+  { name: 'Trends', href: '/trends', icon: TrendingUp },
   { name: 'Analytics', href: '/analytics', icon: ChartPie },
+  { name: 'AI Assistant', href: '/ai-assistant', icon: Brain },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const navigation = useMemo(() => baseNav, []);
+  const { currentWorkspace, scenario } = useStore();
+  const navigation = useMemo(() => {
+    // Start from base and clone so we can mutate labels safely
+    const items = [...baseNav.map((x) => ({ ...x }))];
+    // Insert Clients for Agency
+    if (currentWorkspace?.type === 'Agency') {
+      items.splice(2, 0, { name: 'Clients', href: '/clients', icon: Users });
+    }
+    // Scenario-aware label tweaks
+    const isCreator = scenario === 'creator' || currentWorkspace?.type === 'Individual';
+    const isBusiness = scenario === 'business' || currentWorkspace?.type === 'Organization';
+    const isAgency = currentWorkspace?.type === 'Agency';
+    items.forEach((it) => {
+      if (it.href === '/engagement') {
+        it.name = isCreator ? 'Audience Engagement' : isBusiness ? 'Responses' : isAgency ? 'Engagement Hub' : it.name;
+      }
+      if (it.href === '/pulse') {
+        it.name = isCreator ? 'Mentions Pulse' : isBusiness ? 'Reputation Pulse' : 'Pulse Monitor';
+      }
+      if (it.href === '/competitors') {
+        it.name = isCreator ? 'Peers' : 'Competitors';
+      }
+      if (it.href === '/analytics') {
+        it.name = isCreator ? 'Channel Analytics' : isBusiness ? 'Reviews Analytics' : isAgency ? 'Portfolio Analytics' : 'Analytics';
+      }
+    });
+    return items;
+  }, [currentWorkspace?.type, scenario]);
 
   return (
-  <aside
+    <aside
       className={cn(
-    'dashboard-card soft-shadow border-r pt-5 pb-4 overflow-y-auto scrollbar-nice transition-all duration-300',
+        'dashboard-card border-r pt-5 pb-4 overflow-y-auto transition-all duration-300',
         collapsed ? 'w-16' : 'w-64'
       )}
     >

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,18 +53,34 @@ export default function JoinWaitlistPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 py-12">
-      <div className="max-w-md mx-auto px-4">
+    <div className="min-h-screen bg-[#fafaf9] dark:bg-gray-900 py-12">
+  <div className="max-w-xl mx-auto px-4">
         <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 shadow-xl">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">Get Early Access</CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-300">
-              Be the first to know when Repruv launches and get early access to powerful review management tools.
-            </CardDescription>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+            >
+                <CardTitle className="text-3xl md:text-4xl font-extrabold text-green-500 dark:text-green-400 leading-tight">Book a Demo</CardTitle>
+                <CardDescription className="text-sm font-medium text-green-800 dark:text-green-300 mt-2">
+                Be the first to know when Repruv launches and get early access to powerful community engagement tools.
+              </CardDescription>
+            </motion.div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
+            <motion.form 
+              onSubmit={handleSubmit} 
+              className="space-y-4"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}
+            >
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
                 <Label htmlFor="full_name" className="text-gray-700 dark:text-gray-200 font-medium">Full Name *</Label>
                 <Input
                   id="full_name"
@@ -73,11 +90,15 @@ export default function JoinWaitlistPage() {
                   value={formData.full_name}
                   onChange={handleInputChange}
                   placeholder="John Doe"
-                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30"
+                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30 transition-all duration-200 focus:scale-[1.03]"
                 />
-              </div>
+              </motion.div>
 
-              <div>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.15 }}
+              >
                 <Label htmlFor="email" className="text-gray-700 dark:text-gray-200 font-medium">Email *</Label>
                 <Input
                   id="email"
@@ -87,11 +108,15 @@ export default function JoinWaitlistPage() {
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="john@example.com"
-                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30"
+                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30 transition-all duration-200 focus:scale-[1.03]"
                 />
-              </div>
+              </motion.div>
 
-              <div>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
                 <Label htmlFor="phone" className="text-gray-700 dark:text-gray-200 font-medium">Phone Number</Label>
                 <Input
                   id="phone"
@@ -100,12 +125,16 @@ export default function JoinWaitlistPage() {
                   value={formData.phone}
                   onChange={handleInputChange}
                   placeholder="+1 (555) 123-4567"
-                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30"
+                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30 transition-all duration-200 focus:scale-[1.03]"
                 />
-              </div>
+              </motion.div>
 
-              <div>
-                <Label htmlFor="company_name" className="text-gray-700 dark:text-gray-200 font-medium">Company Name</Label>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.25 }}
+              >
+                <Label htmlFor="company_name" className="text-gray-700 dark:text-gray-200 font-medium">Agency Name</Label>
                 <Input
                   id="company_name"
                   name="company_name"
@@ -113,12 +142,16 @@ export default function JoinWaitlistPage() {
                   value={formData.company_name}
                   onChange={handleInputChange}
                   placeholder="Acme Inc."
-                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30"
+                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30 transition-all duration-200 focus:scale-[1.03]"
                 />
-              </div>
+              </motion.div>
 
-              <div>
-                <Label htmlFor="industry" className="text-gray-700 dark:text-gray-200 font-medium">Industry</Label>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <Label htmlFor="industry" className="text-gray-700 dark:text-gray-200 font-medium">Agency Niche</Label>
                 <Input
                   id="industry"
                   name="industry"
@@ -126,32 +159,59 @@ export default function JoinWaitlistPage() {
                   value={formData.industry}
                   onChange={handleInputChange}
                   placeholder="Restaurant, Retail, Healthcare, etc."
-                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30"
+                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30 transition-all duration-200 focus:scale-[1.03]"
                 />
-              </div>
+              </motion.div>
 
-              {error && (
-                <div className="flex items-center space-x-2 text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-200 dark:border-red-800">
-                  <AlertCircle className="h-4 w-4" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <Button 
-                type="submit" 
-                disabled={loading} 
-                className="w-full bg-gradient-to-r from-[var(--brand-primary-solid)] to-[var(--brand-secondary-solid)] hover:from-[var(--brand-primary-solid-hover)] hover:to-[var(--brand-secondary-solid-hover)] text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 border-0 focus:ring-4 focus:ring-[var(--brand-primary-solid)]/30"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Getting Early Access...
-                  </>
-                ) : (
-                  'Get Early Access'
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    className="flex items-center space-x-2 text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-200 dark:border-red-800"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{error}</span>
+                  </motion.div>
                 )}
-              </Button>
-            </form>
+              </AnimatePresence>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.35 }}
+              >
+                {/* Incentive section at bottom, now very small and inline with dots */}
+                <motion.div 
+                  className="flex flex-row items-center justify-center gap-1 text-xs text-gray-600 dark:text-gray-300 my-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.4, ease: 'easeOut' }}
+                >
+                  <span className="flex items-center gap-1"><span className="text-base">🎯</span>Personalized tailored to your content</span>
+                  <span className="mx-1 text-lg font-bold align-middle">·</span>
+                  <span className="flex items-center gap-1"><span className="text-base">⚡</span>Live Features See AI responses in action</span>
+                  <span className="mx-1 text-lg font-bold align-middle">·</span>
+                  <span className="flex items-center gap-1"><span className="text-base">💬</span>Ask Questions Get all your answers</span>
+                </motion.div>
+                <Button 
+                  type="submit" 
+                  disabled={loading} 
+                  className="w-full bg-gradient-to-r from-[var(--brand-primary-solid)] to-[var(--brand-secondary-solid)] hover:from-[var(--brand-primary-solid-hover)] hover:to-[var(--brand-secondary-solid-hover)] text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 border-0 focus:ring-4 focus:ring-[var(--brand-primary-solid)]/30"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Booking Demo...
+                    </>
+                  ) : (
+                    'Book Demo'
+                  )}
+                </Button>
+              </motion.div>
+            </motion.form>
           </CardContent>
         </Card>
       </div>
