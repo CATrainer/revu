@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import React from 'react';
-import { motion, LazyMotion, domAnimation, useInView } from "framer-motion";
+import { motion, LazyMotion, domAnimation, useInView } from 'framer-motion';
 import { FeaturesScrollNavigation } from '@/components/shared/FeaturesScrollNavigation';
 import { 
 } from 'lucide-react';
@@ -258,13 +258,13 @@ export default function FeaturesPage() {
                       </div>
                       <span className="text-xs text-gray-500">2m</span>
                     </div>
-                    <p className="text-xs text-gray-700 mb-1 border-l-2 border-gray-200 pl-2">"I love your content! When is your next tutorial coming out?"</p>
+                    <p className="text-xs text-gray-700 mb-1 border-l-2 border-gray-200 pl-2">&quot;I love your content! When is your next tutorial coming out?&quot;</p>
                     <div className="bg-blue-50 rounded p-1.5 border-l-2 border-blue-300">
                       <div className="flex items-center gap-1 mb-1">
                         <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                         <span className="text-xs font-medium text-blue-700">AI Response</span>
                       </div>
-                      <p className="text-xs text-gray-700">"Thanks for your support! 🙏 My next tutorial drops this Friday at 3pm EST. Turn on notifications so you don't miss it! 🔔"</p>
+                      <p className="text-xs text-gray-700">&quot;Thanks for your support! 🙏 My next tutorial drops this Friday at 3pm EST. Turn on notifications so you don&apos;t miss it! 🔔&quot;</p>
                     </div>
                   </div>
                   
@@ -278,7 +278,7 @@ export default function FeaturesPage() {
                       </div>
                       <span className="text-xs text-gray-500">8m</span>
                     </div>
-                    <p className="text-xs text-gray-700 mb-1 border-l-2 border-gray-200 pl-2">"What camera do you use for your stunning photos?"</p>
+                    <p className="text-xs text-gray-700 mb-1 border-l-2 border-gray-200 pl-2">&quot;What camera do you use for your stunning photos?&quot;</p>
                     <div className="bg-yellow-50 rounded p-1.5 border-l-2 border-yellow-300">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-1">
@@ -291,7 +291,7 @@ export default function FeaturesPage() {
                           <button className="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs px-1.5 rounded">✎</button>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-700">"I use a Sony Alpha a7III for most of my shots. I've listed all my gear in my profile link! 📸 #Photography"</p>
+                      <p className="text-xs text-gray-700">&quot;I use a Sony Alpha a7III for most of my shots. I&apos;ve listed all my gear in my profile link! 📸 #Photography&quot;</p>
                     </div>
                   </div>
                   
@@ -305,13 +305,13 @@ export default function FeaturesPage() {
                       </div>
                       <span className="text-xs text-gray-500">12m</span>
                     </div>
-                    <p className="text-xs text-gray-700 mb-1 border-l-2 border-gray-200 pl-2">"This routine is amazing! Can you do a tutorial?"</p>
+                    <p className="text-xs text-gray-700 mb-1 border-l-2 border-gray-200 pl-2">&quot;This routine is amazing! Can you do a tutorial?&quot;</p>
                     <div className="bg-blue-50 rounded p-1.5 border-l-2 border-blue-300">
                       <div className="flex items-center gap-1 mb-1">
                         <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                         <span className="text-xs font-medium text-blue-700">AI Response</span>
                       </div>
-                      <p className="text-xs text-gray-700">"Thank you! 💃 I'll be posting a step-by-step tutorial next week! Make sure to follow so you don't miss it!"</p>
+                      <p className="text-xs text-gray-700">&quot;Thank you! 💃 I&apos;ll be posting a step-by-step tutorial next week! Make sure to follow so you don&apos;t miss it!&quot;</p>
                     </div>
                   </div>
                 </div>
@@ -435,7 +435,7 @@ export default function FeaturesPage() {
                           </div>
                           <span className="text-xs text-gray-500">3m ago</span>
                         </div>
-                        <p className="text-xs text-gray-700 pl-7">Obsessed with @yourbrand's new collection! 😍 The designs are next level! #fashionfinds #musthave</p>
+                        <p className="text-xs text-gray-700 pl-7">Obsessed with @yourbrand&apos;s new collection! 😍 The designs are next level! #fashionfinds #musthave</p>
                         <div className="flex items-center gap-2 mt-1 pl-7">
                           <button className="bg-pink-100 hover:bg-pink-200 text-pink-700 text-xs px-2 py-0.5 rounded transition-colors">Reply</button>
                           <button className="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs px-2 py-0.5 rounded transition-colors">DM</button>
@@ -523,7 +523,7 @@ export default function FeaturesPage() {
                         </div>
                       </div>
                       <div className="px-2 py-1 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700 max-w-[120px]">
-                        <span className="font-medium">Insight:</span> Respond to @review_channel's comment soon to improve sentiment
+                        <span className="font-medium">Insight:</span> Respond to @review_channel&apos;s comment soon to improve sentiment
                       </div>
                     </div>
                   </div>
@@ -908,7 +908,7 @@ export default function FeaturesPage() {
                       <div className="flex items-start gap-2">
                         <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center text-white text-xs font-bold">AI</div>
                         <div className="flex-1 bg-purple-50 rounded-lg p-2 max-w-[85%]">
-                          <p className="text-xs text-gray-800">👋 Hello! I'm your Repruv AI assistant. I can help with content strategy, analyze your audience data, answer questions about your performance, and more. How can I assist you today?</p>
+                          <p className="text-xs text-gray-800">👋 Hello! I&apos;m your Repruv AI assistant. I can help with content strategy, analyze your audience data, answer questions about your performance, and more. How can I assist you today?</p>
                         </div>
                       </div>
                       
@@ -924,7 +924,7 @@ export default function FeaturesPage() {
                       <div className="flex items-start gap-2">
                         <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center text-white text-xs font-bold">AI</div>
                         <div className="flex-1 bg-purple-50 rounded-lg p-2 max-w-[85%]">
-                          <p className="text-xs text-gray-800 mb-2">📊 Based on your analytics, your most popular video from last month was <span className="font-medium">"10 Tips for Better Engagement"</span> with:</p>
+                          <p className="text-xs text-gray-800 mb-2">📊 Based on your analytics, your most popular video from last month was <span className="font-medium">&quot;10 Tips for Better Engagement&quot;</span> with:</p>
                           <div className="bg-white rounded-md p-1.5 border border-purple-100 mb-2">
                             <div className="grid grid-cols-2 gap-1.5 text-xs">
                               <div className="flex items-center gap-1">
@@ -965,7 +965,7 @@ export default function FeaturesPage() {
                           <div className="space-y-1.5 mb-2">
                             <div className="flex items-start gap-1.5">
                               <span className="text-purple-600 text-xs">1️⃣</span>
-                              <p className="text-xs text-gray-700"><span className="font-medium">Timing:</span> Posted on Thursday at 6pm - your audience's peak engagement time</p>
+                              <p className="text-xs text-gray-700"><span className="font-medium">Timing:</span> Posted on Thursday at 6pm - your audience&apos;s peak engagement time</p>
                             </div>
                             <div className="flex items-start gap-1.5">
                               <span className="text-purple-600 text-xs">2️⃣</span>
@@ -973,7 +973,7 @@ export default function FeaturesPage() {
                             </div>
                             <div className="flex items-start gap-1.5">
                               <span className="text-purple-600 text-xs">3️⃣</span>
-                              <p className="text-xs text-gray-700"><span className="font-medium">Topic:</span> Engagement strategies align with your audience's primary interest</p>
+                              <p className="text-xs text-gray-700"><span className="font-medium">Topic:</span> Engagement strategies align with your audience&apos;s primary interest</p>
                             </div>
                           </div>
                           <div className="bg-white rounded-md p-2 border border-purple-200">
