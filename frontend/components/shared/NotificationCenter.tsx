@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 import { pushToast } from '@/components/ui/toast';
+import SmartTooltip from '@/components/help/SmartTooltip';
+import LearnMoreInline from '@/components/help/LearnMoreInline';
 
 type QuickWin = {
   id: number;
@@ -12,6 +14,8 @@ type QuickWin = {
   suggestion_type?: string;
   predicted_savings_minutes_per_week?: number | null;
   require_approval?: boolean;
+  reasoning?: string;
+  examples?: string[];
 };
 
 type Summary = {
@@ -108,8 +112,27 @@ export default function NotificationCenter() {
         <div className="space-y-2">
           {summary?.quick_wins?.map((q) => (
             <div key={q.id} className="p-2 rounded border">
-              <div className="text-sm font-medium text-primary-dark">{q.title}</div>
+              <SmartTooltip
+                tipKey={`nc_${q.suggestion_type || 'suggestion'}_${q.rule_id || 'global'}_${q.id}`}
+                title="Why this suggestion"
+                reason={q.reasoning || 'Based on your recent results and patterns, this change is likely to improve performance.'}
+                examples={q.examples || []}
+              >
+                <div className="text-sm font-medium text-primary-dark cursor-help">{q.title}</div>
+              </SmartTooltip>
               <div className="text-xs text-secondary-dark mt-0.5">{q.description}</div>
+              <div className="mt-1">
+                <LearnMoreInline
+                  tipKey={`nc_learn_${q.suggestion_type || 'suggestion'}_${q.rule_id || 'global'}_${q.id}`}
+                  summary="Here’s how we estimated the impact and what will change if you apply this."
+                >
+                  <ul className="list-disc pl-5 text-xs space-y-1">
+                    <li>Predicted uplift is based on recent A/B results and model confidence.</li>
+                    <li>We’ll queue this in Approvals; you can revert any time.</li>
+                    <li>No downtime; current responses remain live until approved.</li>
+                  </ul>
+                </LearnMoreInline>
+              </div>
               {typeof q.predicted_savings_minutes_per_week === 'number' && (
                 <div className="mt-1 text-[11px] text-emerald-800 bg-emerald-50 inline-block rounded px-2 py-0.5 border border-emerald-200">
                   Could save ~{q.predicted_savings_minutes_per_week} min/week

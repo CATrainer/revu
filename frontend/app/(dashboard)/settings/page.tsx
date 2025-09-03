@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { useStore } from '@/lib/store';
 import type { Review } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
+import IntelligenceSettingsPanel from '@/components/intelligence/IntelligenceSettingsPanel';
 
-const tabs = ['Account','Workspace','Team','Integrations','AI Training','Automations','Billing','API','Notifications'] as const;
+const tabs = ['Account','Workspace','Team','Integrations','AI Training','Automations','Intelligence','Billing','API','Notifications'] as const;
 
 export default function SettingsPage() {
   const [tab, setTab] = useState<typeof tabs[number]>('Account');
@@ -45,6 +46,7 @@ export default function SettingsPage() {
           {tab === 'Billing' && <BillingSection />}
           {tab === 'API' && <APISection />}
           {tab === 'Notifications' && <NotificationsSection />}
+          {tab === 'Intelligence' && <IntelligenceSection />}
         </CardContent>
       </Card>
     </div>
@@ -539,6 +541,18 @@ function APISection() {
           }}>Add webhook</Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function IntelligenceSection() {
+  const { intelligenceSettings } = useStore();
+  const conservative = intelligenceSettings.suggestionsSensitivity === 'conservative';
+  const impact = conservative ? 'Conservative: Fewer but higher-confidence suggestions' : intelligenceSettings.suggestionsSensitivity === 'balanced' ? 'Balanced: Mix of safety and speed' : 'Aggressive: More suggestions, lower threshold';
+  return (
+    <div className="space-y-4">
+      <div className="text-sm text-secondary-dark">{impact}</div>
+      <IntelligenceSettingsPanel />
     </div>
   );
 }

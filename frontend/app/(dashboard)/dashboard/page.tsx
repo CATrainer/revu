@@ -2,15 +2,18 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
+import AutomationImpactWidget from '@/components/intelligence/AutomationImpactWidget';
 import ConnectButton from '@/components/youtube/ConnectButton';
 
 export default function DashboardPage() {
   return (
     <div className="space-y-8">
-      <div>
+  <div>
         <h1 className="text-2xl font-bold text-primary-dark">Home</h1>
         <p className="mt-2 text-secondary-dark">Connect your social accounts to get started.</p>
       </div>
+  {/* Impact summary */}
+  <AutomationImpactWidget />
   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="dashboard-card hover-raise card-hover elevated">
           <CardHeader>

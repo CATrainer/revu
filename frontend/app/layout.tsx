@@ -3,6 +3,7 @@ import './globals.css';
 import { ThemeProvider } from '@/lib/theme';
 import { Toaster } from '@/components/ui/toast';
 import QueryProvider from '@/contexts/QueryProvider';
+import HelpProvider from '@/components/help/HelpProvider';
 
 export const metadata: Metadata = {
 
@@ -31,7 +32,9 @@ export default function RootLayout({
       <body className="font-sans">
         <ThemeProvider>
           <QueryProvider>
-            {children}
+            <HelpProvider>
+              {children}
+            </HelpProvider>
             <Toaster />
           </QueryProvider>
         </ThemeProvider>

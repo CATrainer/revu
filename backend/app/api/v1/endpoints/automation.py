@@ -1587,6 +1587,7 @@ async def get_notification_prefs(*, db: AsyncSession = Depends(get_async_session
             CREATE TABLE IF NOT EXISTS notification_prefs (
                 user_id TEXT PRIMARY KEY,
                 weekly_digest_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+                help_tips_enabled BOOLEAN NOT NULL DEFAULT TRUE,
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
             );
             """
@@ -1597,29 +1598,71 @@ async def get_notification_prefs(*, db: AsyncSession = Depends(get_async_session
             await db.rollback()
         except Exception:
             pass
-    row = (await db.execute(text("SELECT weekly_digest_enabled FROM notification_prefs WHERE user_id = :uid"), {"uid": str(current_user.id)})).first()
+    try:
+        row = (await db.execute(text("SELECT weekly_digest_enabled, help_tips_enabled FROM notification_prefs WHERE user_id = :uid"), {"uid": str(current_user.id)})).first()
+    except Exception:
+        row = None
     weekly = bool(row[0]) if row and row[0] is not None else False
-    return {"weekly_digest_opt_in": weekly}
+    tips = True if (not row or row[1] is None) else bool(row[1])
+    return {"weekly_digest_opt_in": weekly, "help_tips_enabled": tips}
 
 
 @router.post("/notifications/prefs")
 async def set_notification_prefs(*, db: AsyncSession = Depends(get_async_session), current_user: User = Depends(get_current_active_user), payload: Dict[str, Any]):
     weekly = bool(payload.get("weekly_digest_opt_in") is True)
+    tips = True if payload.get("help_tips_enabled") is None else bool(payload.get("help_tips_enabled") is True)
     try:
         await db.execute(text(
             """
-            INSERT INTO notification_prefs (user_id, weekly_digest_enabled, updated_at)
-            VALUES (:uid, :w, now())
-            ON CONFLICT (user_id) DO UPDATE SET weekly_digest_enabled = EXCLUDED.weekly_digest_enabled, updated_at = now()
+            INSERT INTO notification_prefs (user_id, weekly_digest_enabled, help_tips_enabled, updated_at)
+            VALUES (:uid, :w, :t, now())
+            ON CONFLICT (user_id) DO UPDATE SET weekly_digest_enabled = EXCLUDED.weekly_digest_enabled, help_tips_enabled = EXCLUDED.help_tips_enabled, updated_at = now()
             """
-        ), {"uid": str(current_user.id), "w": weekly})
+        ), {"uid": str(current_user.id), "w": weekly, "t": tips})
         await db.commit()
     except Exception:
         try:
             await db.rollback()
         except Exception:
             pass
-    return {"weekly_digest_opt_in": weekly}
+    return {"weekly_digest_opt_in": weekly, "help_tips_enabled": tips}
+
+
+@router.post("/help/events")
+async def track_help_event(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+):
+    """Track help/tip interactions. Payload: { tip_key: str, action: 'viewed'|'helpful'|'dismissed'|'learn_more', meta?: json }"""
+    tip_key = (payload.get("tip_key") or "").strip()
+    action = (payload.get("action") or "").strip().lower()
+    if not tip_key or action not in {"viewed", "helpful", "dismissed", "learn_more"}:
+        raise HTTPException(status_code=400, detail="invalid_event")
+    try:
+        await db.execute(text(
+            """
+            CREATE TABLE IF NOT EXISTS help_events (
+                id BIGSERIAL PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                tip_key TEXT NOT NULL,
+                action TEXT NOT NULL,
+                meta JSONB NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            );
+            """
+        ))
+        await db.execute(text(
+            "INSERT INTO help_events (user_id, tip_key, action, meta) VALUES (:u, :k, :a, :m::jsonb)"
+        ), {"u": str(current_user.id), "k": tip_key, "a": action, "m": json.dumps(payload.get("meta") or {})})
+        await db.commit()
+    except Exception:
+        try:
+            await db.rollback()
+        except Exception:
+            pass
+    return {"ok": True}
 
 
 @router.get("/notifications/digest-preview")
@@ -3144,3 +3187,117 @@ async def ab_test_toggle_auto_optimize(
     await db.execute(text("UPDATE automation_rules SET action = :act::jsonb, updated_at = now() WHERE id = :rid"), {"act": json.dumps(action), "rid": rule_id})
     await db.commit()
     return {"enabled": enabled}
+
+
+# ---------------- Impact & ROI (daily-updating summary) ----------------
+
+@router.get("/impact/summary")
+async def impact_summary(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    days: int = 30,
+):
+    """Summarize impact of smart features over a window and previous window.
+
+    Notes:
+    - Uses daily-friendly aggregates; NOT real-time.
+    - Response time proxy uses approval_queue average approval time.
+    - Engagement is the avg `engagement` from rule_response_metrics.
+    - ROI: time saved vs API costs using simple constants.
+    """
+    try:
+        days = max(7, min(180, int(days)))
+    except Exception:
+        days = 30
+
+    # helper fragments
+    w = "(:d || ' days')::interval"
+    params = {"d": days}
+
+    # Automated responses counts (current window)
+    cur_auto = int((await db.execute(text(
+        "SELECT COUNT(1) FROM rule_response_metrics WHERE is_automated = TRUE AND created_at >= now() - " + w
+    ), params)).scalar() or 0)
+    # Previous window (same length immediately before)
+    prev_auto = int((await db.execute(text(
+        "SELECT COUNT(1) FROM rule_response_metrics WHERE is_automated = TRUE AND created_at < now() - " + w + " AND created_at >= now() - (" + w + " * 2)"
+    ), params)).scalar() or 0)
+
+    # Avg engagement (current vs previous)
+    cur_eng = float((await db.execute(text(
+        "SELECT AVG(COALESCE((engagement_metrics->>'engagement')::float,0.0)) FROM rule_response_metrics WHERE is_automated = TRUE AND created_at >= now() - " + w
+    ), params)).scalar() or 0.0)
+    prev_eng = float((await db.execute(text(
+        "SELECT AVG(COALESCE((engagement_metrics->>'engagement')::float,0.0)) FROM rule_response_metrics WHERE is_automated = TRUE AND created_at < now() - " + w + " AND created_at >= now() - (" + w + " * 2)"
+    ), params)).scalar() or 0.0)
+    eng_change_pct = 0.0 if prev_eng <= 0 else ((cur_eng - prev_eng) / prev_eng) * 100.0
+
+    # Avg approval time (seconds) current vs previous
+    cur_resp_seconds = float((await db.execute(text(
+        """
+        SELECT EXTRACT(EPOCH FROM AVG(approved_at - created_at))
+        FROM approval_queue
+        WHERE status IN ('approved','auto_approved') AND approved_at IS NOT NULL
+          AND created_at >= now() - """ + w
+    ), params)).scalar() or 0.0)
+    prev_resp_seconds = float((await db.execute(text(
+        """
+        SELECT EXTRACT(EPOCH FROM AVG(approved_at - created_at))
+        FROM approval_queue
+        WHERE status IN ('approved','auto_approved') AND approved_at IS NOT NULL
+          AND created_at < now() - """ + w + " AND created_at >= now() - (" + w + " * 2)"
+    ), params)).scalar() or 0.0)
+    response_time_improvement_pct = 0.0
+    if prev_resp_seconds > 0 and cur_resp_seconds > 0:
+        response_time_improvement_pct = ((prev_resp_seconds - cur_resp_seconds) / prev_resp_seconds) * 100.0
+
+    # ROI: time saved vs API costs (simple constants)
+    seconds_per_manual = 45
+    hourly_rate = 30.0
+    cost_per_response = 0.005
+    time_saved_seconds = cur_auto * seconds_per_manual
+    time_value_usd = (time_saved_seconds / 3600.0) * hourly_rate
+    api_cost_usd = cur_auto * cost_per_response
+    cost_savings_usd = max(0.0, time_value_usd - api_cost_usd)
+
+    # Health score: composite of approval_rate, engagement trend, automation trend
+    appr_total_cur = int((await db.execute(text("SELECT COUNT(1) FROM approval_queue WHERE created_at >= now() - " + w), params)).scalar() or 0)
+    appr_approved_cur = int((await db.execute(text("SELECT COUNT(1) FROM approval_queue WHERE created_at >= now() - " + w + " AND status IN ('approved','auto_approved')"), params)).scalar() or 0)
+    approval_rate = (appr_total_cur and (appr_approved_cur / appr_total_cur)) or 0.0
+    auto_trend = 0.0 if prev_auto <= 0 else (cur_auto - prev_auto) / prev_auto
+    eng_trend = 0.0 if prev_eng <= 0 else (cur_eng - prev_eng) / prev_eng
+    health_score = int(max(0.0, min(1.0, 0.4 * approval_rate + 0.3 * (1.0 + eng_trend) / 2 + 0.3 * (1.0 + auto_trend) / 2)) * 100)
+
+    # Milestones
+    total_auto_all_time = int((await db.execute(text("SELECT COUNT(1) FROM rule_response_metrics WHERE is_automated = TRUE"))).scalar() or 0)
+    milestones: List[str] = []
+    if total_auto_all_time >= 1000 and (total_auto_all_time - cur_auto) < 1000:
+        milestones.append("🎉 1000th automated response!")
+
+    trends = {
+        "automated_count": {"current": cur_auto, "previous": prev_auto, "delta": cur_auto - prev_auto},
+        "engagement_avg": {"current": round(cur_eng, 4), "previous": round(prev_eng, 4), "delta": round(cur_eng - prev_eng, 4)},
+        "approval_time_seconds": {"current": int(cur_resp_seconds), "previous": int(prev_resp_seconds), "delta": int(cur_resp_seconds - prev_resp_seconds)},
+    }
+
+    from datetime import datetime as _dt
+    return {
+        "window_days": days,
+        "last_updated": _dt.utcnow().isoformat() + "Z",
+        "metrics": {
+            "response_time_improvement_pct": round(response_time_improvement_pct, 2),
+            "cost_savings_usd": round(cost_savings_usd, 2),
+            "time_saved_seconds": int(time_saved_seconds),
+            "automated_count": cur_auto,
+            "engagement_change_pct": round(eng_change_pct, 2),
+            "roi": {
+                "time_value_usd": round(time_value_usd, 2),
+                "api_cost_usd": round(api_cost_usd, 2),
+                "roi_usd": round(cost_savings_usd, 2),
+            },
+            "health_score": health_score,
+            "trends": trends,
+            "milestones": milestones,
+        },
+    }

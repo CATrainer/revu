@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useStore } from '@/lib/store';
 import NotificationCenter from '@/components/shared/NotificationCenter';
+import Glossary from '@/components/help/Glossary';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -184,6 +185,9 @@ export function Header({ onMenuClick }: HeaderProps) {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Help / Glossary */}
+            <div className="hidden md:block"><Glossary /></div>
+
             <ThemeToggle />
 
             {/* User Menu */}
@@ -221,6 +225,9 @@ export function Header({ onMenuClick }: HeaderProps) {
                 </DropdownMenuItem>
                 <DropdownMenuItem className="hover-background" onClick={() => router.push('/settings')}>
                   <span className="text-primary-dark">Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="hover-background md:hidden" onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); }}>
+                  <div className="w-full"><Glossary /></div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[var(--border)]" />
                 <DropdownMenuItem 
