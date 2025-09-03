@@ -9,10 +9,11 @@ import { api } from '@/lib/api';
 import Link from 'next/link';
 import RulesList from '@/components/automation/RulesList';
 import RuleBuilder from '@/components/automation/RuleBuilder';
-import PrepareUpload from '@/components/automation/PrepareUpload';
+import PrepareUpload from '../../../components/automation/PrepareUpload';
 import AutomationNav from '@/components/automation/AutomationNav';
 import TemplateManager from '@/components/automation/TemplateManager';
 import ABTestDashboard from '@/components/automation/ABTestDashboard';
+import SafetyHealthPanel from '@/components/automation/SafetyHealthPanel';
 import LearningDashboard from '@/components/automation/LearningDashboard';
 import { useSearchParams } from 'next/navigation';
 
@@ -86,9 +87,9 @@ export default function AutomationPage() {
   const interval = polling?.polling_interval_minutes ?? 15;
 
   // Tab state
-  type Tab = 'Active Rules' | 'Prepare' | 'Create Rule' | 'Templates' | 'A/B Tests' | 'Learning' | 'Approval Queue' | 'Analytics';
+  type Tab = 'Active Rules' | 'Prepare' | 'Create Rule' | 'Templates' | 'A/B Tests' | 'Learning' | 'Approval Queue' | 'Analytics' | 'Safety & Health';
   const tabParam = (search.get('tab') || '').toLowerCase();
-  const tabFromUrl: Tab = tabParam === 'prepare' ? 'Prepare' : tabParam === 'create' ? 'Create Rule' : tabParam === 'analytics' ? 'Analytics' : tabParam === 'templates' ? 'Templates' : tabParam === 'ab' ? 'A/B Tests' : tabParam === 'learning' ? 'Learning' : 'Active Rules';
+  const tabFromUrl: Tab = tabParam === 'prepare' ? 'Prepare' : tabParam === 'create' ? 'Create Rule' : tabParam === 'analytics' ? 'Analytics' : tabParam === 'templates' ? 'Templates' : tabParam === 'ab' ? 'A/B Tests' : tabParam === 'learning' ? 'Learning' : tabParam === 'safety' ? 'Safety & Health' : 'Active Rules';
   const [tab, setTab] = useState<Tab>(tabFromUrl);
 
   useEffect(() => {
@@ -238,6 +239,17 @@ export default function AutomationPage() {
           </CardHeader>
           <CardContent>
             <div className="text-sm">See more in <Link href="/dashboard/analytics" className="underline">Analytics</Link>. Automation usage and LLM costs are tracked under Analytics → Usage.</div>
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === 'Safety & Health' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Safety & Health</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SafetyHealthPanel />
           </CardContent>
         </Card>
       )}

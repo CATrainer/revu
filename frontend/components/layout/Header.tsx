@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Bell, Menu, Search, X } from 'lucide-react';
+import { PauseCircle, PlayCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -34,6 +35,8 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAlertBanner, setShowAlertBanner] = useState(false);
+  const [systemStatus, setSystemStatus] = useState<{status: 'active'|'paused'; paused_until?: string|null}>({status: 'active'});
+  const [pauseLoading, setPauseLoading] = useState(false);
   const personaLabel = user?.user_kind === 'business' ? 'Business' : 'Content';
   const personaColor = user?.user_kind === 'business'
     ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
@@ -79,8 +82,58 @@ export function Header({ onMenuClick }: HeaderProps) {
     }
   }, [alertHistory.length]);
 
+  useEffect(() => {
+  const fetchStatus = async () => {
+      try {
+    const res = await fetch('/api/v1/system/status');
+        if (res.ok) {
+          const data = await res.json();
+          setSystemStatus({ status: data.status, paused_until: data.paused_until });
+        }
+      } catch {}
+    };
+    fetchStatus();
+  const id = setInterval(fetchStatus, 15000);
+  return () => { clearInterval(id); };
+  }, []);
+
+  const pauseAll = async (minutes = 60) => {
+    if (!confirm(`Pause all automation for ${minutes} minutes?`)) return;
+    setPauseLoading(true);
+    try {
+  const res = await fetch('/api/v1/system/pause', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ duration_minutes: minutes, reason: 'user_pause_from_header' })});
+      if (res.ok) {
+        const data = await res.json();
+        setSystemStatus({ status: 'paused', paused_until: data.paused_until });
+      }
+    } finally {
+      setPauseLoading(false);
+    }
+  };
+
+  const resumeAll = async () => {
+    if (!confirm('Resume automation now?')) return;
+    setPauseLoading(true);
+    try {
+  const res = await fetch('/api/v1/system/resume', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: 'user_resume_from_header' })});
+      if (res.ok) {
+        setSystemStatus({ status: 'active' });
+      }
+    } finally {
+      setPauseLoading(false);
+    }
+  };
+
   return (
   <header className="nav-background soft-shadow elevated">
+      {(systemStatus.status === 'paused') && (
+        <div className="px-4 sm:px-6 lg:px-8 py-2 bg-rose-50 border-b border-[var(--border)] flex items-center justify-between">
+          <div className="text-sm text-primary-dark">⛔ Automation paused {systemStatus.paused_until ? `until ${new Date(systemStatus.paused_until).toLocaleString()}` : '(manual)'}.</div>
+          <div className="flex items-center gap-2">
+            <button className="text-xs underline" disabled={pauseLoading} onClick={resumeAll}>Resume now</button>
+          </div>
+        </div>
+      )}
       {showAlertBanner && alertHistory[0] && (
         <div className="px-4 sm:px-6 lg:px-8 py-2 bg-amber-50 border-b border-[var(--border)] flex items-center justify-between">
           <div className="text-sm text-primary-dark">⚠️ {alertHistory[0].title}: <span className="text-secondary-dark">{alertHistory[0].message}</span></div>
@@ -116,6 +169,18 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Emergency Controls */}
+            <div className="hidden md:flex items-center gap-2 mr-2">
+              {systemStatus.status === 'active' ? (
+                <Button size="sm" variant="destructive" className="bg-rose-600 hover:bg-rose-700" disabled={pauseLoading} onClick={() => pauseAll(60)} title="Pause all automation for 1 hour">
+                  <PauseCircle className="h-4 w-4 mr-1" /> Pause all
+                </Button>
+              ) : (
+                <Button size="sm" variant="default" disabled={pauseLoading} onClick={resumeAll} title="Resume all automation">
+                  <PlayCircle className="h-4 w-4 mr-1" /> Resume
+                </Button>
+              )}
+            </div>
             {/* Persona badge */}
             <span
               title={`Persona: ${personaLabel}`}

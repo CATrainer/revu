@@ -15,6 +15,7 @@ from app.core.config import settings
 from app.services.polling_service import PollingService
 from app.services.automation_engine import AutomationEngine, Comment as AutoComment
 from sqlalchemy import text
+from app.services import system_state
 
 
 async def _poll_once() -> int:
@@ -112,6 +113,13 @@ async def run_automation_cycle(interval_seconds: int = 300, stop_event: Optional
 
             async for session in get_async_session():
                 try:
+                    # Skip automation actions when paused
+                    try:
+                        if await system_state.is_paused(session):
+                            logger.warning("Automation paused; sleeping interval")
+                            break
+                    except Exception:
+                        pass
                     # Fetch channels that have any enabled automation rules
                     res = await session.execute(
                         text(
@@ -248,6 +256,13 @@ async def cleanup_stale_comments(interval_seconds: int = 600, stop_event: Option
 
             async for session in get_async_session():
                 try:
+                    # Cleanup can run while paused (housekeeping), but avoid generating new responses via internal calls when paused
+                    try:
+                        if await system_state.is_paused(session):
+                            logger.info("Cleanup loop: system paused; skipping processing stale items this cycle")
+                            break
+                    except Exception:
+                        pass
                     # Quick existence check to avoid extra work when empty
                     res = await session.execute(text("SELECT COUNT(1) FROM comments_queue WHERE status = 'pending'"))
                     total_pending = int(res.scalar() or 0)

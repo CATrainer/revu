@@ -9,6 +9,7 @@ import IntelligenceSettingsPanel from './IntelligenceSettingsPanel';
 import SmartTooltip from '@/components/help/SmartTooltip';
 import LearnMoreInline from '@/components/help/LearnMoreInline';
 import AutomationImpactWidget from '@/components/intelligence/AutomationImpactWidget';
+import ResponseDiversityPanel from '@/components/intelligence/ResponseDiversityPanel';
 
 type Suggestion = { id: number; title: string; description: string; suggestion_type?: string; rule_id?: string | null; reasoning?: string; examples?: string[] };
 type Prediction = { label: string; value: string | number; priority?: number };
@@ -159,6 +160,9 @@ export default function IntelligenceHub() {
 
   {/* Daily impact summary */}
   <AutomationImpactWidget />
+
+  {/* Response diversity tracking */}
+  <ResponseDiversityPanel />
 
       {/* Priority ordered snapshot (top insights) */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">

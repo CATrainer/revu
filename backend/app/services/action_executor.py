@@ -15,6 +15,7 @@ from app.services.safety_validator import schedule_safety_check, evaluate_delete
 from app.services.template_engine import TemplateEngine
 from app.services.ab_testing import ABTestingService
 from app.services.youtube_service import YouTubeService
+from app.services import system_state
 
 
 @dataclass
@@ -136,6 +137,13 @@ class ActionExecutor:
         ex: ExecContext,
         context: Dict[str, Any],
     ) -> bool:
+        # Global pause guard
+        try:
+            if await system_state.is_paused(db):
+                logger.warning("System paused; skipping respond for {}", ex.comment_id)
+                return False
+        except Exception:
+            pass
         start_ms = time.time() * 1000
         if not await self._allow(ex.channel_id, db=db):
             logger.warning("Rate limited; skipping respond for {}", ex.comment_id)
@@ -208,6 +216,12 @@ class ActionExecutor:
     # 2) delete comment via YouTube API (gated by AI delete criteria)
     async def execute_delete(self, db: AsyncSession, *, rule: Dict[str, Any], ex: ExecContext) -> bool:
         start_ms = time.time() * 1000
+        try:
+            if await system_state.is_paused(db):
+                logger.warning("System paused; skipping delete for {}", ex.comment_id)
+                return False
+        except Exception:
+            pass
         if not await self._allow(ex.channel_id, db=db, per_minute=15):
             logger.warning("Rate limited; skipping delete for {}", ex.comment_id)
             return False
@@ -269,6 +283,12 @@ class ActionExecutor:
     # 3) flag for manual review
     async def execute_flag(self, db: AsyncSession, *, rule: Dict[str, Any], ex: ExecContext) -> bool:
         start_ms = time.time() * 1000
+        try:
+            if await system_state.is_paused(db):
+                logger.info("System paused; marking needs_review without further action for {}", ex.comment_id)
+                # Still mark needs_review so humans can act
+        except Exception:
+            pass
         if not await self._allow(ex.channel_id, db=db, per_minute=60):
             return False
         await self._human_delay(base_min=0.5, base_max=1.5)

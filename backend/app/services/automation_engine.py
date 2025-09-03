@@ -23,6 +23,7 @@ from uuid import UUID
 from loguru import logger
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.services import system_state
 
 
 @dataclass
@@ -167,6 +168,12 @@ class AutomationEngine:
 
         Returns the count of actions executed.
         """
+        # Global pause guard
+        try:
+            if await system_state.is_paused(self.session):
+                return 0
+        except Exception:
+            pass
         rules = await self.get_active_rules(channel_id)
         if not rules:
             return 0

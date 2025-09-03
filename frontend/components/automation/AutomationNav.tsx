@@ -17,6 +17,7 @@ export default function AutomationNav() {
   { key: 'learning', label: 'Learning', href: '/automation?tab=learning' },
   { key: 'approvals', label: 'Approval Queue', href: '/automation/approvals' },
   { key: 'analytics', label: 'Analytics', href: '/automation?tab=analytics' },
+  { key: 'safety', label: 'Safety & Health', href: '/automation?tab=safety' },
   ] as const;
 
   const activeKey = isApprovals ? 'approvals' : (
@@ -26,6 +27,7 @@ export default function AutomationNav() {
     : tab === 'templates' ? 'templates'
     : tab === 'ab' ? 'ab'
     : tab === 'learning' ? 'learning'
+  : tab === 'safety' ? 'safety'
     : 'rules'
   );
 

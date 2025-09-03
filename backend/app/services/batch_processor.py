@@ -28,6 +28,7 @@ from app.core.config import settings
 from app.utils.reliability import async_retry
 from sqlalchemy import text as sql_text
 from app.utils import debug_log
+from app.services import system_state
 
 
 @dataclass
@@ -249,6 +250,13 @@ class BatchProcessor:
         """Call the batch-generate endpoint for up to 5 items and return results."""
         if not items:
             return []
+        # Global pause guard
+        try:
+            if await system_state.is_paused(self.session):
+                logger.warning("System paused; skipping batch of {} items", len(items))
+                return [{"comment_id": it.comment_id, "error": "paused"} for it in items]
+        except Exception:
+            pass
         ids = [it.comment_id for it in items][:5]
 
         # Use the local app endpoint; in-process call would be nicer but we avoid tight coupling.

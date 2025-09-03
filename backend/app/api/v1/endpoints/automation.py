@@ -11,6 +11,7 @@ from app.models.user import User
 from app.services.nl_rule_parser import NaturalLanguageRuleParser, COMMON_PATTERNS
 from app.services.approval_queue import ApprovalQueueService
 from app.services.template_engine import TemplateEngine
+from app.services.claude_service import ClaudeService
 from app.services.ab_testing import ABTestingService
 from app.services.rule_scheduler import RuleScheduler
 from app.services.automation_learning import AutomationLearningService
@@ -23,6 +24,7 @@ from app.services.ab_monitor import ABTestMonitorService
 router = APIRouter()
 
 template_engine = TemplateEngine()
+claude = ClaudeService()
 ab_service = ABTestingService()
 rule_scheduler = RuleScheduler()
 learning_service = AutomationLearningService()
@@ -3301,3 +3303,515 @@ async def impact_summary(
             "milestones": milestones,
         },
     }
+
+
+# ---------------- Safety & Health ----------------
+
+def _range_to_interval(range_str: Optional[str]) -> Tuple[str, str]:
+    """Map a friendly range string to a Postgres interval and a label.
+
+    Accepted: '24h' | '7d' | '30d' (default '7d')
+    """
+    r = (range_str or "7d").lower().strip()
+    if r in ("24h", "1d", "day"):  # treat 24h as 1 day window
+        return "'1 day'::interval", "24h"
+    if r in ("30d", "month", "30days"):
+        return "'30 days'::interval", "30d"
+    # default 7d
+    return "'7 days'::interval", "7d"
+
+
+@router.get("/safety/summary")
+async def safety_summary(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    range: Optional[str] = None,
+):
+    """Summarize Safety & Health metrics over a time window.
+
+    Returns aggregate metrics plus simple by-day series for charting.
+    """
+    interval_sql, range_label = _range_to_interval(range)
+
+    # Safety checks pass rate (from ai_responses)
+    total_checks = int((await db.execute(text(
+        f"""
+        SELECT COUNT(1)
+        FROM ai_responses ar
+        WHERE ar.safety_checked_at IS NOT NULL
+          AND ar.safety_checked_at >= now() - {interval_sql}
+        """
+    ))).scalar() or 0)
+    passed_checks = int((await db.execute(text(
+        f"""
+        SELECT COUNT(1)
+        FROM ai_responses ar
+        WHERE ar.safety_checked_at IS NOT NULL AND ar.passed_safety = TRUE
+          AND ar.safety_checked_at >= now() - {interval_sql}
+        """
+    ))).scalar() or 0)
+
+    safety_pass_rate = (passed_checks / total_checks) if total_checks else 1.0
+
+    # Spam blocked: comments_queue items marked ignored in window
+    spam_blocked = int((await db.execute(text(
+        f"""
+        SELECT COUNT(1)
+        FROM comments_queue cq
+        WHERE cq.status = 'ignored' AND cq.updated_at >= now() - {interval_sql}
+        """
+    ))).scalar() or 0)
+
+    # Blacklist blocks: items flagged or ignored due to link-like content (heuristic)
+    blacklist_blocks = int((await db.execute(text(
+        f"""
+        SELECT COUNT(1)
+        FROM comments_queue cq
+        WHERE cq.updated_at >= now() - {interval_sql}
+          AND cq.status IN ('ignored','needs_review')
+          AND (
+            LOWER(COALESCE(cq.content,'')) LIKE '%http%'
+            OR LOWER(COALESCE(cq.content,'')) LIKE '%www.%'
+            OR LOWER(COALESCE(cq.content,'')) LIKE '%bit.ly%'
+            OR LOWER(COALESCE(cq.content,'')) LIKE '%discord.gg%'
+          )
+        """
+    ))).scalar() or 0)
+
+    # Response diversity: unique responses / total responses in window (ai_responses created)
+    total_responses = int((await db.execute(text(
+        f"SELECT COUNT(1) FROM ai_responses ar WHERE ar.created_at >= now() - {interval_sql}"
+    ))).scalar() or 0)
+    unique_responses = int((await db.execute(text(
+        f"""
+        SELECT COUNT(1) FROM (
+          SELECT DISTINCT TRIM(LOWER(COALESCE(ar.response_text,''))) AS t
+          FROM ai_responses ar
+          WHERE ar.created_at >= now() - {interval_sql}
+        ) x WHERE x.t <> ''
+        """
+    ))).scalar() or 0)
+    response_diversity_pct = (unique_responses / total_responses) * 100.0 if total_responses else 100.0
+
+    # Duplicates prevented (proxy): repeated identical comments in youtube_comments (same video) beyond first.
+    dup_prevented = int((await db.execute(text(
+        f"""
+        SELECT COALESCE(SUM(cnt - 1), 0)
+        FROM (
+          SELECT COUNT(*) AS cnt
+          FROM youtube_comments yc
+          WHERE yc.published_at IS NOT NULL AND yc.published_at >= now() - {interval_sql}
+          GROUP BY yc.video_id, LOWER(COALESCE(yc.text_display,''))
+          HAVING COUNT(*) > 1
+        ) d
+        """
+    ))).scalar() or 0)
+
+    # Health score (0-100): 0.6 * safety_pass_rate + 0.4 * response_diversity
+    health_score = int(max(0.0, min(1.0, 0.6 * safety_pass_rate + 0.4 * (response_diversity_pct / 100.0))) * 100)
+
+    # Build simple by-day series for trends
+    by_day_rows = (await db.execute(text(
+        f"""
+        WITH days AS (
+          SELECT dd::date AS d
+          FROM generate_series((now() - {interval_sql})::date, now()::date, '1 day') dd
+        ),
+        cq_agg AS (
+          SELECT created_at::date AS d,
+                 COUNT(*) FILTER (WHERE status = 'ignored') AS spam_ignored,
+                 COUNT(*) FILTER (WHERE status IN ('ignored','needs_review') AND (
+                    LOWER(COALESCE(content,'')) LIKE '%http%'
+                    OR LOWER(COALESCE(content,'')) LIKE '%www.%'
+                    OR LOWER(COALESCE(content,'')) LIKE '%bit.ly%'
+                    OR LOWER(COALESCE(content,'')) LIKE '%discord.gg%'
+                 )) AS blacklist_hits
+          FROM comments_queue
+          WHERE created_at >= now() - {interval_sql}
+          GROUP BY 1
+        ),
+        ar_agg AS (
+          SELECT created_at::date AS d,
+                 COUNT(*) AS responses,
+                 COUNT(*) FILTER (WHERE safety_checked_at IS NOT NULL) AS safety_checks,
+                 COUNT(*) FILTER (WHERE safety_checked_at IS NOT NULL AND passed_safety = TRUE) AS safety_passed,
+                 COUNT(DISTINCT TRIM(LOWER(COALESCE(response_text,'')))) FILTER (WHERE TRIM(LOWER(COALESCE(response_text,''))) <> '') AS unique_responses
+          FROM ai_responses
+          WHERE created_at >= now() - {interval_sql}
+          GROUP BY 1
+        )
+        SELECT d.d::text,
+               COALESCE(cq_agg.spam_ignored, 0) AS spam_blocked,
+               COALESCE(cq_agg.blacklist_hits, 0) AS blacklist_blocks,
+               COALESCE(ar_agg.responses, 0) AS responses,
+               COALESCE(ar_agg.unique_responses, 0) AS unique_responses,
+               COALESCE(ar_agg.safety_checks, 0) AS safety_checks,
+               COALESCE(ar_agg.safety_passed, 0) AS safety_passed
+        FROM days d
+        LEFT JOIN cq_agg ON cq_agg.d = d.d
+        LEFT JOIN ar_agg ON ar_agg.d = d.d
+        ORDER BY d.d ASC
+        """
+    ))).mappings().all()
+
+    return {
+        "range": range_label,
+        "window_start": None,
+        "health_score": health_score,
+        "metrics": {
+            "safety_pass_rate_pct": round(safety_pass_rate * 100.0, 2),
+            "spam_blocked": spam_blocked,
+            "blacklist_blocks": blacklist_blocks,
+            "duplicates_prevented": dup_prevented,
+            "response_diversity_pct": round(response_diversity_pct, 2),
+        },
+        "series": {
+            "by_day": [
+                {
+                    "date": str(r["d"]),
+                    "spam_blocked": int(r["spam_blocked"] or 0),
+                    "blacklist_blocks": int(r["blacklist_blocks"] or 0),
+                    "responses": int(r["responses"] or 0),
+                    "unique_responses": int(r["unique_responses"] or 0),
+                    "safety_checks": int(r["safety_checks"] or 0),
+                    "safety_passed": int(r["safety_passed"] or 0),
+                }
+                for r in by_day_rows
+            ]
+        },
+    }
+
+
+@router.get("/safety/logs")
+async def safety_logs(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    range: Optional[str] = None,
+    limit: int = 100,
+):
+    """Return recent safety-related actions and checks for the selected window.
+
+    Combines:
+    - ai_responses safety checks (passed/failed, with notes)
+    - comments_queue moderation actions (ignored / needs_review / failed)
+    """
+    interval_sql, _ = _range_to_interval(range)
+    limit = max(1, min(500, int(limit)))
+
+    rows = (await db.execute(text(
+        f"""
+        SELECT ts, type, status, reason, queue_id, response_id, comment_id
+        FROM (
+          SELECT ar.safety_checked_at AS ts,
+                 'safety_check' AS type,
+                 CASE WHEN ar.passed_safety THEN 'passed' ELSE 'failed' END AS status,
+                 NULLIF(ar.safety_notes,'') AS reason,
+                 ar.queue_id::text AS queue_id,
+                 ar.id::text AS response_id,
+                 cq.comment_id AS comment_id
+          FROM ai_responses ar
+          JOIN comments_queue cq ON cq.id = ar.queue_id
+          WHERE ar.safety_checked_at IS NOT NULL AND ar.safety_checked_at >= now() - {interval_sql}
+
+          UNION ALL
+
+          SELECT COALESCE(cq.updated_at, cq.created_at) AS ts,
+                 'moderation' AS type,
+                 cq.status::text AS status,
+                 NULL AS reason,
+                 cq.id::text AS queue_id,
+                 NULL AS response_id,
+                 cq.comment_id AS comment_id
+          FROM comments_queue cq
+          WHERE COALESCE(cq.updated_at, cq.created_at) >= now() - {interval_sql}
+            AND cq.status IN ('ignored','needs_review','failed')
+        ) allx
+        ORDER BY ts DESC NULLS LAST
+        LIMIT :lim
+        """
+    ), {"lim": limit})).mappings().all()
+
+    items: List[Dict[str, Any]] = []
+    for r in rows:
+        items.append({
+            "ts": (r.get("ts").isoformat() + "Z") if r.get("ts") else None,
+            "type": r.get("type"),
+            "status": r.get("status"),
+            "reason": r.get("reason"),
+            "queue_id": r.get("queue_id"),
+            "response_id": r.get("response_id"),
+            "comment_id": r.get("comment_id"),
+        })
+
+    return {"items": items}
+
+
+# ---------------- Response Diversity ----------------
+
+def _diversity_range_to_interval(range_str: Optional[str]) -> Tuple[str, str]:
+    return _range_to_interval(range_str)
+
+
+def _normalize_text_for_cluster(s: str) -> Tuple[str, Tuple[str, ...]]:
+    """Very lightweight textual normalization for clustering.
+    - Lowercase, strip punctuation, collapse spaces, remove simple stopwords.
+    - Return a simple key (first few sorted tokens) and the token tuple.
+    """
+    import re
+    stop = {
+        "the","a","an","and","or","but","so","for","to","of","in","on","at","it","is","are","be","was","were","we","you","i","our","your","with","that","this","thanks","thank","so","much","very","really"
+    }
+    s2 = s.lower()
+    s2 = re.sub(r"[^a-z0-9\s]", " ", s2)
+    toks = tuple([t for t in re.split(r"\s+", s2) if t and t not in stop])
+    if not toks:
+        return ("", tuple())
+    key_tokens = tuple(sorted(toks))[:6]
+    key = "|".join(key_tokens)
+    return key, toks
+
+
+@router.get("/diversity/summary")
+async def diversity_summary(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    range: Optional[str] = None,
+    max_rows: int = 2000,
+):
+    """Compute response diversity metrics, clusters, trends, and engagement impact.
+
+    Returns:
+    - diversity_score: 0-100 (Gini-Simpson)
+    - by_day trend (diversity % per day)
+    - clusters: key, size, sample responses, representative, avg_engagement
+    - overused_phrases: phrase, count, examples
+    - engagement_impact: avg likes/replies for diverse vs similar clusters
+    - alert if diversity_score < 60
+    """
+    interval_sql, range_label = _diversity_range_to_interval(range)
+    max_rows = max(100, min(5000, int(max_rows)))
+
+    # Pull recent ai_responses joined to comment engagement
+    rows = (await db.execute(text(
+        f"""
+        SELECT ar.id, ar.response_text, ar.created_at,
+               yc.like_count, yc.reply_count
+        FROM ai_responses ar
+        JOIN comments_queue cq ON cq.id = ar.queue_id
+        LEFT JOIN youtube_comments yc ON yc.comment_id = cq.comment_id
+        WHERE ar.created_at >= now() - {interval_sql}
+          AND COALESCE(ar.response_text, '') <> ''
+        ORDER BY ar.created_at DESC
+        LIMIT :lim
+        """
+    ), {"lim": max_rows})).mappings().all()
+
+    texts: list[dict] = []
+    for r in rows:
+        t = str(r.get("response_text") or "").strip()
+        if not t:
+            continue
+        texts.append({
+            "id": r.get("id"),
+            "text": t,
+            "ts": r.get("created_at"),
+            "likes": int(r.get("like_count") or 0),
+            "replies": int(r.get("reply_count") or 0),
+        })
+
+    total = len(texts)
+    # Unique count (exact string) for a quick measure
+    uniq = len({(x["text"].strip().lower()) for x in texts}) if texts else 0
+
+    # Cluster by rough token key
+    from collections import defaultdict, Counter
+    clusters: dict[str, list[dict]] = defaultdict(list)
+    token_lists: dict[str, list[Tuple[str, ...]]] = defaultdict(list)
+    for x in texts:
+        key, toks = _normalize_text_for_cluster(x["text"])  # simple approx
+        clusters[key].append(x)
+        token_lists[key].append(toks)
+
+    # Compute cluster stats
+    cluster_items = []
+    for key, items in clusters.items():
+        if not key or not items:
+            continue
+        # representative = shortest response
+        rep = min((it["text"] for it in items), key=lambda s: len(s))
+        avg_likes = sum(it["likes"] for it in items) / max(1, len(items))
+        avg_replies = sum(it["replies"] for it in items) / max(1, len(items))
+        # sample up to 5
+        sample = [it["text"] for it in items[:5]]
+        cluster_items.append({
+            "key": key,
+            "size": len(items),
+            "representative": rep,
+            "avg_likes": round(avg_likes, 2),
+            "avg_replies": round(avg_replies, 2),
+            "sample": sample,
+        })
+
+    # Diversity (Gini-Simpson)
+    n = total
+    size_counts = [c["size"] for c in cluster_items if c["size"] > 0]
+    if n > 0 and size_counts:
+        import math
+        p2_sum = sum((sz / n) ** 2 for sz in size_counts)
+        gini_simpson = 1.0 - p2_sum
+        diversity_score = int(round(gini_simpson * 100))
+    else:
+        diversity_score = 100
+
+    # Overused phrases: top bigrams inside largest clusters
+    def extract_phrases(txt: str) -> list[str]:
+        import re
+        words = [w for w in re.split(r"\W+", txt.lower()) if len(w) >= 2]
+        out = []
+        for i in range(len(words) - 1):
+            bg = f"{words[i]} {words[i+1]}"
+            out.append(bg)
+        return out
+
+    phrase_counter: Counter[str] = Counter()
+    phrase_examples: dict[str, str] = {}
+    for c in sorted(cluster_items, key=lambda x: -x["size"])[:20]:
+        for s in c.get("sample", []):
+            for p in extract_phrases(s):
+                phrase_counter[p] += 1
+                if p not in phrase_examples:
+                    phrase_examples[p] = s
+    overused = [
+        {"phrase": ph, "count": cnt, "example": phrase_examples.get(ph, "")}
+        for ph, cnt in phrase_counter.most_common(10)
+        if cnt >= 3
+    ]
+
+    # Engagement impact: compare small clusters (size==1) vs large (size>=3)
+    small = [c for c in cluster_items if c["size"] == 1]
+    large = [c for c in cluster_items if c["size"] >= 3]
+    def avg(vals: list[float]) -> float:
+        return round(sum(vals) / max(1, len(vals)), 2)
+    impact = {
+        "diverse_avg_likes": avg([c["avg_likes"] for c in small]),
+        "diverse_avg_replies": avg([c["avg_replies"] for c in small]),
+        "similar_avg_likes": avg([c["avg_likes"] for c in large]),
+        "similar_avg_replies": avg([c["avg_replies"] for c in large]),
+    }
+
+    # Trend by day (unique/total per day)
+    by_day_rows = (await db.execute(text(
+        f"""
+        WITH days AS (
+          SELECT dd::date AS d
+          FROM generate_series((now() - {interval_sql})::date, now()::date, '1 day') dd
+        ),
+        ar_agg AS (
+          SELECT created_at::date AS d,
+                 COUNT(*) AS responses,
+                 COUNT(DISTINCT TRIM(LOWER(COALESCE(response_text,'')))) FILTER (WHERE TRIM(LOWER(COALESCE(response_text,''))) <> '') AS unique_responses
+          FROM ai_responses
+          WHERE created_at >= now() - {interval_sql}
+          GROUP BY 1
+        )
+        SELECT d.d::text,
+               COALESCE(ar_agg.responses, 0) AS responses,
+               COALESCE(ar_agg.unique_responses, 0) AS unique_responses
+        FROM days d
+        LEFT JOIN ar_agg ON ar_agg.d = d.d
+        ORDER BY d.d ASC
+        """
+    ))).mappings().all()
+    trend = [
+        {
+            "date": str(r["d"]),
+            "responses": int(r["responses"] or 0),
+            "unique_responses": int(r["unique_responses"] or 0),
+            "diversity_pct": (int(r["unique_responses"] or 0) / max(1, int(r["responses"] or 0))) * 100.0 if int(r["responses"] or 0) else 100.0,
+        }
+        for r in by_day_rows
+    ]
+
+    alert = diversity_score < 60
+
+    suggestions: list[str] = []
+    if overused:
+        suggestions.append("Vary your openings and gratitude phrases; rotate synonyms to avoid repetition.")
+    if large:
+        suggestions.append("Large clusters detected; refresh templates and enable style variety for common cases.")
+    if alert:
+        suggestions.append("Diversity is low; generate new template variants and include personalization tokens.")
+
+    # Prepare lighter cluster payload for UI (limit 50)
+    clusters_small = sorted(cluster_items, key=lambda x: -x["size"])[:50]
+
+    return {
+        "range": range_label,
+        "diversity_score": diversity_score,
+        "total": total,
+        "unique": uniq,
+        "alert": alert,
+        "clusters": clusters_small,
+        "overused_phrases": overused,
+        "engagement_impact": impact,
+        "trend": trend,
+        "suggestions": suggestions,
+    }
+
+
+@router.post("/diversity/refresh-templates")
+async def diversity_refresh_templates(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    top_k: int = 3,
+    variants_per: int = 3,
+) -> Dict[str, Any]:
+    """Generate new template variants for top overused phrases and insert into response_templates."""
+    # Reuse summary to find overused phrases
+    summary = await diversity_summary(db=db, current_user=current_user)
+    phrases = [p["phrase"] for p in (summary.get("overused_phrases") or [])][:max(1, min(10, int(top_k)))]
+    created: list[Dict[str, Any]] = []
+    for ph in phrases:
+        for i in range(max(1, min(5, int(variants_per)))):
+            try:
+                variant = await claude.generate_variant(base_template=ph, style="friendly", custom_instructions=None)
+            except Exception:
+                continue
+            txt = (variant or "").strip()
+            if not txt:
+                continue
+            await db.execute(text(
+                """
+                INSERT INTO response_templates (name, category, template_text, created_at)
+                VALUES (:name, :cat, :txt, now())
+                RETURNING id, name, category, template_text
+                """
+            ), {"name": f"Variant of '{ph[:24]}'", "cat": "diversity", "txt": txt})
+            created.append({"phrase": ph, "text": txt})
+    await db.commit()
+    return {"created": created[:50], "count": len(created)}
+
+
+@router.post("/diversity/regenerate")
+async def diversity_regenerate_variants(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    base_phrase: str,
+    count: int = 3,
+) -> Dict[str, Any]:
+    """Generate response variants for a specific base phrase/cluster key and return them (not persisted)."""
+    out: list[str] = []
+    for i in range(max(1, min(10, int(count)))):
+        try:
+            variant = await claude.generate_variant(base_template=base_phrase, style="friendly", custom_instructions=None)
+        except Exception:
+            continue
+        variant = (variant or "").strip()
+        if variant:
+            out.append(variant)
+    return {"base": base_phrase, "variants": out}

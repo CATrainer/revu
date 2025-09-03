@@ -1,7 +1,7 @@
 """
 AI endpoints.
 
-AI-powered response generation and brand voice management.
+AI-powered response generation and creator voice management.
 """
 
 from typing import Dict, Any, List, Optional
@@ -36,6 +36,7 @@ from app.services.safety_validator import quick_safety_check, schedule_safety_ch
 from app.services.youtube_service import YouTubeService
 from datetime import timedelta
 from app.services.batch_processor import BatchProcessor, QueueItem
+from app.services import system_state
 from app.utils import debug_log
 
 router = APIRouter()
@@ -625,6 +626,12 @@ async def batch_generate(
     - Persist ai_responses and mark queue rows completed.
     - Return all generated responses.
     """
+    # Global pause guard
+    try:
+        if await system_state.is_paused(db):
+            return BatchGenerateResponse(items=[], metadata={"status": "paused"})
+    except Exception:
+        pass
     # Deduplicate and enforce max via schema; still ensure at runtime
     raw_ids: List[str] = list(dict.fromkeys(request.comment_ids))
     if not raw_ids:

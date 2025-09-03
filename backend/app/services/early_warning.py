@@ -22,6 +22,9 @@ from sqlalchemy import text
 from loguru import logger
 
 from app.services.prediction_engine import PredictionEngine
+from app.services import system_state as sys_state
+from app.tasks.email import send_email
+from app.core.config import settings
 
 
 @dataclass
@@ -316,6 +319,29 @@ class EarlyWarningService:
                         await db.rollback()
                     except Exception:
                         pass
+
+                # Auto-pause on spike if configured: use a higher threshold (e.g., 5x) to be conservative
+                try:
+                    st = await sys_state.get_state(db)
+                    if st.auto_pause_on_spike and (observed >= 5.0 * max(0.1, baseline)):
+                        res = await sys_state.pause(db, reason="auto_pause_on_spike", duration_minutes=30, user_id=None, metadata={"channel_id": chan, "video_id": vid_db_id, "observed_cpm": observed, "baseline_cpm": baseline})
+                        # Notify via email if possible: send to system EMAIL_FROM_ADDRESS as admin notification
+                        try:
+                            subject = "Auto-pause activated due to activity spike"
+                            until = res.get("paused_until")
+                            html = f"""
+                            <h2>Emergency Auto-Pause Activated</h2>
+                            <p>Channel: {chan}</p>
+                            <p>Video: {vid_db_id}</p>
+                            <p>Observed CPM: {observed:.2f} (baseline {baseline:.2f})</p>
+                            <p>Reason: spike detector</p>
+                            <p>Auto-resume: {until or 'manual resume'}</p>
+                            """
+                            send_email.delay(str(settings.EMAIL_FROM_ADDRESS), subject, html)
+                        except Exception:
+                            pass
+                except Exception:
+                    logger.exception("Auto-pause on spike failed")
         return alerts
 
     async def handle_action(self, db: AsyncSession, *, action: str, channel_id: str, video_id: str, duration_minutes: int = 60) -> Dict[str, Any]:
