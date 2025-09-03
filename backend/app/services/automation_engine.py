@@ -55,9 +55,14 @@ class AutomationEngine:
         res = await self.session.execute(
             text(
                 """
-                SELECT id, channel_id, conditions, action
-                FROM automation_rules
-                WHERE channel_id = :cid AND enabled = true
+                                SELECT id, channel_id, conditions, action
+                                FROM automation_rules
+                                WHERE channel_id = :cid
+                                    AND enabled = true
+                                    AND (
+                                        NOT (conditions ? '_temp_expires_at')
+                                        OR ((conditions->>'_temp_expires_at')::timestamptz > now())
+                                    )
                 ORDER BY priority DESC, created_at ASC
                 """
             ),

@@ -26,6 +26,8 @@ from app.workers.sync_worker import (
     process_incremental_sync,
     sync_recent_comments,
 )
+from app.core.database import async_session_maker
+from app.services.early_warning import EarlyWarningService
 
 
 async def _list_active_connections() -> list[YouTubeConnection]:
@@ -63,6 +65,16 @@ async def job_sync_recent_comments() -> None:
             await sync_recent_comments(conn.id)
     except Exception as e:  # noqa: BLE001
         logger.exception("job_sync_recent_comments failed: %s", e)
+async def job_early_warning_scan() -> None:
+    try:
+        svc = EarlyWarningService()
+        async with async_session_maker() as session:
+            alerts = await svc.monitor_recent_videos(session)
+            if alerts:
+                from loguru import logger as _l
+                _l.info("EarlyWarning: {} alert(s) detected", len(alerts))
+    except Exception as e:  # noqa: BLE001
+        logger.exception("job_early_warning_scan failed: %s", e)
 
 
 async def job_cleanup_expired_oauth_tokens() -> None:
@@ -109,6 +121,16 @@ def start_youtube_scheduler() -> AsyncIOScheduler:
         name="Sync comments for recent videos",
         coalesce=True,
         misfire_grace_time=300,
+        max_instances=1,
+    )
+
+    scheduler.add_job(
+        job_early_warning_scan,
+        IntervalTrigger(minutes=5),
+        id="early_warning_scan",
+        name="Scan for early viral signals",
+        coalesce=True,
+        misfire_grace_time=120,
         max_instances=1,
     )
 

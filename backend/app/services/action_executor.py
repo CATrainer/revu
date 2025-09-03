@@ -48,13 +48,41 @@ class ActionExecutor:
     async def _human_delay(self, *, base_min: float = 0.8, base_max: float = 2.0) -> None:
         await asyncio.sleep(random.uniform(base_min, base_max))
 
-    def _allow(self, channel_id: str, *, per_minute: int = 30) -> bool:
-        bucket = self._rate.setdefault(channel_id, {"window": int(time.time() // 60), "count": 0})
+    async def _effective_rate_limit(self, db: Optional[AsyncSession], channel_id: str, default: int = 30) -> int:
+        # Read burst mode state if exists (best-effort)
+        if not db:
+            return default
+        try:
+            await db.execute(text("""
+                CREATE TABLE IF NOT EXISTS burst_mode_states (
+                    id BIGSERIAL PRIMARY KEY,
+                    channel_id TEXT NOT NULL,
+                    video_id TEXT NOT NULL,
+                    enabled BOOLEAN NOT NULL,
+                    started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                    ends_at TIMESTAMPTZ,
+                    per_minute INT,
+                    variety_level INT
+                );
+            """))
+            row = (await db.execute(text("SELECT per_minute FROM burst_mode_states WHERE channel_id=:c AND enabled=true ORDER BY started_at DESC LIMIT 1"), {"c": channel_id})).first()
+            if row and row[0]:
+                return int(row[0])
+        except Exception:
+            pass
+        return default
+
+    async def _allow(self, channel_id: str, *, db: Optional[AsyncSession] = None, per_minute: int = 30) -> bool:
+        # Allow burst override if present
+        per_minute = await self._effective_rate_limit(db, channel_id, default=per_minute)
+        bucket = self._rate.setdefault(channel_id, {"window": int(time.time() // 60), "count": 0, "limit": per_minute})
         now_window = int(time.time() // 60)
         if bucket["window"] != now_window:
             bucket["window"] = now_window
             bucket["count"] = 0
-        if bucket["count"] >= per_minute:
+        # Update limit each call in case of dynamic changes
+        bucket["limit"] = per_minute
+        if bucket["count"] >= bucket["limit"]:
             return False
         bucket["count"] += 1
         return True
@@ -109,7 +137,7 @@ class ActionExecutor:
         context: Dict[str, Any],
     ) -> bool:
         start_ms = time.time() * 1000
-        if not self._allow(ex.channel_id):
+        if not await self._allow(ex.channel_id, db=db):
             logger.warning("Rate limited; skipping respond for {}", ex.comment_id)
             return False
         await self._human_delay()
@@ -134,12 +162,31 @@ class ActionExecutor:
         text_out = render.text if render.text else template or ""
 
         # Generate varied response for uniqueness
+        # Determine variety level from burst settings
+        variety_level = 0
+        try:
+            row = (await db.execute(text("SELECT variety_level FROM burst_mode_states WHERE channel_id=:c AND enabled=true ORDER BY started_at DESC LIMIT 1"), {"c": ex.channel_id})).first()
+            if row and row[0] is not None:
+                variety_level = int(row[0])
+        except Exception:
+            pass
+
+        # Inject stronger variation prompts based on burst variety level
+        base_instr = ((rule.get("action") or {}).get("config") or {}).get("custom_instructions")
+        if variety_level >= 2:
+            extra = " Increase uniqueness and paraphrasing slightly more than usual. Avoid repeating common phrases."
+        elif variety_level >= 1:
+            extra = " Prefer alternative phrasing while keeping tone consistent."
+        else:
+            extra = ""
+        combined_instructions = (base_instr or "") + extra
+
         varied = await self._claude.generate_varied_response(
             base_template=text_out,
             context={"username": context.get("username"), "video_title": ex.video_title, "comment": ex.comment_text},
             previous_responses=[],
             style=((rule.get("action") or {}).get("config") or {}).get("style", "friendly"),
-            custom_instructions=((rule.get("action") or {}).get("config") or {}).get("custom_instructions"),
+            custom_instructions=combined_instructions if combined_instructions else None,
             db=db,
             channel_id=ex.channel_id,
         )
@@ -161,7 +208,7 @@ class ActionExecutor:
     # 2) delete comment via YouTube API (gated by AI delete criteria)
     async def execute_delete(self, db: AsyncSession, *, rule: Dict[str, Any], ex: ExecContext) -> bool:
         start_ms = time.time() * 1000
-        if not self._allow(ex.channel_id, per_minute=15):
+        if not await self._allow(ex.channel_id, db=db, per_minute=15):
             logger.warning("Rate limited; skipping delete for {}", ex.comment_id)
             return False
         await self._human_delay(base_min=1.0, base_max=2.5)
@@ -222,7 +269,7 @@ class ActionExecutor:
     # 3) flag for manual review
     async def execute_flag(self, db: AsyncSession, *, rule: Dict[str, Any], ex: ExecContext) -> bool:
         start_ms = time.time() * 1000
-        if not self._allow(ex.channel_id, per_minute=60):
+        if not await self._allow(ex.channel_id, db=db, per_minute=60):
             return False
         await self._human_delay(base_min=0.5, base_max=1.5)
         try:

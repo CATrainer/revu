@@ -15,6 +15,7 @@ from app.services.ab_testing import ABTestingService
 from app.services.rule_scheduler import RuleScheduler
 from app.services.automation_learning import AutomationLearningService
 from app.services.rule_performance import RulePerformanceService
+from app.services.prediction_engine import PredictionEngine
 
 router = APIRouter()
 
@@ -23,6 +24,182 @@ ab_service = ABTestingService()
 rule_scheduler = RuleScheduler()
 learning_service = AutomationLearningService()
 perf_service = RulePerformanceService()
+predictor = PredictionEngine()
+
+@router.post("/prepare-upload/suggestions")
+async def prepare_upload_suggestions(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Return 3–5 suggested rules, similar past videos, and comment projections for an upcoming upload.
+
+    Payload: { topic?: str, type?: str, tags?: string[], scheduled_at?: ISO string, channel_id?: str }
+    """
+    channel_id = payload.get("channel_id")
+    if not channel_id:
+        row = (await db.execute(text("SELECT channel_id FROM polling_config ORDER BY updated_at DESC NULLS LAST LIMIT 1"))).first()
+        if row and row[0]:
+            channel_id = str(row[0])
+
+    upcoming = {
+        "type": payload.get("type") or payload.get("category"),
+        "tags": payload.get("tags") or ([] if not payload.get("topic") else [payload.get("topic")]),
+        "scheduled_at": payload.get("scheduled_at"),
+    }
+
+    # Suggestions from predictor (confidence-gated)
+    sug = await predictor.suggest_preemptive_rules(db, upcoming)
+
+    # Similar past videos (last 180d, naive matching on title/description by topic keyword)
+    similar: List[Dict[str, Any]] = []
+    topic = str(payload.get("topic") or "").strip()
+    if channel_id:
+        try:
+            params = {"cid": channel_id, "kw": f"%{topic.lower()}%"}
+            rows = (await db.execute(text(
+                """
+                SELECT v.id, v.video_id, v.title, v.published_at,
+                       (SELECT COUNT(1) FROM youtube_comments c WHERE c.video_id = v.id) AS comment_count
+                FROM youtube_videos v
+                WHERE v.channel_id = :cid
+                  AND v.published_at >= now() - interval '180 days'
+                  AND (:kw = '%%' OR LOWER(COALESCE(v.title,'')) LIKE :kw OR LOWER(COALESCE(v.description,'')) LIKE :kw)
+                ORDER BY v.published_at DESC
+                LIMIT 5
+                """
+            ), params)).mappings().all()
+            for r in rows:
+                similar.append({
+                    "id": str(r.get("id")),
+                    "video_id": r.get("video_id"),
+                    "title": r.get("title"),
+                    "published_at": r.get("published_at").isoformat() if r.get("published_at") else None,
+                    "comment_count": int(r.get("comment_count") or 0),
+                })
+        except Exception:
+            similar = []
+
+    # Comment volume estimate using predictor
+    volume_pred = await predictor.predict_comment_volume(db, {"channel_id": channel_id, **upcoming})
+
+    # Rough comment type mix (heuristic)
+    type_mix = [
+        {"type": "simple_positive", "share": 0.5},
+        {"type": "question", "share": 0.25},
+        {"type": "feedback", "share": 0.15},
+        {"type": "negative", "share": 0.1},
+    ]
+
+    # Build 3–5 suggested rule cards
+    rule_cards: List[Dict[str, Any]] = []
+    base_rules = [
+        {
+            "name": "Thank first-timers",
+            "conditions": {"classification": "simple_positive"},
+            "action": {"type": "generate_response", "template": "thanks"},
+            "why": "Reduce repetitive replies to positive comments.",
+        },
+        {
+            "name": "Answer common questions",
+            "conditions": {"classification": "question"},
+            "action": {"type": "generate_response", "template": "faq"},
+            "why": "Speed up responses to repeat questions on tutorials/launches.",
+        },
+        {
+            "name": "Flag sensitive debates",
+            "conditions": {"classification": "negative"},
+            "action": {"type": "flag_for_review"},
+            "why": "Keep an eye on heated threads without auto-replying.",
+        },
+        {
+            "name": "Hold links for review",
+            "conditions": {"keywords": ["http://", "https://"]},
+            "action": {"type": "flag_for_review"},
+            "why": "Catch potential spam during announcement spikes.",
+        },
+    ]
+    if sug.get("show") and sug.get("suggestions"):
+        for s in sug["suggestions"]:
+            if s.get("rule") == "moderate_spam_links" and not any("links" in b["name"].lower() for b in base_rules):
+                base_rules.append({
+                    "name": "Moderate spam links",
+                    "conditions": {"keywords": ["http://", "https://"]},
+                    "action": {"type": "flag_for_review"},
+                    "why": s.get("why"),
+                })
+
+    rule_cards = base_rules[:5]
+
+    return {
+        "suggested_rules": rule_cards,
+        "comment_volume": volume_pred.__dict__,
+        "similar_videos": similar,
+        "type_mix": type_mix,
+    }
+
+
+@router.post("/prepare-upload/activate")
+async def prepare_upload_activate(
+    *,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    payload: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Activate suggested rules temporarily for 48 hours; auto-deactivate afterward.
+
+    Payload: { channel_id?: str, rules: [{ name, conditions, action, priority? }], duration_hours?: int }
+    """
+    rules = payload.get("rules") or []
+    if not isinstance(rules, list) or not rules:
+        raise HTTPException(status_code=400, detail="rules (non-empty array) is required")
+
+    channel_id = payload.get("channel_id")
+    if not channel_id:
+        row = (await db.execute(text("SELECT channel_id FROM polling_config ORDER BY updated_at DESC NULLS LAST LIMIT 1"))).first()
+        if row and row[0]:
+            channel_id = str(row[0])
+    if not channel_id:
+        raise HTTPException(status_code=400, detail="channel_id is required")
+
+    duration_hours = int(payload.get("duration_hours") or 48)
+    # Insert rules with an expiry marker in conditions JSON so engines can filter
+    inserted: List[Dict[str, Any]] = []
+    for r in rules:
+        name = (r.get("name") or "Temporary Rule").strip()
+        conditions = r.get("conditions") or {}
+        action = r.get("action") or {"type": "generate_response"}
+        priority = int(r.get("priority") or 0)
+
+        # Attach expiry marker
+        res = await db.execute(text(
+            """
+            INSERT INTO automation_rules (channel_id, name, enabled, trigger_conditions, actions, conditions, action, require_approval, response_limit_per_run, priority)
+            VALUES (:cid, :name, TRUE, jsonb_set(COALESCE(:conds::jsonb, '{}'::jsonb), '{_temp_expires_at}', to_jsonb((now() + (:dur || ' hours')::interval))),
+                    :acts::jsonb,
+                    jsonb_set(COALESCE(:conds::jsonb, '{}'::jsonb), '{_temp_expires_at}', to_jsonb((now() + (:dur || ' hours')::interval))),
+                    :act::jsonb,
+                    FALSE,
+                    NULL,
+                    :prio)
+            RETURNING id, name, enabled, priority
+            """
+        ), {
+            "cid": str(channel_id),
+            "name": name,
+            "conds": json.dumps(conditions),
+            "acts": json.dumps([action]),
+            "act": json.dumps(action),
+            "dur": str(duration_hours),
+            "prio": priority,
+    })
+        row = res.first()
+        if row:
+            inserted.append({"id": str(row[0]), "name": row[1], "enabled": bool(row[2]), "priority": int(row[3] or 0)})
+
+    await db.commit()
+    return {"status": "ok", "inserted": inserted, "expires_in_hours": duration_hours}
 
 
 def _validate_rule_payload(payload: Dict[str, Any], *, for_update: bool = False) -> Dict[str, Any]:

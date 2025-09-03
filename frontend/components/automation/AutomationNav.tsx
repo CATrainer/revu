@@ -10,6 +10,7 @@ export default function AutomationNav() {
 
   const items = [
   { key: 'rules', label: 'Active Rules', href: '/automation?tab=rules' },
+  { key: 'prepare', label: 'Prepare', href: '/automation?tab=prepare' },
   { key: 'create', label: 'Create Rule', href: '/automation?tab=create' },
   { key: 'templates', label: 'Templates', href: '/automation?tab=templates' },
   { key: 'ab', label: 'A/B Tests', href: '/automation?tab=ab' },
@@ -20,6 +21,7 @@ export default function AutomationNav() {
 
   const activeKey = isApprovals ? 'approvals' : (
     tab === 'create' ? 'create'
+    : tab === 'prepare' ? 'prepare'
     : tab === 'analytics' ? 'analytics'
     : tab === 'templates' ? 'templates'
     : tab === 'ab' ? 'ab'

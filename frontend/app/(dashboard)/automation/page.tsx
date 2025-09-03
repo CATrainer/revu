@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import Link from 'next/link';
 import RulesList from '@/components/automation/RulesList';
 import RuleBuilder from '@/components/automation/RuleBuilder';
+import PrepareUpload from '@/components/automation/PrepareUpload';
 import AutomationNav from '@/components/automation/AutomationNav';
 import TemplateManager from '@/components/automation/TemplateManager';
 import ABTestDashboard from '@/components/automation/ABTestDashboard';
@@ -85,9 +86,9 @@ export default function AutomationPage() {
   const interval = polling?.polling_interval_minutes ?? 15;
 
   // Tab state
-  type Tab = 'Active Rules' | 'Create Rule' | 'Templates' | 'A/B Tests' | 'Learning' | 'Approval Queue' | 'Analytics';
+  type Tab = 'Active Rules' | 'Prepare' | 'Create Rule' | 'Templates' | 'A/B Tests' | 'Learning' | 'Approval Queue' | 'Analytics';
   const tabParam = (search.get('tab') || '').toLowerCase();
-  const tabFromUrl: Tab = tabParam === 'create' ? 'Create Rule' : tabParam === 'analytics' ? 'Analytics' : tabParam === 'templates' ? 'Templates' : tabParam === 'ab' ? 'A/B Tests' : tabParam === 'learning' ? 'Learning' : 'Active Rules';
+  const tabFromUrl: Tab = tabParam === 'prepare' ? 'Prepare' : tabParam === 'create' ? 'Create Rule' : tabParam === 'analytics' ? 'Analytics' : tabParam === 'templates' ? 'Templates' : tabParam === 'ab' ? 'A/B Tests' : tabParam === 'learning' ? 'Learning' : 'Active Rules';
   const [tab, setTab] = useState<Tab>(tabFromUrl);
 
   useEffect(() => {
@@ -182,6 +183,17 @@ export default function AutomationPage() {
 
       {tab === 'Create Rule' && (
         <RuleBuilder />
+      )}
+
+      {tab === 'Prepare' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Prepare for Upload</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PrepareUpload />
+          </CardContent>
+        </Card>
       )}
 
       {tab === 'Templates' && (

@@ -12,6 +12,7 @@ from app.api.v1.endpoints import (
     ai,
     analytics,
     auth,
+    early_warning,
     debug,
     test_utils,
     automation,
@@ -104,6 +105,12 @@ api_router.include_router(
 )
 
 api_router.include_router(
+    early_warning.router,
+    prefix="/early-warning",
+    tags=["early-warning"],
+)
+
+api_router.include_router(
     webhooks.router,
     prefix="/webhooks",
     tags=["webhooks"],
@@ -153,5 +160,6 @@ async def api_root():
             "ai": "/ai",
             "analytics": "/analytics",
             "webhooks": "/webhooks",
+        "early_warning": "/early-warning",
         },
     }
