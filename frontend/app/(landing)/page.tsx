@@ -3,7 +3,7 @@ import { Hero } from '@/components/landing/Hero';
 import { Features } from '@/components/landing/Features';
 import { SocialProof } from '@/components/landing/SocialProof';
 import { FinalCTA } from '@/components/landing/FinalCTA';
-import { ScrollNavigation } from '@/components/shared/ScrollNavigation';
+import { FeaturesScrollNavigation } from '@/components/shared/FeaturesScrollNavigation';
 
 export default function HomePage() {
   return (
@@ -12,7 +12,7 @@ export default function HomePage() {
       <Features />
       <SocialProof />
       <FinalCTA />
-      <ScrollNavigation />
+      <FeaturesScrollNavigation />
     </>
   );
 }

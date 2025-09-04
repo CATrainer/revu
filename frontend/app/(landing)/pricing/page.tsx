@@ -135,21 +135,6 @@ function FAQProgressNavigation({
       <div className="relative">
         {/* Vertical Progress Track */}
         <div className="absolute left-1/2 transform -translate-x-1/2 w-0.5 h-full bg-gradient-to-b from-transparent via-gray-300 to-transparent dark:via-gray-600 opacity-30" />
-        
-        {/* Active Progress Line */}
-        <motion.div
-          className="absolute left-1/2 transform -translate-x-1/2 w-0.5 bg-gradient-to-b from-green-600 to-green-400 shadow-sm"
-          initial={{ height: 0, top: 0 }}
-          animate={{ 
-            height: `${(100 / Math.max(1, categories.length - 1)) * currentSection}%`,
-            top: '0%'
-          }}
-          transition={{ 
-            duration: 0.8, 
-            ease: [0.25, 0.1, 0.25, 1],
-            type: "tween"
-          }}
-        />
 
         {/* Navigation Dots */}
         <div className="relative flex flex-col space-y-8">
@@ -351,13 +336,13 @@ export default function PricingPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <h2 
-              className="text-4xl md:text-5xl font-bold text-green-500 mb-6"
+              className="text-4xl md:text-5xl font-bold text-green-600 mb-6"
               data-faq-title="true"
             >
               Frequently Asked Questions
             </h2>
-            <p className="text-xl text-green-800 font-bold">
-              Everything you need to know about Repruv for creators and agencies
+            <p className="text-xl text-green-800">
+              Everything you need to know about Repruv for your brand and your community
             </p>
           </motion.div>
 

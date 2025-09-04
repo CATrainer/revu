@@ -28,7 +28,7 @@ export default function JoinWaitlistPage() {
     setError('');
 
     try {
-      const response = await api.post('/users/waitlist/join', formData);
+      const response = await api.post('/users/early-access/join', formData);
       
       // Redirect to success page with user info
       router.push(`/waitlist-success?user_id=${response.data.user_id}&has_account=${response.data.has_account}&email=${encodeURIComponent(formData.email)}`);
@@ -62,7 +62,7 @@ export default function JoinWaitlistPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: 'easeOut' }}
             >
-                <CardTitle className="text-3xl md:text-4xl font-extrabold text-green-500 dark:text-green-400 leading-tight">Book a Demo</CardTitle>
+                <CardTitle className="text-3xl md:text-4xl font-extrabold text-green-500 dark:text-green-400 leading-tight">Get Early Access</CardTitle>
                 <CardDescription className="text-sm font-medium text-green-800 dark:text-green-300 mt-2">
                 Be the first to know when Repruv launches and get early access to powerful community engagement tools.
               </CardDescription>
@@ -204,10 +204,10 @@ export default function JoinWaitlistPage() {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Booking Demo...
+                      Processing...
                     </>
                   ) : (
-                    'Book Demo'
+                    'Get Early Access'
                   )}
                 </Button>
               </motion.div>

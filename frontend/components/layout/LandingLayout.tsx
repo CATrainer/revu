@@ -122,7 +122,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                               </div>
                               <div className="text-sm font-medium leading-none">Social Monitoring</div>
                               <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
-                                Monitor online mentions
+                                Keep on top of what people are saying about you
                               </p>
                             </Link>
                           </NavigationMenuLink>
@@ -153,13 +153,8 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                             </Link>
                           </NavigationMenuLink>
                         </li>
-                        <li className="flex flex-col space-y-2 p-3">
-                          <Button asChild className="bg-green-600 hover:bg-green-700 text-white text-xs h-8">
-                            <Link href="/demo">
-                              Request Demo
-                            </Link>
-                          </Button>
-                          <Button asChild variant="outline" className="text-xs h-8 border-green-600 text-green-600 hover:bg-green-50">
+                        <li className="flex flex-col p-3">
+                          <Button asChild variant="outline" className="text-sm h-12 border-green-600 text-green-600 hover:bg-green-50 font-medium">
                             <Link href="/#hero">
                               Get Early Access
                             </Link>
@@ -172,7 +167,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                   <NavigationMenuItem>
                     <NavigationMenuLink asChild>
                       <Link href="/ai" className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
-                        SEO | AI
+                        Repruv AI
                       </Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
@@ -187,8 +182,8 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                   
                   <NavigationMenuItem>
                     <Button asChild className="bg-green-600 hover:bg-green-700 text-white">
-                      <Link href="/demo">
-                        Request Demo
+                      <Link href="/#hero">
+                        Get Early Access
                       </Link>
                     </Button>
                   </NavigationMenuItem>
@@ -245,7 +240,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                 href="/ai"
                 className="nav-mobile-link"
               >
-                SEO | AI
+                Repruv AI
               </Link>
               <Link
                 href="/pricing"
@@ -255,8 +250,8 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
               </Link>
               <div className="px-3 py-2">
                 <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
-                  <Link href="/demo">
-                    Request Demo
+                  <Link href="/#hero">
+                    Get Early Access
                   </Link>
                 </Button>
               </div>

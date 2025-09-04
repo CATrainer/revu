@@ -1,7 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import React from 'react';
 import { motion, LazyMotion, domAnimation, useInView } from 'framer-motion';
 import { FeaturesScrollNavigation } from '@/components/shared/FeaturesScrollNavigation';
@@ -555,10 +553,10 @@ export default function FeaturesPage() {
                   transition={{ duration: 0.6, delay: 0.8 }}
                 >
                   {[
-                    'Real-time sentiment analysis and alerts.',
-                    'Hashtag and keyword tracking across platforms.',
-                    '@ mention identification and notifications.',
-                    'Automated threat and opportunity detection.'
+                    'Real-time sentiment analysis and alerts',
+                    'Hashtag and keyword tracking across platforms',
+                    '@ mention identification and notifications',
+                    'Automated threat and opportunity detection'
                   ].map((item, index) => (
                     <motion.li 
                       key={index}
@@ -1097,43 +1095,107 @@ export default function FeaturesPage() {
           </div>
         </motion.section>
 
-        {/* CTA */}
+        {/* Horizontal Feature Timeline Section */}
         <motion.section 
+          id="upcoming-features"
           ref={ctaRef}
-          className="py-24 section-background-alt"
+          className="py-32 section-background-alt overflow-hidden mb-32"
           initial={{ opacity: 0, y: 50 }}
           animate={ctaInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
           transition={{ duration: 0.8 }}
         >
-          <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-            <motion.h2 
-              className="text-3xl font-bold text-primary-dark mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={ctaInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.6, delay: ctaInView ? 0.2 : 0 }}
-            >
-              Ready to Transform Your Review Management?
-            </motion.h2>
-            <motion.p 
-              className="text-xl text-primary-dark font-bold mb-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={ctaInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.6, delay: ctaInView ? 0.4 : 0 }}
-            >
-              Join hundreds of businesses already using Repruv to save time and grow
-            </motion.p>
+          <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div className="flex items-center gap-3 mb-6 justify-center">
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={ctaInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </motion.div>
+              <h2 className="text-3xl font-bold brand-text">Upcoming Features Roadmap</h2>
+            </div>
+            <p className="text-lg font-bold mb-16 text-center max-w-3xl mx-auto" style={{ color: '#17633A' }}>
+              See what&apos;s coming next in our community engagement platform
+            </p>
+            
+            {/* Horizontal Timeline Component */}
             <motion.div 
-              className="flex justify-center gap-4"
-              initial={{ opacity: 0, y: 30, scale: 0.9 }}
-              animate={ctaInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 30, scale: 0.9 }}
-              transition={{ duration: 0.6, delay: ctaInView ? 0.6 : 0 }}
+              className="relative max-w-6xl mx-auto"
+              initial={{ opacity: 0 }}
+              animate={ctaInView ? { opacity: 1 } : { opacity: 0 }}
+              transition={{ duration: 0.8, delay: ctaInView ? 0.6 : 0 }}
             >
-              <Button size="lg" className="button-primary" asChild>
-                <Link href="/join-waitlist">Get Early Access</Link>
-              </Button>
-              <Button size="lg" className="button-secondary" asChild>
-                <Link href="/demo">Request Demo</Link>
-              </Button>
+              {/* Timeline central line - uniform color */}
+              <div className="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 h-2 bg-green-500 rounded-full"></div>
+              
+              {/* Timeline entries */}
+              <div className="flex justify-between items-center relative">
+                {[
+                  {
+                    title: "DM Automation",
+                    description: "AI assistant that manages your DMs for you",
+                    date: "Sep 20th",
+                    icon: "💬",
+                    delay: 0.8
+                  },
+                  {
+                    title: "TikTok Integration",
+                    description: "Existing comment and DM features expanded to TikTok",
+                    date: "Oct 15th",
+                    icon: "🎵",
+                    delay: 1.0
+                  },
+                  {
+                    title: "Ideas Engine",
+                    description: "AI assistant that helps you generate new content ideas",
+                    date: "Nov 1st",
+                    icon: "💡",
+                    delay: 1.2
+                  }
+                ].map((feature, index) => (
+                  <motion.div 
+                    key={feature.title}
+                    className="flex flex-col items-center relative px-4 w-1/3"
+                    initial={{ opacity: 0, y: index % 2 === 0 ? -50 : 50 }}
+                    animate={ctaInView ? { opacity: 1, y: 0 } : { opacity: 0, y: index % 2 === 0 ? -50 : 50 }}
+                    transition={{ duration: 0.8, delay: ctaInView ? feature.delay : 0 }}
+                  >
+                    {/* Timeline node - all using same color */}
+                    <motion.div 
+                      className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-white shadow-lg z-10 mb-4"
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={ctaInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
+                      transition={{ 
+                        duration: 0.6, 
+                        delay: ctaInView ? feature.delay + 0.2 : 0,
+                        type: "spring",
+                        stiffness: 200
+                      }}
+                      whileHover={{ scale: 1.1 }}
+                    >
+                      <span className="text-xl">{feature.icon}</span>
+                    </motion.div>
+                    
+                    {/* Timeline content box - all top positions for consistency */}
+                    <div className="w-full">
+                      <div className="p-4 rounded-lg shadow-md bg-white border-t-4 border-green-500 hover:shadow-lg transition-shadow duration-300">
+                        <div className="flex flex-col mb-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-base font-medium text-gray-800">{feature.title}</span>
+                            <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                              {feature.date}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-2">{feature.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </motion.div>
           </div>
         </motion.section>

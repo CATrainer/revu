@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { useInView } from 'framer-motion';
@@ -25,7 +24,7 @@ export function Hero() {
     setError('');
 
     try {
-      const response = await api.post('/users/waitlist/join', {
+      const response = await api.post('/users/early-access/join', {
         email,
         full_name: '',
         phone: '',
@@ -137,16 +136,6 @@ export function Hero() {
                   </svg>
                 </motion.div>
               </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-            >
-              <Button size="lg" className="button-secondary py-4 px-8 text-lg font-semibold" asChild>
-                <Link href="/demo">Book Demo</Link>
-              </Button>
             </motion.div>
 
             <motion.div
@@ -270,7 +259,7 @@ export function Hero() {
                       
                       <div className="text-center sm:text-left">
                         <p className="text-sm text-primary-dark/60 dark:text-gray-400 font-['Poppins',sans-serif]">
-                          Join <span className="font-semibold text-[var(--brand-primary-solid)]">countless</span> creators already on the waitlist
+                          Join <span className="font-semibold text-[var(--brand-primary-solid)]">countless</span> creators getting early access
                         </p>
                       </div>
                     </form>

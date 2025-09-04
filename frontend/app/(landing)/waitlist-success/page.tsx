@@ -49,7 +49,7 @@ function WaitlistSuccessContent() {
     setError('');
 
     try {
-      await api.post('/users/waitlist/create-account', {
+      await api.post('/users/early-access/create-account', {
         email,
         password
       });
@@ -85,9 +85,9 @@ function WaitlistSuccessContent() {
             <div className="mx-auto mb-4">
               <CheckCircle className="h-16 w-16 text-green-500" />
             </div>
-            <CardTitle className="text-2xl font-bold">You&apos;re in!</CardTitle>
+            <CardTitle className="text-2xl font-bold">You&apos;re getting early access!</CardTitle>
             <CardDescription>
-              Thank you for getting early access. We&apos;ll notify you as soon as Repruv is ready.
+              Thank you for signing up. We&apos;ll notify you as soon as Repruv is ready.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -95,7 +95,7 @@ function WaitlistSuccessContent() {
               <div className="space-y-4">
                 <div className="text-center">
                   <p className="text-sm text-secondary-dark mb-4">
-                    Want to get special offers and potential early access?
+                    Want to get special offers and priority early access?
                   </p>
                   <div className="space-y-2">
                     <Button 

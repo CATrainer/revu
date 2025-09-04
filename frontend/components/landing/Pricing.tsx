@@ -12,6 +12,9 @@ const plans = [
 		name: 'Basic',
 		price: 'FREE',
 		description: 'Perfect for getting started',
+		priceDetail: 'Free forever',
+		popular: false,
+		buttonText: 'Get Early Access',
 		features: [
 			'Up to 3 Platform connections',
 			'Up to 1,000 AI Generated Responses/month',
@@ -22,8 +25,13 @@ const plans = [
 	},
 	{
 		name: 'Pro',
-		price: '$34.99',
+		price: '$35',
 		description: 'Ideal for growing creators',
+		priceDetail: 'per month, billed monthly',
+		popular: true,
+		savePercentage: '20%',
+		annualPrice: '$28',
+		buttonText: 'Get Early Access',
 		features: [
 			'Up to 5 Platform connections',
 			'Up to 10,000 AI Generated Responses/month',
@@ -34,8 +42,11 @@ const plans = [
 	},
 	{
 		name: 'Enterprise',
-		price: 'Get Quote',
+		price: 'Custom',
 		description: 'For large creators and agencies',
+		priceDetail: 'Custom pricing for your needs',
+		popular: false,
+		buttonText: 'Request Demo',
 		features: [
 			'Heavy usage requirements supported',
 			'Manage many channels',
@@ -49,26 +60,57 @@ const plans = [
 export function Pricing() {
 	const ref = React.useRef(null);
 	const isInView = useInView(ref, { once: false, amount: 0.2 });
+	const [isAnnual, setIsAnnual] = React.useState(false);
 
 	return (
 		<LazyMotion features={domAnimation}>
 			<section id="pricing" ref={ref} className="py-24 section-background-alt">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
 					<motion.div 
 						className="text-center mb-16"
 						initial={{ opacity: 0, y: 30 }}
 						animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
 						transition={{ duration: 0.6 }}
 					>
-						<h2 className="text-4xl md:text-5xl font-bold text-green-500 mb-6">
-							Intuitive Pricing
+						<motion.span 
+							className="text-sm uppercase tracking-wider font-semibold text-green-600 mb-2 inline-block"
+							initial={{ opacity: 0, y: -10 }}
+							animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
+							transition={{ duration: 0.5 }}
+						>
+							No hidden fees
+						</motion.span>
+						<h2 className="text-4xl md:text-5xl font-bold text-green-500 mb-4">
+							Scalable &amp; Intuitive Pricing
 						</h2>
-						<p className="text-xl text-green-800 font-bold">
-							Simple pricing designed for creators and agencies of all sizes
+						<p className="text-xl text-green-800 font-medium max-w-2xl mx-auto mb-2">
+							Choose your perfect plan as a creator or agency of any size
 						</p>
+						<p className="text-gray-600 max-w-lg mx-auto mb-6">
+							All plans include core features, with flexible options as you grow. Cancel anytime.
+						</p>
+						
+						<div className="flex items-center justify-center mb-8">
+							<span className={`text-sm font-medium mr-3 ${!isAnnual ? 'text-green-600' : 'text-gray-500'}`}>Monthly</span>
+							<button 
+								onClick={() => setIsAnnual(!isAnnual)} 
+								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-500 ${isAnnual ? 'bg-green-500' : 'bg-gray-300'}`}
+								role="switch"
+								aria-checked={isAnnual}
+							>
+								<span className="sr-only">Toggle annual billing</span>
+								<span 
+									className={`${isAnnual ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+								/>
+							</button>
+							<div className="flex items-center ml-3">
+								<span className={`text-sm font-medium mr-2 ${isAnnual ? 'text-green-600' : 'text-gray-500'}`}>Annual</span>
+								<span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">Save 20%</span>
+							</div>
+						</div>
 					</motion.div>
 
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 lg:gap-10 max-w-6xl mx-auto">
 						{plans.map((plan, index) => (
 							<motion.div
 								key={plan.name}
@@ -76,29 +118,31 @@ export function Pricing() {
 								animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
 								transition={{ delay: index * 0.15, duration: 0.6 }}
 								whileHover={{ 
-									scale: 1.05,
+									scale: plan.popular ? 1.03 : 1.02,
 									transition: { duration: 0.2 }
 								}}
 								whileTap={{ 
 									scale: 0.98,
 									transition: { duration: 0.1 }
 								}}
-								className="cursor-pointer"
+								className={`cursor-pointer ${plan.popular ? 'z-10' : 'z-0'}`}
 							>
-								<Card className="card-background shadow-lg hover:shadow-xl transition-shadow h-full relative">
-									{plan.name === 'Pro' && (
-										<div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-green-500 to-green-600 text-white text-center py-2 text-sm font-semibold rounded-t-lg">
-											⭐ Most Popular
+								<Card 
+									className={`${plan.popular ? 'shadow-xl ring-2 ring-green-500 scale-103' : 'shadow-lg'} card-background hover:shadow-xl transition-all duration-300 h-full relative`}
+								>
+									{plan.popular && (
+										<div className="absolute -top-5 left-0 right-0 mx-auto w-max px-4 py-1.5 bg-gradient-to-r from-green-500 to-green-600 text-white text-center text-sm font-semibold rounded-full shadow-md">
+											⭐ BEST VALUE
 										</div>
 									)}
-									<CardHeader className={plan.name === 'Pro' ? 'pt-12' : ''}>
+									<CardHeader className={plan.popular ? 'pt-8' : 'pt-6'}>
 										<motion.div
 											initial={{ opacity: 0, y: 20 }}
 											animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
 											transition={{ delay: index * 0.15 + 0.1, duration: 0.5 }}
 											className="text-center"
 										>
-											<CardTitle className="text-2xl md:text-3xl font-bold text-green-500">
+											<CardTitle className={`text-3xl md:text-4xl lg:text-5xl font-bold ${plan.name === 'Pro' ? 'text-green-600' : 'text-green-500'} text-center`}>
 												{plan.name}
 											</CardTitle>
 										</motion.div>
@@ -108,7 +152,7 @@ export function Pricing() {
 											transition={{ delay: index * 0.15 + 0.2, duration: 0.5 }}
 											className="text-center"
 										>
-											<CardDescription className="text-green-800 font-bold">
+											<CardDescription className="text-green-800 font-bold mt-2 text-lg md:text-xl">
 												{plan.description}
 											</CardDescription>
 										</motion.div>
@@ -120,16 +164,47 @@ export function Pricing() {
 											animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
 											transition={{ delay: index * 0.15 + 0.3, duration: 0.6 }}
 										>
-											<span className="text-4xl font-bold text-primary-dark">
-												{plan.price}
-											</span>
-											{plan.price !== 'FREE' && plan.price !== 'Get Quote' && (
-												<span className="text-secondary-dark">
-													/month
-												</span>
+											<div className="flex items-center pl-3">
+												{plan.price === 'FREE' && (
+													<span className={`text-2xl font-bold text-green-800`}>
+														{plan.price}
+													</span>
+												)}
+												
+												{plan.price !== 'FREE' && plan.price !== 'Custom' && (
+													<>
+														<span className={`text-2xl font-bold text-green-800`}>
+															{isAnnual && plan.annualPrice ? plan.annualPrice : plan.price}
+														</span>
+														<span className="text-secondary-dark ml-1 font-medium text-base">
+															/mo
+														</span>
+													</>
+												)}
+												
+												{plan.price === 'Custom' && (
+													<span className={`text-2xl font-bold text-green-800`}>
+														{plan.price}
+													</span>
+												)}
+											</div>
+											
+											<p className="text-sm text-gray-500 mt-2 pl-3">
+												{plan.name === 'Pro' && isAnnual 
+													? 'per month, billed annually' 
+													: plan.priceDetail}
+											</p>
+											
+											{plan.popular && plan.savePercentage && plan.annualPrice && !isAnnual && (
+												<div className="mt-3 bg-green-50 text-green-800 rounded-full px-4 py-1.5 inline-flex items-center">
+													<span className="text-xs font-semibold mr-1">Save {plan.savePercentage}:</span>
+													<span className="text-sm font-bold">{plan.annualPrice}/mo</span>
+													<span className="text-xs ml-1">billed annually</span>
+												</div>
 											)}
 										</motion.div>
-										<ul className="space-y-3">
+										
+										<ul className="space-y-4 mt-8">
 											{plan.features.map((feature, featureIndex) => (
 												<motion.li 
 													key={featureIndex} 
@@ -141,15 +216,17 @@ export function Pricing() {
 														duration: 0.4 
 													}}
 												>
-													<Check className="h-5 w-5 icon-color mr-2 flex-shrink-0" />
-													<span className="text-secondary-dark">
+													<div className={`flex-shrink-0 h-6 w-6 rounded-full ${plan.popular ? 'bg-green-100' : 'bg-green-100'} flex items-center justify-center mr-3 mt-0.5`}>
+														<Check className={`h-4 w-4 text-green-500`} />
+													</div>
+													<span className="text-secondary-dark text-base">
 														{feature}
 													</span>
 												</motion.li>
 											))}
 										</ul>
 									</CardContent>
-									<CardFooter>
+									<CardFooter className="pt-4 pb-8">
 										<motion.div
 											initial={{ opacity: 0, y: 30, scale: 0.9 }}
 											animate={isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 30, scale: 0.9 }}
@@ -157,14 +234,12 @@ export function Pricing() {
 											className="w-full"
 										>
 											<Button
-												className="w-full bg-[var(--brand-primary-solid)] hover:bg-[var(--brand-primary-solid-hover)] text-[var(--brand-primary-solid-foreground)] border-0"
+												className="w-full bg-green-600 hover:bg-green-700 text-white border-0 py-6 text-base shadow-lg hover:shadow-xl transition-all duration-300"
 												asChild
 											>
-												{plan.name === 'Enterprise' ? (
-													<Link href="/demo">Request Demo</Link>
-												) : (
-													<Link href="/join-waitlist">Get Early Access</Link>
-												)}
+												<Link href={plan.name === 'Enterprise' ? '/request-demo' : '/join-waitlist'}>
+													{plan.buttonText}
+												</Link>
 											</Button>
 										</motion.div>
 									</CardFooter>
@@ -174,14 +249,42 @@ export function Pricing() {
 					</div>
 
 					<motion.div 
-						className="mt-12 text-center"
+						className="mt-16 text-center"
 						initial={{ opacity: 0, y: 20 }}
 						animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
 						transition={{ delay: 0.8, duration: 0.6 }}
 					>
-						<p className="text-secondary-dark">
-							Start with our free Basic plan or get early access to Pro and Enterprise tiers.
-						</p>
+						<div className="bg-white/80 backdrop-blur-sm max-w-3xl mx-auto py-6 px-8 rounded-2xl shadow-md border border-gray-100">
+							<div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
+								<div className="text-left">
+									<h3 className="text-xl font-semibold text-gray-900 mb-1">Got questions about pricing?</h3>
+									<p className="text-gray-600">Our team is ready to help you choose the perfect plan</p>
+								</div>
+								<div className="flex flex-col sm:flex-row gap-3">
+									<Button className="bg-green-600 hover:bg-green-700 text-white py-5 px-6">
+										<Link href="/contact">Contact Sales</Link>
+									</Button>
+									<Button className="bg-white border border-green-500 text-green-600 hover:bg-green-50 py-5 px-6">
+										<Link href="/contact">Request Custom Quote</Link>
+									</Button>
+								</div>
+							</div>
+						</div>
+						
+						<div className="mt-10 flex flex-wrap items-center justify-center gap-6">
+							<div className="flex items-center gap-2">
+								<Check className="h-5 w-5 text-green-500" />
+								<span className="text-gray-600 text-sm">No credit card required</span>
+							</div>
+							<div className="flex items-center gap-2">
+								<Check className="h-5 w-5 text-green-500" />
+								<span className="text-gray-600 text-sm">Cancel anytime</span>
+							</div>
+							<div className="flex items-center gap-2">
+								<Check className="h-5 w-5 text-green-500" />
+								<span className="text-gray-600 text-sm">Premium support</span>
+							</div>
+						</div>
 					</motion.div>
 				</div>
 			</section>
