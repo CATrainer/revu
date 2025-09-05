@@ -61,3 +61,8 @@ pgvector==0.2.5
 
 # Stripe for payments
 stripe==8.1.0
+
+# Social scraping clients
+tweepy==4.14.0
+praw==7.7.1
+aioredis==2.0.1
