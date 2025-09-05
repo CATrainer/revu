@@ -9,8 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 import { motion, LazyMotion, domAnimation, useInView } from "framer-motion";
-import { Mail, MessageCircle, ArrowRight, Phone, Send, MapPin, ChevronRight, Globe, Clock, CheckCircle, Loader2, AlertCircle } from "lucide-react";
-import { api } from '@/lib/api';
+import { Mail, ArrowRight, Send, ChevronRight, Globe, Clock, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 
 export default function ContactPage() {
   const ref = useRef(null);
@@ -45,8 +44,12 @@ export default function ContactPage() {
       // For now we're just simulating a successful submission
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setSuccess(true);
-    } catch (err: any) {
-      setError(err?.message || "Something went wrong. Please try again.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Something went wrong. Please try again.");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -69,13 +72,13 @@ export default function ContactPage() {
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
               transition={{ duration: 0.5 }}
             >
-              We're here to help
+              We&apos;re here to help
             </motion.span>
             <h1 className="text-4xl md:text-5xl font-bold text-green-600 mb-4">
               Get In Touch With Our Team
             </h1>
             <p className="text-xl text-green-800 font-medium max-w-2xl mx-auto mb-2">
-              Have questions or need assistance? We're just a message away
+              Have questions or need assistance? We&apos;re just a message away
             </p>
           </motion.div>
 
@@ -91,7 +94,7 @@ export default function ContactPage() {
                 <CardHeader>
                   <CardTitle className="text-2xl text-green-700 dark:text-green-500">Send Us A Message</CardTitle>
                   <CardDescription className="text-gray-600 dark:text-gray-400">
-                    Fill out the form below and we'll get back to you within 24 hours
+                    Fill out the form below and we&apos;ll get back to you within 24 hours
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -107,7 +110,7 @@ export default function ContactPage() {
                       </div>
                       <h3 className="text-xl font-bold text-green-700 dark:text-green-500 mb-2">Message Sent Successfully!</h3>
                       <p className="text-gray-600 dark:text-gray-400 mb-6">
-                        Thank you for reaching out. We'll respond to your message shortly.
+                        Thank you for reaching out. We&apos;ll respond to your message shortly.
                       </p>
                       <Button onClick={() => setSuccess(false)} className="bg-green-600 hover:bg-green-700 text-white">
                         Send Another Message
