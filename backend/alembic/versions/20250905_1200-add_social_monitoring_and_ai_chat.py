@@ -1,7 +1,7 @@
 """add social monitoring & ai chat tables
 
 Revision ID: 20250905_1200
-Revises: 20250829_1510
+Revises: 20250902_1300
 Create Date: 2025-09-05
 
 """
@@ -11,9 +11,28 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+
+# Minimal pgvector type definition (avoids external dependency during migration)
+from sqlalchemy.types import UserDefinedType
+
+
+class Vector(UserDefinedType):  # noqa: D401
+    """Lightweight pgvector column type for migrations.
+
+    Provides DDL like VECTOR(1536). Runtime ORM mapping can use the
+    real pgvector library (pgvector==0.2.x) if desired; for pure DDL
+    this is sufficient.
+    """
+
+    def __init__(self, dimensions: int):  # type: ignore[no-untyped-def]
+        self.dimensions = dimensions
+
+    def get_col_spec(self, **kw):  # type: ignore[no-untyped-def]
+        return f"vector({self.dimensions})"
+
 # revision identifiers, used by Alembic.
 revision = "20250905_1200"
-down_revision = "20250829_1510"
+down_revision = "20250902_1300"
 branch_labels = None
 depends_on = None
 
@@ -91,7 +110,7 @@ def upgrade() -> None:
         sa.Column('url', sa.Text(), nullable=True),
         sa.Column('status', sa.String(), nullable=False, server_default='active'),
         sa.Column('tags', postgresql.ARRAY(sa.String()), server_default='{}', nullable=False),
-        sa.Column('embedding', sa.dialects.postgresql.VECTOR(1536), nullable=True),
+    sa.Column('embedding', Vector(1536), nullable=True),
         sa.Column('created_at', TZDateTime, server_default=sa.text('now()'), nullable=False),
         sa.Column('updated_at', TZDateTime, server_default=sa.text('now()'), nullable=False),
         sa.PrimaryKeyConstraint('id'),
@@ -124,7 +143,7 @@ def upgrade() -> None:
         sa.Column('first_seen_at', TZDateTime, nullable=True),
         sa.Column('last_seen_at', TZDateTime, nullable=True),
         sa.Column('mention_count', sa.Integer(), nullable=False, server_default='0'),
-        sa.Column('embedding', sa.dialects.postgresql.VECTOR(1536), nullable=True),
+    sa.Column('embedding', Vector(1536), nullable=True),
         sa.Column('created_at', TZDateTime, server_default=sa.text('now()'), nullable=False),
         sa.Column('updated_at', TZDateTime, server_default=sa.text('now()'), nullable=False),
         sa.PrimaryKeyConstraint('id'),
@@ -189,7 +208,7 @@ def upgrade() -> None:
         sa.Column('platform', sa.String(), nullable=True),
         sa.Column('content', sa.Text(), nullable=False),
         sa.Column('metadata', postgresql.JSONB, nullable=True),
-        sa.Column('embedding', sa.dialects.postgresql.VECTOR(1536), nullable=False),
+    sa.Column('embedding', Vector(1536), nullable=False),
         sa.Column('created_at', TZDateTime, server_default=sa.text('now()'), nullable=False),
         sa.PrimaryKeyConstraint('id'),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE')
@@ -251,7 +270,7 @@ def upgrade() -> None:
         sa.Column('tool_args', postgresql.JSONB, nullable=True),
         sa.Column('latency_ms', sa.Integer(), nullable=True),
         sa.Column('error', sa.Text(), nullable=True),
-        sa.Column('embedding', sa.dialects.postgresql.VECTOR(1536), nullable=True),
+    sa.Column('embedding', Vector(1536), nullable=True),
         sa.Column('created_at', TZDateTime, server_default=sa.text('now()'), nullable=False),
         sa.PrimaryKeyConstraint('id'),
         sa.ForeignKeyConstraint(['session_id'], ['ai_chat_sessions.id'], ondelete='CASCADE'),
