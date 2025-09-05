@@ -4,18 +4,17 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Inbox, Brain, Users, TrendingUp, ChartPie, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BarChart3, Brain, ChartPie, Settings, ChevronLeft, ChevronRight, MessageSquare, Zap, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useMemo } from 'react';
-import { useStore } from '@/lib/store';
 
+// Streamlined nav: only current surfaces + new explicit routes for Comments & Automation & Social Monitoring
 const baseNav = [
   { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
-  { name: 'Engagement Hub', href: '/engagement', icon: Inbox },
-  { name: 'Pulse Monitor', href: '/pulse', icon: TrendingUp },
-  { name: 'Competitors', href: '/competitors', icon: Users },
-  { name: 'Trends', href: '/trends', icon: TrendingUp },
+  { name: 'Comments', href: '/comments', icon: MessageSquare },
+  { name: 'Automation', href: '/automation', icon: Zap },
   { name: 'Analytics', href: '/analytics', icon: ChartPie },
+  { name: 'Social Monitoring', href: '/social-monitoring', icon: Radio },
   { name: 'AI Assistant', href: '/ai-assistant', icon: Brain },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
@@ -23,34 +22,13 @@ const baseNav = [
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const { currentWorkspace, scenario } = useStore();
   const navigation = useMemo(() => {
     // Start from base and clone so we can mutate labels safely
     const items = [...baseNav.map((x) => ({ ...x }))];
-    // Insert Clients for Agency
-    if (currentWorkspace?.type === 'Agency') {
-      items.splice(2, 0, { name: 'Clients', href: '/clients', icon: Users });
-    }
-    // Scenario-aware label tweaks
-    const isCreator = scenario === 'creator' || currentWorkspace?.type === 'Individual';
-    const isBusiness = scenario === 'business' || currentWorkspace?.type === 'Organization';
-    const isAgency = currentWorkspace?.type === 'Agency';
-    items.forEach((it) => {
-      if (it.href === '/engagement') {
-        it.name = isCreator ? 'Audience Engagement' : isBusiness ? 'Responses' : isAgency ? 'Engagement Hub' : it.name;
-      }
-      if (it.href === '/pulse') {
-        it.name = isCreator ? 'Mentions Pulse' : isBusiness ? 'Reputation Pulse' : 'Pulse Monitor';
-      }
-      if (it.href === '/competitors') {
-        it.name = isCreator ? 'Peers' : 'Competitors';
-      }
-      if (it.href === '/analytics') {
-        it.name = isCreator ? 'Channel Analytics' : isBusiness ? 'Reviews Analytics' : isAgency ? 'Portfolio Analytics' : 'Analytics';
-      }
-    });
+  // Scenario-aware label tweaks trimmed: always show single 'Analytics'
+  // Remove legacy dynamic labels (Responses, Reputation Pulse, etc.)
     return items;
-  }, [currentWorkspace?.type, scenario]);
+  }, []);
 
   return (
     <aside
