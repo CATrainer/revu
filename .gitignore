@@ -66,3 +66,7 @@ redis_data/
 
 rebuild/
 rebuild/frontend/.next
+
+# Adhoc
+package-lock.json
+yarn.lock
