@@ -34,7 +34,7 @@ export default function RequestDemoPage() {
 
     try {
       // In a real implementation, this would send to a demo-specific endpoint
-      const response = await api.post('/users/early-access/join', {
+      await api.post('/users/waitlist/join', {
         ...formData,
         request_type: 'demo'
       });
@@ -43,8 +43,16 @@ export default function RequestDemoPage() {
       setTimeout(() => {
         router.push('/thank-you-demo');
       }, 2000);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Something went wrong. Please try again.');
+    } catch (err: unknown) {
+      type AxiosLike = { response?: { data?: { message?: string } } };
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        const r = (err as AxiosLike).response;
+        setError(r?.data?.message || 'Something went wrong. Please try again.');
+      } else if (err instanceof Error) {
+        setError(err.message || 'Something went wrong. Please try again.');
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -121,7 +129,7 @@ export default function RequestDemoPage() {
                     </svg>
                   </div>
                   <h3 className="text-xl font-semibold text-green-800 dark:text-green-200 mb-2">Thank you for your request!</h3>
-                  <p className="text-green-600 dark:text-green-300">We'll be in touch soon to schedule your demo.</p>
+                  <p className="text-green-600 dark:text-green-300">We&apos;ll be in touch soon to schedule your demo.</p>
                 </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">

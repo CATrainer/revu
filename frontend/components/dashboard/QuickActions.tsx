@@ -21,8 +21,8 @@ export function QuickActions() {
   <Button className="w-full border-[var(--border)] text-secondary-dark hover-background" variant="outline" onClick={() => { addReportEntry({ id: `rep_${Date.now()}`, title: `Weekly Analytics Summary — ${new Date().toLocaleDateString()}`, route: '/analytics', createdAt: new Date().toISOString() }); addNotification({ id: `n_${Date.now()}`, title: 'Report ready', message: 'Weekly report generated. Open Analytics to export.', createdAt: new Date().toISOString(), severity: 'success' }); pushToast('Weekly report generated. Check Analytics > Export.', 'success'); }}>
           Generate Weekly Report
         </Button>
-  <Button className="w-full border-[var(--border)] text-secondary-dark hover-background" variant="outline" onClick={() => router.push('/competitors')}>
-          Check Competitors
+  <Button className="w-full border-[var(--border)] text-secondary-dark hover-background" variant="outline" onClick={() => router.push('/automation')}>
+          Open Automation
         </Button>
       </CardContent>
     </Card>

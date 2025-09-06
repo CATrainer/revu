@@ -35,8 +35,9 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAlertBanner, setShowAlertBanner] = useState(false);
-  const [systemStatus, setSystemStatus] = useState<{status: 'active'|'paused'; paused_until?: string|null}>({status: 'active'});
+  const [systemStatus, setSystemStatus] = useState<{status: 'active'|'paused'; paused_until?: string|null; test_mode?: boolean; auto_pause_on_spike?: boolean}>({status: 'active'});
   const [pauseLoading, setPauseLoading] = useState(false);
+  const [sysUpdateLoading, setSysUpdateLoading] = useState(false);
   const personaLabel = user?.user_kind === 'business' ? 'Business' : 'Content';
   const personaColor = user?.user_kind === 'business'
     ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
@@ -88,7 +89,7 @@ export function Header({ onMenuClick }: HeaderProps) {
     const res = await fetch('/api/v1/system/status');
         if (res.ok) {
           const data = await res.json();
-          setSystemStatus({ status: data.status, paused_until: data.paused_until });
+          setSystemStatus({ status: data.status, paused_until: data.paused_until, test_mode: !!data.test_mode, auto_pause_on_spike: !!data.auto_pause_on_spike });
         }
       } catch {}
     };
@@ -121,6 +122,30 @@ export function Header({ onMenuClick }: HeaderProps) {
       }
     } finally {
       setPauseLoading(false);
+    }
+  };
+
+  const setTestMode = async (enabled: boolean) => {
+    setSysUpdateLoading(true);
+    try {
+      const res = await fetch('/api/v1/system/test-mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled })});
+      if (res.ok) {
+        setSystemStatus((s) => ({ ...s, test_mode: enabled }));
+      }
+    } finally {
+      setSysUpdateLoading(false);
+    }
+  };
+
+  const setAutoPauseOnSpike = async (enabled: boolean) => {
+    setSysUpdateLoading(true);
+    try {
+      const res = await fetch('/api/v1/system/auto-pause-on-spike', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled })});
+      if (res.ok) {
+        setSystemStatus((s) => ({ ...s, auto_pause_on_spike: enabled }));
+      }
+    } finally {
+      setSysUpdateLoading(false);
     }
   };
 
@@ -180,6 +205,25 @@ export function Header({ onMenuClick }: HeaderProps) {
                   <PlayCircle className="h-4 w-4 mr-1" /> Resume
                 </Button>
               )}
+              {/* Global toggles */}
+              <label className="flex items-center gap-2 text-xs text-secondary-dark ml-2" title="Run actions in simulation mode only">
+                <input
+                  type="checkbox"
+                  checked={!!systemStatus.test_mode}
+                  onChange={(e) => setTestMode(e.target.checked)}
+                  disabled={sysUpdateLoading}
+                />
+                Test mode
+              </label>
+              <label className="flex items-center gap-2 text-xs text-secondary-dark" title="Automatically pause on extreme spikes (e.g., 5x)">
+                <input
+                  type="checkbox"
+                  checked={!!systemStatus.auto_pause_on_spike}
+                  onChange={(e) => setAutoPauseOnSpike(e.target.checked)}
+                  disabled={sysUpdateLoading}
+                />
+                Auto-pause on spike
+              </label>
             </div>
             {/* Persona badge */}
             <span
