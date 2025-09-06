@@ -34,7 +34,7 @@ export default function RequestDemoPage() {
 
     try {
       // In a real implementation, this would send to a demo-specific endpoint
-      const response = await api.post('/users/waitlist/join', {
+      const response = await api.post('/users/early-access/join', {
         ...formData,
         request_type: 'demo'
       });

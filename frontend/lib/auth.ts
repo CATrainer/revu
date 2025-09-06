@@ -27,6 +27,8 @@ interface AuthState {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, fullName: string) => Promise<void>;
+  googleLogin: () => Promise<void>;
+  instagramLogin: () => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   requestDemo: () => Promise<void>;
@@ -47,6 +49,40 @@ export const useAuth = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
+
+  googleLogin: async () => {
+    try {
+      // This would typically redirect to Google OAuth flow
+      // For now, we'll just simulate this with a console message
+      console.log('Google OAuth login initiated');
+      
+      // In a real implementation, we would redirect to something like:
+      // window.location.href = '/api/auth/google';
+      
+      // For demonstration purposes only - this would be handled by the OAuth callback
+      alert('Google login feature is coming soon!');
+    } catch (error) {
+      console.error('Google login error:', error);
+      throw error;
+    }
+  },
+
+  instagramLogin: async () => {
+    try {
+      // This would typically redirect to Instagram OAuth flow
+      // For now, we'll just simulate this with a console message
+      console.log('Instagram OAuth login initiated');
+      
+      // In a real implementation, we would redirect to something like:
+      // window.location.href = '/api/auth/instagram';
+      
+      // For demonstration purposes only - this would be handled by the OAuth callback
+      alert('Instagram login feature is coming soon!');
+    } catch (error) {
+      console.error('Instagram login error:', error);
+      throw error;
+    }
+  },
 
   login: async (email: string, password: string) => {
     try {

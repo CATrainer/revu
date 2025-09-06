@@ -54,21 +54,24 @@ export default function JoinWaitlistPage() {
 
   return (
     <div className="min-h-screen bg-[#fafaf9] dark:bg-gray-900 py-12">
-  <div className="max-w-xl mx-auto px-4">
-        <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 shadow-xl">
-          <CardHeader className="text-center">
+      <div className="max-w-2xl mx-auto px-4">
+        <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 shadow-xl overflow-visible">
+          <CardHeader className="text-center px-8">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: 'easeOut' }}
+              className="flex flex-col items-center w-full"
             >
-                <CardTitle className="text-3xl md:text-4xl font-extrabold text-green-500 dark:text-green-400 leading-tight">Get Early Access</CardTitle>
-                <CardDescription className="text-sm font-medium text-green-800 dark:text-green-300 mt-2">
-                Be the first to know when Repruv launches and get early access to powerful community engagement tools.
-              </CardDescription>
+                <CardTitle className="text-3xl md:text-4xl font-extrabold text-green-500 dark:text-green-400 leading-tight text-center mx-auto">
+                  Request Demo & Early Access
+                </CardTitle>
+                <CardDescription className="text-sm font-medium text-green-800 dark:text-green-300 mt-2 text-center w-full mx-auto px-4">
+                  Exclusive for agencies and large creators: Schedule a personalized demo and be among the first to access our AI-powered community engagement tools.
+                </CardDescription>
             </motion.div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-8">
             <motion.form 
               onSubmit={handleSubmit} 
               className="space-y-4"

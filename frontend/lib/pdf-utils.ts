@@ -1,17 +1,15 @@
 // frontend/lib/pdf-utils.ts
 'use client';
 
-import { useStore } from '@/lib/store';
-
 // Build a base HTML document, optionally branded with workspace colors/logo/header/footer.
 function buildHtml(pageTitle: string, bodyContent: string, opts?: { contentTitle?: string; subtitleHtml?: string }) {
-  const branding = (() => { try { return useStore.getState().branding; } catch { return undefined; } })();
-  const useBranding = !!branding?.useBrandingInExports;
-  const primary = branding?.primaryColor || '#111827';
-  const accent = branding?.accentColor || '#22c55e';
-  const headerText = branding?.headerText || 'Revu';
-  const footerText = branding?.footerText || '';
-  const logo = branding?.logoUrl || '';
+  // Default branding values
+  const primary = '#111827';
+  const accent = '#22c55e';
+  const headerText = 'Revu';
+  const footerText = '';
+  const logo = '';
+  const useBranding = false;
 
   const baseStyles = `
     body{font-family:Arial,Helvetica,sans-serif;color:#111827;padding:24px}
@@ -111,14 +109,6 @@ export function downloadEngagementSummaryPDF(payload: { title?: string; stats: A
 }
 
 export const downloadTermsAsPDF = () => {
-  // Create a new window with the terms content formatted for printing
-  const printWindow = window.open('', '_blank');
-  
-  if (!printWindow) {
-    alert('Please allow popups to download the PDF');
-    return;
-  }
-
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -161,7 +151,7 @@ export const downloadTermsAsPDF = () => {
           margin-top: 20px;
         }
         @media print {
-          body { margin: 0; }
+          body { margin: 0; padding: 20px; }
         }
       </style>
     </head>
@@ -232,32 +222,51 @@ export const downloadTermsAsPDF = () => {
         <p>If you have any questions or concerns regarding these Terms and Conditions, please contact us at:</p>
         <p><strong>info@repruv.co.uk</strong></p>
       </div>
-
-      <script>
-        window.onload = function() {
-          window.print();
-          setTimeout(function() {
-            window.close();
-          }, 1000);
-        }
-      </script>
     </body>
     </html>
   `;
 
-  printWindow.document.write(htmlContent);
-  printWindow.document.close();
+  try {
+    // Method 1: Download as HTML document
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Repruv-Terms-and-Conditions.html';
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+    // Method 2: Open in new window for printing to PDF
+    setTimeout(() => {
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        const printContent = htmlContent + `
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 500);
+            }
+          </script>
+        `;
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+      }
+    }, 500);
+  } catch (error) {
+    console.error('Error downloading document:', error);
+    alert('There was an error downloading the document. Please try again.');
+  }
 };
 
 export const downloadPrivacyAsPDF = () => {
-  // Create a new window with the privacy policy content formatted for printing
-  const printWindow = window.open('', '_blank');
-  
-  if (!printWindow) {
-    alert('Please allow popups to download the PDF');
-    return;
-  }
-
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -305,7 +314,7 @@ export const downloadPrivacyAsPDF = () => {
           margin-top: 20px;
         }
         @media print {
-          body { margin: 0; }
+          body { margin: 0; padding: 20px; }
         }
       </style>
     </head>
@@ -404,19 +413,46 @@ export const downloadPrivacyAsPDF = () => {
         <p>If you have any questions about this Privacy Policy or how we handle your data, please contact us at:</p>
         <p><strong>info@repruv.co.uk</strong></p>
       </div>
-
-      <script>
-        window.onload = function() {
-          window.print();
-          setTimeout(function() {
-            window.close();
-          }, 1000);
-        }
-      </script>
     </body>
     </html>
   `;
 
-  printWindow.document.write(htmlContent);
-  printWindow.document.close();
+  try {
+    // Method 1: Download as HTML document
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Repruv-Privacy-Policy.html';
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+    // Method 2: Open in new window for printing to PDF
+    setTimeout(() => {
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        const printContent = htmlContent + `
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 500);
+            }
+          </script>
+        `;
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+      }
+    }, 500);
+  } catch (error) {
+    console.error('Error downloading document:', error);
+    alert('There was an error downloading the document. Please try again.');
+  }
 };

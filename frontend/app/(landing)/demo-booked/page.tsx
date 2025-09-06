@@ -43,7 +43,7 @@ export default function DemoBookedPage() {
 
     try {
       // First add to early access
-      await api.post('/users/waitlist/join', {
+      await api.post('/users/early-access/join', {
         email: formData.email,
         full_name: formData.full_name,
         phone: formData.phone,
@@ -52,7 +52,7 @@ export default function DemoBookedPage() {
       });
 
       // Then create account
-      const response = await api.post('/users/waitlist/create-account', {
+      const response = await api.post('/users/early-access/create-account', {
         email: formData.email,
         password: formData.password
       });
