@@ -22,11 +22,39 @@ from sqlalchemy.pool import NullPool, QueuePool
 
 from app.core.config import settings
 
+# --- Diagnostics & URL normalization ---------------------------------------------------------
+# Some deploy environments (e.g. Railway) may inject DATABASE_URL without +asyncpg.
+# For async SQLAlchemy we need the async driver specified. We transparently upgrade here
+# and log a warning so the underlying cause is visible in logs.
+raw_url = settings.DATABASE_URL
+effective_async_url = raw_url
+if raw_url.startswith("postgresql://") and "+asyncpg" not in raw_url:
+    # Avoid double replacement if driver already correct
+    effective_async_url = raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    logger.warning(
+        "DATABASE_URL lacked +asyncpg driver; normalized to async variant. Original={orig}",
+        orig=raw_url,
+    )
+
+def _log_env_summary():  # lightweight, avoid leaking secrets
+    try:
+        redacted_url = effective_async_url.split("@")[-1]  # host/db part only
+        logger.info(
+            "DB init: env={env} driver_url={url} echo={echo} pool(prod?={prod})", 
+            env=settings.ENVIRONMENT,
+            url=redacted_url,
+            echo=settings.DATABASE_ECHO,
+            prod=settings.ENVIRONMENT == "production",
+        )
+    except Exception:
+        pass
+_log_env_summary()
+
 # Create async engine with conditional pooling
 if settings.ENVIRONMENT == "production":
     # Use NullPool for production/serverless environments
     engine = create_async_engine(
-        settings.DATABASE_URL,
+        effective_async_url,
         echo=settings.DATABASE_ECHO,
         poolclass=NullPool,
         pool_pre_ping=True,
@@ -34,7 +62,7 @@ if settings.ENVIRONMENT == "production":
 else:
     # Use QueuePool for development with connection pooling
     engine = create_async_engine(
-        settings.DATABASE_URL,
+        effective_async_url,
         echo=settings.DATABASE_ECHO,
         pool_size=settings.DATABASE_POOL_SIZE,
         max_overflow=settings.DATABASE_MAX_OVERFLOW,
