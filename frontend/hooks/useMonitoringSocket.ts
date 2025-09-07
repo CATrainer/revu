@@ -1,0 +1,101 @@
+"use client";
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+
+interface UseMonitoringSocketOptions {
+  url?: string; // override for tests
+  onMention?: (m: any)=> void; // eslint-disable-line
+  enabled?: boolean;
+  maxBackoffMs?: number;
+}
+
+interface SocketState {
+  status: 'connecting' | 'open' | 'closed' | 'error' | 'reconnecting';
+  attempts: number;
+  lastMessageAt?: number;
+}
+
+export function useMonitoringSocket(opts: UseMonitoringSocketOptions = {}) {
+  const { url = '/api/v1/monitoring/ws/live', onMention, enabled = true, maxBackoffMs = 15000 } = opts;
+  const qc = useQueryClient();
+  const wsRef = useRef<WebSocket | null>(null);
+  const queueRef = useRef<string[]>([]);
+  const [state,setState] = useState<SocketState>({ status: 'connecting', attempts: 0 });
+  const backoffRef = useRef(1000);
+  const manualCloseRef = useRef(false);
+
+  const flushQueue = () => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    while(queueRef.current.length) {
+      const msg = queueRef.current.shift();
+      if (msg) wsRef.current.send(msg);
+    }
+  };
+
+  const send = useCallback((data: any) => { // eslint-disable-line
+    const payload = JSON.stringify(data);
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(payload);
+    } else {
+      queueRef.current.push(payload);
+    }
+  },[]);
+
+  const connect = useCallback(()=>{
+    if (!enabled) return;
+    manualCloseRef.current = false;
+    setState(s=> ({...s, status: 'connecting'}));
+    const socket = new WebSocket(url.replace(/^http/, 'ws'));
+    wsRef.current = socket;
+
+    socket.onopen = () => {
+      setState(s=> ({...s, status: 'open'}));
+      backoffRef.current = 1000;
+      flushQueue();
+    };
+
+    socket.onmessage = (ev) => {
+      setState(s=> ({...s, lastMessageAt: Date.now()}));
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.event === 'connected') return;
+        if (msg.event === 'message') {
+          if (msg.content?.type === 'mention') {
+            onMention?.(msg.content);
+            // Optimistically prepend to mentions query cache (if used elsewhere)
+            qc.setQueryData(['monitoring','mentions'], (old: any)=>{ // eslint-disable-line
+              if (!old) return old;
+              return { ...old, items: [msg.content, ...(old.items||[])].slice(0,200) };
+            });
+          }
+        }
+      } catch { /* ignore */ }
+    };
+
+    socket.onerror = () => {
+      setState(s=> ({...s, status: 'error'}));
+    };
+
+    socket.onclose = () => {
+      if (manualCloseRef.current) { setState(s=> ({...s, status: 'closed'})); return; }
+      setState(s=> ({...s, status: 'reconnecting', attempts: s.attempts + 1}));
+      const wait = backoffRef.current;
+      backoffRef.current = Math.min(maxBackoffMs, backoffRef.current * 2);
+      setTimeout(()=> connect(), wait + Math.random()*500);
+    };
+  },[enabled, url, onMention, qc, maxBackoffMs]);
+
+  useEffect(()=> {
+    if (!enabled) return;
+    connect();
+    return () => { manualCloseRef.current = true; wsRef.current?.close(); };
+  },[connect, enabled]);
+
+  return {
+    status: state.status,
+    attempts: state.attempts,
+    lastMessageAt: state.lastMessageAt,
+    send,
+    isConnected: state.status === 'open',
+  };
+}

@@ -26,6 +26,8 @@ from app.api.v1.endpoints import (
     reviews,
     users,
     webhooks,
+    social_monitoring,
+    chat,
 )
 
 # Create the main API router
@@ -115,6 +117,18 @@ api_router.include_router(
     early_warning.router,
     prefix="/early-warning",
     tags=["early-warning"],
+)
+
+api_router.include_router(
+    social_monitoring.router,
+    prefix="/monitoring",
+    tags=["monitoring"],
+)
+
+api_router.include_router(
+    chat.router,
+    prefix="/chat",
+    tags=["chat"],
 )
 
 api_router.include_router(
