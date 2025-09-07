@@ -40,8 +40,9 @@ if __name__ == "__main__":
     print(f"Starting Repruve API on port {port}")
 
     # --- Early diagnostics: validate required env vars before uvicorn loads app ---
+    # Redis made optional for basic API startup (features that need it will log warnings later)
     REQUIRED_VARS = [
-        "SECRET_KEY", "DATABASE_URL", "REDIS_URL", "REDIS_CACHE_URL", "CELERY_BROKER_URL",
+        "SECRET_KEY", "DATABASE_URL", "CELERY_BROKER_URL",
         "CELERY_RESULT_BACKEND", "SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY",
         "OPENAI_API_KEY", "CALENDLY_ACCESS_TOKEN", "RESEND_API_KEY", "EMAIL_FROM_ADDRESS"
     ]
@@ -50,6 +51,14 @@ if __name__ == "__main__":
         logger.error(f"❌ Missing required environment variables: {', '.join(missing)}")
         logger.error("Application will exit before starting Uvicorn.")
         sys.exit(1)
+
+    # Inject Redis fallbacks if absent (non-fatal)
+    if not os.environ.get("REDIS_URL"):
+        os.environ["REDIS_URL"] = "redis://localhost:6379/0"
+        logger.warning("REDIS_URL not set; using local fallback redis://localhost:6379/0 (features needing Redis may degrade)")
+    if not os.environ.get("REDIS_CACHE_URL"):
+        os.environ["REDIS_CACHE_URL"] = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+        logger.warning("REDIS_CACHE_URL not set; mirroring REDIS_URL fallback")
 
     # Test importing config & main components explicitly to surface validation errors clearly
     try:

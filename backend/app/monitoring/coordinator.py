@@ -24,7 +24,7 @@ from sqlalchemy import text
 from .data_processor import DataProcessor
 from .ai_analyzer import AIAnalyzer
 from .storage import Storage
-from .platforms.base import PlatformClient, FetchResult
+from .platforms.base import PlatformClientBase
 from .platforms.twitter import TwitterClient
 from .platforms.reddit import RedditClient
 from .platforms.tiktok import TikTokClient
@@ -63,7 +63,7 @@ class MonitoringCoordinator:
         self.data_processor = DataProcessor()
         self.ai_analyzer = AIAnalyzer(session)
         self.storage = Storage(session)
-        self.platform_clients: Dict[str, PlatformClient] = {
+        self.platform_clients: Dict[str, PlatformClientBase] = {
             "twitter": TwitterClient(session),
             "reddit": RedditClient(session),
             "tiktok": TikTokClient(session),
@@ -115,13 +115,28 @@ class MonitoringCoordinator:
             return
         logger.info("Running monitoring job user={u} platform={p}", u=str(job.user_id), p=job.platform)
         # 1. Fetch
-        fetched: FetchResult = await client.fetch_recent(user_id=job.user_id)
-        if not fetched.items:
+        # Use generic fetch_mentions abstraction (limit small for incremental runs)
+        fetched_mentions = await client.fetch_mentions(user_id=job.user_id, limit=100)
+        if not fetched_mentions:
             logger.debug("No items fetched user={u} platform={p}", u=str(job.user_id), p=job.platform)
             await self.storage.touch_profile(job.user_id, job.platform)
             return
-        # 2. Process
-        processed = [self.data_processor.normalize(i, platform=job.platform) for i in fetched.items]
+        # 2. Process (they are already NormalizedMention but pass through unify + dedupe pipeline)
+        processed = [
+            self.data_processor.normalize(
+                {
+                    "platform": m.platform,
+                    "content_id": m.content_id,
+                    "content": m.content,
+                    "author_username": m.author_username,
+                    "url": m.url,
+                    "published_at": m.published_at,
+                    "engagement": m.engagement_metrics,
+                },
+                platform=job.platform,
+            )
+            for m in fetched_mentions
+        ]
         processed = self.data_processor.post_process(processed)
         # 3. Analyze (batch AI sentiment / topics / embeddings)
         analyzed = await self.ai_analyzer.analyze_mentions(processed, user_id=job.user_id)
@@ -133,7 +148,7 @@ class MonitoringCoordinator:
             "Completed monitoring job user={u} platform={p} fetched={f} stored={s}",
             u=str(job.user_id),
             p=job.platform,
-            f=len(fetched.items),
+            f=len(fetched_mentions),
             s=len(analyzed),
         )
 
