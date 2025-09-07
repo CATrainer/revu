@@ -34,13 +34,46 @@ if __name__ == "__main__":
     
     # Then start the app
     import uvicorn
-    
+    from loguru import logger
+
     port = int(os.environ.get("PORT", 8000))
     print(f"Starting Repruve API on port {port}")
-    
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=port,
-        log_level="info"
-    )
+
+    # --- Early diagnostics: validate required env vars before uvicorn loads app ---
+    REQUIRED_VARS = [
+        "SECRET_KEY", "DATABASE_URL", "REDIS_URL", "REDIS_CACHE_URL", "CELERY_BROKER_URL",
+        "CELERY_RESULT_BACKEND", "SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY",
+        "OPENAI_API_KEY", "CALENDLY_ACCESS_TOKEN", "RESEND_API_KEY", "EMAIL_FROM_ADDRESS"
+    ]
+    missing = [v for v in REQUIRED_VARS if not os.environ.get(v)]
+    if missing:
+        logger.error(f"❌ Missing required environment variables: {', '.join(missing)}")
+        logger.error("Application will exit before starting Uvicorn.")
+        sys.exit(1)
+
+    # Test importing config & main components explicitly to surface validation errors clearly
+    try:
+        from app.core.config import settings  # noqa: F401
+        logger.info("Settings imported successfully (environment validation passed)")
+    except Exception as e:  # noqa: BLE001
+        logger.exception("Failed importing settings (pydantic validation likely). Exiting.")
+        sys.exit(1)
+
+    # Granular import check for api router to isolate failing module
+    try:
+        from app.api.v1 import api  # noqa: F401
+        logger.info("API router module imported successfully")
+    except Exception as e:  # noqa: BLE001
+        logger.exception("Import error inside app.api.v1.api; check referenced endpoint modules.")
+        sys.exit(1)
+
+    try:
+        uvicorn.run(
+            "app.main:app",
+            host="0.0.0.0",
+            port=port,
+            log_level="info"
+        )
+    except Exception:
+        logger.exception("Uvicorn failed to start")
+        sys.exit(1)
