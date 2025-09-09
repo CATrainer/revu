@@ -41,11 +41,47 @@ export function useMonitoringSocket(opts: UseMonitoringSocketOptions = {}) {
     }
   },[]);
 
+  // Build final websocket URL considering env override.
+  const resolveUrl = useCallback(() => {
+    const envBase = process.env.NEXT_PUBLIC_WS_URL; // Can be full ws(s) URL or http(s) origin or full path.
+    let base = url;
+    // If explicit override passed in opts use as-is.
+    if (!opts.url && envBase) {
+      // If envBase looks like a full ws/http URL AND already points to a ws endpoint (contains '/ws') assume complete.
+      if (/^(ws|wss|http|https):\/\//i.test(envBase) && /\/ws\//i.test(envBase)) {
+        base = envBase;
+      } else if (/^(ws|wss|http|https):\/\//i.test(envBase)) {
+        // Treat envBase as origin; append path if current base is a leading slash path.
+        if (base.startsWith('/')) base = envBase.replace(/\/$/, '') + base;
+        else base = base; // already absolute
+      } else {
+        // envBase is likely a host w/o protocol, add current window protocol if available.
+        if (typeof window !== 'undefined') {
+          const locProto = window.location.protocol === 'https:' ? 'https://' : 'http://';
+          base = locProto + envBase.replace(/\/$/, '') + (base.startsWith('/') ? base : '/' + base);
+        }
+      }
+    } else if (/^\//.test(base) && typeof window !== 'undefined') {
+      // Relative path -> use current origin.
+      base = window.location.origin + base;
+    }
+    // Normalize to ws/wss protocol.
+    if (/^http:/.test(base)) base = base.replace(/^http:/, 'ws:');
+    else if (/^https:/.test(base)) base = base.replace(/^https:/, 'wss:');
+    else if (!/^(ws|wss):\/\//.test(base) && typeof window !== 'undefined') {
+      // Missing protocol; infer from page.
+      const secure = window.location.protocol === 'https:';
+      base = `${secure ? 'wss://' : 'ws://'}${base.replace(/^\/*/, '')}`;
+    }
+    return base;
+  }, [url, opts.url]);
+
   const connect = useCallback(()=>{
     if (!enabled) return;
     manualCloseRef.current = false;
     setState(s=> ({...s, status: 'connecting'}));
-    const socket = new WebSocket(url.replace(/^http/, 'ws'));
+    const finalUrl = resolveUrl();
+    const socket = new WebSocket(finalUrl);
     wsRef.current = socket;
 
     socket.onopen = () => {
@@ -95,7 +131,7 @@ export function useMonitoringSocket(opts: UseMonitoringSocketOptions = {}) {
       backoffRef.current = Math.min(maxBackoffMs, backoffRef.current * 2);
       setTimeout(()=> connect(), wait + Math.random()*500);
     };
-  },[enabled, url, onMention, qc, maxBackoffMs]);
+  },[enabled, onMention, qc, maxBackoffMs, resolveUrl]);
 
   useEffect(()=> {
     if (!enabled) return;

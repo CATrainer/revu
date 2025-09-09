@@ -77,12 +77,16 @@ if __name__ == "__main__":
         sys.exit(1)
 
     try:
+        
         uvicorn.run(
-            "app.main:app",
-            host="0.0.0.0",
+            "app.main:app", 
+            host="0.0.0.0", 
             port=port,
-            log_level="info"
-        )
+            log_level="info", 
+            ws="websockets", 
+            ws_ping_interval=20, 
+            ws_ping_timeout=20
+            )
     except Exception:
         logger.exception("Uvicorn failed to start")
         sys.exit(1)
