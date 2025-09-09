@@ -24,12 +24,12 @@ export const NarrativesWidget: React.FC<{id:string; onRemove?: (id:string)=>void
       <ul className="space-y-2">
         {threads.map((t,i)=> (
           <li key={i} className="flex items-center gap-2">
-            <div className="flex-1 truncate text-xs">{t.title || 'Untitled'}</div>
-            <div className="w-16 text-right text-emerald-300 text-xs">{(t.sentiment*100).toFixed(0)}%</div>
-            <div className="w-10 text-right text-white/60 text-[10px]">{t.mention_count}</div>
+            <div className="flex-1 truncate text-xs text-[var(--foreground)] dark:text-white/90">{t.title || 'Untitled'}</div>
+            <div className="w-16 text-right text-emerald-600 dark:text-emerald-300 text-xs">{(t.sentiment*100).toFixed(0)}%</div>
+            <div className="w-10 text-right text-[var(--muted-foreground)] dark:text-white/60 text-[10px]">{t.mention_count}</div>
           </li>
         ))}
-        {threads.length===0 && !loading && <li className="text-xs text-white/50">No threads</li>}
+        {threads.length===0 && !loading && <li className="text-xs text-[var(--muted-foreground)] dark:text-white/50">No threads</li>}
       </ul>
     </WidgetFrame>
   );

@@ -31,10 +31,10 @@ export const CompetitorsWidget: React.FC<{id:string; onRemove?: (id:string)=>voi
         <div className="h-40 -mx-2">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data}>
-              <XAxis dataKey="name" stroke="#888" fontSize={10} />
+              <XAxis dataKey="name" stroke={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? '#bbb' : '#555'} fontSize={10} />
               <YAxis hide />
-              <Tooltip contentStyle={{background:'rgba(0,0,0,0.6)', border:'none'}} />
-              <Bar dataKey="score" fill="#6366f1" radius={4} />
+              <Tooltip contentStyle={{background:'rgba(0,0,0,0.65)', border:'none', borderRadius:6, padding:8}} />
+              <Bar dataKey="score" fill="#10b981" radius={4} />
             </BarChart>
           </ResponsiveContainer>
         </div>

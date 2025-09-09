@@ -28,11 +28,11 @@ export const TrendingTopicsWidget: React.FC<{id:string; onRemove?: (id:string)=>
     <WidgetFrame id={id} title="Trending" onRemove={onRemove} loading={loading} error={error} onRefresh={load}>
       <div className="flex flex-wrap gap-2 text-[10px]">
         {topics.map(t=> (
-          <span key={t.term} className="px-2 py-1 rounded-full bg-emerald-400/10 text-emerald-200 border border-emerald-400/20" style={{fontSize: 10 + Math.min(8, t.weight) }}>
+          <span key={t.term} className="px-2 py-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 dark:bg-emerald-400/10" style={{fontSize: 10 + Math.min(8, t.weight) }}>
             {t.term}
           </span>
         ))}
-        {!loading && topics.length===0 && <div className="text-xs text-white/40">No topics</div>}
+        {!loading && topics.length===0 && <div className="text-xs text-[var(--muted-foreground)] dark:text-white/40">No topics</div>}
       </div>
     </WidgetFrame>
   );

@@ -43,16 +43,16 @@ export const MentionsWidget: React.FC<{id:string; onRemove?: (id:string)=>void;}
     <WidgetFrame id={id} title="Mentions" onRemove={onRemove} loading={loading && page===1} error={error} onRefresh={()=> load(1)}>
       <div ref={ref} className="h-44 overflow-y-auto pr-1 space-y-2 custom-scrollbar">
         {items.map(m=> (
-          <div key={m.id} className="text-[11px] p-2 rounded bg-black/30 border border-white/5">
-            <div className="flex items-center justify-between mb-1 text-[10px] text-white/40">
-              <span>{m.platform}</span>
+          <div key={m.id} className="text-[11px] p-2 rounded border border-[var(--border)] bg-[var(--muted)] dark:bg-black/30 dark:border-white/5">
+            <div className="flex items-center justify-between mb-1 text-[10px] text-[var(--muted-foreground)] dark:text-white/40">
+              <span className="uppercase tracking-wide">{m.platform}</span>
               <span>{new Date(m.created_at).toLocaleTimeString()}</span>
             </div>
-            <p className="text-white/80 leading-snug line-clamp-3">{m.text}</p>
+            <p className="text-[var(--foreground)] dark:text-white/80 leading-snug line-clamp-3">{m.text}</p>
           </div>
         ))}
-        {loading && page>1 && <div className="text-[10px] text-white/40">Loading...</div>}
-        {!loading && items.length===0 && <div className="text-xs text-white/40">No mentions</div>}
+        {loading && page>1 && <div className="text-[10px] text-[var(--muted-foreground)]">Loading...</div>}
+        {!loading && items.length===0 && <div className="text-xs text-[var(--muted-foreground)]">No mentions</div>}
       </div>
     </WidgetFrame>
   );

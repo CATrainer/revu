@@ -11,11 +11,12 @@ import { LiveIndicator } from '@/components/monitoring/LiveIndicator';
 import { NotificationCenter, useMentionNotifications } from '@/components/monitoring/NotificationCenter';
 
 interface SortableItemProps { id: string; children: React.ReactNode; }
-const SortableItem: React.FC<SortableItemProps> = ({id, children}) => {
+const SortableItem: React.FC<SortableItemProps> = React.memo(({id, children}) => {
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({id});
-  const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging?0.5:1 };
+  const style: React.CSSProperties = React.useMemo(()=> ({ transform: CSS.Transform.toString(transform), transition, opacity: isDragging?0.5:1 }), [transform, transition, isDragging]);
   return <div ref={setNodeRef} style={style} {...attributes} {...listeners}>{children}</div>;
-};
+});
+SortableItem.displayName = 'SortableItem';
 
 const DashboardInner: React.FC = () => {
   const { widgets, removeWidget, addWidget, moveWidget, lastUpdated, setUpdated, search, setSearch } = useDashboard();
@@ -43,6 +44,14 @@ const DashboardInner: React.FC = () => {
       setTimeout(()=> setUpdated(), 500);
     } finally { setRefreshing(false); }
   };
+
+  // Stable quick stats (remove random every render -> heavy layout/paint). Placeholder zeros until real API attaches.
+  const quickStats = React.useMemo(()=> [
+    { label: 'Mentions', value: '—' },
+    { label: 'Threads', value: '—' },
+    { label: 'Sentiment', value: '—' },
+    { label: 'Reach', value: '—' }
+  ], []);
 
   return (
     <div className="flex-1 w-full mx-auto max-w-[1500px] px-2 md:px-4 py-4 md:py-6 space-y-6">
@@ -72,10 +81,10 @@ const DashboardInner: React.FC = () => {
         </div>
         {/* Quick stats placeholder */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          {['Mentions','Threads','Sentiment','Reach'].map((l,i)=>(
+          {quickStats.map((s,i)=>(
             <div key={i} className="p-3 rounded-lg md:rounded-xl card-background-light flex flex-col">
-              <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]">{l}</span>
-              <span className="text-base md:text-lg font-semibold mt-1 text-[var(--foreground)]">{Math.round(Math.random()*1000)}</span>
+              <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]">{s.label}</span>
+              <span className="text-base md:text-lg font-semibold mt-1 text-[var(--foreground)]">{s.value}</span>
             </div>
           ))}
         </div>
@@ -92,7 +101,7 @@ const DashboardInner: React.FC = () => {
       </div>
 
       {/* Widgets grid */}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={widgets.map(w=> w.id)} strategy={verticalListSortingStrategy}>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 auto-rows-[220px]">
             {widgets.map(w=> (

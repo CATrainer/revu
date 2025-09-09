@@ -29,11 +29,11 @@ export const InfluencersWidget: React.FC<{id:string; onRemove?: (id:string)=>voi
       <ul className="space-y-1 text-[11px]">
         {data.map((d,i)=>(
           <li key={i} className="flex items-center justify-between">
-            <span className="truncate">@{d.handle}</span>
-            <span className="text-white/50">{d.impact}</span>
+            <span className="truncate text-[var(--foreground)] dark:text-white/80">@{d.handle}</span>
+            <span className="text-[var(--muted-foreground)] dark:text-white/50">{d.impact}</span>
           </li>
         ))}
-        {!loading && data.length===0 && <li className="text-white/40">No data</li>}
+        {!loading && data.length===0 && <li className="text-[var(--muted-foreground)] dark:text-white/40">No data</li>}
       </ul>
     </WidgetFrame>
   );
