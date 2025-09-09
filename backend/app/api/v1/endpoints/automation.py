@@ -1730,7 +1730,7 @@ async def get_today_stats(
             SELECT COUNT(1)
             FROM rule_executions re
             WHERE re.triggered_at >= date_trunc('day', now())
-              AND (re.action->>'type') = 'delete_comment'
+              AND (re.action::jsonb->>'type') = 'delete_comment'
             """
         )
     )
@@ -1742,7 +1742,7 @@ async def get_today_stats(
             SELECT COUNT(1)
             FROM rule_executions re
             WHERE re.triggered_at >= date_trunc('day', now())
-              AND (re.action->>'type') = 'flag_for_review'
+              AND (re.action::jsonb->>'type') = 'flag_for_review'
             """
         )
     )

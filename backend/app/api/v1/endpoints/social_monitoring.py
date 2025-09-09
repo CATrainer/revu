@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import asyncio
+import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -9,7 +11,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+from loguru import logger
 
+_active_connections: List[WebSocket] = []
+MAX_CONNECTIONS = 100  # soft cap to prevent resource exhaustion
+PING_INTERVAL = 25  # seconds between server pings if no client traffic
+IDLE_TIMEOUT = 300  # idle seconds before closing connection
 from app.core.database import get_async_session
 from app.core.security import get_current_active_user
 from app.models.user import User
@@ -310,16 +317,48 @@ async def _broadcast(message: Dict[str, Any]) -> None:
 
 
 @router.websocket("/ws/live")
-async def ws_live(ws: WebSocket):  # Authentication upgrade needed (e.g. token param)
+async def ws_live(ws: WebSocket):
+    """Live WebSocket with heartbeat, capacity guard, and idle timeout.
+
+    TODO:
+      - Auth (token / session)
+      - Redis pub/sub fan-out for multi-instance scaling
+      - Subscription filters per user
+    """
+    if len(_active_connections) >= MAX_CONNECTIONS:
+        await ws.close(code=1013, reason="Capacity reached")
+        return
+
     await ws.accept()
     _active_connections.append(ws)
+    token = ws.query_params.get("token")
+    logger.debug("WS live connected token_present={} active_conns={}", bool(token), len(_active_connections))
+
+    await ws.send_text(json.dumps({"event": "connected", "ts": datetime.utcnow().isoformat()}))
+    last_activity = time.time()
     try:
-        await ws.send_text(json.dumps({"event": "connected", "ts": datetime.utcnow().isoformat()}))
         while True:
-            # Simple ping/pong or receive messages to keep alive
-            await ws.receive_text()
-    except WebSocketDisconnect:
-        pass
+            try:
+                msg = await asyncio.wait_for(ws.receive_text(), timeout=PING_INTERVAL)
+                last_activity = time.time()
+                if msg == "ping":
+                    await ws.send_text(json.dumps({"event": "pong", "ts": datetime.utcnow().isoformat()}))
+                # ignore other payloads for now
+            except asyncio.TimeoutError:
+                now = time.time()
+                if now - last_activity > IDLE_TIMEOUT:
+                    await ws.close(code=1000, reason="Idle timeout")
+                    break
+                try:
+                    await ws.send_text(json.dumps({"event": "ping", "ts": datetime.utcnow().isoformat()}))
+                except Exception:
+                    break
+            except WebSocketDisconnect:
+                break
+            except Exception:
+                logger.exception("WS live unexpected error")
+                break
     finally:
         if ws in _active_connections:
             _active_connections.remove(ws)
+        logger.debug("WS live disconnected active_conns={}", len(_active_connections))

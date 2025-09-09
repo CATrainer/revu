@@ -59,6 +59,12 @@ export function useMonitoringSocket(opts: UseMonitoringSocketOptions = {}) {
       try {
         const msg = JSON.parse(ev.data);
         if (msg.event === 'connected') return;
+        if (msg.event === 'ping') {
+          // respond with pong to keep alive
+          try { socket.send(JSON.stringify('pong')); } catch {}
+          return;
+        }
+        if (msg.event === 'pong') return;
         if (msg.event === 'message') {
           if (msg.content?.type === 'mention') {
             onMention?.(msg.content);
@@ -87,8 +93,25 @@ export function useMonitoringSocket(opts: UseMonitoringSocketOptions = {}) {
 
   useEffect(()=> {
     if (!enabled) return;
+  let visibilityHandler: (() => void) | null = null;
     connect();
-    return () => { manualCloseRef.current = true; wsRef.current?.close(); };
+    if (typeof document !== 'undefined') {
+      visibilityHandler = () => {
+        if (document.hidden) {
+          // Pause connection when tab hidden to save resources
+          manualCloseRef.current = true;
+          wsRef.current?.close();
+        } else if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
+          manualCloseRef.current = false;
+          connect();
+        }
+      };
+      document.addEventListener('visibilitychange', visibilityHandler);
+    }
+    return () => {
+      manualCloseRef.current = true; wsRef.current?.close();
+  if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
+    };
   },[connect, enabled]);
 
   return {
