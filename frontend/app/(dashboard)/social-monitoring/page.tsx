@@ -56,26 +56,26 @@ const DashboardInner: React.FC = () => {
           <div className="flex items-center gap-3 self-start md:self-auto">
             <NotificationCenter />
             <div className="relative">
-              <input value={search} onChange={e=> setSearch(e.target.value)} placeholder="Search mentions..." className="bg-white/5 border border-white/10 rounded pl-8 pr-3 py-1.5 text-xs md:text-sm focus:outline-none focus:border-emerald-400/40 placeholder:text-white/30" />
-              <Search className="w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-white/40" />
+              <input value={search} onChange={e=> setSearch(e.target.value)} placeholder="Search mentions..." className="bg-[var(--card)]/70 dark:bg-white/5 border border-[var(--border)] rounded pl-8 pr-3 py-1.5 text-xs md:text-sm focus:outline-none focus:border-[var(--ring)] placeholder:text-[var(--muted-foreground)]" />
+              <Search className="w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]" />
             </div>
-            <button className="p-2 rounded bg-white/5 border border-white/10 hover:bg-white/10 relative" aria-label="Notifications">
-              <Bell className="w-4 h-4" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 text-[10px] flex items-center justify-center">3</span>
+            <button className="p-2 rounded bg-[var(--muted)] dark:bg-white/5 border border-[var(--border)] hover:bg-[var(--secondary)]/60 dark:hover:bg-white/10 relative" aria-label="Notifications">
+              <Bell className="w-4 h-4 text-[var(--foreground)]" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--brand-primary)] text-[10px] text-white flex items-center justify-center">3</span>
             </button>
-            <button onClick={doRefresh} disabled={refreshing} className="p-2 rounded bg-emerald-500/20 border border-emerald-500/30 hover:bg-emerald-500/30 flex items-center gap-1 text-xs md:text-sm">
-              <RefreshCcw className={"w-4 h-4" + (refreshing?' animate-spin':'')} />
+            <button onClick={doRefresh} disabled={refreshing} className="p-2 rounded bg-[var(--brand-primary)]/15 border border-[var(--brand-primary)]/30 hover:bg-[var(--brand-primary)]/25 flex items-center gap-1 text-xs md:text-sm text-[var(--foreground)]">
+              <RefreshCcw className={"w-4 h-4 text-[var(--brand-primary)]" + (refreshing?' animate-spin':'')} />
               <span>Refresh</span>
             </button>
-            <div className="text-[10px] md:text-xs text-white/40 min-w-[100px] text-right">{lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : '—'}</div>
+            <div className="text-[10px] md:text-xs text-[var(--muted-foreground)] min-w-[100px] text-right">{lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : '—'}</div>
           </div>
         </div>
         {/* Quick stats placeholder */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {['Mentions','Threads','Sentiment','Reach'].map((l,i)=>(
-            <div key={i} className="p-3 rounded-lg md:rounded-xl bg-white/5 border border-white/10 backdrop-blur flex flex-col">
-              <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-white/40">{l}</span>
-              <span className="text-base md:text-lg font-semibold mt-1">{Math.round(Math.random()*1000)}</span>
+            <div key={i} className="p-3 rounded-lg md:rounded-xl card-background-light flex flex-col">
+              <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]">{l}</span>
+              <span className="text-base md:text-lg font-semibold mt-1 text-[var(--foreground)]">{Math.round(Math.random()*1000)}</span>
             </div>
           ))}
         </div>
@@ -83,10 +83,10 @@ const DashboardInner: React.FC = () => {
 
       {/* Add widget bar */}
       <div className="flex flex-wrap gap-2 items-center">
-        <div className="text-[10px] md:text-xs text-white/50">Add widget:</div>
+        <div className="text-[10px] md:text-xs text-[var(--muted-foreground)]">Add widget:</div>
         {WIDGET_TYPES.map(w=> (
-          <button key={w.type} onClick={()=> addWidget(w.type)} className="px-2 py-1 rounded bg-white/5 border border-white/10 text-[10px] md:text-[11px] hover:bg-white/10">
-            <Plus className="w-3 h-3 inline mr-1" />{w.label}
+          <button key={w.type} onClick={()=> addWidget(w.type)} className="px-2 py-1 rounded bg-[var(--muted)] dark:bg-white/5 border border-[var(--border)] text-[10px] md:text-[11px] hover:bg-[var(--secondary)]/70 dark:hover:bg-white/10 text-[var(--foreground)]">
+            <Plus className="w-3 h-3 inline mr-1 text-[var(--brand-primary)]" />{w.label}
           </button>
         ))}
       </div>
