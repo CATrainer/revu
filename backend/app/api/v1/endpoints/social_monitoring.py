@@ -14,6 +14,15 @@ from sqlalchemy import text
 from loguru import logger
 
 _active_connections: List[WebSocket] = []
+# Simple connection metrics (in-memory single instance). Consider Redis for multi-instance.
+_ws_metrics: Dict[str, Any] = {
+    "connections_total": 0,
+    "messages_received": 0,
+    "pings_sent": 0,
+    "pongs_received": 0,
+    "disconnects": 0,
+    "last_event_ts": None,
+}
 MAX_CONNECTIONS = 100  # soft cap to prevent resource exhaustion
 PING_INTERVAL = 25  # seconds between server pings if no client traffic
 IDLE_TIMEOUT = 300  # idle seconds before closing connection
@@ -331,6 +340,8 @@ async def ws_live(ws: WebSocket):
 
     await ws.accept()
     _active_connections.append(ws)
+    _ws_metrics["connections_total"] += 1
+    _ws_metrics["last_event_ts"] = datetime.utcnow().isoformat()
     token = ws.query_params.get("token")
     logger.debug("WS live connected token_present={} active_conns={}", bool(token), len(_active_connections))
 
@@ -340,9 +351,11 @@ async def ws_live(ws: WebSocket):
         while True:
             try:
                 msg = await asyncio.wait_for(ws.receive_text(), timeout=PING_INTERVAL)
+                _ws_metrics["messages_received"] += 1
                 last_activity = time.time()
                 if msg == "ping":
                     await ws.send_text(json.dumps({"event": "pong", "ts": datetime.utcnow().isoformat()}))
+                    _ws_metrics["pongs_received"] += 1
                 # ignore other payloads for now
             except asyncio.TimeoutError:
                 now = time.time()
@@ -351,6 +364,8 @@ async def ws_live(ws: WebSocket):
                     break
                 try:
                     await ws.send_text(json.dumps({"event": "ping", "ts": datetime.utcnow().isoformat()}))
+                    _ws_metrics["pings_sent"] += 1
+                    _ws_metrics["last_event_ts"] = datetime.utcnow().isoformat()
                 except Exception:
                     break
             except WebSocketDisconnect:
@@ -361,4 +376,18 @@ async def ws_live(ws: WebSocket):
     finally:
         if ws in _active_connections:
             _active_connections.remove(ws)
+        _ws_metrics["disconnects"] += 1
+        _ws_metrics["last_event_ts"] = datetime.utcnow().isoformat()
         logger.debug("WS live disconnected active_conns={}", len(_active_connections))
+
+
+@router.get("/ws/metrics")
+async def websocket_metrics():
+    """Return current in-memory WebSocket metrics (single instance)."""
+    return {
+        **_ws_metrics,
+        "active_connections": len(_active_connections),
+        "max_connections": MAX_CONNECTIONS,
+        "idle_timeout_seconds": IDLE_TIMEOUT,
+        "ping_interval_seconds": PING_INTERVAL,
+    }

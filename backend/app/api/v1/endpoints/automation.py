@@ -3220,6 +3220,25 @@ async def impact_summary(
     - Engagement is the avg `engagement` from rule_response_metrics.
     - ROI: time saved vs API costs using simple constants.
     """
+    # Safeguard: ensure metrics table exists so selects below don't 500 on fresh deploys
+    try:
+        await db.execute(text(
+            """
+            CREATE TABLE IF NOT EXISTS rule_response_metrics (
+              id bigserial PRIMARY KEY,
+              rule_id UUID NULL,
+              response_id VARCHAR NULL,
+              is_automated BOOLEAN NOT NULL DEFAULT TRUE,
+              engagement_metrics JSONB NOT NULL,
+              created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            );
+            CREATE INDEX IF NOT EXISTS ix_rrm_rule ON rule_response_metrics(rule_id);
+            CREATE INDEX IF NOT EXISTS ix_rrm_created ON rule_response_metrics(created_at);
+            CREATE INDEX IF NOT EXISTS ix_rrm_auto ON rule_response_metrics(is_automated);
+            """
+        ))
+    except Exception:
+        pass
     try:
         days = max(7, min(180, int(days)))
     except Exception:
