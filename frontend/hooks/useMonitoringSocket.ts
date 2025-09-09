@@ -51,6 +51,8 @@ export function useMonitoringSocket(opts: UseMonitoringSocketOptions = {}) {
     socket.onopen = () => {
       setState(s=> ({...s, status: 'open'}));
       backoffRef.current = 1000;
+      // Send an identifying client hello for server-side diagnostics
+      try { socket.send(JSON.stringify({ event: 'client_hello', ts: Date.now(), ua: navigator.userAgent })); } catch {}
       flushQueue();
     };
 
@@ -82,7 +84,11 @@ export function useMonitoringSocket(opts: UseMonitoringSocketOptions = {}) {
       setState(s=> ({...s, status: 'error'}));
     };
 
-    socket.onclose = () => {
+    socket.onclose = (ev) => {
+      // Basic console diagnostics (can be removed later)
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('Monitoring WS closed', { code: ev.code, reason: ev.reason, wasClean: ev.wasClean });
+      }
       if (manualCloseRef.current) { setState(s=> ({...s, status: 'closed'})); return; }
       setState(s=> ({...s, status: 'reconnecting', attempts: s.attempts + 1}));
       const wait = backoffRef.current;

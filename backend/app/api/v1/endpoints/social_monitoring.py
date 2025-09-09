@@ -14,6 +14,10 @@ from sqlalchemy import text
 from loguru import logger
 
 _active_connections: List[WebSocket] = []
+# Track per-connection metadata
+_ws_clients: Dict[int, Dict[str, Any]] = {}
+_next_conn_id = 1
+
 # Simple connection metrics (in-memory single instance). Consider Redis for multi-instance.
 _ws_metrics: Dict[str, Any] = {
     "connections_total": 0,
@@ -22,6 +26,7 @@ _ws_metrics: Dict[str, Any] = {
     "pongs_received": 0,
     "disconnects": 0,
     "last_event_ts": None,
+    "closes_by_code": {},  # code -> count
 }
 MAX_CONNECTIONS = 100  # soft cap to prevent resource exhaustion
 PING_INTERVAL = 25  # seconds between server pings if no client traffic
@@ -338,32 +343,60 @@ async def ws_live(ws: WebSocket):
         await ws.close(code=1013, reason="Capacity reached")
         return
 
+    global _next_conn_id  # noqa: PLW0603
     await ws.accept()
+    conn_id = _next_conn_id
+    _next_conn_id += 1
     _active_connections.append(ws)
+    client_host = getattr(ws.client, 'host', None)
     _ws_metrics["connections_total"] += 1
     _ws_metrics["last_event_ts"] = datetime.utcnow().isoformat()
+    _ws_clients[conn_id] = {
+        "id": conn_id,
+        "connected_at": time.time(),
+        "last_activity": time.time(),
+        "client_host": client_host,
+        "messages": 0,
+    }
     token = ws.query_params.get("token")
-    logger.debug("WS live connected token_present={} active_conns={}", bool(token), len(_active_connections))
+    debug_flag = ws.query_params.get("debug") == "1"
+    if debug_flag:
+        logger.info("WS[{}] connected host={} token_present={} active_conns={}", conn_id, client_host, bool(token), len(_active_connections))
+    else:
+        logger.debug("WS live connected id={} token_present={} active_conns={}", conn_id, bool(token), len(_active_connections))
 
     await ws.send_text(json.dumps({"event": "connected", "ts": datetime.utcnow().isoformat()}))
     last_activity = time.time()
     try:
         while True:
             try:
-                msg = await asyncio.wait_for(ws.receive_text(), timeout=PING_INTERVAL)
+                # Allow slight jitter so all clients don't align pings
+                timeout = PING_INTERVAL + (0.2 * PING_INTERVAL * (hash(str(id(ws))) % 100) / 100.0 - 0.1 * PING_INTERVAL)
+                msg = await asyncio.wait_for(ws.receive_text(), timeout=timeout)
                 _ws_metrics["messages_received"] += 1
                 last_activity = time.time()
-                if msg == "ping":
-                    await ws.send_text(json.dumps({"event": "pong", "ts": datetime.utcnow().isoformat()}))
+                meta = _ws_clients.get(conn_id)
+                if meta:
+                    meta["last_activity"] = last_activity
+                    meta["messages"] += 1
+                raw = msg
+                # Normalize JSON wrapped string values (e.g. "pong")
+                if raw.startswith('"') and raw.endswith('"') and len(raw) < 20:
+                    raw = raw.strip('"')
+                if raw == "ping":  # client-initiated ping
+                    await ws.send_text(json.dumps({"event": "pong", "ts": datetime.utcnow().isoformat(), "server": True}))
                     _ws_metrics["pongs_received"] += 1
-                # ignore other payloads for now
+                elif raw == "pong":  # reply to our ping
+                    _ws_metrics["pongs_received"] += 1
+                elif debug_flag and meta and meta["messages"] <= 5:
+                    logger.info("WS[{}] first_messages raw={} len={}", conn_id, raw[:80], len(raw))
             except asyncio.TimeoutError:
                 now = time.time()
                 if now - last_activity > IDLE_TIMEOUT:
                     await ws.close(code=1000, reason="Idle timeout")
                     break
                 try:
-                    await ws.send_text(json.dumps({"event": "ping", "ts": datetime.utcnow().isoformat()}))
+                    await ws.send_text(json.dumps({"event": "ping", "ts": datetime.utcnow().isoformat(), "server": True}))
                     _ws_metrics["pings_sent"] += 1
                     _ws_metrics["last_event_ts"] = datetime.utcnow().isoformat()
                 except Exception:
@@ -371,14 +404,21 @@ async def ws_live(ws: WebSocket):
             except WebSocketDisconnect:
                 break
             except Exception:
-                logger.exception("WS live unexpected error")
+                logger.exception("WS live unexpected error id={}", conn_id)
                 break
     finally:
         if ws in _active_connections:
             _active_connections.remove(ws)
         _ws_metrics["disconnects"] += 1
         _ws_metrics["last_event_ts"] = datetime.utcnow().isoformat()
-        logger.debug("WS live disconnected active_conns={}", len(_active_connections))
+        code = getattr(ws, "close_code", None)
+        if code is not None:
+            _ws_metrics["closes_by_code"][str(code)] = _ws_metrics["closes_by_code"].get(str(code), 0) + 1
+        meta = _ws_clients.pop(conn_id, None)
+        dur = 0.0
+        if meta:
+            dur = time.time() - meta.get("connected_at", time.time())
+        logger.debug("WS live disconnected id={} active_conns={} dur={:.1f}s code={}", conn_id, len(_active_connections), dur, code)
 
 
 @router.get("/ws/metrics")
@@ -387,6 +427,16 @@ async def websocket_metrics():
     return {
         **_ws_metrics,
         "active_connections": len(_active_connections),
+        "clients": [
+            {
+                "id": m.get("id"),
+                "client_host": m.get("client_host"),
+                "uptime_s": round(time.time() - m.get("connected_at", time.time()), 1),
+                "last_activity_s": round(time.time() - m.get("last_activity", time.time()), 1),
+                "messages": m.get("messages"),
+            }
+            for m in list(_ws_clients.values())[:50]
+        ],
         "max_connections": MAX_CONNECTIONS,
         "idle_timeout_seconds": IDLE_TIMEOUT,
         "ping_interval_seconds": PING_INTERVAL,
