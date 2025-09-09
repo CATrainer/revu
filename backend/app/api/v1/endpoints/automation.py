@@ -1780,9 +1780,21 @@ async def get_today_stats(
 # --------------------
 
 def _normalize_sort(sort: Optional[str]) -> str:
-    # Allow known columns only; default priority desc, created_at asc
+    """Normalize user-provided sort syntax into a safe SQL ORDER BY clause.
+
+    Accepts comma-separated segments in forms like:
+      priority:desc,created_at:asc
+      updated_at (defaults to ASC)
+
+    Only whitelisted columns are kept. If no valid segments remain, a stable
+    default ordering is returned. Previously we returned the colon-syntax
+    string directly when no sort was provided, which produced invalid SQL
+    (ORDER BY priority:desc,...). We now always parse the default pattern so
+    the output is valid ("priority DESC, created_at ASC").
+    """
+    # Provide default pattern for parsing if not supplied
     if not sort:
-        return "priority:desc,created_at:asc"
+        sort = "priority:desc,created_at:asc"
     parts: List[str] = []
     for seg in str(sort).split(","):
         seg = seg.strip()
