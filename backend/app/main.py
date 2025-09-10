@@ -39,40 +39,57 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"CORS Origins: {settings.BACKEND_CORS_ORIGINS}")
 
-    # Initialize database
+    # Initialize database with retry (resilient startup on cold DB / migrations pending)
+    max_attempts = 5
+    delay = 1.0
+    for attempt in range(1, max_attempts + 1):
+        try:
+            await create_db_and_tables()
+            logger.info("✅ Database initialization (attempt {}/{}).", attempt, max_attempts)
+            break
+        except Exception as e:
+            logger.warning("DB init attempt {}/{} failed: {}", attempt, max_attempts, e)
+            if attempt == max_attempts:
+                logger.error("❌ All database init attempts failed; continuing with degraded state")
+            else:
+                await asyncio.sleep(delay)
+                delay = min(delay * 2, 15)
+    # Lightweight / best-effort schema verifications (wrapped to avoid startup crash)
     try:
-        await create_db_and_tables()
-        logger.info("✅ Database initialization completed")
-        
-        # Verify critical tables and columns exist
         from app.core.database import get_async_session
         from sqlalchemy import text
-        
         async for session in get_async_session():
-            # Check if the users table has the new columns
-            result = await session.execute(
-                text("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name IN ('access_status', 'demo_requested', 'user_kind')")
-            )
-            columns = [row[0] for row in result.fetchall()]
-            
-            if 'access_status' not in columns or 'demo_requested' not in columns:
-                logger.error("❌ Database schema appears to be missing recent migration columns")
-                logger.error("This may cause application errors. Please check migration status.")
-            else:
-                logger.info("✅ Database schema verification passed")
-            break
-            
+            try:
+                # Verify users table columns (non-fatal)
+                result = await session.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name IN ('access_status', 'demo_requested', 'user_kind')"))
+                cols = {r[0] for r in result.fetchall()}
+                missing = { 'access_status', 'demo_requested'} - cols
+                if missing:
+                    logger.warning("User table missing columns: {} (migrations may be pending)", missing)
+                # Probe rule_response_metrics existence (non-fatal)
+                try:
+                    await session.execute(text("SELECT 1 FROM rule_response_metrics LIMIT 1"))
+                except Exception as e:  # table/column may not exist yet
+                    await session.rollback()
+                    logger.warning("rule_response_metrics not ready at startup (non-fatal): {}", e)
+            finally:
+                # Ensure we don't hold the session beyond first iteration
+                break
     except Exception as e:
-        logger.error(f"❌ Database initialization failed: {e}")
-        # Don't exit here, let the app try to start anyway
-        # The health check endpoint will catch any issues
+        logger.debug("Startup schema probe skipped due to error: {}", e)
 
     # Initialize other services here (Redis, etc.)
 
-    # Start background polling task
+    # Start background polling task (delayed + resilient)
     from app.background_tasks import run_polling_cycle
     stop_event = asyncio.Event()
-    polling_task = asyncio.create_task(run_polling_cycle(interval_seconds=60, stop_event=stop_event))
+    async def _delayed_polling_wrapper():
+        await asyncio.sleep(30)  # allow database & migrations to settle
+        try:
+            await run_polling_cycle(interval_seconds=60, stop_event=stop_event)
+        except Exception:
+            logger.exception("Polling loop terminated unexpectedly")
+    polling_task = asyncio.create_task(_delayed_polling_wrapper())
     app.state._polling_stop_event = stop_event
     app.state._polling_task = polling_task
 

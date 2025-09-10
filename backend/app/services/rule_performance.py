@@ -80,6 +80,8 @@ class RulePerformanceService:
         is_automated: Optional[bool] = None,
         since: Optional[datetime] = None,
     ) -> Aggregate:
+        # Ensure table exists before reading (fresh deployments may query before first write)
+        await self._ensure_tables(db)
         where = ["1=1"]
         params: Dict[str, Any] = {}
         if rule_id:
@@ -115,6 +117,7 @@ class RulePerformanceService:
         rule_id: str,
         window_days: int = 30,
     ) -> Dict[str, Any]:
+        await self._ensure_tables(db)
         since = datetime.now(timezone.utc) - timedelta(days=max(1, window_days))
         auto = await self._aggregate(db, rule_id=rule_id, is_automated=True, since=since)
         manual = await self._aggregate(db, rule_id=rule_id, is_automated=False, since=since)
@@ -137,6 +140,7 @@ class RulePerformanceService:
         window_days: int = 30,
         top_n: int = 5,
     ) -> Dict[str, Any]:
+        await self._ensure_tables(db)
         since = datetime.now(timezone.utc) - timedelta(days=max(1, window_days))
         rows = (
             await db.execute(
@@ -184,6 +188,7 @@ class RulePerformanceService:
         hourly_rate: float = 30.0,
         cost_per_response: float = 0.005,
     ) -> Dict[str, Any]:
+        await self._ensure_tables(db)
         since = datetime.now(timezone.utc) - timedelta(days=max(1, window_days))
         auto = await self._aggregate(db, rule_id=rule_id, is_automated=True, since=since)
         # Assume each automated response replaces one manual action
@@ -210,6 +215,7 @@ class RulePerformanceService:
         lookback_days: int = 28,
         threshold: float = 0.3,
     ) -> Dict[str, Any]:
+        await self._ensure_tables(db)
         since = datetime.now(timezone.utc) - timedelta(days=max(7, lookback_days))
         where = ["is_automated = TRUE", "created_at >= :since"]
         params: Dict[str, Any] = {"since": since}
@@ -266,6 +272,7 @@ class RulePerformanceService:
         end: Optional[datetime] = None,
         weeks: int = 1,
     ) -> Dict[str, Any]:
+        await self._ensure_tables(db)
         end = end or datetime.now(timezone.utc)
         start = end - timedelta(days=7 * max(1, weeks))
         q = text(

@@ -1730,7 +1730,7 @@ async def get_today_stats(
             SELECT COUNT(1)
             FROM rule_executions re
             WHERE re.triggered_at >= date_trunc('day', now())
-              AND (re.action->>'type') = 'delete_comment'
+              AND (re.action::jsonb->>'type') = 'delete_comment'
             """
         )
     )
@@ -1742,7 +1742,7 @@ async def get_today_stats(
             SELECT COUNT(1)
             FROM rule_executions re
             WHERE re.triggered_at >= date_trunc('day', now())
-              AND (re.action->>'type') = 'flag_for_review'
+              AND (re.action::jsonb->>'type') = 'flag_for_review'
             """
         )
     )
@@ -1780,9 +1780,21 @@ async def get_today_stats(
 # --------------------
 
 def _normalize_sort(sort: Optional[str]) -> str:
-    # Allow known columns only; default priority desc, created_at asc
+    """Normalize user-provided sort syntax into a safe SQL ORDER BY clause.
+
+    Accepts comma-separated segments in forms like:
+      priority:desc,created_at:asc
+      updated_at (defaults to ASC)
+
+    Only whitelisted columns are kept. If no valid segments remain, a stable
+    default ordering is returned. Previously we returned the colon-syntax
+    string directly when no sort was provided, which produced invalid SQL
+    (ORDER BY priority:desc,...). We now always parse the default pattern so
+    the output is valid ("priority DESC, created_at ASC").
+    """
+    # Provide default pattern for parsing if not supplied
     if not sort:
-        return "priority:desc,created_at:asc"
+        sort = "priority:desc,created_at:asc"
     parts: List[str] = []
     for seg in str(sort).split(","):
         seg = seg.strip()
@@ -3208,6 +3220,25 @@ async def impact_summary(
     - Engagement is the avg `engagement` from rule_response_metrics.
     - ROI: time saved vs API costs using simple constants.
     """
+    # Safeguard: ensure metrics table exists so selects below don't 500 on fresh deploys
+    try:
+        await db.execute(text(
+            """
+            CREATE TABLE IF NOT EXISTS rule_response_metrics (
+              id bigserial PRIMARY KEY,
+              rule_id UUID NULL,
+              response_id VARCHAR NULL,
+              is_automated BOOLEAN NOT NULL DEFAULT TRUE,
+              engagement_metrics JSONB NOT NULL,
+              created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            );
+            CREATE INDEX IF NOT EXISTS ix_rrm_rule ON rule_response_metrics(rule_id);
+            CREATE INDEX IF NOT EXISTS ix_rrm_created ON rule_response_metrics(created_at);
+            CREATE INDEX IF NOT EXISTS ix_rrm_auto ON rule_response_metrics(is_automated);
+            """
+        ))
+    except Exception:
+        pass
     try:
         days = max(7, min(180, int(days)))
     except Exception:
