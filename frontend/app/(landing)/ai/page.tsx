@@ -92,10 +92,11 @@ function AIFeatures() {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
+          // Add a slight delay for dramatic effect
+          setTimeout(() => setIsVisible(true), 100);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.15, rootMargin: '-30px 0px' }
     );
 
     if (featuresRef.current) {
@@ -134,42 +135,60 @@ function AIFeatures() {
 
   return (
     <section ref={featuresRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 mb-16">
-      <div className={`text-center mb-12 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-          Transform Your Content Strategy with AI
-        </h2>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-          Our comprehensive AI platform handles every aspect of content creation, from initial planning to performance analysis, empowering creators to focus on what they do best.
-        </p>
-      </div>
-
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
         {features.map((feature, index) => (
           <div 
             key={index}
-            className={`bg-white rounded-2xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-700 hover:-translate-y-1 ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+            className={`bg-white rounded-2xl p-8 shadow-lg border border-gray-100 hover:shadow-2xl transition-all duration-1000 hover:-translate-y-2 hover:rotate-1 ${
+              isVisible 
+                ? 'opacity-100 translate-y-0 scale-100 rotate-0' 
+                : 'opacity-0 translate-y-24 scale-90 -rotate-3'
             }`}
             style={{ 
-              transitionDelay: isVisible ? `${index * 150}ms` : '0ms'
+              transitionDelay: isVisible ? `${300 + (index * 200)}ms` : '0ms',
+              transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+              transformOrigin: 'center bottom'
             }}
           >
             <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center text-green-600">
-                {feature.icon}
+              <div className={`flex-shrink-0 w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center text-green-600 transition-all duration-700 ${
+                isVisible ? 'scale-100 rotate-0' : 'scale-75 rotate-45'
+              }`} style={{ 
+                transitionDelay: isVisible ? `${400 + (index * 200)}ms` : '0ms',
+                transitionTimingFunction: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+              }}>
+                <div className={`transition-all duration-500 ${isVisible ? 'scale-100' : 'scale-0'}`} 
+                     style={{ transitionDelay: isVisible ? `${500 + (index * 200)}ms` : '0ms' }}>
+                  {feature.icon}
+                </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                <h3 className={`text-xl font-bold text-gray-900 mb-3 transition-all duration-700 ${
+                  isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
+                }`} style={{ 
+                  transitionDelay: isVisible ? `${600 + (index * 200)}ms` : '0ms',
+                  transitionTimingFunction: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                }}>
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 mb-4 leading-relaxed">
+                <p className={`text-gray-600 mb-4 leading-relaxed transition-all duration-700 ${
+                  isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
+                }`} style={{ 
+                  transitionDelay: isVisible ? `${700 + (index * 200)}ms` : '0ms' 
+                }}>
                   {feature.description}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {feature.highlights.map((highlight, idx) => (
                     <span 
                       key={idx}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700 border border-green-200"
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700 border border-green-200 transition-all duration-600 ${
+                        isVisible ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-95 rotate-6'
+                      }`}
+                      style={{ 
+                        transitionDelay: isVisible ? `${800 + (index * 200) + (idx * 100)}ms` : '0ms',
+                        transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+                      }}
                     >
                       {highlight}
                     </span>
@@ -182,9 +201,12 @@ function AIFeatures() {
       </div>
 
       <div className={`text-center mt-12 transition-all duration-1000 ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`} style={{ transitionDelay: isVisible ? '600ms' : '0ms' }}>
-        <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-6 py-3 rounded-full text-base font-medium">
+        isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
+      }`} style={{ 
+        transitionDelay: isVisible ? '800ms' : '0ms',
+        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)'
+      }}>
+        <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-6 py-3 rounded-full text-base font-medium hover:bg-blue-100 transition-colors duration-300">
           <FaCog className="h-5 w-5" />
           Fully Integrated AI Workflow Management
         </div>
@@ -476,20 +498,33 @@ function ContentCreationFramework() {
                     stroke="none"
                     rx="20"
                     ry="20"
-                    style={{ opacity: 1 }}
+                    className={`transition-all duration-1000 ${
+                      isFrameworkVisible ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    style={{ 
+                      transformOrigin: `${centerX}px ${centerY}px`,
+                      transform: isFrameworkVisible ? 'scale(1) rotate(0deg)' : 'scale(0.8) rotate(-10deg)',
+                      transitionDelay: isFrameworkVisible ? `${100 + (sectionIndex * 150)}ms` : '0ms',
+                      transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+                    }}
                   />
                   
                   {/* Section title - Professional angled layout */}
                   <text
                     x={labelX}
                     y={labelY}
-                    className="font-bold text-green-800 dark:text-green-300"
+                    className={`font-bold text-green-800 dark:text-green-300 transition-all duration-800 ${
+                      isFrameworkVisible ? 'opacity-95' : 'opacity-0'
+                    }`}
                     style={{ 
                       fontSize: '22px', 
                       fontWeight: '700',
                       letterSpacing: '0.5px',
                       textShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                      opacity: 0.95
+                      transform: isFrameworkVisible ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(15deg)',
+                      transformOrigin: `${labelX}px ${labelY}px`,
+                      transitionDelay: isFrameworkVisible ? `${300 + (sectionIndex * 150)}ms` : '0ms',
+                      transitionTimingFunction: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
                     }}
                     textAnchor="middle"
                     dominantBaseline="middle"
@@ -505,8 +540,8 @@ function ContentCreationFramework() {
           
           {/* Center Circle - Clean professional design */}
           <div 
-            className={`absolute rounded-full bg-gradient-to-br from-emerald-600 to-green-600 flex items-center justify-center z-20 hover:scale-102 transition-all duration-800 ${
-              isFrameworkVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
+            className={`absolute rounded-full bg-gradient-to-br from-emerald-600 to-green-600 flex items-center justify-center z-20 hover:scale-102 transition-all duration-1200 ${
+              isFrameworkVisible ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 rotate-180'
             }`}
             style={{ 
               width: `${centerSize}px`, 
@@ -515,16 +550,30 @@ function ContentCreationFramework() {
               top: '50%',
               transform: 'translate(-50%, -50%)',
               border: '2px solid rgba(255, 255, 255, 0.1)',
-              transitionDelay: isFrameworkVisible ? '600ms' : '0ms'
+              transitionDelay: isFrameworkVisible ? '200ms' : '0ms',
+              transitionTimingFunction: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
             }}
           >
             {/* Inner content - NO shiny effects */}
             <div className="flex flex-col items-center justify-center text-center p-2">
-              <div className="relative mb-2">
+              <div className={`relative mb-2 transition-all duration-800 ${
+                isFrameworkVisible ? 'scale-100 rotate-0' : 'scale-0 rotate-45'
+              }`} style={{ 
+                transitionDelay: isFrameworkVisible ? '400ms' : '0ms',
+                transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+              }}>
                 <FaMagic className="h-8 w-8 text-white" />
               </div>
-              <span className="text-white text-xl font-bold leading-tight">Repruv AI</span>
-              <span className="text-white/90 text-xs mt-1 tracking-wider uppercase font-light">Content Framework</span>
+              <span className={`text-white text-xl font-bold leading-tight transition-all duration-700 ${
+                isFrameworkVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`} style={{ 
+                transitionDelay: isFrameworkVisible ? '500ms' : '0ms' 
+              }}>Repruv AI</span>
+              <span className={`text-white/90 text-xs mt-1 tracking-wider uppercase font-light transition-all duration-700 ${
+                isFrameworkVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`} style={{ 
+                transitionDelay: isFrameworkVisible ? '600ms' : '0ms' 
+              }}>Content Framework</span>
             </div>
           </div>
 
@@ -573,8 +622,8 @@ function ContentCreationFramework() {
               <React.Fragment key={stageKey}>
                 {/* Stage bubble - Larger size for better text fit */}
                 <div
-                  className={`absolute bg-white dark:bg-gray-800 rounded-full cursor-pointer transition-all duration-700 flex flex-col items-center justify-center z-30 ${
-                    isFrameworkVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
+                  className={`absolute bg-white dark:bg-gray-800 rounded-full cursor-pointer transition-all duration-1000 flex flex-col items-center justify-center z-30 ${
+                    isFrameworkVisible ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-180'
                   }`}
                   style={{ 
                     width: '130px', 
@@ -584,7 +633,8 @@ function ContentCreationFramework() {
                     transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
                     border: `2px solid ${section.color}`,
                     boxShadow: `0 4px 12px rgba(0,0,0,0.08), 0 0 0 2px rgba(255,255,255,0.8)`,
-                    transitionDelay: isFrameworkVisible ? `${400 + (stage.id * 80)}ms` : '0ms'
+                    transitionDelay: isFrameworkVisible ? `${400 + (stage.id * 120)}ms` : '0ms',
+                    transitionTimingFunction: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
                   }}
                   onClick={() => handleStageClick(stage.id)}
                   onMouseEnter={(e) => {
@@ -615,14 +665,29 @@ function ContentCreationFramework() {
                     {stage.id}
                   </div>
                   
-                  <div className={`${section.iconBgColor} p-3 rounded-full mb-2`}>
+                  <div className={`${section.iconBgColor} p-3 rounded-full mb-2 transition-all duration-700 ${
+                    isFrameworkVisible ? 'scale-100 rotate-0' : 'scale-75 rotate-45'
+                  }`} style={{ 
+                    transitionDelay: isFrameworkVisible ? `${600 + (stage.id * 120)}ms` : '0ms',
+                    transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+                  }}>
                     <div 
-                      className={`${section.textColor} hover:rotate-12 transition-transform duration-200`}
+                      className={`${section.textColor} hover:rotate-12 transition-all duration-500 ${
+                        isFrameworkVisible ? 'scale-100' : 'scale-0'
+                      }`}
+                      style={{ 
+                        transitionDelay: isFrameworkVisible ? `${700 + (stage.id * 120)}ms` : '0ms',
+                        transitionTimingFunction: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+                      }}
                     >
                       {stage.icon}
                     </div>
                   </div>
-                  <div className={`font-semibold text-xs text-center px-2 leading-tight ${section.textColor}`}>
+                  <div className={`font-semibold text-xs text-center px-2 leading-tight ${section.textColor} transition-all duration-600 ${
+                    isFrameworkVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`} style={{ 
+                    transitionDelay: isFrameworkVisible ? `${800 + (stage.id * 120)}ms` : '0ms' 
+                  }}>
                     {stage.title}
                   </div>
                 </div>
