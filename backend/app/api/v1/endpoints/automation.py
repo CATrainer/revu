@@ -7,32 +7,18 @@ from sqlalchemy import text
 
 from app.core.database import get_async_session
 from app.core.security import get_current_active_user
+from app.core.dependencies import (
+    get_template_engine, get_claude_service, get_ab_testing_service,
+    get_rule_scheduler, get_automation_learning_service, get_rule_performance_service,
+    get_prediction_engine, get_auto_learning_service, get_digest_service,
+    get_ab_monitor_service, get_approval_queue_service, get_nl_rule_parser
+)
+from app.core.response_models import success_response, error_response
+from app.core.exceptions import validation_exception, not_found_exception
 from app.models.user import User
-from app.services.nl_rule_parser import NaturalLanguageRuleParser, COMMON_PATTERNS
-from app.services.approval_queue import ApprovalQueueService
-from app.services.template_engine import TemplateEngine
-from app.services.claude_service import ClaudeService
-from app.services.ab_testing import ABTestingService
-from app.services.rule_scheduler import RuleScheduler
-from app.services.automation_learning import AutomationLearningService
-from app.services.rule_performance import RulePerformanceService
-from app.services.prediction_engine import PredictionEngine
-from app.services.auto_learning import AutoLearningService
-from app.services.digest import DigestService
-from app.services.ab_monitor import ABTestMonitorService
+from app.services.nl_rule_parser import COMMON_PATTERNS
 
 router = APIRouter()
-
-template_engine = TemplateEngine()
-claude = ClaudeService()
-ab_service = ABTestingService()
-rule_scheduler = RuleScheduler()
-learning_service = AutomationLearningService()
-perf_service = RulePerformanceService()
-predictor = PredictionEngine()
-auto_learning = AutoLearningService()
-digest_service = DigestService()
-ab_monitor_service = ABTestMonitorService()
 
 @router.post("/prepare-upload/suggestions")
 async def prepare_upload_suggestions(
@@ -40,6 +26,10 @@ async def prepare_upload_suggestions(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
     payload: Dict[str, Any],
+    template_engine = Depends(get_template_engine),
+    claude_service = Depends(get_claude_service),
+    predictor = Depends(get_prediction_engine),
+    learning_service = Depends(get_automation_learning_service),
 ) -> Dict[str, Any]:
     """Return 3–5 suggested rules, similar past videos, and comment projections for an upcoming upload.
 
@@ -140,13 +130,17 @@ async def prepare_upload_suggestions(
 
     rule_cards = base_rules[:5]
 
-    return {
-        "suggested_rules": rule_cards,
-        "comment_volume": volume_pred.__dict__,
-        "similar_videos": similar,
-        "type_mix": type_mix,
-    }
-
+    return success_response(
+        data={
+            "suggestions": rule_cards,
+            "similar_videos": similar,
+            "projections": {
+                "estimated_comments": volume_pred,
+                "type_distribution": type_mix,
+            },
+        },
+        message="Upload suggestions generated successfully"
+    )
 
 @router.post("/prepare-upload/activate")
 async def prepare_upload_activate(
@@ -161,7 +155,7 @@ async def prepare_upload_activate(
     """
     rules = payload.get("rules") or []
     if not isinstance(rules, list) or not rules:
-        raise HTTPException(status_code=400, detail="rules (non-empty array) is required")
+        raise validation_exception("rules (non-empty array) is required")
 
     channel_id = payload.get("channel_id")
     if not channel_id:
@@ -169,7 +163,7 @@ async def prepare_upload_activate(
         if row and row[0]:
             channel_id = str(row[0])
     if not channel_id:
-        raise HTTPException(status_code=400, detail="channel_id is required")
+        raise validation_exception("channel_id is required")
 
     duration_hours = int(payload.get("duration_hours") or 48)
     # Insert rules with an expiry marker in conditions JSON so engines can filter
@@ -207,25 +201,28 @@ async def prepare_upload_activate(
             inserted.append({"id": str(row[0]), "name": row[1], "enabled": bool(row[2]), "priority": int(row[3] or 0)})
 
     await db.commit()
-    return {"status": "ok", "inserted": inserted, "expires_in_hours": duration_hours}
+    return success_response(
+        data={"inserted": inserted, "expires_in_hours": duration_hours},
+        message="Rules activated successfully"
+    )
 
 
 def _validate_rule_payload(payload: Dict[str, Any], *, for_update: bool = False) -> Dict[str, Any]:
     name = (payload.get("name") or "").strip()
     if not for_update and not name:
-        raise HTTPException(status_code=400, detail="name is required")
+        raise validation_exception("name is required")
 
     # JSON fields
     trigger_conditions = payload.get("trigger_conditions")
     if trigger_conditions is not None and not isinstance(trigger_conditions, dict):
-        raise HTTPException(status_code=400, detail="trigger_conditions must be an object")
+        raise validation_exception("trigger_conditions must be an object")
     actions = payload.get("actions")
     if actions is not None and not isinstance(actions, (list, dict)):
-        raise HTTPException(status_code=400, detail="actions must be a list or object")
+        raise validation_exception("actions must be a list or object")
 
     require_approval = payload.get("require_approval")
     if require_approval is not None and not isinstance(require_approval, bool):
-        raise HTTPException(status_code=400, detail="require_approval must be boolean")
+        raise validation_exception("require_approval must be boolean")
 
     response_limit_per_run = payload.get("response_limit_per_run")
     if response_limit_per_run is not None:
@@ -234,14 +231,14 @@ def _validate_rule_payload(payload: Dict[str, Any], *, for_update: bool = False)
             if response_limit_per_run < 0:
                 raise ValueError()
         except Exception:
-            raise HTTPException(status_code=400, detail="response_limit_per_run must be a non-negative integer")
+            raise validation_exception("response_limit_per_run must be a non-negative integer")
 
     priority = payload.get("priority")
     if priority is not None:
         try:
             priority = int(priority)
         except Exception:
-            raise HTTPException(status_code=400, detail="priority must be an integer")
+            raise validation_exception("priority must be an integer")
 
     return {
         "name": name if name else None,
@@ -2335,8 +2332,8 @@ async def update_template(
     text_tpl = str(payload.get("template_text") or "")
     ok, invalid = template_engine.validate_template(text_tpl)
     if not ok:
-        from fastapi.responses import JSONResponse
-        return JSONResponse({"error": "invalid_variables", "invalid": invalid}, status_code=400)
+        from app.core.response_models import success_response
+        return success_response({"error": "invalid_variables", "invalid": invalid}, status_code=400)
     try:
         await db.execute(
             text(

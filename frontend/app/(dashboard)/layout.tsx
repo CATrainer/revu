@@ -24,18 +24,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoading || !isAuthenticated || !user) return;
-    // Waiting users -> waiting area
+    // Users without dashboard access -> redirect to login
     if (!canAccessDashboard()) {
-      if (pathname !== '/waiting-area') router.push('/waiting-area');
+      router.push('/login');
       return;
     }
-    // Full access but business kind -> under construction view
-    if (user.user_kind === 'business') {
-      if (pathname !== '/under-construction') router.push('/under-construction');
-      return;
-    }
-    // Content users with full access -> dashboard home if on waiting or UC
-    if (pathname === '/waiting-area' || pathname === '/under-construction') {
+    // All authenticated users with access go to dashboard
+    if (pathname === '/') {
       router.push('/dashboard');
     }
   }, [isLoading, isAuthenticated, user, canAccessDashboard, pathname, router]);
@@ -52,10 +47,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  // If user is on waiting list, show waiting area without dashboard layout
-  if (user && !canAccessDashboard() && pathname === '/waiting-area') {
-    return <>{children}</>;
-  }
+  // Removed waiting area logic - simplified for social media focus
 
   // For users with dashboard access, show normal dashboard layout
   return <DashboardLayout>{children}</DashboardLayout>;

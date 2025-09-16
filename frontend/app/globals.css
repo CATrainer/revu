@@ -3,18 +3,23 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Brand & design system tokens */
+/* Modern Brand & Design System */
 :root {
-  /* Radius */
-  --radius: 0.625rem;
+  /* Modern radius scale */
+  --radius: 0.75rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
 
-  /* Core backgrounds & foreground */
-  --background: #FFF8E7; /* cream base */
-  --foreground: #005A3C; /* primary dark text */
+  /* Modern neutral palette */
+  --background: #FAFAFA; /* clean white-gray */
+  --foreground: #0A0A0A; /* true black for contrast */
   --card: #FFFFFF;
-  --card-foreground: #005A3C;
+  --card-foreground: #0A0A0A;
   --popover: #FFFFFF;
-  --popover-foreground: #005A3C;
+  --popover-foreground: #0A0A0A;
 
   /* Brand scale */
   --brand-50: #E6F7EF;
@@ -52,26 +57,26 @@
   --danger: #FF4B3A;
   --info: #1E90FF; /* new info color */
 
-  /* Neutral & borders */
-  --border: #E5DCC9; /* subtle warm border */
-  --input: #E5DCC9;
-  --ring: var(--brand-400); /* focus ring */
-  --muted: #F9F1DE;
-  --muted-foreground: #4F6B5C;
-  --secondary: #F1E7D2; /* secondary surfaces */
-  --secondary-foreground: #005A3C;
+  /* Modern neutral palette */
+  --border: #E4E4E7; /* clean gray border */
+  --input: #F4F4F5;
+  --ring: #3B82F6; /* modern blue focus ring */
+  --muted: #F8F9FA;
+  --muted-foreground: #6B7280;
+  --secondary: #F1F5F9; /* subtle blue-gray */
+  --secondary-foreground: #1E293B;
   --accent: var(--brand-primary);
   --accent-foreground: var(--brand-primary-foreground);
   --destructive: var(--danger);
 
-  /* Sidebar (light) */
-  --sidebar: #FFF3D9;
-  --sidebar-foreground: #005A3C;
+  /* Modern sidebar */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #1E293B;
   --sidebar-primary: var(--brand-primary-solid);
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: var(--brand-primary);
   --sidebar-accent-foreground: var(--brand-primary-foreground);
-  --sidebar-border: #E5DCC9;
+  --sidebar-border: #E4E4E7;
   --sidebar-ring: var(--ring);
 
   /* Charts (reuse scale & accents) */
@@ -87,12 +92,12 @@
 }
 
 .dark {
-  --background: #1A1F3A;
-  --foreground: #FFF8E7;
-  --card: #242B4A;
-  --card-foreground: #FFF8E7;
-  --popover: #242B4A;
-  --popover-foreground: #FFF8E7;
+  --background: #0F172A;
+  --foreground: #F8FAFC;
+  --card: #1E293B;
+  --card-foreground: #F8FAFC;
+  --popover: #1E293B;
+  --popover-foreground: #F8FAFC;
 
   /* Brand tokens unchanged (branding should be consistent), adjust hover for glow */
   --brand-primary: var(--brand-500);
@@ -101,25 +106,25 @@
   --brand-primary-solid-hover: var(--brand-500);
   --brand-primary-solid-foreground: #FFFFFF;
 
-  /* Neutrals & surfaces */
-  --muted: #283152;
-  --muted-foreground: #C5D0D2;
-  --secondary: #222B4A;
-  --secondary-foreground: #FFF8E7;
+  /* Dark mode surfaces */
+  --muted: #334155;
+  --muted-foreground: #CBD5E1;
+  --secondary: #1E293B;
+  --secondary-foreground: #F8FAFC;
   --accent: var(--brand-primary);
   --accent-foreground: #FFFFFF;
-  --border: #2F3A5E;
-  --input: #2F3A5E;
-  --ring: var(--brand-400);
+  --border: #334155;
+  --input: #1E293B;
+  --ring: #3B82F6;
 
-  /* Sidebar */
-  --sidebar: #202846;
-  --sidebar-foreground: #FFF8E7;
+  /* Dark sidebar */
+  --sidebar: #1E293B;
+  --sidebar-foreground: #F8FAFC;
   --sidebar-primary: var(--brand-primary-solid);
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: var(--brand-primary);
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #2F3A5E;
+  --sidebar-border: #334155;
   --sidebar-ring: var(--ring);
 
   /* Status keep same hues */
@@ -185,10 +190,32 @@
   body { @apply bg-background text-foreground; }
 }
 
+/* Modern Animations & Micro-interactions */
 @keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-10px) } }
 @keyframes float-delayed { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-15px) } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+@keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
+@keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+@keyframes bounce-subtle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
 .animate-float { animation: float 3s ease-in-out infinite; }
 .animate-float-delayed { animation: float-delayed 3s ease-in-out 0.5s infinite; }
+.animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
+.animate-slide-in-right { animation: slideInRight 0.5s ease-out forwards; }
+.animate-slide-in-left { animation: slideInLeft 0.5s ease-out forwards; }
+.animate-scale-in { animation: scaleIn 0.4s ease-out forwards; }
+.animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
+.animate-bounce-subtle { animation: bounce-subtle 1s ease-in-out infinite; }
+
+/* Skeleton loading animation */
+.skeleton {
+  background: linear-gradient(90deg, var(--muted) 25%, color-mix(in oklab, var(--muted) 50%, transparent) 50%, var(--muted) 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
 
 /* Semantic classes */
 @layer components {
@@ -267,8 +294,14 @@
   .icon-color { @apply text-[var(--brand-primary)]; }
   .dark .icon-color { @apply text-[var(--brand-primary)]; }
 
-  .hover-background {}
-  .hover-background:hover { @apply bg-[var(--muted)]; }
+  /* Modern interactive states */
+  .hover-background { 
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .hover-background:hover { 
+    @apply bg-[var(--muted)]; 
+    transform: translateY(-1px);
+  }
   .dark .hover-background:hover { @apply bg-[var(--secondary)]; }
 
   .button-primary { @apply bg-[var(--brand-primary-solid)] text-[var(--brand-primary-solid-foreground)]; }

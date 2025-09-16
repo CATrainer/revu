@@ -1,14 +1,15 @@
-# Revu - AI-Powered Review Management Platform
+# Repruv - AI-Powered Social Media Management Platform
 
-All-in-one dashboard to supercharge your business through intelligent review management, competitor tracking, and AI-powered insights.
+All-in-one dashboard to supercharge your content creation and brand engagement through intelligent social media monitoring, comment management, and AI-powered insights.
 
 ## 🚀 Features
 
-- **Unified Review Management** - Centralize reviews from Google, TripAdvisor, and social media
-- **AI-Powered Responses** - Generate personalized responses in your brand voice
-- **Competitor Tracking** - Monitor and benchmark against local competitors
-- **Smart Analytics** - Natural language queries and comprehensive reporting
-- **Automation Rules** - Set up intelligent workflows to save time
+- **Social Media Monitoring** - Track comments and mentions across YouTube, Twitter/X, and other platforms
+- **AI-Powered Comment Management** - Generate personalized responses in your brand voice
+- **Content Creator Analytics** - Comprehensive insights into engagement and performance
+- **Smart Automation** - Set up intelligent workflows for comment moderation and responses
+- **AI Assistant** - Get content suggestions and engagement strategies
+- **Multi-Platform Integration** - Unified dashboard for all your social media channels
 
 ## 🏗️ Tech Stack
 
@@ -17,20 +18,22 @@ All-in-one dashboard to supercharge your business through intelligent review man
 - **Database**: PostgreSQL with pgvector
 - **Cache**: Redis
 - **Queue**: Celery
-- **AI**: OpenAI GPT-4
+- **AI**: OpenAI GPT-4, Anthropic Claude
 
 ### Frontend
 - **Framework**: Next.js 14 with App Router
 - **UI**: React 18 + Tailwind CSS + Shadcn/ui
 - **State**: Zustand
-- **API Client**: Axios + React Query
+- **API Client**: Axios + React Query (TanStack Query)
+- **Animations**: Framer Motion
 
 ### Infrastructure
 - **Hosting**: Vercel (Frontend), Railway (Backend)
-- **Database**: Supabase
+- **Database**: Supabase (PostgreSQL)
 - **File Storage**: Cloudflare R2
 - **Email**: Resend
 - **Monitoring**: Sentry
+- **Social APIs**: YouTube Data API, Twitter/X API, Reddit API
 
 ## 🛠️ Development Setup
 
@@ -45,8 +48,8 @@ All-in-one dashboard to supercharge your business through intelligent review man
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/Revu.git
-   cd Revu
+   git clone https://github.com/yourusername/Repruv.git
+   cd Repruv
    ```
 
 2. **Start infrastructure services**
@@ -89,55 +92,56 @@ Key variables:
 - `DATABASE_URL` - PostgreSQL connection string
 - `REDIS_URL` - Redis connection string
 - `OPENAI_API_KEY` - OpenAI API key for AI features
+- `CLAUDE_API_KEY` - Anthropic Claude API key (optional)
 - `SUPABASE_URL` & `SUPABASE_ANON_KEY` - Supabase configuration
+- `YOUTUBE_API_KEY` - YouTube Data API key for social monitoring
+- `CALENDLY_ACCESS_TOKEN` - Calendly integration token
 
 ## 👨‍💻 Admin Access
 
 For development and testing purposes, a shared admin account is available (seeded by the demo script):
 
-- Email: `admin@revu.dev`
+- Email: `admin@repruv.dev`
 - Password: `Demo2025!`
 
 This admin account has full access to:
-- User management (view all users, grant/revoke access or demo subtypes)
+- User management (view all users, grant/revoke access)
 - System administration features
-- Dashboard analytics and insights
+- Platform analytics and insights
+- Social media monitoring configuration
 
 ⚠️ Security: Change these credentials in production environments.
 
+## 🎯 Dashboard Structure
+
+The platform provides a streamlined dashboard with focused sections:
+
+- **Dashboard** (`/dashboard`) - Main overview with key metrics and activity feed
+- **Comments** (`/comments`) - Social media comment management and moderation
+- **Automation** (`/automation`) - Workflow automation and rule configuration
+- **Analytics** (`/analytics`) - Performance metrics and engagement insights
+- **AI Assistant** (`/ai-assistant`) - AI-powered content and strategy suggestions
+- **Settings** (`/settings`) - User preferences and platform configuration
+- **Social Monitoring** (`/social-monitoring`) - Real-time platform monitoring and alerts
+
 ## 🧪 Demo Accounts
 
-These demo users are created by `backend/scripts/seed_demo_accounts.py` and exist as real DB users. All share the same password unless you change it.
+These demo users are created by `backend/scripts/seed_demo_accounts.py` for testing:
 
-- Creator demo
-   - Email: `demo+creator@revu.app`
+- Content Creator demo
+   - Email: `demo+creator@repruv.app`
    - Password: `Demo2025!`
-   - Access: Demo (creator). Routes to a creator-focused dashboard with social comments.
+   - Access: Full platform access with social media monitoring
 
-- Business demo
-   - Email: `demo+business@revu.app`
+- Brand Manager demo
+   - Email: `demo+brand@repruv.app`
    - Password: `Demo2025!`
-   - Access: Demo (business). Routes to a local business dashboard with review feeds.
+   - Access: Brand-focused dashboard with engagement analytics
 
-- Agency (creators) demo
-   - Email: `demo+agency@revu.app`
-   - Password: `Demo2025!`
-   - Access: Demo (agency_creators). Defaults to the Agency workspace; Clients tab enabled.
-
-- Agency (businesses) demo
-   - Email: `demo+agency-biz@revu.app`
-   - Password: `Demo2025!`
-   - Access: Demo (agency_businesses). Defaults to the Agency workspace; Clients tab enabled.
-
-- Agency manager (scoped example)
-   - Email: `manager+agency@revu.app`
-   - Password: `Demo2025!`
-   - Access: Early access manager, scoped to a single client under the creators agency.
-
-Notes
-- Demo data in the UI is generated on the client; actions (assign, tag, archive) simulate behavior without writing to external platforms.
-- The Admin page allows setting a user’s Access Status to `demo_access` and choosing a `demo_access_type` (creator, business, agency_creators, agency_businesses).
-- Frontend defaults to the production API unless `NEXT_PUBLIC_API_URL` is set. Override in `frontend/.env.local` if needed.
+Notes:
+- Demo data simulates real social media interactions without affecting external platforms
+- Frontend defaults to the production API unless `NEXT_PUBLIC_API_URL` is set
+- Override API URL in `frontend/.env.local` for local development
 
 ## 🧪 Testing
 
@@ -195,6 +199,6 @@ This project is proprietary software. All rights reserved.
 
 ---
 
-Built with ❤️ for local businesses
+Built with ❤️ for content creators, influencers, and brands
 
 Note: Do not store secrets in this README. Place environment variables in the appropriate `.env` files. See `backend/.env.example` and `frontend/.env.example` for templates.

@@ -293,7 +293,7 @@ function WorkspaceSection() {
   const [logoUrl, setLogoUrl] = useState(branding.logoUrl || '');
   const [primary, setPrimary] = useState(branding.primaryColor || '#4f46e5');
   const [accent, setAccent] = useState(branding.accentColor || '#22c55e');
-  const [headerText, setHeaderText] = useState(branding.headerText || 'Revu');
+  const [headerText, setHeaderText] = useState(branding.headerText || 'Repruv');
   const [footerText, setFooterText] = useState(branding.footerText || '');
   const [useBranding, setUseBranding] = useState(!!branding.useBrandingInExports);
   const [name, setName] = useState(workspaceSettings.name || '');

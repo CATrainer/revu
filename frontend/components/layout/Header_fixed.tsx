@@ -3,8 +3,8 @@
 
 import { useState } from 'react';
 import { Bell, Menu, Search, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { ModernButton } from '@/components/ui/modern-button';
+import { ModernInput } from '@/components/ui/modern-input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,9 +39,9 @@ export function Header({ onMenuClick }: HeaderProps) {
   };
 
   const mockNotifications = [
-    { id: 1, title: 'New review received', message: 'You have a new 5-star review on Google', time: '2 minutes ago', unread: true },
-    { id: 2, title: 'Response needed', message: 'Customer feedback requires your attention', time: '1 hour ago', unread: true },
-    { id: 3, title: 'Monthly report ready', message: 'Your analytics report is now available', time: '2 hours ago', unread: false },
+    { id: 1, title: 'New comment detected', message: 'High-priority comment needs attention on your latest video', time: '2 minutes ago', unread: true },
+    { id: 2, title: 'Automation rule triggered', message: 'AI response sent to 5 positive comments', time: '1 hour ago', unread: true },
+    { id: 3, title: 'Weekly analytics ready', message: 'Your social media performance report is available', time: '2 hours ago', unread: false },
   ];
 
   return (
@@ -49,14 +49,14 @@ export function Header({ onMenuClick }: HeaderProps) {
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <Button
+            <ModernButton
               variant="ghost"
               size="sm"
               onClick={onMenuClick}
               className="lg:hidden hover-background"
             >
               <Menu className="h-5 w-5" />
-            </Button>
+            </ModernButton>
             
             <div className="hidden sm:block ml-4 lg:ml-0">
               <LocationSelector />
@@ -67,15 +67,15 @@ export function Header({ onMenuClick }: HeaderProps) {
             {/* Search */}
             {searchOpen ? (
               <form onSubmit={handleSearch} className="flex items-center space-x-2">
-                <Input
+                <ModernInput
                   type="search"
-                  placeholder="Search reviews, customers..."
+                  placeholder="Search comments, videos..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                   className="w-64 card-background"
                   autoFocus
                 />
-                <Button
+                <ModernButton
                   type="button"
                   variant="ghost"
                   size="sm"
@@ -86,28 +86,28 @@ export function Header({ onMenuClick }: HeaderProps) {
                   className="hover-background"
                 >
                   <X className="h-4 w-4" />
-                </Button>
+                </ModernButton>
               </form>
             ) : (
-              <Button
+              <ModernButton
                 variant="ghost"
                 size="sm"
                 onClick={() => setSearchOpen(true)}
                 className="hover-background"
               >
                 <Search className="h-5 w-5" />
-              </Button>
+              </ModernButton>
             )}
 
             {/* Notifications */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="relative hover-background">
+                <ModernButton variant="ghost" size="sm" className="relative hover-background">
                   <Bell className="h-5 w-5" />
                   {mockNotifications.some(n => n.unread) && (
                     <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
                   )}
-                </Button>
+                </ModernButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 align="end" 
@@ -144,14 +144,14 @@ export function Header({ onMenuClick }: HeaderProps) {
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full hover-background">
+                <ModernButton variant="ghost" className="relative h-8 w-8 rounded-full hover-background">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="" alt={user?.full_name || ''} />
                     <AvatarFallback className="button-primary">
                       {user?.full_name?.charAt(0) || 'U'}
                     </AvatarFallback>
                   </Avatar>
-                </Button>
+                </ModernButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 className="w-56 card-background" 

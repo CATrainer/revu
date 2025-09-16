@@ -17,13 +17,9 @@ from app.api.v1.endpoints import (
     test_utils,
     automation,
     system,
-    segments,
     youtube_auth,
     youtube_content,
     platforms,
-    # locations,
-    # organizations,
-    reviews,
     users,
     webhooks,
     social_monitoring,
@@ -52,24 +48,7 @@ api_router.include_router(
     tags=["users"],
 )
 
-# Temporarily disable organizations and locations while simplifying to single-user accounts
-# api_router.include_router(
-#     organizations.router,
-#     prefix="/organizations",
-#     tags=["organizations"],
-# )
-
-# api_router.include_router(
-#     locations.router,
-#     prefix="/locations",
-#     tags=["locations"],
-# )
-
-api_router.include_router(
-    reviews.router,
-    prefix="/reviews",
-    tags=["reviews"],
-)
+# Removed: organizations, locations, reviews - not needed for social media focus
 
 api_router.include_router(
     ai.router,
@@ -89,11 +68,7 @@ api_router.include_router(
     tags=["system"],
 )
 
-api_router.include_router(
-    segments.router,
-    prefix="/segments",
-    tags=["segments"],
-)
+# Removed segments - not needed for social media focus
 
 api_router.include_router(
     test_utils.router,
@@ -175,12 +150,14 @@ async def api_root():
         "endpoints": {
             "auth": "/auth",
             "users": "/users",
-            # "organizations": "/organizations",
-            # "locations": "/locations",
-            "reviews": "/reviews",
             "ai": "/ai",
+            "automation": "/automation",
             "analytics": "/analytics",
+            "social_monitoring": "/monitoring",
+            "early_warning": "/early-warning",
+            "polling": "/polling",
+            "chat": "/chat",
             "webhooks": "/webhooks",
-        "early_warning": "/early-warning",
+            "youtube": "/youtube",
         },
     }

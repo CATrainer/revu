@@ -33,7 +33,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'dashboard-card border-r pt-5 pb-4 overflow-y-auto transition-all duration-300',
+        'dashboard-card border-r pt-5 pb-4 overflow-y-auto transition-all duration-300 animate-slide-in-left',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
