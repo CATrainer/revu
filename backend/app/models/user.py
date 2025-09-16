@@ -59,7 +59,11 @@ class User(Base):
     follow_up_reminders = Column(Text)
     user_qualification_notes = Column(Text)
 
+    # Foreign keys
+    organization_id = Column(PGUUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
+
     # Relationships
+    organization = relationship("Organization", back_populates="users")
     response_templates = relationship("ResponseTemplate", back_populates="created_by")
     automation_rules = relationship("AutomationRule", back_populates="created_by")
     audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan")

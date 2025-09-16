@@ -20,7 +20,7 @@ class AnalyticsSnapshot(Base):
     metrics = Column(JSONB, nullable=False)
 
     # Relationships
-    location = relationship("Location", back_populates="analytics_snapshots")
+    location = relationship("Location", back_populates="analytics")
 
     def __repr__(self) -> str:
         return f"<AnalyticsSnapshot(location_id='{self.location_id}', date='{self.date}')>"

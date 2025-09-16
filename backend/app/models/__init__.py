@@ -1,14 +1,12 @@
-# Removed missing imports: organization, location
+from app.models.organization import Organization
+from app.models.location import Location
 from app.models.user import User
-# Removed missing import: review
 from app.models.platform import PlatformConnection
 from app.models.automation import AutomationRule
 from app.models.template import ResponseTemplate
-# Removed missing import: competitor
 from app.models.analytics import AnalyticsSnapshot
 from app.models.ai_training import AITrainingData
 from app.models.audit import AuditLog
-# Removed missing import: demo
 from app.models.youtube import (
     YouTubeConnection,
     YouTubeVideo,
@@ -18,6 +16,8 @@ from app.models.youtube import (
 )
 
 __all__ = [
+    "Organization",
+    "Location",
     "User",
     "PlatformConnection",
     "AutomationRule",
