@@ -1,5 +1,5 @@
 # Removed missing imports: organization, location
-from app.models.user import User, UserMembership
+from app.models.user import User
 # Removed missing import: review
 from app.models.platform import PlatformConnection
 from app.models.automation import AutomationRule
@@ -19,7 +19,6 @@ from app.models.youtube import (
 
 __all__ = [
     "User",
-    "UserMembership",
     "PlatformConnection",
     "AutomationRule",
     "ResponseTemplate",
