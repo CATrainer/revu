@@ -14,7 +14,7 @@ export default function DashboardPage() {
       {/* Header Section */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-primary-dark">Welcome back!</h1>
-        <p className="text-lg text-secondary-dark">Here's what's happening with your social media presence.</p>
+        <p className="text-lg text-secondary-dark">Here&apos;s what&apos;s happening with your social media presence.</p>
       </div>
 
       {/* Stats Overview */}
