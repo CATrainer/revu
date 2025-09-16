@@ -22,7 +22,7 @@ from app.schemas.analytics import (
     SentimentBreakdown,
     CompetitorComparison,
 )
-from app.services.demo_adapter import DemoDataAdapter
+# Removed demo_adapter import (service doesn't exist)
 
 router = APIRouter()
 
