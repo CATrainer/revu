@@ -15,7 +15,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import get_async_session
 from app.core.security import get_current_active_user, get_password_hash
-from app.models.user import User, UserMembership
+from app.models.user import User
 from app.schemas.user import UserUpdate, User as UserSchema, UserAccessUpdate, WaitlistJoin, WaitlistAccountCreate, DemoRequest, AdminNotes
 from app.schemas.membership import MembershipResponse
 
@@ -146,24 +146,22 @@ async def update_current_user(
 
 
 @router.get("/me/memberships", response_model=List[MembershipResponse])
-async def get_my_memberships(
+async def get_user_memberships(
     *,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
     """
-    Get all organization memberships for the current user.
+    Get user membership info (simplified for social media focus).
     """
-    result = await db.execute(
-        select(UserMembership)
-        .where(UserMembership.user_id == current_user.id)
-        .options(
-            selectinload(UserMembership.organization),
-            selectinload(UserMembership.location),
-        )
-    )
-    memberships = result.scalars().all()
-    return memberships
+    # Return simplified membership info since UserMembership model was removed
+    return [{
+        "id": current_user.id,
+        "user_id": current_user.id,
+        "role": "owner",  # Default role for social media users
+        "organization": None,
+        "location": None
+    }]
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
@@ -177,35 +175,7 @@ async def delete_current_user(
     
     This will remove the user from all organizations.
     """
-    # Check if user is the only owner of any organization
-    result = await db.execute(
-        select(UserMembership)
-        .where(
-            UserMembership.user_id == current_user.id,
-            UserMembership.role == "owner",
-        )
-    )
-    owner_memberships = result.scalars().all()
-    
-    for membership in owner_memberships:
-        # Check if there are other owners
-        other_owners_result = await db.execute(
-            select(UserMembership)
-            .where(
-                UserMembership.organization_id == membership.organization_id,
-                UserMembership.role == "owner",
-                UserMembership.user_id != current_user.id,
-            )
-        )
-        other_owners = other_owners_result.scalars().all()
-        
-        if not other_owners:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Cannot delete account: You are the only owner of organization {membership.organization_id}. Transfer ownership first.",
-            )
-    
-    # Delete user (cascades to memberships)
+    # Simplified deletion for social media focus (no organization ownership checks needed)
     await db.delete(current_user)
     await db.commit()
     

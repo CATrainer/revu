@@ -13,9 +13,8 @@ from sqlalchemy import select, func, text
 
 from app.core.database import get_async_session
 from app.core.security import get_current_active_user
-from app.models.user import User, UserMembership
-from app.models.location import Location
-from app.models.review import Review
+from app.models.user import User
+# Removed imports for Location and Review models (not needed for social media focus)
 from app.models.analytics import AnalyticsSnapshot
 from app.schemas.analytics import (
     DashboardMetrics,
@@ -39,77 +38,10 @@ async def get_dashboard_metrics(
     """
     Get dashboard metrics for a location.
     """
-    # Demo mode removed; fall back to real data only
-    # Verify user has access to location
-    result = await db.execute(
-        select(Location)
-        .join(UserMembership, UserMembership.organization_id == Location.organization_id)
-        .where(
-            Location.id == location_id,
-            UserMembership.user_id == current_user.id,
-        )
-    )
-    location = result.scalar_one_or_none()
-    
-    if not location:
-        raise HTTPException(status_code=404, detail="Location not found")
-    
-    # Calculate date range
-    end_date = datetime.utcnow()
-    start_date = end_date - timedelta(days=date_range)
-    
-    # Get review statistics
-    review_stats = await db.execute(
-        select(
-            func.count(Review.id).label("total_reviews"),
-            func.avg(Review.rating).label("avg_rating"),
-            func.count(Review.id).filter(Review.review_reply.is_not(None)).label("responded_count"),
-            func.count(Review.id).filter(Review.rating >= 4).label("positive_count"),
-            func.count(Review.id).filter(Review.rating <= 2).label("negative_count"),
-        )
-        .where(
-            Review.location_id == location_id,
-            Review.published_at >= start_date,
-        )
-    )
-    stats = review_stats.one()
-    
-    # Calculate response rate
-    response_rate = (
-        (stats.responded_count / stats.total_reviews * 100) 
-        if stats.total_reviews > 0 else 0
-    )
-    
-    # Get recent reviews count (last 7 days)
-    recent_count_result = await db.execute(
-        select(func.count(Review.id))
-        .where(
-            Review.location_id == location_id,
-            Review.published_at >= datetime.utcnow() - timedelta(days=7),
-        )
-    )
-    recent_count = recent_count_result.scalar()
-    
-    # Get reviews needing response
-    pending_result = await db.execute(
-        select(func.count(Review.id))
-        .where(
-            Review.location_id == location_id,
-            Review.review_reply.is_(None),
-            Review.rating <= 3,
-        )
-    )
-    pending_count = pending_result.scalar()
-    
-    return DashboardMetrics(
-        avg_rating=float(stats.avg_rating or 0),
-        total_reviews=stats.total_reviews,
-        response_rate=response_rate,
-        reviews_this_week=recent_count,
-        pending_responses=pending_count,
-        sentiment_score=calculate_sentiment_score(stats),
-        positive_reviews=stats.positive_count,
-        negative_reviews=stats.negative_count,
+    # Analytics not implemented for social media focus
+    raise HTTPException(
+        status_code=501,
+        detail="Location-based analytics not implemented for social media focus"
     )
 
 

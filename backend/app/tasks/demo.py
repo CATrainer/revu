@@ -11,7 +11,7 @@ from app.core.celery import celery_app
 from app.core.database import async_session_maker
 from app.models.demo import DemoAccount
 from app.models.analytics import AnalyticsSnapshot
-from app.models.location import Location
+# Removed Location import (not needed for social media focus)
 from app.models.user import User
 from app.services.demo_data import DemoDataService
 from datetime import date, timedelta
