@@ -76,9 +76,9 @@ function IntegrationsSection() {
   const { integrations, setIntegrationStatus } = useStore();
   
   const socialPlatforms = [
-    { id: 'youtube', name: 'YouTube', canConnect: true },
-    { id: 'instagram', name: 'Instagram', canConnect: false },
-    { id: 'tiktok', name: 'TikTok', canConnect: false }
+    { id: 'youtube' as const, name: 'YouTube', canConnect: true },
+    { id: 'instagram' as const, name: 'Instagram', canConnect: false },
+    { id: 'tiktok' as const, name: 'TikTok', canConnect: false }
   ];
 
   return (
@@ -99,7 +99,7 @@ function IntegrationsSection() {
                   <Button 
                     variant="outline" 
                     className="border-[var(--border)]" 
-                    onClick={() => setIntegrationStatus(platform.id as any, { connected: true, status: 'ok' })}
+                    onClick={() => setIntegrationStatus(platform.id, { connected: true, status: 'ok' })}
                     disabled={integration?.connected}
                   >
                     {integration?.connected ? 'Connected' : 'Connect'}
@@ -108,7 +108,7 @@ function IntegrationsSection() {
                     <Button 
                       variant="outline" 
                       className="border-[var(--border)]" 
-                      onClick={() => setIntegrationStatus(platform.id as any, { connected: false, status: 'pending' })}
+                      onClick={() => setIntegrationStatus(platform.id, { connected: false, status: 'pending' })}
                     >
                       Disconnect
                     </Button>
