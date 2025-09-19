@@ -133,7 +133,7 @@ export interface WhatIfState {
 }
 
 export interface IntegrationConnection {
-  id: 'google' | 'facebook' | 'instagram' | 'tiktok' | 'twitter' | 'tripadvisor';
+  id: 'google' | 'facebook' | 'instagram' | 'tiktok' | 'twitter' | 'tripadvisor' | 'youtube';
   name: string;
   connected: boolean;
   status?: 'ok' | 'error' | 'pending';
@@ -142,7 +142,7 @@ export interface IntegrationConnection {
 // Notification preferences (demo)
 export interface NotificationPrefs {
   muteKeywords: string[]; // case-insensitive contains match
-  mutedPlatforms: Array<'google' | 'facebook' | 'instagram' | 'tiktok' | 'twitter' | 'tripadvisor'>;
+  mutedPlatforms: Array<'google' | 'facebook' | 'instagram' | 'tiktok' | 'twitter' | 'tripadvisor' | 'youtube'>;
   mode: 'All' | 'Important only';
 }
 
