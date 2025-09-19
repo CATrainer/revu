@@ -28,7 +28,7 @@ class Location(Base):
     response_templates = relationship("ResponseTemplate", back_populates="location")
     automation_rules = relationship("AutomationRule", back_populates="location")
     ai_training_data = relationship("AITrainingData", back_populates="location")
-    analytics = relationship("Analytics", back_populates="location")
+    analytics = relationship("AnalyticsSnapshot", back_populates="location")
 
     def __repr__(self) -> str:
         return f"<Location(id='{self.id}', name='{self.name}')>"
