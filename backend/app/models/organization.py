@@ -21,6 +21,7 @@ class Organization(Base):
     # Relationships
     users = relationship("User", back_populates="organization")
     locations = relationship("Location", back_populates="organization")
+    audit_logs = relationship("AuditLog", back_populates="organization", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Organization(id='{self.id}', name='{self.name}')>"

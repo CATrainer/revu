@@ -181,14 +181,18 @@ async def create_db_and_tables() -> None:
                 user,
                 organization,
                 location,
-                review,
                 platform,
                 automation,
                 template,
-                competitor,
                 analytics,
-                demo,
+                audit,
+                ai_training,
+                youtube,
             )
+
+            # Configure the registry to resolve any relationship mapping issues
+            from sqlalchemy.orm import configure_mappers
+            configure_mappers()
 
             await conn.run_sync(Base.metadata.create_all)
             logger.info("Database tables created successfully")
