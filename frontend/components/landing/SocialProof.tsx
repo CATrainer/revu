@@ -214,14 +214,14 @@ export function SocialProof() {
                   >
                     {/* Enhanced YouTube Thumbnail with better loading states and play button */}
                     <div className="relative w-full h-full">
-                      {thumbSrc && (
+                      {thumbSrc ? (
                         <Image
                           src={thumbSrc}
                           alt={`${currentAvatar.title} video thumbnail`}
                           fill
                           unoptimized
                           className={`rounded-xl ${
-                            currentAvatar.videoId === 'f8qaKONsEbU' 
+                            currentAvatar.videoId === 'f8qaKONsEbU'
                               ? 'object-contain'
                               : 'object-cover'
                           }`}
@@ -239,6 +239,13 @@ export function SocialProof() {
                           }}
                           priority
                         />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-xl">
+                          <svg className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Video coming soon</p>
+                        </div>
                       )}
                     </div>
                   </motion.div>
