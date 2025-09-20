@@ -5,6 +5,7 @@ import { ModernStats, StatsGrid } from '@/components/ui/modern-stats';
 import { ModernButton } from '@/components/ui/modern-button';
 import Link from 'next/link';
 import AutomationImpactWidget from '@/components/intelligence/AutomationImpactWidget';
+import { features } from '@/lib/features';
 import ConnectButton from '@/components/youtube/ConnectButton';
 import { Youtube, Instagram, Music, TrendingUp, Users, MessageCircle, Zap } from 'lucide-react';
 
@@ -52,8 +53,8 @@ export default function DashboardPage() {
         />
       </StatsGrid>
 
-      {/* Impact Summary */}
-      <AutomationImpactWidget />
+      {/* Impact Summary (conditional) */}
+      {features.showAutomationImpact && <AutomationImpactWidget />}
 
       {/* Platform Connections */}
       <div className="space-y-4">
@@ -75,7 +76,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-3 flex-wrap">
                 <ConnectButton />
                 <Link href="/comments" className="text-sm text-brand-primary hover:underline">
-                  View comments →
+                  View interactions →
                 </Link>
               </div>
             </CardContent>

@@ -4,6 +4,8 @@
 import { useEffect, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { features } from '@/lib/features';
+
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useStore } from '@/lib/store';
 import { pushToast } from '@/components/ui/toast';
@@ -72,15 +74,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </div>
         </main>
 
-        {/* Guided tour hint bar */}
-        {!tour.completed && (
+        {/* Guided tour hint bar (conditional via feature flag) */}
+        {features.showLoginTour && !tour.completed && (
           <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-md border border-[var(--border)] card-background shadow">
             <span className="text-sm text-primary-dark">
               {tour.step === 0 && 'Take a 60s tour of Revu.'}
               {tour.step === 1 && 'Step 1: Use Quick Actions to jump into Comments.'}
-              {tour.step === 2 && 'Step 2: Check Analytics and export a branded report.'}
-              {tour.step === 3 && 'Step 3: Save and share a filtered view.'}
-              {tour.step === 4 && 'Step 4: Tweak notification noise in Settings.'}
+              {tour.step === 2 && 'Export a branded PDF report for stakeholders.'}
+              {tour.step === 3 && 'Save a view here to revisit filters fast.'}
+              {tour.step === 4 && 'Adjust notification rules and mute noisy platforms.'}
             </span>
             {tour.step === 0 ? (
               <button className="ml-3 text-xs px-2 py-1 rounded border border-[var(--border)] hover-background" onClick={() => setTour({ step: 1 })}>Start</button>
@@ -97,8 +99,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        {/* Anchored tour tooltip */}
-        {!tour.completed && anchorRect && (
+        {/* Anchored tour tooltip (conditional via feature flag) */}
+        {features.showLoginTour && !tour.completed && anchorRect && (
           <div
             className="fixed z-50 px-3 py-2 rounded-md border border-[var(--border)] card-background shadow"
             style={{ top: anchorRect.bottom + 8, left: Math.min(anchorRect.left, window.innerWidth - 280) }}
@@ -134,7 +136,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <div className="absolute top-24 left-1/2 -translate-x-1/2 w-full max-w-xl card-background border border-[var(--border)] rounded-md shadow">
               <div className="p-3 border-b border-[var(--border)] text-sm text-secondary-dark">Command Palette</div>
               <ul className="p-3 space-y-2 text-sm">
-                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/comments'); setPaletteOpen(false); }}>Go to Comments</li>
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/comments'); setPaletteOpen(false); }}>Go to Interactions</li>
                 <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/analytics'); setPaletteOpen(false); }}>Go to Analytics</li>
                 <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { setTheme('light'); setPaletteOpen(false); }}>Theme: Light</li>
                 <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { setTheme('dark'); setPaletteOpen(false); }}>Theme: Dark</li>
@@ -189,11 +191,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'comments.csv';
+                    a.download = 'interactions.csv';
                     a.click();
                     URL.revokeObjectURL(url);
                     setPaletteOpen(false);
-                  }}>Export Comments CSV</li>
+                  }}>Export Interactions CSV</li>
                 ) : null}
                 {typeof window !== 'undefined' && window.location.pathname.startsWith('/comments') ? (
                   <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={async () => {

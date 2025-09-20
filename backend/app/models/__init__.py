@@ -7,6 +7,7 @@ from app.models.template import ResponseTemplate
 from app.models.analytics import AnalyticsSnapshot
 from app.models.ai_training import AITrainingData
 from app.models.audit import AuditLog
+from app.models.workflow import Workflow, WorkflowApproval
 from app.models.youtube import (
     YouTubeConnection,
     YouTubeVideo,
@@ -25,6 +26,8 @@ __all__ = [
     "AnalyticsSnapshot",
     "AITrainingData",
     "AuditLog",
+    "Workflow",
+    "WorkflowApproval",
     "YouTubeConnection",
     "YouTubeVideo",
     "YouTubeComment",

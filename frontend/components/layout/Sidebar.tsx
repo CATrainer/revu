@@ -6,12 +6,13 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { BarChart3, Brain, ChartPie, Settings, ChevronLeft, ChevronRight, MessageSquare, Zap, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { features } from '@/lib/features';
 import { useState, useMemo } from 'react';
 
 // Streamlined nav: only current surfaces + new explicit routes for Comments & Automation & Social Monitoring
 const baseNav = [
   { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
-  { name: 'Comments', href: '/comments', icon: MessageSquare },
+  { name: 'Interactions', href: '/comments', icon: MessageSquare },
   { name: 'Automation', href: '/automation', icon: Zap },
   { name: 'Analytics', href: '/analytics', icon: ChartPie },
   { name: 'Social Monitoring', href: '/social-monitoring', icon: Radio },
@@ -24,11 +25,21 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const navigation = useMemo(() => {
     // Start from base and clone so we can mutate labels safely
-    const items = [...baseNav.map((x) => ({ ...x }))];
-  // Scenario-aware label tweaks trimmed: always show single 'Analytics'
-  // Remove legacy dynamic labels (Responses, Reputation Pulse, etc.)
+    let items = [...baseNav.map((x) => ({ ...x }))];
+    // Conditionally hide certain routes via feature flags
+    if (!features.showNavAutomation) {
+      items = items.filter((i) => i.name !== 'Automation');
+    }
+    if (!features.showNavAnalytics) {
+      items = items.filter((i) => i.name !== 'Analytics');
+    }
+    if (!features.showNavSocialMonitoring) {
+      items = items.filter((i) => i.name !== 'Social Monitoring');
+    }
+    // Scenario-aware label tweaks trimmed: always show single 'Analytics'
+    // Remove legacy dynamic labels (Responses, Reputation Pulse, etc.)
     return items;
-  }, []);
+  }, [features.showNavAutomation, features.showNavAnalytics, features.showNavSocialMonitoring]);
 
   return (
     <aside

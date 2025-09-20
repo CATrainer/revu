@@ -8,7 +8,7 @@ import { useStore } from '@/lib/store';
 export function QuickActions() {
   const router = useRouter();
   const { addReportEntry, addNotification } = useStore();
-  const labelNew = 'View New Comments';
+  const labelNew = 'View Interactions';
   return (
   <Card className="card-background border-[var(--border)]">
     <CardHeader>

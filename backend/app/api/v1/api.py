@@ -25,6 +25,7 @@ from app.api.v1.endpoints import (
     social_monitoring,
     chat,
 )
+from app.api.v1.endpoints import workflows as workflows_endpoints
 
 # Create the main API router
 api_router = APIRouter()
@@ -104,6 +105,12 @@ api_router.include_router(
     chat.router,
     prefix="/chat",
     tags=["chat"],
+)
+
+api_router.include_router(
+    workflows_endpoints.router,
+    prefix="/workflows",
+    tags=["workflows"],
 )
 
 api_router.include_router(

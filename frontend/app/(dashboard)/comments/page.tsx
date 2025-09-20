@@ -12,6 +12,7 @@ import { listConnections } from '@/lib/api/youtube';
 import type { YouTubeVideo } from '@/types/youtube';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function CommentsPage() {
   const [connectionId, setConnectionId] = useState<string | null>(null);
@@ -54,8 +55,8 @@ export default function CommentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-primary-dark">Comments</h1>
-          <p className="mt-1 text-secondary-dark">Manage comments and see video metrics.</p>
+          <h1 className="text-2xl font-bold text-primary-dark">Interactions</h1>
+          <p className="mt-1 text-secondary-dark">Manage comments, DMs and @ mentions from connected accounts.</p>
         </div>
         {connectionId ? (
           <SyncStatus connectionId={connectionId} />
@@ -63,6 +64,41 @@ export default function CommentsPage() {
           <ConnectButton />
         )}
       </div>
+
+      {/* Intro & Widgets */}
+      <Card className="card-background border-[var(--border)]">
+        <CardHeader>
+          <CardTitle className="text-primary-dark">What you can do here</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-secondary-dark mb-4">
+            Interactions aggregates activity across platforms. Connect your accounts to pull in Comments, DMs and @ mentions. Use Workflows to set up rules and automations for triage and responses.
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Link href="/comments/dms" className="rounded-lg border border-[var(--border)] p-4 hover-background block">
+              <div className="text-primary-dark font-medium">Direct Messages</div>
+              <div className="text-xs text-secondary-dark mt-1">View and respond to DMs from connected platforms.</div>
+            </Link>
+            <Link href="/comments" className="rounded-lg border border-[var(--border)] p-4 hover-background block">
+              <div className="text-primary-dark font-medium">Comments</div>
+              <div className="text-xs text-secondary-dark mt-1">Monitor and reply to public comments by video or as a feed.</div>
+            </Link>
+            <Link href="/comments/mentions" className="rounded-lg border border-[var(--border)] p-4 hover-background block">
+              <div className="text-primary-dark font-medium">@ Mentions</div>
+              <div className="text-xs text-secondary-dark mt-1">Track mentions of your handle and brand across platforms.</div>
+            </Link>
+            <Link href="/comments/workflows" className="rounded-lg border border-[var(--border)] p-4 hover-background block">
+              <div className="text-primary-dark font-medium">Workflows</div>
+              <div className="text-xs text-secondary-dark mt-1">Build rules to triage, label and respond automatically.</div>
+            </Link>
+          </div>
+          <div className="mt-4">
+            <Link href="/comments/view" className="inline-block">
+              <Button className="button-primary">View Interactions</Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* If not connected, show a friendly card prompting to connect */}
       {!connectionId && (
@@ -158,7 +194,7 @@ export default function CommentsPage() {
                       <Card className="card-background border-[var(--border)] h-full flex flex-col min-h-0">
                         <CardHeader className="py-3 px-4 border-b">
                           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                            <CardTitle className="text-primary-dark">Comments</CardTitle>
+                            <CardTitle className="text-primary-dark">Interactions</CardTitle>
                             <div className="flex flex-wrap items-center gap-3 text-sm">
                               <label className="flex items-center gap-2">
                                 <span className="text-secondary-dark">Sort by</span>
@@ -451,7 +487,7 @@ function AllCommentsFeed({ connectionId, onSelectVideo, parentsOnly, newestFirst
     );
   }
   if (isError) return <div className="text-destructive">{(error as Error)?.message ?? 'Failed to load comments feed'}</div>;
-  if (!items || items.length === 0) return <div className="text-secondary-dark text-sm">No comments found.</div>;
+  if (!items || items.length === 0) return <div className="text-secondary-dark text-sm">No interactions found.</div>;
 
   return (
     <div>
