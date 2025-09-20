@@ -265,11 +265,10 @@ export function SocialProof() {
                           </svg>
                           <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Video coming soon</p>
                         </div>
-                      )}
-                    </div>
+                      
+                    
                   </motion.div>
-                </motion.div>
-              </motion.div>
+                
 
               {/* Content Section - Right Side */}
               <motion.div 
