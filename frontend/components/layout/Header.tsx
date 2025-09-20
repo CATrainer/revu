@@ -23,6 +23,7 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useStore } from '@/lib/store';
 import NotificationCenter from '@/components/shared/NotificationCenter';
 import Glossary from '@/components/help/Glossary';
+import { features } from '@/lib/features';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -182,11 +183,13 @@ export function Header({ onMenuClick }: HeaderProps) {
               <Image src="/logo/mark.png" alt="Repruv" width={32} height={32} className="h-8 w-8" priority />
               {/* Location selector appears only when relevant (org/agency or demo agency) */}
               <LocationSelector />
-              <button
-                className="ml-2 text-xs px-2 py-1 rounded border border-[var(--border)] hover-background"
-                onClick={() => router.push('/automation')}
-                title="Open Automation"
-              >Automation</button>
+              {features.showAutomationButton && (
+                <button
+                  className="ml-2 text-xs px-2 py-1 rounded border border-[var(--border)] hover-background"
+                  onClick={() => router.push('/automation')}
+                  title="Open Automation"
+                >Automation</button>
+              )}
             </div>
             <div className="hidden sm:block lg:hidden ml-4">
               <LocationSelector />
@@ -194,45 +197,52 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
 
           <div className="flex items-center space-x-4">
-            {/* Emergency Controls */}
-            <div className="hidden md:flex items-center gap-2 mr-2">
-              {systemStatus.status === 'active' ? (
-                <Button size="sm" variant="destructive" className="bg-rose-600 hover:bg-rose-700" disabled={pauseLoading} onClick={() => pauseAll(60)} title="Pause all automation for 1 hour">
-                  <PauseCircle className="h-4 w-4 mr-1" /> Pause all
-                </Button>
-              ) : (
-                <Button size="sm" variant="default" disabled={pauseLoading} onClick={resumeAll} title="Resume all automation">
-                  <PlayCircle className="h-4 w-4 mr-1" /> Resume
-                </Button>
-              )}
-              {/* Global toggles */}
-              <label className="flex items-center gap-2 text-xs text-secondary-dark ml-2" title="Run actions in simulation mode only">
-                <input
-                  type="checkbox"
-                  checked={!!systemStatus.test_mode}
-                  onChange={(e) => setTestMode(e.target.checked)}
-                  disabled={sysUpdateLoading}
-                />
-                Test mode
-              </label>
-              <label className="flex items-center gap-2 text-xs text-secondary-dark" title="Automatically pause on extreme spikes (e.g., 5x)">
-                <input
-                  type="checkbox"
-                  checked={!!systemStatus.auto_pause_on_spike}
-                  onChange={(e) => setAutoPauseOnSpike(e.target.checked)}
-                  disabled={sysUpdateLoading}
-                />
-                Auto-pause on spike
-              </label>
-            </div>
-            {/* Persona badge */}
-            <span
-              title={`Persona: ${personaLabel}`}
-              className={`hidden md:inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${personaColor}`}
-            >
-              <span className={`inline-block h-1.5 w-1.5 rounded-full ${personaColor.split(' ').find(c=>c.startsWith('bg-')) || 'bg-blue-500'}`}></span>
-              {personaLabel}
-            </span>
+            {/* Emergency controls & global toggles (conditional) */}
+            {features.showEmergencyControls && (
+              <div className="hidden md:flex items-center gap-2 mr-2">
+                {systemStatus.status === 'active' ? (
+                  <Button size="sm" variant="destructive" className="bg-rose-600 hover:bg-rose-700" disabled={pauseLoading} onClick={() => pauseAll(60)} title="Pause all automation for 1 hour">
+                    <PauseCircle className="h-4 w-4 mr-1" /> Pause all
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="default" disabled={pauseLoading} onClick={resumeAll} title="Resume all automation">
+                    <PlayCircle className="h-4 w-4 mr-1" /> Resume
+                  </Button>
+                )}
+                {features.showTestModeToggle && (
+                  <label className="flex items-center gap-2 text-xs text-secondary-dark ml-2" title="Run actions in simulation mode only">
+                    <input
+                      type="checkbox"
+                      checked={!!systemStatus.test_mode}
+                      onChange={(e) => setTestMode(e.target.checked)}
+                      disabled={sysUpdateLoading}
+                    />
+                    Test mode
+                  </label>
+                )}
+                {features.showAutoPauseToggle && (
+                  <label className="flex items-center gap-2 text-xs text-secondary-dark" title="Automatically pause on extreme spikes (e.g., 5x)">
+                    <input
+                      type="checkbox"
+                      checked={!!systemStatus.auto_pause_on_spike}
+                      onChange={(e) => setAutoPauseOnSpike(e.target.checked)}
+                      disabled={sysUpdateLoading}
+                    />
+                    Auto-pause on spike
+                  </label>
+                )}
+              </div>
+            )}
+            {/* Persona badge (conditional) */}
+            {features.showPersonaBadge && (
+              <span
+                title={`Persona: ${personaLabel}`}
+                className={`hidden md:inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${personaColor}`}
+              >
+                <span className={`inline-block h-1.5 w-1.5 rounded-full ${personaColor.split(' ').find(c=>c.startsWith('bg-')) || 'bg-blue-500'}`}></span>
+                {personaLabel}
+              </span>
+            )}
             {/* Search */}
             {searchOpen ? (
               <form onSubmit={handleSearch} className="flex items-center space-x-2">
