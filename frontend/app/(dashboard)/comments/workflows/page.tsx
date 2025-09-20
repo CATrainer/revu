@@ -91,7 +91,7 @@ export default function WorkflowsPage() {
         </CardHeader>
         <CardContent>
           {drafts.length === 0 ? (
-            <div className="text-sm text-secondary-dark">No workflows yet. Click "Create Workflow" to get started.</div>
+            <div className="text-sm text-secondary-dark">No workflows yet. Click &quot;Create Workflow&quot; to get started.</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {drafts.map((wf) => (

@@ -87,7 +87,7 @@ export async function rejectApproval(id: string, reason?: string): Promise<Appro
 }
 
 // Executions (optional usage for logs)
-export interface WorkflowExecutionOut { id: string; workflow_id: string; status: 'completed'|'failed'|'skipped'; context?: any; result?: any; error?: string|null; created_at: string; updated_at: string }
+export interface WorkflowExecutionOut { id: string; workflow_id: string; status: 'completed'|'failed'|'skipped'; context?: Record<string, unknown> | null; result?: Record<string, unknown> | null; error?: string | null; created_at: string; updated_at: string }
 export async function listExecutions(workflowId: string): Promise<WorkflowExecutionOut[]> {
   return http<WorkflowExecutionOut[]>(base(`/workflows/${workflowId}/executions`));
 }

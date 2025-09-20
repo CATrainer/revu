@@ -18,9 +18,10 @@ export default function ActiveWorkflowsPage() {
       const data = await listWorkflows();
       setItems(data);
       setError(null);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      setError(e?.message || 'Failed to load workflows');
+      const msg = e instanceof Error ? e.message : 'Failed to load workflows';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -36,7 +37,7 @@ export default function ActiveWorkflowsPage() {
     try {
       if (wf.status === 'active') await pauseWorkflow(wf.id);
       else await activateWorkflow(wf.id);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error(e);
       // Revert on failure
       setItems((prev) => prev.map((it) => it.id === wf.id ? { ...it, status: wf.status } : it));
