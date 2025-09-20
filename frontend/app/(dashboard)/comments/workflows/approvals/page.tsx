@@ -99,9 +99,14 @@ export default function WorkflowApprovalsPage() {
       }));
       setItems(mapped);
       setError(null);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      setError(e?.message || 'Failed to load approvals');
+      let message = 'Failed to load approvals';
+      if (e && typeof e === 'object' && 'message' in e) {
+        const maybeMsg = (e as Record<string, unknown>).message;
+        if (typeof maybeMsg === 'string') message = maybeMsg;
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }
