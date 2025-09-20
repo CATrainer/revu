@@ -39,7 +39,7 @@ export function Sidebar() {
     // Scenario-aware label tweaks trimmed: always show single 'Analytics'
     // Remove legacy dynamic labels (Responses, Reputation Pulse, etc.)
     return items;
-  }, [features.showNavAutomation, features.showNavAnalytics, features.showNavSocialMonitoring]);
+  }, []);
 
   return (
     <aside

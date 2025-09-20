@@ -41,20 +41,22 @@ function ActionsBuilder({
     >
   ) => void;
 }) {
+  type ActionItem = typeof value[number];
   const add = (t: 'tag' | 'assign' | 'notify' | 'template_reply') => {
-    const base =
+    const base: ActionItem =
       t === 'tag'
-        ? { type: 'tag', config: { tag: '' } as { tag?: string } }
+        ? { type: 'tag', config: { tag: '' } }
         : t === 'assign'
-        ? { type: 'assign', config: { assignee: '' } as { assignee?: string } }
+        ? { type: 'assign', config: { assignee: '' } }
         : t === 'notify'
-        ? { type: 'notify', config: { channel: 'email' as 'email' | 'slack', target: '' } }
-        : { type: 'template_reply', config: { template: '' } as { template?: string } };
-    onChange([...(value || []), base as any]);
+        ? { type: 'notify', config: { channel: 'email', target: '' } }
+        : { type: 'template_reply', config: { template: '' } };
+    onChange([...(value || []), base]);
   };
-  const update = (i: number, patch: any) => {
+  const update = (i: number, patch: Partial<ActionItem>) => {
     const next = value.slice();
-    next[i] = { ...next[i], ...patch } as any;
+    const current = next[i] as ActionItem;
+    next[i] = { ...current, ...(patch as ActionItem) } as ActionItem;
     onChange(next);
   };
   const remove = (i: number) => onChange(value.filter((_, idx) => idx !== i));
