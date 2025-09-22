@@ -1,28 +1,42 @@
 """
 Core configuration module using Pydantic Settings.
-
-This module defines all configuration parameters for the application,
-loading from environment variables and providing validation.
 """
 
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional, Union
 import os
-import re
-from loguru import logger
+from urllib.parse import urlparse, urlunparse
 
-from pydantic import AnyHttpUrl, EmailStr, field_validator
+from pydantic import field_validator, EmailStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
- # Resolve project root (backend folder) to load .env reliably regardless of CWD
+# Load .env files for local development
 _BACKEND_ROOT = Path(__file__).resolve().parents[2]
 _ENV_FILES = (
     _BACKEND_ROOT / ".env",
     _BACKEND_ROOT / ".env.local",
-    Path.cwd() / ".env",
-    Path.cwd() / ".env.local",
 )
+
+def make_redis_url_with_db(base_url: str, db: int) -> str:
+    """
+    Create a Redis URL with a specific database number.
+    Handles cases where base_url might already have a database.
+    """
+    if not base_url:
+        return f"redis://localhost:6379/{db}"
+    
+    parsed = urlparse(base_url)
+    # Replace path with just the database number
+    return urlunparse((
+        parsed.scheme,
+        parsed.netloc,  # includes auth and host:port
+        f'/{db}',       # new path with db number
+        parsed.params,
+        parsed.query,
+        parsed.fragment
+    ))
+
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
@@ -39,33 +53,17 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
-    LOG_LEVEL: str = "INFO"
     FRONTEND_URL: str = "http://localhost:3000"
-    BACKEND_BASE_URL: Optional[str] = None
-
-    # API Configuration
     API_V1_PREFIX: str = "/api/v1"
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000"]
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
-        if isinstance(v, str) and not v.startswith("["):
+        if isinstance(v, str):
             return [i.strip() for i in v.split(",")]
-        elif isinstance(v, str) and v.startswith("["):
-            # Parse JSON string
-            import json
-            try:
-                origins = json.loads(v)
-                # Ensure they're strings without trailing slashes
-                return [origin.rstrip('/') for origin in origins]
-            except:
-                return []
-        elif isinstance(v, list):
-            # Ensure they're strings without trailing slashes
-            return [str(origin).rstrip('/') for origin in v]
-        return []
+        return v
 
     # Security
     SECRET_KEY: str
@@ -75,25 +73,31 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str
-    DATABASE_POOL_SIZE: int = 20
-    DATABASE_MAX_OVERFLOW: int = 40
     DATABASE_ECHO: bool = False
 
-    # Redis
+    # Redis - Only this one is from env
     REDIS_URL: str
-    REDIS_CACHE_URL: str
-    REDIS_CACHE_TTL: int = 3600  # 1 hour default
 
-    # Celery
-    CELERY_BROKER_URL: str
-    CELERY_RESULT_BACKEND: str
+    # These are computed properties, NOT from environment
+    @property
+    def REDIS_CACHE_URL(self) -> str:
+        """Redis URL for cache (database 2)."""
+        return make_redis_url_with_db(self.REDIS_URL, 2)
+    
+    @property
+    def CELERY_BROKER_URL(self) -> str:
+        """Redis URL for Celery broker (database 0)."""
+        return make_redis_url_with_db(self.REDIS_URL, 0)
+    
+    @property
+    def CELERY_RESULT_BACKEND(self) -> str:
+        """Redis URL for Celery result backend (database 1)."""
+        return make_redis_url_with_db(self.REDIS_URL, 1)
 
     # Supabase
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: str
     SUPABASE_SERVICE_ROLE_KEY: str
-     # Toggle use of Supabase Python client (use direct HTTP by default to avoid env proxy issues)
-    SUPABASE_ENABLE_CLIENT: bool = False
 
     # OpenAI
     OPENAI_API_KEY: str
@@ -101,53 +105,32 @@ class Settings(BaseSettings):
     OPENAI_MAX_TOKENS: int = 500
     OPENAI_TEMPERATURE: float = 0.7
 
-    # Claude (Anthropic)
+    # Claude (optional)
     CLAUDE_API_KEY: Optional[str] = None
-    CLAUDE_MODEL: Optional[str] = None
-    CLAUDE_MAX_TOKENS: int = 500
-
-    # YouTube / OAuth (optional)
-    YOUTUBE_API_KEY: Optional[str] = None
-    OAUTH_REDIRECT_URI: Optional[str] = None
-
-    # Calendly
-    CALENDLY_ACCESS_TOKEN: str
-
-    # Crypto
-    ENCRYPTION_KEY: Optional[str] = None
+    CLAUDE_MODEL: Optional[str] = "claude-3-opus-20240229"
 
     # Email
     RESEND_API_KEY: str
     EMAIL_FROM_ADDRESS: EmailStr
     EMAIL_FROM_NAME: str = "Repruv"
 
-    # SendGrid (optional)
-    SENDGRID_API_KEY: Optional[str] = None
-    SENDGRID_WELCOME_TEMPLATE_ID: Optional[str] = None
+    # Calendly
+    CALENDLY_ACCESS_TOKEN: str
+
+    # Optional services
+    YOUTUBE_API_KEY: Optional[str] = None
+    STRIPE_SECRET_KEY: Optional[str] = None
+    STRIPE_WEBHOOK_SECRET: Optional[str] = None
+    SENTRY_DSN: Optional[str] = None
 
     # File Storage
+    S3_BUCKET_NAME: str = "repruv-files"
+    S3_REGION: str = "auto"
     S3_ENDPOINT_URL: Optional[str] = None
     S3_ACCESS_KEY_ID: Optional[str] = None
     S3_SECRET_ACCESS_KEY: Optional[str] = None
-    S3_BUCKET_NAME: str = "Repruv-files"
-    S3_REGION: str = "auto"
-
-    # External APIs
-    GOOGLE_CLIENT_ID: Optional[str] = None
-    GOOGLE_CLIENT_SECRET: Optional[str] = None
-    GOOGLE_REDIRECT_URI: Optional[str] = None
-
-    # Stripe
-    STRIPE_SECRET_KEY: Optional[str] = None
-    STRIPE_WEBHOOK_SECRET: Optional[str] = None
-    STRIPE_PUBLISHABLE_KEY: Optional[str] = None
-
-    # Monitoring
-    SENTRY_DSN: Optional[str] = None
 
     # Feature Flags
-    ENABLE_SOCIAL_MONITORING: bool = False
-    ENABLE_COMPETITOR_TRACKING: bool = True
     ENABLE_AI_RESPONSES: bool = True
 
     # Rate Limiting
@@ -157,68 +140,30 @@ class Settings(BaseSettings):
     # Computed Properties
     @property
     def is_production(self) -> bool:
-        """Check if running in production environment."""
         return self.ENVIRONMENT == "production"
 
     @property
     def is_development(self) -> bool:
-        """Check if running in development environment."""
         return self.ENVIRONMENT == "development"
 
     @property
-    def is_testing(self) -> bool:
-        """Check if running in test environment."""
-        return self.ENVIRONMENT == "testing"
-
-    @property
     def database_url_sync(self) -> str:
-        """Get synchronous database URL for Alembic."""
+        """Synchronous database URL for Alembic."""
         return self.DATABASE_URL.replace("+asyncpg", "")
-
-    # Validators / Normalizers
-    @field_validator("CELERY_BROKER_URL", "CELERY_RESULT_BACKEND", mode="before")
-    @classmethod
-    def _expand_redis_urls(cls, v: Union[str, None]) -> Union[str, None]:
-        """
-        Allow env var expressions like ${REDIS_URL}/1 and bare DB indices like /1 by
-        expanding with os.environ at runtime and prefixing REDIS_URL if present.
-        """
-        if v is None:
-            return v
-        s = str(v).strip()
-        # Strip surrounding quotes if present
-        if (s.startswith("'") and s.endswith("'")) or (s.startswith('"') and s.endswith('"')):
-            s = s[1:-1]
-
-        # Expand ${VAR} and $VAR using environment
-        expanded = os.path.expandvars(s)
-
-        # If value is just "/<db>" and REDIS_URL is available, prefix it
-        if expanded.startswith("/") and os.environ.get("REDIS_URL"):
-            base = os.environ["REDIS_URL"].rstrip("/")
-            expanded = f"{base}{expanded}"
-
-        # If still contains unresolved ${...}, warn for visibility
-        if "${" in expanded or expanded.startswith("/"):
-            logger.warning(
-                "CELERY url may be misconfigured or unresolved: value='{}' | env REDIS_URL='{}'",
-                expanded,
-                os.environ.get("REDIS_URL", "<unset>"),
-            )
-
-        return expanded
 
 
 @lru_cache
 def get_settings() -> Settings:
-    """
-    Get cached settings instance.
-
-    This function uses LRU cache to ensure settings are only loaded once
-    and reused throughout the application lifecycle.
-    """
+    """Get cached settings instance."""
     return Settings()
 
 
-# Create a global settings instance
+# Global settings instance
 settings = get_settings()
+
+# Debug output when module loads (remove in production)
+if os.environ.get("DEBUG_CONFIG"):
+    print(f"REDIS_URL: {settings.REDIS_URL}")
+    print(f"CELERY_BROKER_URL: {settings.CELERY_BROKER_URL}")
+    print(f"CELERY_RESULT_BACKEND: {settings.CELERY_RESULT_BACKEND}")
+    print(f"REDIS_CACHE_URL: {settings.REDIS_CACHE_URL}")
