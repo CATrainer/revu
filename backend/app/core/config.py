@@ -118,6 +118,10 @@ class Settings(BaseSettings):
     EMAIL_FROM_ADDRESS: EmailStr
     EMAIL_FROM_NAME: str = "Repruv"
 
+    # SendGrid (optional)
+    SENDGRID_API_KEY: Optional[str] = None
+    SENDGRID_WELCOME_TEMPLATE_ID: Optional[str] = None
+
     # File Storage
     S3_ENDPOINT_URL: Optional[str] = None
     S3_ACCESS_KEY_ID: Optional[str] = None
