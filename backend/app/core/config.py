@@ -8,6 +8,9 @@ loading from environment variables and providing validation.
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional, Union
+import os
+import re
+from loguru import logger
 
 from pydantic import AnyHttpUrl, EmailStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -171,6 +174,39 @@ class Settings(BaseSettings):
     def database_url_sync(self) -> str:
         """Get synchronous database URL for Alembic."""
         return self.DATABASE_URL.replace("+asyncpg", "")
+
+    # Validators / Normalizers
+    @field_validator("CELERY_BROKER_URL", "CELERY_RESULT_BACKEND", mode="before")
+    @classmethod
+    def _expand_redis_urls(cls, v: Union[str, None]) -> Union[str, None]:
+        """
+        Allow env var expressions like ${REDIS_URL}/1 and bare DB indices like /1 by
+        expanding with os.environ at runtime and prefixing REDIS_URL if present.
+        """
+        if v is None:
+            return v
+        s = str(v).strip()
+        # Strip surrounding quotes if present
+        if (s.startswith("'") and s.endswith("'")) or (s.startswith('"') and s.endswith('"')):
+            s = s[1:-1]
+
+        # Expand ${VAR} and $VAR using environment
+        expanded = os.path.expandvars(s)
+
+        # If value is just "/<db>" and REDIS_URL is available, prefix it
+        if expanded.startswith("/") and os.environ.get("REDIS_URL"):
+            base = os.environ["REDIS_URL"].rstrip("/")
+            expanded = f"{base}{expanded}"
+
+        # If still contains unresolved ${...}, warn for visibility
+        if "${" in expanded or expanded.startswith("/"):
+            logger.warning(
+                "CELERY url may be misconfigured or unresolved: value='{}' | env REDIS_URL='{}'",
+                expanded,
+                os.environ.get("REDIS_URL", "<unset>"),
+            )
+
+        return expanded
 
 
 @lru_cache
