@@ -42,8 +42,7 @@ if __name__ == "__main__":
     # --- Early diagnostics: validate required env vars before uvicorn loads app ---
     # Redis made optional for basic API startup (features that need it will log warnings later)
     REQUIRED_VARS = [
-        "SECRET_KEY", "DATABASE_URL", "CELERY_BROKER_URL",
-        "CELERY_RESULT_BACKEND", "SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY",
+        "SECRET_KEY", "DATABASE_URL", "SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY",
         "OPENAI_API_KEY", "CALENDLY_ACCESS_TOKEN", "RESEND_API_KEY", "EMAIL_FROM_ADDRESS"
     ]
     missing = [v for v in REQUIRED_VARS if not os.environ.get(v)]
