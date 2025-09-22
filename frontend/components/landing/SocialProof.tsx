@@ -20,6 +20,7 @@ export function SocialProof() {
       title: 'Our Vision',
       icon: Target,
       videoId: 'Vzg3Ltsmmw4',
+      isShort: false,
       content: {
         text: [
           "At Repruv, we believe every creator deserves authentic engagement without the time drain. In today's digital world, comments and messages shape your community — managing them shouldn't consume your creativity.",
@@ -34,6 +35,7 @@ export function SocialProof() {
       title: 'For Creators',
       icon: Users,
       videoId: 'f8qaKONsEbU',
+      isShort: true,
       content: {
         bullets: [
           "Save 10+ hrs/week responding to comments & DMs with AI.",
@@ -75,7 +77,10 @@ export function SocialProof() {
   const currentAvatar = avatarCards[currentCard];
 
   // Manage YouTube thumbnail fallback sequence per current avatar
-  const [thumbSrc, setThumbSrc] = useState<string>('');
+  // Initialize thumbnail synchronously to prevent initial placeholder when a video exists
+  const [thumbSrc, setThumbSrc] = useState<string>(() =>
+    currentAvatar.videoId ? `https://i.ytimg.com/vi/${currentAvatar.videoId}/maxresdefault.jpg` : ''
+  );
   useEffect(() => {
     if (currentAvatar.videoId) {
       setThumbSrc(`https://i.ytimg.com/vi/${currentAvatar.videoId}/maxresdefault.jpg`);
@@ -85,9 +90,10 @@ export function SocialProof() {
   }, [currentAvatar.videoId]);
 
   return (
+    // Reduced padding on mobile for better spacing
     <motion.section 
       id="vision" 
-      className="py-24 section-background-alt"
+      className="py-16 md:py-24 section-background-alt"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
@@ -130,7 +136,9 @@ export function SocialProof() {
               <motion.button
                 key={index}
                 onClick={() => setCurrentCard(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                type="button"
+                aria-label={`Go to ${avatarCards[index].title}`}
+                className={`w-3 h-3 p-2 rounded-full transition-all duration-300 ${ // p-2 increases touch target to >= 44px with icon size
                   currentCard === index 
                     ? 'bg-[var(--brand-primary)] scale-125' 
                     : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
@@ -143,11 +151,12 @@ export function SocialProof() {
         </motion.div>
 
         {/* Main Content Card */}
-        <div ref={ref} className="relative">
+        <div ref={ref} className="relative overflow-hidden"> {/* Prevent horizontal overflow on small screens */}
           {/* Navigation Arrows */}
           <motion.button
             onClick={prevCard}
             className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 p-3 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700"
+            aria-label="Previous"
             whileHover={{ scale: 1.1, x: -5 }}
             whileTap={{ scale: 0.95 }}
             initial={{ opacity: 0, x: -20 }}
@@ -160,6 +169,7 @@ export function SocialProof() {
           <motion.button
             onClick={nextCard}
             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 p-3 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700"
+            aria-label="Next"
             whileHover={{ scale: 1.1, x: 5 }}
             whileTap={{ scale: 0.95 }}
             initial={{ opacity: 0, x: 20 }}
@@ -180,7 +190,7 @@ export function SocialProof() {
                 duration: 0.6, 
                 ease: [0.25, 0.46, 0.45, 0.94] 
               }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl border border-gray-100 dark:border-gray-700"
+              className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-6 lg:p-8 shadow-xl border border-gray-100 dark:border-gray-700"
             >
               
               {/* Video Section - Left Side */}
@@ -214,32 +224,35 @@ export function SocialProof() {
                   >
                     {/* Enhanced YouTube Thumbnail with better loading states and play button */}
                     <div className="relative w-full h-full">
-                      {thumbSrc ? (
-                        <Image
-                          src={thumbSrc}
-                          alt={`${currentAvatar.title} video thumbnail`}
-                          fill
-                          unoptimized
-                          className={`rounded-xl ${
-                            currentAvatar.videoId === 'f8qaKONsEbU'
-                              ? 'object-contain'
-                              : 'object-cover'
-                          }`}
-                          onError={() => {
-                            // Progressively downgrade thumbnail quality
-                            if (thumbSrc.includes('maxresdefault')) {
-                              setThumbSrc(`https://i.ytimg.com/vi/${currentAvatar.videoId}/sddefault.jpg`);
-                            } else if (thumbSrc.includes('sddefault')) {
-                              setThumbSrc(`https://i.ytimg.com/vi/${currentAvatar.videoId}/hqdefault.jpg`);
-                            } else if (thumbSrc.includes('hqdefault')) {
-                              setThumbSrc(`https://i.ytimg.com/vi/${currentAvatar.videoId}/mqdefault.jpg`);
-                            } else if (thumbSrc.includes('mqdefault')) {
-                              setThumbSrc(`https://i.ytimg.com/vi/${currentAvatar.videoId}/default.jpg`);
-                            }
-                          }}
-                          priority
-                        />
+                      {currentAvatar.videoId ? (
+                        thumbSrc ? (
+                          <Image
+                            src={thumbSrc}
+                            alt={`${currentAvatar.title} video thumbnail`}
+                            fill
+                            unoptimized
+                            sizes="(max-width: 1024px) 100vw, 50vw"
+                            className={`rounded-xl object-cover`}
+                            onError={() => {
+                              // Progressively downgrade thumbnail quality
+                              if (thumbSrc.includes('maxresdefault')) {
+                                setThumbSrc(`https://i.ytimg.com/vi/${currentAvatar.videoId}/sddefault.jpg`);
+                              } else if (thumbSrc.includes('sddefault')) {
+                                setThumbSrc(`https://i.ytimg.com/vi/${currentAvatar.videoId}/hqdefault.jpg`);
+                              } else if (thumbSrc.includes('hqdefault')) {
+                                setThumbSrc(`https://i.ytimg.com/vi/${currentAvatar.videoId}/mqdefault.jpg`);
+                              } else if (thumbSrc.includes('mqdefault')) {
+                                setThumbSrc(`https://i.ytimg.com/vi/${currentAvatar.videoId}/default.jpg`);
+                              }
+                            }}
+                            priority
+                          />
+                        ) : (
+                          // Skeleton loader while the thumbSrc resolves
+                          <div className="w-full h-full rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 animate-pulse" />
+                        )
                       ) : (
+                        // Only show explicit message when no video is provided for this card
                         <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-xl">
                           <svg className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -247,29 +260,30 @@ export function SocialProof() {
                           <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Video coming soon</p>
                         </div>
                       )}
+
+                      {/* Play Button Overlay */}
+                      {currentAvatar.videoId && (
+                        <button
+                          type="button"
+                          aria-label={`Play ${currentAvatar.title} video`}
+                          className="absolute inset-0 flex items-center justify-center"
+                          onClick={() => {
+                            setCurrentVideoId(currentAvatar.videoId);
+                            setVideoModalOpen(true);
+                          }}
+                        >
+                          <span className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-black/60 text-white backdrop-blur-sm border border-white/30 shadow-lg">
+                            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </span>
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 </motion.div>
               </motion.div>
               
-              {/* Content Section - Right Side */}
-              <motion.div 
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className="lg:pl-8"
-              >
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-xl">
-                          <svg className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Video coming soon</p>
-                        </div>
-                      
-                    
-                  </motion.div>
-                
-
               {/* Content Section - Right Side */}
               <motion.div 
                 initial={{ opacity: 0, y: 30 }}
@@ -359,6 +373,7 @@ export function SocialProof() {
             <motion.button
               key={card.id}
               onClick={() => setCurrentCard(index)}
+              type="button"
               className={`p-4 rounded-xl transition-all duration-300 border-2 ${
                 currentCard === index
                   ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 shadow-lg'
@@ -389,7 +404,7 @@ export function SocialProof() {
         videoId={currentVideoId}
         isOpen={videoModalOpen}
         onClose={() => setVideoModalOpen(false)}
-        isShort={true}  // Setting to true since these are YouTube shorts
+        isShort={!!avatarCards.find(c => c.videoId === currentVideoId)?.isShort}
       />
     </motion.section>
   );

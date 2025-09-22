@@ -97,7 +97,7 @@ export function Features() {
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ duration: 0.6, delay: 0.5 }}
             >
-              Powerful features designed to save you time and grow your audience&nbsp;⚡.
+              Powerful features designed to save you time and grow your audience.
             </motion.p>
           </motion.div>
           

@@ -24,12 +24,8 @@ export function Hero() {
     setError('');
 
     try {
-      const response = await api.post('/users/early-access/join', {
+      const response = await api.post('/users/waitlist/join', {
         email,
-        full_name: '',
-        phone: '',
-        company_name: '',
-        industry: ''
       });
       
       router.push(`/waitlist-success?user_id=${response.data.user_id}&has_account=${response.data.has_account}&email=${encodeURIComponent(email)}`);
@@ -64,7 +60,7 @@ export function Hero() {
           >
             <div className="text-center">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-dark leading-tight font-['Poppins',sans-serif]">
-                <span className="brand-text">Community Engagement Made Simple</span>
+                <span className="brand-text">Engagment. Growth. Monetisation</span>
               </h1>
             </div>
           </motion.div>
@@ -77,7 +73,7 @@ export function Hero() {
           >
             <div className="text-center">
               <p className="text-lg md:text-xl text-primary-dark/80 leading-relaxed font-['Poppins',sans-serif] font-bold max-w-4xl mx-auto">
-                Repruv AI replies that sound like you 💬. Social media monitoring keeping you in the loop 🔔. Grow your following with data driven insights 🚀.
+                Boost your engagment through automation. Grow your community through AI driven insights. Enhance your earnings through monetisation
               </p>
             </div>
           </motion.div>
@@ -145,7 +141,7 @@ export function Hero() {
               className="flex flex-col items-center"
             >
               <p className="text-sm font-medium text-primary-dark/70 mb-2 font-['Poppins',sans-serif]">Coming soon</p>
-              <div className="bg-gradient-to-r from-emerald-50/90 to-teal-50/80 backdrop-blur-md rounded-full px-6 py-3 shadow-lg border border-emerald-200/40 flex items-center space-x-4">
+              <div className="bg-gradient-to-r from-blue-50/90 to-indigo-50/80 backdrop-blur-md rounded-full px-6 py-3 shadow-lg border border-blue-200/40 flex items-center space-x-4">
                 <motion.div 
                   className="w-6 h-6 flex items-center justify-center cursor-pointer"
                   whileHover={{ scale: 1.2, rotate: 5 }}
@@ -199,7 +195,7 @@ export function Hero() {
                         Get Early Access
                       </h3>
                       <p className="text-base text-primary-dark/80 dark:text-gray-300 font-['Poppins',sans-serif] font-medium mb-3">
-                        Start using Repruv now. Use AI-Powered Automation to grow your audience.
+                        We’re in prelaunch. Share your email and we’ll notify you early when access opens.
                       </p>
                       <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
@@ -235,7 +231,7 @@ export function Hero() {
                             <Button 
                               type="submit" 
                               disabled={loading || !email.trim()} 
-                              className="w-full sm:w-auto px-6 py-3 text-base font-semibold bg-gradient-to-r from-[var(--brand-primary-solid)] to-[var(--brand-secondary-solid)] hover:from-[var(--brand-primary-solid-hover)] hover:to-[var(--brand-secondary-solid-hover)] text-white border-0 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 focus:ring-4 focus:ring-[var(--brand-primary-solid)]/30"
+                              className="w-full sm:w-auto px-6 py-3 text-base font-semibold bg-green-600 hover:bg-green-700 text-white border-0 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 focus:ring-4 focus:ring-green-500/30"
                             >
                               {loading ? (
                                 <>
@@ -259,7 +255,7 @@ export function Hero() {
                       
                       <div className="text-center sm:text-left">
                         <p className="text-sm text-primary-dark/60 dark:text-gray-400 font-['Poppins',sans-serif]">
-                          Join <span className="font-semibold text-[var(--brand-primary-solid)]">countless</span> creators getting early access
+                          We’re in prelaunch — drop your email and we’ll notify you early when access opens
                         </p>
                       </div>
                     </form>

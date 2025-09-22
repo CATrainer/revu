@@ -21,11 +21,11 @@ export default function WorkflowsPage() {
   ]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 px-4 md:px-0">{/* Mobile padding */}
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">{/* Stack on mobile */}
         <div>
-          <h1 className="text-2xl font-bold text-primary-dark">Workflows</h1>
-          <p className="mt-1 text-secondary-dark">Design and automate interaction handling. This is a fresh redesign replacing legacy Automations.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-primary-dark">Workflows</h1>
+          <p className="mt-1 text-sm md:text-base text-secondary-dark">Design and automate interaction handling. This is a fresh redesign replacing legacy Automations.</p>
         </div>
         <Link href="/comments" className="text-sm text-brand-primary hover:underline">Back to Interactions</Link>
       </div>

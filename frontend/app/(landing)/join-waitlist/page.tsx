@@ -14,10 +14,6 @@ export default function JoinWaitlistPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
-    full_name: '',
-    phone: '',
-    company_name: '',
-    industry: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,7 +24,7 @@ export default function JoinWaitlistPage() {
     setError('');
 
     try {
-      const response = await api.post('/users/early-access/join', formData);
+      const response = await api.post('/users/waitlist/join', { email: formData.email });
       
       // Redirect to success page with user info
       router.push(`/waitlist-success?user_id=${response.data.user_id}&has_account=${response.data.has_account}&email=${encodeURIComponent(formData.email)}`);
@@ -64,10 +60,10 @@ export default function JoinWaitlistPage() {
               className="flex flex-col items-center w-full"
             >
                 <CardTitle className="text-3xl md:text-4xl font-extrabold text-green-500 dark:text-green-400 leading-tight text-center mx-auto">
-                  Request Demo & Early Access
+                  Get Early Access
                 </CardTitle>
                 <CardDescription className="text-sm font-medium text-green-800 dark:text-green-300 mt-2 text-center w-full mx-auto px-4">
-                  Exclusive for agencies and large creators: Schedule a personalized demo and be among the first to access our AI-powered community engagement tools.
+                  We’re in prelaunch. Share your email and we’ll notify you early when access opens.
                 </CardDescription>
             </motion.div>
           </CardHeader>
@@ -79,24 +75,6 @@ export default function JoinWaitlistPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}
             >
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <Label htmlFor="full_name" className="text-gray-700 dark:text-gray-200 font-medium">Full Name *</Label>
-                <Input
-                  id="full_name"
-                  name="full_name"
-                  type="text"
-                  required
-                  value={formData.full_name}
-                  onChange={handleInputChange}
-                  placeholder="John Doe"
-                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30 transition-all duration-200 focus:scale-[1.03]"
-                />
-              </motion.div>
-
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -111,57 +89,6 @@ export default function JoinWaitlistPage() {
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="john@example.com"
-                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30 transition-all duration-200 focus:scale-[1.03]"
-                />
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <Label htmlFor="phone" className="text-gray-700 dark:text-gray-200 font-medium">Phone Number</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder="+1 (555) 123-4567"
-                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30 transition-all duration-200 focus:scale-[1.03]"
-                />
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.25 }}
-              >
-                <Label htmlFor="company_name" className="text-gray-700 dark:text-gray-200 font-medium">Agency Name</Label>
-                <Input
-                  id="company_name"
-                  name="company_name"
-                  type="text"
-                  value={formData.company_name}
-                  onChange={handleInputChange}
-                  placeholder="Acme Inc."
-                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30 transition-all duration-200 focus:scale-[1.03]"
-                />
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <Label htmlFor="industry" className="text-gray-700 dark:text-gray-200 font-medium">Agency Niche</Label>
-                <Input
-                  id="industry"
-                  name="industry"
-                  type="text"
-                  value={formData.industry}
-                  onChange={handleInputChange}
-                  placeholder="Restaurant, Retail, Healthcare, etc."
                   className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30 transition-all duration-200 focus:scale-[1.03]"
                 />
               </motion.div>

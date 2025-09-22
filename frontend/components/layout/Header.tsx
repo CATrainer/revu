@@ -175,10 +175,15 @@ export function Header({ onMenuClick }: HeaderProps) {
               variant="ghost"
               size="sm"
               onClick={onMenuClick}
-              className="lg:hidden hover-background"
+              aria-label="Open sidebar menu"
+              className="lg:hidden hover-background h-10 w-10" // Ensure 44px+ touch target
             >
               <Menu className="h-5 w-5" />
             </Button>
+            {/* Mobile logo to ensure brand visibility on small screens */}
+            <div className="flex items-center gap-2 ml-1 lg:hidden">
+              <Image src="/logo/mark.png" alt="Repruv" width={28} height={28} className="h-7 w-7" priority />
+            </div>
             <div className="hidden lg:flex items-center gap-3 ml-2">
               <Image src="/logo/mark.png" alt="Repruv" width={32} height={32} className="h-8 w-8" priority />
               {/* Location selector appears only when relevant (org/agency or demo agency) */}
@@ -251,7 +256,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                   placeholder="Search reviews, customers..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-64 card-background border-[var(--border)]"
+                  className="w-48 md:w-64 card-background border-[var(--border)]" // Narrower on mobile to fit header
                   autoFocus
                 />
                 <Button
@@ -262,7 +267,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                     setSearchOpen(false);
                     setSearchQuery('');
                   }}
-                  className="hover-background"
+                  className="hover-background h-10 w-10" // Ensure touch target
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -272,7 +277,8 @@ export function Header({ onMenuClick }: HeaderProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setSearchOpen(true)}
-                className="hover-background"
+                aria-label="Open search"
+                className="hover-background h-10 w-10" // Ensure touch target
               >
                 <Search className="h-5 w-5" />
               </Button>

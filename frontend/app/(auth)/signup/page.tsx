@@ -48,10 +48,8 @@ export default function SignupPage() {
     try {
       await signup(data.email, data.password, data.fullName);
       
-      // Get appropriate redirect path based on user role and access status
-      const { getRedirectPath } = useAuth.getState();
-      const redirectPath = getRedirectPath();
-      router.push(redirectPath);
+      // During prelaunch, send users to the same thank-you screen as waitlist
+      router.push(`/waitlist-success?has_account=true&email=${encodeURIComponent(data.email)}`);
     } catch (err) {
       console.error('Signup error:', err);
       const axiosError = err as AxiosError<ErrorResponse>;

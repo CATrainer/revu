@@ -19,8 +19,8 @@ export default function SettingsPage() {
     if (found) setTab(found);
   }, [sp]);
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-primary-dark">Settings</h1>
+    <div className="space-y-6 px-4 md:px-0">{/* Mobile padding */}
+      <h1 className="text-2xl md:text-3xl font-bold text-primary-dark">Settings</h1>
 
       <div className="flex flex-wrap gap-2">
         {tabs.map((t) => (
@@ -54,11 +54,11 @@ function AccountSection() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <div className="text-sm text-secondary-dark mb-1">Full Name</div>
-          <input className="h-9 px-3 py-1 rounded-md border card-background border-[var(--border)] w-full" value={name} onChange={(e) => setName(e.target.value)} />
+          <input className="h-11 md:h-9 px-3 py-1 rounded-md border card-background border-[var(--border)] w-full" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div>
           <div className="text-sm text-secondary-dark mb-1">Email</div>
-          <input className="h-9 px-3 py-1 rounded-md border card-background border-[var(--border)] w-full" value={email} readOnly />
+          <input className="h-11 md:h-9 px-3 py-1 rounded-md border card-background border-[var(--border)] w-full" value={email} readOnly />
         </div>
       </div>
       <div className="flex items-center gap-2">

@@ -46,11 +46,11 @@ export default function ActiveWorkflowsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 px-4 md:px-0">{/* Mobile padding */}
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">{/* Stack on mobile */}
         <div>
-          <h1 className="text-2xl font-bold text-primary-dark">Active Workflows</h1>
-          <p className="mt-1 text-secondary-dark">View, pause and resume workflows that are currently running.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-primary-dark">Active Workflows</h1>
+          <p className="mt-1 text-sm md:text-base text-secondary-dark">View, pause and resume workflows that are currently running.</p>
         </div>
         <Link href="/comments/workflows" className="text-sm text-brand-primary hover:underline">Back to Workflows</Link>
       </div>

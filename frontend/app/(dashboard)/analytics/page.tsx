@@ -22,9 +22,9 @@ export default function AnalyticsPage() {
   const { data: summary } = useQuery({ queryKey: ['usage-summary', range], queryFn: () => fetchUsageSummary(range), refetchInterval: 60_000 });
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Analytics</h1>
+    <div className="px-4 md:px-6 py-4 md:py-6 space-y-6">{/** Mobile-first padding */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">{/** Stack on mobile */}
+        <h1 className="text-2xl md:text-3xl font-semibold text-primary-dark">Analytics</h1>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Range</span>
           <select className="border rounded px-2 py-1 text-sm" value={range} onChange={(e) => setRange(Number(e.target.value))}>
@@ -35,13 +35,13 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:gap-6">{/** Tighter gap on mobile */}
         <Card>
           <CardHeader>
-            <CardTitle>Average Response Time</CardTitle>
+            <CardTitle className="text-primary-dark">Average Response Time</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold">{summary ? `${Math.round(summary.totals.avg_latency)} ms` : '—'}</div>
+            <div className="text-2xl md:text-3xl font-semibold text-primary-dark">{summary ? `${Math.round(summary.totals.avg_latency)} ms` : '—'}</div>
             <div className="text-sm text-muted-foreground mt-1">Average over selected range</div>
           </CardContent>
         </Card>

@@ -106,9 +106,9 @@ export default function AutomationPage() {
   }, [enabled, interval, refetchToday]);
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Automation</h1>
+    <div className="px-4 md:px-6 py-4 md:py-6 space-y-6">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-2xl md:text-3xl font-semibold text-primary-dark">Automation</h1>
         <Link href="/help#automation" className="text-sm underline">Help</Link>
       </div>
 
@@ -153,9 +153,9 @@ export default function AutomationPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Today</CardTitle>
+          <CardTitle className="text-primary-dark">Today</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <CardContent className="grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4">
           <Stat label="Generated" value={today?.responses_generated ?? 0} />
           <Stat label="Posted" value={today?.responses_posted ?? 0} />
           <Stat label="Deletes" value={today?.deletes_attempted ?? 0} />
@@ -164,8 +164,8 @@ export default function AutomationPage() {
         </CardContent>
       </Card>
 
-  {/* Tabs with links */}
-  <AutomationNav />
+      {/* Tabs with links */}
+      <AutomationNav />
 
       {/* Panels */}
       {tab === 'Active Rules' && (

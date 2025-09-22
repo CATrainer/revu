@@ -28,7 +28,7 @@ class WaitlistJoin(BaseModel):
     """Schema for joining the waitlist without creating an account."""
     
     email: EmailStr
-    full_name: str = Field(..., min_length=1, max_length=255)
+    full_name: Optional[str] = Field(None, min_length=1, max_length=255)
     phone: Optional[str] = Field(None, max_length=50)
     company_name: Optional[str] = Field(None, max_length=255)
     industry: Optional[str] = Field(None, max_length=100)

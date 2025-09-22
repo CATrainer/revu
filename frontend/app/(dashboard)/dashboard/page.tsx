@@ -11,11 +11,11 @@ import { Youtube, Instagram, Music, TrendingUp, Users, MessageCircle, Zap } from
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in px-4 md:px-0"> {/* Add horizontal padding on mobile */}
       {/* Header Section */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-primary-dark">Welcome back!</h1>
-        <p className="text-lg text-secondary-dark">Here&apos;s what&apos;s happening with your social media presence.</p>
+        <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-primary-dark">Welcome back!</h1> {/* Responsive heading sizes */}
+        <p className="text-base md:text-lg text-secondary-dark">Here&apos;s what&apos;s happening with your social media presence.</p>
       </div>
 
       {/* Stats Overview */}
@@ -58,8 +58,8 @@ export default function DashboardPage() {
 
       {/* Platform Connections */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-primary-dark">Connect Your Platforms</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <h2 className="text-lg md:text-xl font-semibold text-primary-dark">Connect Your Platforms</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6"> {/* Tighter gaps on mobile */}
           <ModernCard hover interactive className="group">
             <CardHeader>
               <div className="flex items-center gap-3">

@@ -5,10 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function ViewInteractionsPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 md:px-0">
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold text-primary-dark">View Interactions</h1>
-        <p className="text-secondary-dark">Choose what you want to manage right now.</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-primary-dark">View Interactions</h1>
+        <p className="text-sm md:text-base text-secondary-dark">Choose what you want to manage right now.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

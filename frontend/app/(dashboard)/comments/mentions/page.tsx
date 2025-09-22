@@ -5,11 +5,11 @@ import Link from 'next/link';
 
 export default function MentionsPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 px-4 md:px-0">{/* Mobile padding */}
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">{/* Stack on mobile */}
         <div>
-          <h1 className="text-2xl font-bold text-primary-dark">@ Mentions</h1>
-          <p className="mt-1 text-secondary-dark">Track posts that mention your handle or brand and take action.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-primary-dark">@ Mentions</h1>
+          <p className="mt-1 text-sm md:text-base text-secondary-dark">Track posts that mention your handle or brand and take action.</p>
         </div>
         <Link href="/comments" className="text-sm text-brand-primary hover:underline">Back to Interactions</Link>
       </div>

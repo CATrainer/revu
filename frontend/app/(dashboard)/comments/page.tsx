@@ -52,11 +52,11 @@ export default function CommentsPage() {
   const { isLoading: vidsLoading } = useVideos({ connectionId: connectionId ?? undefined, limit: 6, offset: 0, newestFirst: true });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 px-4 md:px-0"> {/* Add mobile padding */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"> {/* Stack on mobile */}
         <div>
-          <h1 className="text-2xl font-bold text-primary-dark">Interactions</h1>
-          <p className="mt-1 text-secondary-dark">Manage comments, DMs and @ mentions from connected accounts.</p>
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary-dark">Interactions</h1>
+          <p className="mt-1 text-sm md:text-base text-secondary-dark">Manage comments, DMs and @ mentions from connected accounts.</p>
         </div>
         {connectionId ? (
           <SyncStatus connectionId={connectionId} />
@@ -183,7 +183,7 @@ export default function CommentsPage() {
 
           {/* Modal with comments + metrics */}
           <Dialog open={Boolean(selectedVideo)} onOpenChange={(open) => !open && setSelectedVideo(null)}>
-            <DialogContent className="max-w-[1200px] w-[96vw] h-[85vh] p-0 overflow-hidden">
+            <DialogContent className="w-full h-dvh sm:max-w-[1200px] sm:w-[96vw] sm:h-[85vh] p-0 overflow-hidden"> {/* Full-screen on mobile */}
               {selectedVideo && (
                 <div className="h-full flex flex-col min-h-0">
                   <DialogHeader className="px-6 pt-6 pb-4 border-b">

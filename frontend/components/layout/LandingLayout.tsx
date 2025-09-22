@@ -191,22 +191,11 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
               </NavigationMenu>
             </div>
             
-            {/* Desktop Auth Buttons */}
+            {/* Desktop Auth Buttons (Login/Signup hidden during prelaunch) */}
             <div className="hidden md:flex md:items-center md:space-x-4">
               <ThemeToggle />
-              {!isLoading && (
-                isAuthenticated ? (
-                  <AccountDropdown variant="landing" />
-                ) : (
-                  <>
-                    <Button variant="ghost" asChild>
-                      <Link href="/login">Login</Link>
-                    </Button>
-                    <Button asChild>
-                      <Link href="/signup">Sign Up</Link>
-                    </Button>
-                  </>
-                )
+              {!isLoading && isAuthenticated && (
+                <AccountDropdown variant="landing" />
               )}
             </div>
             
@@ -214,7 +203,10 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center md:hidden">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-secondary-dark hover:text-primary-dark hover-background focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--ring)]"
+                aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                aria-controls="mobile-menu"
+                aria-expanded={mobileMenuOpen}
+                className="inline-flex items-center justify-center h-10 w-10 rounded-md text-secondary-dark hover:text-primary-dark hover-background focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--ring)]"
               >
                 {mobileMenuOpen ? (
                   <X className="block h-6 w-6" />
@@ -228,28 +220,36 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
         
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden nav-mobile-background">
+          <div
+            id="mobile-menu"
+            role="menu"
+            aria-label="Mobile navigation"
+            className="md:hidden nav-mobile-background origin-top animate-in slide-in-from-top-2 fade-in duration-200"
+          >
             <div className="pt-2 pb-3 space-y-1">
               <Link
                 href="/features"
-                className="nav-mobile-link"
+                role="menuitem"
+                className="nav-mobile-link block px-4 py-3 text-base"
               >
                 Features
               </Link>
               <Link
                 href="/ai"
-                className="nav-mobile-link"
+                role="menuitem"
+                className="nav-mobile-link block px-4 py-3 text-base"
               >
                 Repruv AI
               </Link>
               <Link
                 href="/pricing"
-                className="nav-mobile-link"
+                role="menuitem"
+                className="nav-mobile-link block px-4 py-3 text-base"
               >
                 Pricing
               </Link>
               <div className="px-3 py-2">
-                <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
+                <Button asChild className="w-full min-h-11 bg-green-600 hover:bg-green-700 text-white">
                   <Link href="/#hero">
                     Get Early Access
                   </Link>
@@ -261,21 +261,10 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                 <ThemeToggle />
               </div>
               <div className="flex items-center px-4 space-x-3">
-                {!isLoading && (
-                  isAuthenticated ? (
-                    <div className="w-full flex justify-center">
-                      <AccountDropdown variant="landing" />
-                    </div>
-                  ) : (
-                    <>
-                      <Button variant="ghost" className="w-full" asChild>
-                        <Link href="/login">Login</Link>
-                      </Button>
-                      <Button className="w-full" asChild>
-                        <Link href="/signup">Sign Up</Link>
-                      </Button>
-                    </>
-                  )
+                {!isLoading && isAuthenticated && (
+                  <div className="w-full flex justify-center">
+                    <AccountDropdown variant="landing" />
+                  </div>
                 )}
               </div>
             </div>
