@@ -53,7 +53,9 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
+    LOG_LEVEL: str = "INFO"  # ← ADD THIS LINE!
     FRONTEND_URL: str = "http://localhost:3000"
+    BACKEND_BASE_URL: Optional[str] = None
     API_V1_PREFIX: str = "/api/v1"
 
     # CORS
@@ -73,10 +75,15 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str
+    DATABASE_POOL_SIZE: int = 20
+    DATABASE_MAX_OVERFLOW: int = 40
     DATABASE_ECHO: bool = False
 
-    # Redis - Only this one is from env
-    REDIS_URL: str
+    # Redis - Only this one is from env, with fallback
+    REDIS_URL: str = "redis://localhost:6379/0"
+
+    # Cache TTL
+    REDIS_CACHE_TTL: int = 3600  # 1 hour default
 
     # These are computed properties, NOT from environment
     @property
@@ -98,6 +105,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: str
     SUPABASE_SERVICE_ROLE_KEY: str
+    SUPABASE_ENABLE_CLIENT: bool = False
 
     # OpenAI
     OPENAI_API_KEY: str
@@ -108,20 +116,26 @@ class Settings(BaseSettings):
     # Claude (optional)
     CLAUDE_API_KEY: Optional[str] = None
     CLAUDE_MODEL: Optional[str] = "claude-3-opus-20240229"
+    CLAUDE_MAX_TOKENS: int = 500
+
+    # YouTube / OAuth (optional)
+    YOUTUBE_API_KEY: Optional[str] = None
+    OAUTH_REDIRECT_URI: Optional[str] = None
 
     # Email
     RESEND_API_KEY: str
     EMAIL_FROM_ADDRESS: EmailStr
     EMAIL_FROM_NAME: str = "Repruv"
 
+    # SendGrid (optional)
+    SENDGRID_API_KEY: Optional[str] = None
+    SENDGRID_WELCOME_TEMPLATE_ID: Optional[str] = None
+
     # Calendly
     CALENDLY_ACCESS_TOKEN: str
 
-    # Optional services
-    YOUTUBE_API_KEY: Optional[str] = None
-    STRIPE_SECRET_KEY: Optional[str] = None
-    STRIPE_WEBHOOK_SECRET: Optional[str] = None
-    SENTRY_DSN: Optional[str] = None
+    # Crypto
+    ENCRYPTION_KEY: Optional[str] = None
 
     # File Storage
     S3_BUCKET_NAME: str = "repruv-files"
@@ -130,7 +144,22 @@ class Settings(BaseSettings):
     S3_ACCESS_KEY_ID: Optional[str] = None
     S3_SECRET_ACCESS_KEY: Optional[str] = None
 
+    # External APIs
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GOOGLE_REDIRECT_URI: Optional[str] = None
+
+    # Stripe
+    STRIPE_SECRET_KEY: Optional[str] = None
+    STRIPE_WEBHOOK_SECRET: Optional[str] = None
+    STRIPE_PUBLISHABLE_KEY: Optional[str] = None
+
+    # Monitoring
+    SENTRY_DSN: Optional[str] = None
+
     # Feature Flags
+    ENABLE_SOCIAL_MONITORING: bool = False
+    ENABLE_COMPETITOR_TRACKING: bool = True
     ENABLE_AI_RESPONSES: bool = True
 
     # Rate Limiting
@@ -147,6 +176,10 @@ class Settings(BaseSettings):
         return self.ENVIRONMENT == "development"
 
     @property
+    def is_testing(self) -> bool:
+        return self.ENVIRONMENT == "testing"
+
+    @property
     def database_url_sync(self) -> str:
         """Synchronous database URL for Alembic."""
         return self.DATABASE_URL.replace("+asyncpg", "")
@@ -160,10 +193,3 @@ def get_settings() -> Settings:
 
 # Global settings instance
 settings = get_settings()
-
-# Debug output when module loads (remove in production)
-if os.environ.get("DEBUG_CONFIG"):
-    print(f"REDIS_URL: {settings.REDIS_URL}")
-    print(f"CELERY_BROKER_URL: {settings.CELERY_BROKER_URL}")
-    print(f"CELERY_RESULT_BACKEND: {settings.CELERY_RESULT_BACKEND}")
-    print(f"REDIS_CACHE_URL: {settings.REDIS_CACHE_URL}")
