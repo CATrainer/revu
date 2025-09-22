@@ -37,16 +37,14 @@ export default function HelpPage() {
                   <div>
                     <h4 className="font-medium mb-2 text-primary-dark">How do I get started with Repruv?</h4>
                     <p className="text-secondary-dark text-sm">
-                      After creating your account, you&apos;ll be placed in our waiting area where you can 
-                      explore features and request a demo.
+                      We’re in prelaunch. Join the waitlist with your email and we’ll notify you as soon as access opens.
                     </p>
                   </div>
                   
                   <div>
-                    <h4 className="font-medium mb-2 text-primary-dark">When will my demo be scheduled?</h4>
+                    <h4 className="font-medium mb-2 text-primary-dark">When will I get access?</h4>
                     <p className="text-secondary-dark text-sm">
-                      Our team will contact you within 24 hours to schedule your personalized demo 
-                      at a time that works for you.
+                      We plan to open early access within the next couple of weeks. Join the waitlist and we’ll email you as soon as it’s ready.
                     </p>
                   </div>
                   
@@ -92,8 +90,8 @@ export default function HelpPage() {
                   <Button className="w-full" onClick={() => window.location.href = 'mailto:support@repruv.co.uk'}>
                     Contact Support
                   </Button>
-                  <Button variant="outline" className="w-full" onClick={() => window.location.href = '/demo'}>
-                    Book a Demo
+                  <Button variant="outline" className="w-full" onClick={() => window.location.href = '/join-waitlist'}>
+                    Join the Waitlist
                   </Button>
                 </div>
               </div>

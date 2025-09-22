@@ -352,20 +352,21 @@ export default function SignupPage() {
               </Button>
             </div>
 
-            {/* Demo CTA */}
+            {/* Prelaunch CTA */}
             <div className="mt-3 p-2 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/10 rounded-lg border border-green-200/50 dark:border-green-800/20 shadow-sm">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-gray-800 dark:text-gray-200">
-                  <strong>Want to see Repruv first?</strong>
+                  <strong>We’re in prelaunch.</strong>
                 </p>
                 <Link
                   href="/join-waitlist"
                   className="text-xs text-green-600 dark:text-green-400 hover:underline font-medium"
                 >
-                  Schedule a demo →
+                  Join the waitlist →
                 </Link>
               </div>
             </div>
+
           </CardContent>
         </Card>
       </motion.div>

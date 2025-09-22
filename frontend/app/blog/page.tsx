@@ -31,8 +31,8 @@ export default function BlogPage() {
                 and business growth strategies. Stay tuned!
               </p>
               
-              <Button className="button-primary" onClick={() => window.location.href = '/demo'}>
-                Book a Demo Instead
+              <Button className="button-primary" onClick={() => window.location.href = '/join-waitlist'}>
+                Join the Waitlist
               </Button>
             </div>
           </CardContent>

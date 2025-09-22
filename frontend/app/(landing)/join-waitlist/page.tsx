@@ -113,19 +113,6 @@ export default function JoinWaitlistPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.35 }}
               >
-                {/* Incentive section at bottom, now very small and inline with dots */}
-                <motion.div 
-                  className="flex flex-row items-center justify-center gap-1 text-xs text-gray-600 dark:text-gray-300 my-4"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4, ease: 'easeOut' }}
-                >
-                  <span className="flex items-center gap-1"><span className="text-base">🎯</span>Personalized tailored to your content</span>
-                  <span className="mx-1 text-lg font-bold align-middle">·</span>
-                  <span className="flex items-center gap-1"><span className="text-base">⚡</span>Live Features See AI responses in action</span>
-                  <span className="mx-1 text-lg font-bold align-middle">·</span>
-                  <span className="flex items-center gap-1"><span className="text-base">💬</span>Ask Questions Get all your answers</span>
-                </motion.div>
                 <Button 
                   type="submit" 
                   disabled={loading} 

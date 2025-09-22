@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
 export default function Page() {
-  redirect('/request-demo');
+  redirect('/join-waitlist');
   return null;
 }

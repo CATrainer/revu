@@ -437,10 +437,10 @@ export default function PricingPage() {
                   Contact Support
                 </a>
                 <a 
-                  href="/demo" 
+                  href="/join-waitlist" 
                   className="inline-flex items-center px-6 py-3 border border-green-500 text-green-500 hover:bg-green-50 font-medium rounded-lg transition-colors"
                 >
-                  Request Demo
+                  Join Waitlist
                 </a>
               </div>
             </div>

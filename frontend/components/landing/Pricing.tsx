@@ -46,7 +46,7 @@ const plans = [
 		description: 'For large creators and agencies',
 		priceDetail: 'Custom pricing for your needs',
 		popular: false,
-		buttonText: 'Request Demo',
+		buttonText: 'Get Early Access',
 		features: [
 			'Heavy usage requirements supported',
 			'Manage many channels',
@@ -237,7 +237,7 @@ export function Pricing() {
 												className="w-full bg-green-600 hover:bg-green-700 text-white border-0 py-6 text-base shadow-lg hover:shadow-xl transition-all duration-300"
 												asChild
 											>
-												<Link href={plan.name === 'Enterprise' ? '/request-demo' : '/join-waitlist'}>
+												<Link href={'/join-waitlist'}>
 													{plan.buttonText}
 												</Link>
 											</Button>
