@@ -270,9 +270,9 @@ export default function ContactPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center justify-between">
-                    <Link href="/request-demo">
+                    <Link href="/join-waitlist">
                       <span className="flex items-center">
-                        <span>Request a Demo</span>
+                        <span>Join the Waitlist</span>
                       </span>
                       <ChevronRight className="h-4 w-4 ml-2" />
                     </Link>

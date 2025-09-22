@@ -12,9 +12,9 @@ export default function HelpPage() {
         {/* Back navigation */}
         <div className="mb-6">
           <Button variant="ghost" asChild>
-            <Link href="/waiting-area" className="flex items-center gap-2">
+            <Link href="/contact" className="flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" />
-              Back to Waiting Area
+              Back to Contact
             </Link>
           </Button>
         </div>
@@ -82,9 +82,9 @@ export default function HelpPage() {
                 
                 <div className="mt-6 space-y-3">
                   <Button asChild className="w-full">
-                    <Link href="/waiting-area" className="flex items-center justify-center gap-2">
+                    <Link href="/contact" className="flex items-center justify-center gap-2">
                       <ArrowLeft className="h-4 w-4" />
-                      Back to Waiting Area
+                      Back to Contact
                     </Link>
                   </Button>
                   <Button className="w-full" onClick={() => window.location.href = 'mailto:support@repruv.co.uk'}>
