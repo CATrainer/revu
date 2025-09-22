@@ -6,57 +6,75 @@ including review syncing, email sending, and analytics generation.
 """
 
 import os
+from urllib.parse import urlparse, urlunparse
 from celery import Celery
 from celery.schedules import crontab
 from loguru import logger
 
-# Get Redis URL from environment
+
+def build_redis_url_with_db(base_url: str, db_number: int) -> str:
+    """
+    Build a Redis URL with a specific database number.
+    
+    Args:
+        base_url: Base Redis URL (might already have a db number)
+        db_number: Database number to use (0-15)
+    
+    Returns:
+        str: Redis URL with the specified database
+    """
+    if not base_url:
+        return f"redis://localhost:6379/{db_number}"
+    
+    # Parse the URL
+    parsed = urlparse(base_url)
+    
+    # Build new path with just the database number
+    new_path = f"/{db_number}"
+    
+    # Reconstruct the URL with the new database
+    new_url = urlunparse((
+        parsed.scheme,
+        parsed.netloc,  # includes username:password@host:port
+        new_path,
+        parsed.params,
+        parsed.query,
+        parsed.fragment
+    ))
+    
+    return new_url
+
+
+# Get base Redis URL from environment
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379')
 
-# Clean up the Redis URL (remove any trailing path/database)
-if REDIS_URL.count('/') > 2 and REDIS_URL.split('/')[-1].isdigit():
-    # Remove the database number if present
-    REDIS_URL = '/'.join(REDIS_URL.split('/')[:-1])
-
-# Build Celery URLs
+# Build Celery URLs with specific databases
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', '')
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', '')
 
-# Handle cases where Railway might not have expanded the variables properly
-# or where we just have database numbers
-if not CELERY_BROKER_URL or CELERY_BROKER_URL.startswith('/') or CELERY_BROKER_URL == '/0':
-    CELERY_BROKER_URL = f"{REDIS_URL}/0"
-elif not CELERY_BROKER_URL.startswith('redis://'):
-    # If it's not a valid Redis URL, try to fix it
-    CELERY_BROKER_URL = f"{REDIS_URL}/0"
-
-if not CELERY_RESULT_BACKEND or CELERY_RESULT_BACKEND.startswith('/') or CELERY_RESULT_BACKEND == '/2':
-    CELERY_RESULT_BACKEND = f"{REDIS_URL}/2"
-elif not CELERY_RESULT_BACKEND.startswith('redis://'):
-    # If it's not a valid Redis URL, try to fix it
-    CELERY_RESULT_BACKEND = f"{REDIS_URL}/2"
-
-# Log the configuration (helpful for debugging)
-logger.info(f"Celery Broker URL: {CELERY_BROKER_URL}")
-logger.info(f"Celery Result Backend: {CELERY_RESULT_BACKEND}")
-
-# Validate that we have proper Redis URLs
+# If the URLs aren't properly set or are just database numbers, build them
 if not CELERY_BROKER_URL.startswith('redis://'):
-    raise ValueError(
-        f"Invalid CELERY_BROKER_URL: {CELERY_BROKER_URL}. "
-        f"Expected Redis URL starting with 'redis://'"
-    )
+    CELERY_BROKER_URL = build_redis_url_with_db(REDIS_URL, 0)
 
 if not CELERY_RESULT_BACKEND.startswith('redis://'):
-    raise ValueError(
-        f"Invalid CELERY_RESULT_BACKEND: {CELERY_RESULT_BACKEND}. "
-        f"Expected Redis URL starting with 'redis://'"
-    )
+    CELERY_RESULT_BACKEND = build_redis_url_with_db(REDIS_URL, 2)
+
+# Log the configuration (helpful for debugging)
+logger.info(f"Redis Base URL: {REDIS_URL.split('@')[-1] if '@' in REDIS_URL else REDIS_URL}")  # Hide password
+logger.info(f"Celery Broker URL (db 0): {CELERY_BROKER_URL.split('@')[-1] if '@' in CELERY_BROKER_URL else CELERY_BROKER_URL}")
+logger.info(f"Celery Result Backend (db 2): {CELERY_RESULT_BACKEND.split('@')[-1] if '@' in CELERY_RESULT_BACKEND else CELERY_RESULT_BACKEND}")
+
+# Validate URLs
+if not CELERY_BROKER_URL.startswith('redis://'):
+    raise ValueError(f"Invalid CELERY_BROKER_URL: {CELERY_BROKER_URL}")
+
+if not CELERY_RESULT_BACKEND.startswith('redis://'):
+    raise ValueError(f"Invalid CELERY_RESULT_BACKEND: {CELERY_RESULT_BACKEND}")
 
 # Create Celery app
 celery_app = Celery("Repruv")
 
-# Configure Celery using conf.update for better control
+# Configure Celery
 celery_app.conf.update(
     # Broker and Backend
     broker_url=CELERY_BROKER_URL,
@@ -113,80 +131,47 @@ celery_app.conf.update(
     # Rate limits
     task_annotations={
         "app.tasks.reviews.sync_google_reviews": {
-            "rate_limit": "10/m",  # 10 per minute
+            "rate_limit": "10/m",
         },
         "app.tasks.email.send_email": {
-            "rate_limit": "30/m",  # 30 per minute
+            "rate_limit": "30/m",
         },
     },
 )
 
-# Configure periodic tasks (beat schedule)
+# Configure periodic tasks
 celery_app.conf.beat_schedule = {
-    # Sync reviews every hour for active locations
     "sync-all-reviews": {
         "task": "app.tasks.reviews.sync_all_active_locations",
-        "schedule": crontab(minute=0),  # Every hour
-        "options": {
-            "queue": "reviews",
-            "expires": 3600,
-        },
+        "schedule": crontab(minute=0),
+        "options": {"queue": "reviews", "expires": 3600},
     },
-    
-    # Generate daily analytics snapshots
     "generate-analytics-snapshots": {
         "task": "app.tasks.analytics.generate_daily_snapshots",
-        "schedule": crontab(hour=2, minute=0),  # 2 AM UTC daily
-        "options": {
-            "queue": "analytics",
-            "expires": 3600,
-        },
+        "schedule": crontab(hour=2, minute=0),
+        "options": {"queue": "analytics", "expires": 3600},
     },
-    
-    # Check for trial expirations
     "check-trial-expirations": {
         "task": "app.tasks.email.check_trial_expirations",
-        "schedule": crontab(hour=9, minute=0),  # 9 AM UTC daily
-        "options": {
-            "queue": "email",
-            "expires": 3600,
-        },
+        "schedule": crontab(hour=9, minute=0),
+        "options": {"queue": "email", "expires": 3600},
     },
-    
-    # Process automation rules every 5 minutes
     "process-automation-rules": {
         "task": "app.tasks.automation.process_all_rules",
-        "schedule": crontab(minute="*/5"),  # Every 5 minutes
-        "options": {
-            "queue": "automation",
-            "expires": 300,
-        },
+        "schedule": crontab(minute="*/5"),
+        "options": {"queue": "automation", "expires": 300},
     },
-    
-    # Clean up old data monthly
     "cleanup-old-data": {
         "task": "app.tasks.analytics.cleanup_old_data",
-        "schedule": crontab(hour=3, minute=0, day_of_month=1),  # First day of month at 3 AM
-        "options": {
-            "queue": "analytics",
-            "expires": 7200,
-        },
+        "schedule": crontab(hour=3, minute=0, day_of_month=1),
+        "options": {"queue": "analytics", "expires": 7200},
     },
 }
 
 
 def get_task_info(task_id: str) -> dict:
-    """
-    Get information about a specific task.
-    
-    Args:
-        task_id: The task ID to look up
-        
-    Returns:
-        dict: Task information including status and result
-    """
+    """Get information about a specific task."""
     result = celery_app.AsyncResult(task_id)
-    
     return {
         "task_id": task_id,
         "status": result.status,
@@ -198,83 +183,39 @@ def get_task_info(task_id: str) -> dict:
     }
 
 
-def revoke_task(task_id: str, terminate: bool = False) -> bool:
-    """
-    Revoke a pending or running task.
-    
-    Args:
-        task_id: The task ID to revoke
-        terminate: If True, terminate running tasks
-        
-    Returns:
-        bool: True if revocation was sent
-    """
-    try:
-        celery_app.control.revoke(task_id, terminate=terminate)
-        return True
-    except Exception as e:
-        logger.error(f"Failed to revoke task {task_id}: {e}")
-        return False
-
-
-def get_active_queues() -> list:
-    """Get list of active queues."""
-    try:
-        inspect = celery_app.control.inspect()
-        active_queues = inspect.active_queues()
-        if active_queues:
-            return list(active_queues.keys())
-        return []
-    except Exception as e:
-        logger.error(f"Failed to get active queues: {e}")
-        return []
-
-
-def ping_workers() -> bool:
-    """Check if Celery workers are responsive."""
-    try:
-        inspect = celery_app.control.inspect()
-        stats = inspect.stats()
-        return bool(stats)
-    except Exception as e:
-        logger.error(f"Failed to ping workers: {e}")
-        return False
-
-
-# Health check function for monitoring
 def celery_health_check() -> dict:
-    """
-    Perform a health check on Celery.
+    """Perform a health check on Celery."""
+    health = {"status": "checking"}
     
-    Returns:
-        dict: Health check results
-    """
-    health = {
-        "broker_url": CELERY_BROKER_URL.replace(
-            CELERY_BROKER_URL.split('@')[0].split('//')[-1], 
-            "***"
-        ) if '@' in CELERY_BROKER_URL else "not configured",
-        "workers_online": ping_workers(),
-        "active_queues": get_active_queues(),
-    }
-    
-    # Test Redis connection
     try:
+        # Test broker connection
+        from kombu import Connection
+        with Connection(CELERY_BROKER_URL) as conn:
+            conn.ensure_connection(max_retries=3)
+        health["broker"] = "connected"
+    except Exception as e:
+        health["broker"] = f"error: {str(e)}"
+    
+    try:
+        # Test result backend
         from redis import Redis
-        from urllib.parse import urlparse
-        
-        parsed = urlparse(CELERY_BROKER_URL)
+        parsed = urlparse(CELERY_RESULT_BACKEND)
+        db_num = int(parsed.path.lstrip('/')) if parsed.path else 0
         redis_client = Redis(
             host=parsed.hostname,
             port=parsed.port or 6379,
             password=parsed.password,
-            db=int(parsed.path.lstrip('/')) if parsed.path else 0,
+            db=db_num,
             socket_connect_timeout=5,
         )
         redis_client.ping()
-        health["redis_connection"] = "healthy"
+        health["result_backend"] = "connected"
     except Exception as e:
-        health["redis_connection"] = f"unhealthy: {str(e)}"
+        health["result_backend"] = f"error: {str(e)}"
+    
+    health["status"] = "healthy" if all(
+        "connected" in str(v) for v in [health.get("broker"), health.get("result_backend")]
+    ) else "unhealthy"
     
     return health
 
@@ -285,13 +226,4 @@ try:
     if django_settings.configured:
         celery_app.autodiscover_tasks(lambda: django_settings.INSTALLED_APPS)
 except ImportError:
-    # Not using Django, tasks should be explicitly imported
     pass
-
-
-# For debugging - remove in production
-if os.environ.get('DEBUG_CELERY'):
-    logger.debug(f"Celery configuration loaded:")
-    logger.debug(f"  Broker: {CELERY_BROKER_URL}")
-    logger.debug(f"  Backend: {CELERY_RESULT_BACKEND}")
-    logger.debug(f"  Imports: {celery_app.conf.imports}")
