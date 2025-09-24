@@ -16,6 +16,9 @@ print(f"  Backend: {settings.CELERY_RESULT_BACKEND}")
 
 # Create Celery app
 celery_app = Celery("Repruv")
+# Alias for CLI compatibility so `celery -A app.core.celery worker` finds an app
+# Celery defaults to looking for a symbol named `celery` in the target module.
+celery = celery_app
 
 # Configure Celery
 celery_app.conf.update(
