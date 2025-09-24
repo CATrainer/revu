@@ -25,46 +25,48 @@ celery_app.conf.update(
     # Use the computed URLs from settings
     broker_url=settings.CELERY_BROKER_URL,
     result_backend=settings.CELERY_RESULT_BACKEND,
-    
+
     # Serialization
     task_serializer="json",
     accept_content=["json"],
     result_serializer="json",
     result_expires=3600,
-    
+
     # Timezone
     timezone="UTC",
     enable_utc=True,
-    
+
     # Task imports
     imports=[
         "app.tasks.reviews",
         "app.tasks.analytics",
         "app.tasks.email",
         "app.tasks.automation",
+        "app.tasks.marketing",
     ],
-    
+
     # Worker settings
     worker_prefetch_multiplier=4,
     worker_max_tasks_per_child=1000,
-    
+
     # Connection settings
     broker_connection_retry=True,
     broker_connection_retry_on_startup=True,
     broker_connection_max_retries=10,
-    
+
     # Task routing
     task_routes={
         "app.tasks.reviews.*": {"queue": "reviews"},
         "app.tasks.analytics.*": {"queue": "analytics"},
         "app.tasks.email.*": {"queue": "email"},
         "app.tasks.automation.*": {"queue": "automation"},
+        "app.tasks.marketing.*": {"queue": "marketing"},
     },
-    
+
     # Queue settings
     task_default_queue="default",
     task_create_missing_queues=True,
-    
+
     # Rate limits
     task_annotations={
         "app.tasks.reviews.sync_google_reviews": {
@@ -97,6 +99,10 @@ celery_app.conf.beat_schedule = {
     "cleanup-old-data": {
         "task": "app.tasks.analytics.cleanup_old_data",
         "schedule": crontab(hour=3, minute=0, day_of_month=1),  # Monthly
+    },
+    "sync-sendgrid-contacts": {
+        "task": "app.tasks.marketing.sync_all_contacts",
+        "schedule": crontab(hour=4, minute=15),  # Daily at 04:15 UTC
     },
 }
 

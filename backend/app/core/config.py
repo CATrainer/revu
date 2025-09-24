@@ -151,6 +151,8 @@ class Settings(BaseSettings):
     # SendGrid (optional)
     SENDGRID_API_KEY: Optional[str] = None
     SENDGRID_WELCOME_TEMPLATE_ID: Optional[str] = None
+    SENDGRID_MARKETING_LIST_ID: Optional[str] = None
+    SENDGRID_WEBHOOK_PUBLIC_KEY: Optional[str] = None
 
     # Calendly
     CALENDLY_ACCESS_TOKEN: str
