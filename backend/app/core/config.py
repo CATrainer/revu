@@ -81,6 +81,9 @@ class Settings(BaseSettings):
 
     # Redis - Only this one is from env, with fallback
     REDIS_URL: str = "redis://localhost:6379/0"
+    # Some managed Redis providers (e.g., Upstash) only support a single logical DB (0)
+    # Set to false on such providers to avoid SELECTing other DB indexes in derived URLs
+    REDIS_USE_DB_INDEXING: bool = True
 
     # Cache TTL
     REDIS_CACHE_TTL: int = 3600  # 1 hour default
@@ -89,16 +92,34 @@ class Settings(BaseSettings):
     @property
     def REDIS_CACHE_URL(self) -> str:
         """Redis URL for cache (database 2)."""
+        # Allow override via env if explicitly provided
+        override = os.getenv("REDIS_CACHE_URL")
+        if override:
+            return override
+        if not self.REDIS_USE_DB_INDEXING:
+            return self.REDIS_URL
         return make_redis_url_with_db(self.REDIS_URL, 2)
     
     @property
     def CELERY_BROKER_URL(self) -> str:
         """Redis URL for Celery broker (database 0)."""
+        # Allow override via env if explicitly provided (e.g., Railway rediss URL)
+        override = os.getenv("CELERY_BROKER_URL")
+        if override:
+            return override
+        if not self.REDIS_USE_DB_INDEXING:
+            return self.REDIS_URL
         return make_redis_url_with_db(self.REDIS_URL, 0)
     
     @property
     def CELERY_RESULT_BACKEND(self) -> str:
         """Redis URL for Celery result backend (database 1)."""
+        # Allow override via env if explicitly provided
+        override = os.getenv("CELERY_RESULT_BACKEND")
+        if override:
+            return override
+        if not self.REDIS_USE_DB_INDEXING:
+            return self.REDIS_URL
         return make_redis_url_with_db(self.REDIS_URL, 1)
 
     # Supabase
