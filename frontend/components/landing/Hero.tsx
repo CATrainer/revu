@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import SocialPlatformCarousel from '@/components/shared/SocialPlatformCarousel';
 
 export function Hero() {
   const router = useRouter();
@@ -45,206 +46,403 @@ export function Hero() {
   return (
     <motion.section 
       id="hero" 
-      className="relative section-background-alt py-24 overflow-hidden"
+      className="relative min-h-[90vh] bg-gradient-to-br from-slate-50 via-white to-blue-50/30 overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Professional Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(circle at 1px 1px, rgb(51, 65, 85) 1px, transparent 0)`,
+          backgroundSize: '24px 24px'
+        }}></div>
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <div ref={ref} className="relative">
-          <motion.div 
-            className="mb-8"
-            initial={{ opacity: 0, y: 50 }}
-            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <div className="text-center">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-dark leading-tight font-['Poppins',sans-serif]">
-                <span className="brand-text">Engagment. Growth. Monetisation</span>
-              </h1>
-            </div>
-          </motion.div>
-          
-          <motion.div 
-            className="mb-12"
-            initial={{ opacity: 0, y: 30 }}
-            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            <div className="text-center">
-              <p className="text-lg md:text-xl text-primary-dark/80 leading-relaxed font-['Poppins',sans-serif] font-bold max-w-4xl mx-auto">
-                Boost your engagment through automation. Grow your community through AI driven insights. Enhance your earnings through monetisation
-              </p>
-            </div>
-          </motion.div>
-          
-          <motion.div 
-            className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-8 mb-8"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-          >
+          {/* Subtle Professional Background Graphics */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {/* Minimalist Geometric Shapes */}
             <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
-              transition={{ duration: 0.8, delay: 0.7 }}
-              className="flex flex-col items-center"
+              className="absolute top-20 left-12 opacity-8"
+              initial={{ opacity: 0, scale: 0 }}
+              animate={isInView ? { opacity: 0.08, scale: 1 } : { opacity: 0, scale: 0 }}
+              transition={{ duration: 2, delay: 0.5 }}
             >
-              <p className="text-sm font-medium text-primary-dark/70 mb-2 font-['Poppins',sans-serif]">Supports</p>
-              <div className="bg-gradient-to-r from-blue-50/90 to-indigo-50/80 backdrop-blur-md rounded-full px-6 py-3 shadow-lg border border-blue-200/40 flex items-center space-x-4">
-                <motion.div 
-                  className="w-6 h-6 flex items-center justify-center cursor-pointer"
-                  whileHover={{ scale: 1.2, rotate: 5 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                >
-                  <svg viewBox="0 0 24 24" className="w-full h-full fill-black hover:fill-gray-700 transition-colors duration-200">
-                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-.88-.05A6.33 6.33 0 0 0 5.16 20.5a6.33 6.33 0 0 0 10.14-5.09V8.76a8.23 8.23 0 0 0 4.65 1.46V6.69h-.36Z"/>
-                  </svg>
-                </motion.div>
-                <motion.div 
-                  className="w-6 h-6 flex items-center justify-center cursor-pointer"
-                  whileHover={{ scale: 1.2, rotate: -5 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                >
-                  <svg viewBox="0 0 24 24" className="w-full h-full fill-red-600 hover:fill-red-700 transition-colors duration-200">
-                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                  </svg>
-                </motion.div>
-                <motion.div 
-                  className="w-6 h-6 flex items-center justify-center cursor-pointer"
-                  whileHover={{ scale: 1.2, rotate: 5 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                >
-                  <svg viewBox="0 0 24 24" className="w-full h-full hover:opacity-80 transition-opacity duration-200">
-                    <defs>
-                      <linearGradient id="instagram-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#f09433" />
-                        <stop offset="25%" stopColor="#e6683c" />
-                        <stop offset="50%" stopColor="#dc2743" />
-                        <stop offset="75%" stopColor="#cc2366" />
-                        <stop offset="100%" stopColor="#bc1888" />
-                      </linearGradient>
-                    </defs>
-                    <path fill="url(#instagram-gradient)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.40z"/>
-                  </svg>
-                </motion.div>
-              </div>
+              <div className="w-32 h-32 border border-blue-200 rounded-full"></div>
+            </motion.div>
+            
+            <motion.div
+              className="absolute top-40 right-16 opacity-6"
+              initial={{ opacity: 0, rotate: -45 }}
+              animate={isInView ? { opacity: 0.06, rotate: 0 } : { opacity: 0, rotate: -45 }}
+              transition={{ duration: 2, delay: 0.8 }}
+            >
+              <div className="w-24 h-24 border border-green-200 rounded-lg transform rotate-12"></div>
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
-              transition={{ duration: 0.8, delay: 0.9 }}
-              className="flex flex-col items-center"
+              className="absolute bottom-32 left-20 opacity-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 0.08, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 2, delay: 1.2 }}
             >
-              <p className="text-sm font-medium text-primary-dark/70 mb-2 font-['Poppins',sans-serif]">Coming soon</p>
-              <div className="bg-gradient-to-r from-blue-50/90 to-indigo-50/80 backdrop-blur-md rounded-full px-6 py-3 shadow-lg border border-blue-200/40 flex items-center space-x-4">
-                <motion.div 
-                  className="w-6 h-6 flex items-center justify-center cursor-pointer"
-                  whileHover={{ scale: 1.2, rotate: 5 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                >
-                  <svg viewBox="0 0 24 24" className="w-full h-full fill-black hover:fill-gray-700 transition-colors duration-200">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                  </svg>
-                </motion.div>
-                <motion.div 
-                  className="w-6 h-6 flex items-center justify-center cursor-pointer"
-                  whileHover={{ scale: 1.2, rotate: -5 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                >
-                  <svg viewBox="0 0 24 24" className="w-full h-full fill-blue-700 hover:fill-blue-800 transition-colors duration-200">
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                  </svg>
-                </motion.div>
-                <motion.div 
-                  className="w-6 h-6 flex items-center justify-center cursor-pointer"
-                  whileHover={{ scale: 1.2, rotate: 5 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                >
-                  <svg viewBox="0 0 24 24" className="w-full h-full fill-orange-600 hover:fill-orange-700 transition-colors duration-200">
-                    <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>
-                  </svg>
-                </motion.div>
-              </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full"></div>
             </motion.div>
+
+            {/* Subtle Icon Representations */}
+            <motion.div
+              className="absolute top-32 right-8 opacity-12"
+              initial={{ opacity: 0, scale: 0 }}
+              animate={isInView ? { opacity: 0.12, scale: 1 } : { opacity: 0, scale: 0 }}
+              transition={{ duration: 1.5, delay: 1 }}
+            >
+              <svg width="40" height="40" viewBox="0 0 24 24" className="text-slate-300">
+                <path fill="currentColor" d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+              </svg>
+            </motion.div>
+
+            <motion.div
+              className="absolute bottom-40 right-24 opacity-10"
+              initial={{ opacity: 0, scale: 0 }}
+              animate={isInView ? { opacity: 0.1, scale: 1 } : { opacity: 0, scale: 0 }}
+              transition={{ duration: 1.5, delay: 1.5 }}
+            >
+              <svg width="36" height="36" viewBox="0 0 24 24" className="text-slate-300">
+                <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"/>
+              </svg>
+            </motion.div>
+          </div>
+
+          <motion.div 
+            className="text-center mb-8 relative z-10"
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-slate-900 leading-tight tracking-tight mb-4">
+              <div className="flex items-center justify-center gap-4 mb-2">
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={isInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
+                  transition={{ duration: 0.8, delay: 0.4, type: "spring", bounce: 0.5 }}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  className="flex-shrink-0"
+                >
+                  <div className="relative w-20 h-18">
+                    {/* Heart for Likes - Top of triangle */}
+                    <motion.div
+                      className="absolute top-0 left-1/2 transform -translate-x-1/2"
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={isInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
+                      transition={{ duration: 0.6, delay: 0.4, type: "spring", bounce: 0.5 }}
+                      whileHover={{ scale: 1.3 }}
+                    >
+                      <motion.svg 
+                        width="32" 
+                        height="32" 
+                        viewBox="0 0 24 24" 
+                        className="text-red-500"
+                        style={{
+                          filter: 'drop-shadow(0 4px 8px rgba(239, 68, 68, 0.5))'
+                        }}
+                        animate={{ 
+                          y: [0, -4, 0],
+                          scale: [1, 1.05, 1],
+                        }}
+                        transition={{
+                          duration: 2.5,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        <path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                      </motion.svg>
+                    </motion.div>
+
+                    {/* Comment Bubble - Bottom left of triangle */}
+                    <motion.div
+                      className="absolute bottom-0 left-1"
+                      initial={{ scale: 0, y: 20 }}
+                      animate={isInView ? { scale: 1, y: 0 } : { scale: 0, y: 20 }}
+                      transition={{ duration: 0.6, delay: 0.5, type: "spring", bounce: 0.4 }}
+                      whileHover={{ scale: 1.3 }}
+                    >
+                      <motion.svg 
+                        width="32" 
+                        height="32" 
+                        viewBox="0 0 24 24" 
+                        className="text-blue-500"
+                        style={{
+                          filter: 'drop-shadow(0 4px 8px rgba(59, 130, 246, 0.5))'
+                        }}
+                        animate={{ 
+                          y: [0, -3, 0],
+                        }}
+                        transition={{
+                          duration: 2.5,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                          delay: 0.5
+                        }}
+                      >
+                        <path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l3 3 3-3h6c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-3 12H7v-2h10v2zm0-4H7V8h10v2zm0-4H7V4h10v2z"/>
+                      </motion.svg>
+                    </motion.div>
+
+                    {/* View Counter - Bottom right of triangle */}
+                    <motion.div
+                      className="absolute bottom-0 right-1"
+                      initial={{ scale: 0, rotate: 180 }}
+                      animate={isInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: 180 }}
+                      transition={{ duration: 0.6, delay: 0.6, type: "spring", bounce: 0.3 }}
+                      whileHover={{ scale: 1.3 }}
+                    >
+                      <motion.svg 
+                        width="32" 
+                        height="32" 
+                        viewBox="0 0 24 24" 
+                        className="text-purple-500"
+                        style={{
+                          filter: 'drop-shadow(0 4px 8px rgba(147, 51, 234, 0.5))'
+                        }}
+                        animate={{ 
+                          scale: [1, 1.1, 1],
+                        }}
+                        transition={{
+                          duration: 2.2,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                          delay: 1
+                        }}
+                      >
+                        <path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                      </motion.svg>
+                    </motion.div>
+                  </div>
+                </motion.div>
+                <span className="block">Increase Engagement.</span>
+              </div>
+              <div className="flex items-center justify-center gap-4 mb-2">
+                <motion.div
+                  initial={{ scale: 0, y: -20 }}
+                  animate={isInView ? { scale: 1, y: 0 } : { scale: 0, y: -20 }}
+                  transition={{ duration: 0.8, delay: 0.6, type: "spring", bounce: 0.4 }}
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  className="flex-shrink-0"
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Trending Arrow for Growth */}
+                    <motion.div
+                      initial={{ scale: 0, y: -20 }}
+                      animate={isInView ? { scale: 1, y: 0 } : { scale: 0, y: -20 }}
+                      transition={{ duration: 0.6, delay: 0.6, type: "spring", bounce: 0.4 }}
+                      whileHover={{ scale: 1.3 }}
+                    >
+                      <motion.svg 
+                        width="40" 
+                        height="40" 
+                        viewBox="0 0 24 24" 
+                        className="text-blue-600"
+                        style={{
+                          filter: 'drop-shadow(0 4px 8px rgba(59, 130, 246, 0.5))'
+                        }}
+                        animate={{ 
+                          y: [0, -4, 0],
+                          scale: [1, 1.05, 1],
+                        }}
+                        transition={{
+                          duration: 2.5,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                          delay: 0.5
+                        }}
+                      >
+                        <path fill="currentColor" d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                      </motion.svg>
+                    </motion.div>
+
+                    {/* Bar Chart for Analytics */}
+                    <motion.div
+                      initial={{ scale: 0, x: -20 }}
+                      animate={isInView ? { scale: 1, x: 0 } : { scale: 0, x: -20 }}
+                      transition={{ duration: 0.6, delay: 0.7, type: "spring", bounce: 0.3 }}
+                      whileHover={{ scale: 1.3 }}
+                    >
+                      <motion.svg 
+                        width="40" 
+                        height="40" 
+                        viewBox="0 0 24 24" 
+                        className="text-indigo-600"
+                        style={{
+                          filter: 'drop-shadow(0 4px 8px rgba(99, 102, 241, 0.5))'
+                        }}
+                        animate={{ 
+                          y: [0, -3, 0],
+                          scale: [1, 1.1, 1],
+                        }}
+                        transition={{
+                          duration: 2.2,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                          delay: 0.8
+                        }}
+                      >
+                        <path fill="currentColor" d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/>
+                      </motion.svg>
+                    </motion.div>
+
+
+                  </div>
+                </motion.div>
+                <span className="block text-blue-600">Drive Growth.</span>
+              </div>
+              <div className="flex items-center justify-center gap-4">
+                <motion.div
+                  initial={{ scale: 0, rotate: 180 }}
+                  animate={isInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: 180 }}
+                  transition={{ duration: 0.8, delay: 0.8, type: "spring", bounce: 0.3 }}
+                  whileHover={{ scale: 1.3 }}
+                  className="flex-shrink-0"
+                >
+                  <motion.svg 
+                    width="48" 
+                    height="48" 
+                    viewBox="0 0 24 24" 
+                    className="text-green-600"
+                    style={{
+                      filter: 'drop-shadow(0 4px 8px rgba(34, 197, 94, 0.5))'
+                    }}
+                    animate={{ 
+                      y: [0, -3, 0],
+                      scale: [1, 1.1, 1],
+                    }}
+                    transition={{
+                      duration: 2.2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: 0.9
+                    }}
+                  >
+                    <defs>
+                      <linearGradient id="billGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#22c55e"/>
+                        <stop offset="50%" stopColor="#16a34a"/>
+                        <stop offset="100%" stopColor="#15803d"/>
+                      </linearGradient>
+                    </defs>
+                    {/* Bill outline */}
+                    <rect x="1" y="6" width="22" height="12" rx="1" fill="url(#billGradient)" stroke="#065f46" strokeWidth="0.5"/>
+                    {/* Decorative border */}
+                    <rect x="2" y="7" width="20" height="10" rx="0.5" fill="none" stroke="#dcfce7" strokeWidth="0.3" strokeDasharray="0.5,0.5"/>
+                    {/* Center circle - blank note */}
+                    <circle cx="12" cy="12" r="3" fill="#dcfce7" fillOpacity="0.3"/>
+                    {/* Corner decorative elements */}
+                    <circle cx="4" cy="9" r="0.8" fill="#dcfce7" fillOpacity="0.6"/>
+                    <circle cx="20" cy="9" r="0.8" fill="#dcfce7" fillOpacity="0.6"/>
+                    <circle cx="4" cy="15" r="0.8" fill="#dcfce7" fillOpacity="0.6"/>
+                    <circle cx="20" cy="15" r="0.8" fill="#dcfce7" fillOpacity="0.6"/>
+                    {/* Serial number style decoration */}
+                    <rect x="3" y="16.5" width="6" height="0.5" fill="#065f46" fillOpacity="0.4"/>
+                    <rect x="15" y="16.5" width="6" height="0.5" fill="#065f46" fillOpacity="0.4"/>
+                  </motion.svg>
+                </motion.div>
+                <span className="block text-green-600">Boost Monetisation.</span>
+              </div>
+            </h1>
+            
+            <p className="text-lg md:text-xl text-slate-600 leading-relaxed max-w-3xl mx-auto font-light">
+              Transform your <span className="text-slate-900 font-medium">social media engagement</span> with <span className="text-slate-900 font-medium">intelligent automation</span>, {' '}
+              <span className="text-blue-600 font-medium">drive growth</span> with <span className="text-blue-600 font-medium">actionable AI-driven insights</span>, and {' '}
+              <span className="text-green-600 font-medium">boost monetisation</span> with <span className="text-green-600 font-medium">strategic reports</span>.
+            </p>
+          </motion.div>
+          
+          <motion.div 
+            className="mb-6 relative z-10"
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+          >
+            <SocialPlatformCarousel />
           </motion.div>
         </div>
         
         <motion.div 
-          className="mb-16 relative"
+          className="relative z-10"
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
+          transition={{ duration: 0.8, delay: 0.7 }}
         >
-          <div className="max-w-6xl mx-auto">
-            <div className="bg-gradient-to-br from-white/95 via-white/90 to-white/85 dark:from-gray-900/95 dark:via-gray-900/90 dark:to-gray-800/85 backdrop-blur-md rounded-3xl p-6 lg:p-8 shadow-2xl border border-white/30 dark:border-gray-700/50 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-[var(--brand-primary-solid)]/5 via-transparent to-[var(--brand-secondary-solid)]/5 rounded-3xl"></div>
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-3 lg:p-4 shadow-2xl border border-slate-200/70 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-50/40 via-blue-50/20 to-green-50/40"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 via-blue-400 to-green-400 opacity-60"></div>
               
               <div className="relative z-10">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                  <div className="lg:col-span-5">
-                    <div className="text-center lg:text-left">
-                      <h3 className="text-2xl lg:text-3xl font-bold text-primary-dark dark:text-white mb-3 font-['Poppins',sans-serif] bg-gradient-to-r from-[var(--brand-primary-solid)] to-[var(--brand-secondary-solid)] bg-clip-text text-transparent">
-                        Get Early Access
-                      </h3>
+                <div className="text-center mb-2">
+                  <h3 className="text-3xl lg:text-4xl font-bold text-green-600 mb-4">
+                    Get Early Access
+                  </h3>
                       <p className="text-base text-primary-dark/80 dark:text-gray-300 font-['Poppins',sans-serif] font-medium mb-3">
                         We’re in prelaunch. Share your email and we’ll notify you early when access opens.
                       </p>
-                      <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
-                          Early Access
-                        </span>
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-                          Secure &amp; Private
-                        </span>
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
-                          Free Creator Use
-                        </span>
-                      </div>
-                    </div>
+                  <div className="flex flex-wrap gap-3 justify-center mb-4">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+                      🚀 Early Access
+                    </span>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                      🔒 Secure &amp; Private
+                    </span>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                      💎 Free Creator Use
+                    </span>
                   </div>
-                  
-                  <div className="lg:col-span-7">
-                    <form onSubmit={handleEmailSubmit} className="space-y-4">
-                      <div className="relative">
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <div className="flex-1 relative group">
-                            <Input
-                              type="email"
-                              placeholder="Enter your email address"
-                              value={email}
-                              onChange={(e) => setEmail(e.target.value)}
-                              required
-                              className="w-full pl-6 pr-12 py-3 text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-4 focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30 transition-all duration-300 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm group-hover:border-gray-300 dark:group-hover:border-gray-500 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                              disabled={loading}
-                            />
-                          </div>
-                          
-                          <div className="sm:w-auto">
-                            <Button 
-                              type="submit" 
-                              disabled={loading || !email.trim()} 
-                              className="w-full sm:w-auto px-6 py-3 text-base font-semibold bg-green-600 hover:bg-green-700 text-white border-0 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 focus:ring-4 focus:ring-green-500/30"
-                            >
-                              {loading ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Joining...
-                                </>
-                              ) : (
-                                'Get Early Access'
-                              )}
-                            </Button>
-                          </div>
+                </div>
+                
+                <motion.div 
+                  className="w-full"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.6, delay: 0.8 }}
+                >
+                  <form onSubmit={handleEmailSubmit} className="space-y-2">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                      <div className="relative group flex-1">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <svg className="h-5 w-5 text-slate-400 group-hover:text-green-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                          </svg>
                         </div>
+                        <Input
+                          type="email"
+                          placeholder="Enter your email address"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                          className="w-full pl-12 pr-4 py-3 text-base border-2 border-slate-300 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition-all duration-300 bg-white/95 backdrop-blur-sm text-slate-900 placeholder:text-slate-500 shadow-sm hover:shadow-md group-hover:border-green-400"
+                          disabled={loading}
+                        />
                       </div>
+                      
+                      <Button 
+                        type="submit" 
+                        disabled={loading || !email.trim()} 
+                        className="sm:w-auto px-6 py-3 text-base font-bold bg-green-600 hover:bg-green-700 disabled:bg-slate-400 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 whitespace-nowrap"
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Joining...
+                          </>
+                        ) : (
+                          'Get Early Access'
+                        )}
+                      </Button>
+                    </div>
+                    
+
                       
                       {error && (
                         <div className="flex items-center space-x-2 text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-200 dark:border-red-800">
@@ -258,9 +456,8 @@ export function Hero() {
                           We’re in prelaunch — drop your email and we’ll notify you early when access opens
                         </p>
                       </div>
-                    </form>
-                  </div>
-                </div>
+                  </form>
+                </motion.div>
               </div>
             </div>
           </div>
