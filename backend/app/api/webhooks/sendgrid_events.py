@@ -11,6 +11,8 @@ from sqlalchemy import select
 from app.core.config import settings
 from app.core.database import async_session_maker
 from app.models.user import User
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec
 
 router = APIRouter()
 
@@ -38,16 +40,69 @@ async def sendgrid_events(request: Request) -> Dict[str, Any]:
             or request.headers.get("x-twilio-email-event-webhook-timestamp")
         )
         if not sig_hdr or not ts_hdr:
+            logger.warning("SendGrid webhook: missing signature headers")
             raise HTTPException(status_code=400, detail="Missing signature headers")
+
+        def _pad(s: str) -> str:
+            return s + "=" * (-len(s) % 4)
+
+        def _b64decode_any(s: str) -> bytes:
+            s = s.strip()
+            try:
+                return base64.urlsafe_b64decode(_pad(s))
+            except Exception:
+                return base64.b64decode(_pad(s))
+
+        signed_data = ts_hdr.encode("utf-8") + raw_body
+        signature = _b64decode_any(sig_hdr)
+
+        key_bytes = _b64decode_any(pub_key_b64)
+
+        # Try Ed25519 first (raw 32-byte key). If that fails, try ECDSA P-256 (DER SPKI)
+        verified = False
+        ed25519_error: str | None = None
+        ecdsa_error: str | None = None
+
+        # Attempt Ed25519
         try:
-            verify_key = VerifyKey(base64.b64decode(pub_key_b64))
-            signed_data = ts_hdr.encode("utf-8") + raw_body
-            signature = base64.b64decode(sig_hdr)
-            verify_key.verify(signed_data, signature)
+            if len(key_bytes) == 32:
+                VerifyKey(key_bytes).verify(signed_data, signature)
+                verified = True
+            else:
+                # Try treating provided key as SPKI for Ed25519 as well
+                # Some providers may wrap Ed25519 keys in SPKI format starting with 'MCowBQYDK2VwAyE'
+                try:
+                    pk = serialization.load_der_public_key(key_bytes)
+                    from cryptography.hazmat.primitives.asymmetric import ed25519 as crypto_ed
+                    if isinstance(pk, crypto_ed.Ed25519PublicKey):
+                        pk.verify(signature, signed_data)
+                        verified = True
+                except Exception as e:  # noqa: BLE001
+                    ed25519_error = f"ed25519 spki load failed: {e}"
         except BadSignatureError:
-            raise HTTPException(status_code=400, detail="Invalid webhook signature")
+            ed25519_error = "ed25519 signature invalid"
         except Exception as e:  # noqa: BLE001
-            raise HTTPException(status_code=400, detail=f"Verification error: {e}")
+            ed25519_error = f"ed25519 verify error: {e}"
+
+        # Attempt ECDSA P-256 if not verified yet
+        if not verified:
+            try:
+                pk = serialization.load_der_public_key(key_bytes)
+                if isinstance(pk, ec.EllipticCurvePublicKey):
+                    pk.verify(signature, signed_data, ec.ECDSA(hashes.SHA256()))
+                    verified = True
+                else:
+                    ecdsa_error = "public key is not EC"
+            except Exception as e:  # noqa: BLE001
+                ecdsa_error = f"ecdsa verify error: {e}"
+
+        if not verified:
+            logger.warning(
+                "SendGrid webhook: signature verification failed (ed25519_err={}, ecdsa_err={})",
+                ed25519_error,
+                ecdsa_error,
+            )
+            raise HTTPException(status_code=400, detail="Invalid webhook signature")
     else:
         logger.warning("SENDGRID_WEBHOOK_PUBLIC_KEY not set; accepting events without verification")
 
