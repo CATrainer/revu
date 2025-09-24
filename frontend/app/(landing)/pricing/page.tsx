@@ -12,7 +12,7 @@ const faqCategories = [
     questions: [
       {
         question: "How does the free Basic plan work?",
-        answer: "The Basic plan is completely free forever and includes up to 3 platform connections, 1,000 AI responses per month, access to Repruv AI chatbot, basic analytics, and social monitoring. No credit card required to start."
+        answer: "The Basic plan is completely free forever and includes up to 3 platform connections, 1,000 AI responses per month, access to Repruv AI Creator Sidekick, basic analytics, and social monitoring. No credit card required to start."
       },
       {
         question: "Which platforms do you support?",

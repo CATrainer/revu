@@ -39,20 +39,20 @@ const features: Feature[] = [
   {
     icon: FaReply,
     iconColor: 'text-blue-500', // Blue for replies/communication
-    title: 'Comment Automation',
-    description: 'Automate replies to Comments on your Reels/Videos on YouTube and Instagram.',
+    title: 'DM & Comment Automation',
+    description: 'Automate replies to DM\'s & Comments on your Posts, Reels and Videos on Instagram and Youtube.',
   },
   {
     icon: FaBrain,
     iconColor: 'text-purple-500', // Purple for AI intelligence
-    title: 'AI Chatbot',
-    description: 'AI Chatbot that understands you and your community.',
+    title: 'AI Creator Sidekick',
+    description: 'Your personalized AI chatbot that understands you and your community.',
   },
   {
     icon: FaHashtag,
     iconColor: 'text-pink-500', // Pink for social media
     title: 'Social Monitoring',
-    description: 'Keep on top of what people are saying about you on online.',
+    description: 'Keep on top of what people are saying about you on online across all of your channels.',
   },
   {
     icon: FaChartBar,
@@ -89,7 +89,7 @@ export function Features() {
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              Everything You Need to Manage Your Community Engagement
+              Your Creator Side-Kick Tools to Help You Scale.
             </motion.h2>
             <motion.p 
               className="text-lg md:text-xl text-primary-dark max-w-2xl mx-auto font-['Poppins',sans-serif] font-bold"
@@ -97,7 +97,7 @@ export function Features() {
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ duration: 0.6, delay: 0.5 }}
             >
-              Powerful features designed to save you time and grow your audience.
+              Powerful features to help you focus on being a creator.
             </motion.p>
           </motion.div>
           
@@ -128,8 +128,8 @@ export function Features() {
                 }}
                 className="card-background p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer group relative overflow-hidden"
               >
-                {/* Social Media Background Icons for Comment Automation */}
-                {feature.title === 'Comment Automation' && (
+                {/* Social Media Background Icons for DM & Comment Automation */}
+                {feature.title === 'DM & Comment Automation' && (
                   <div className="absolute inset-0 opacity-15 pointer-events-none">
                     <FaYoutube className="absolute top-4 right-4 text-red-500" size={36} />
                     <FaInstagram className="absolute top-16 right-12 text-pink-500" size={32} />
@@ -146,8 +146,8 @@ export function Features() {
                   </div>
                 )}
 
-                {/* AI Background Icons for AI Chatbot */}
-                {feature.title === 'AI Chatbot' && (
+                {/* AI Background Icons for AI Creator Sidekick */}
+                {feature.title === 'AI Creator Sidekick' && (
                   <div className="absolute inset-0 opacity-15 pointer-events-none">
                     <FaRobot className="absolute top-4 right-4 text-blue-500" size={36} />
                     <FaBrain className="absolute top-16 right-12 text-purple-500" size={32} />

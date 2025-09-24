@@ -67,7 +67,7 @@ export default function FeaturesPage() {
               { 
                 icon: FaReply, 
                 color: "text-blue-500", 
-                title: "Comment Automation", 
+                title: "DM & Comment Automation", 
                 id: "comment-automation" 
               },
               { 
@@ -79,7 +79,7 @@ export default function FeaturesPage() {
               { 
                 icon: FaBrain, 
                 color: "text-purple-500", 
-                title: "AI Chatbot", 
+                title: "AI Creator Sidekick", 
                 id: "ai-responses" 
               },
               { 
@@ -119,7 +119,7 @@ export default function FeaturesPage() {
           </motion.div>
         </motion.section>
 
-        {/* Comment Automation Section */}
+        {/* DM & Comment Automation Section */}
         <motion.section 
           id="comment-automation" 
           ref={responseRef}
@@ -153,7 +153,7 @@ export default function FeaturesPage() {
                   animate={responseInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                   transition={{ duration: 0.6, delay: responseInView ? 0.5 : 0 }}
                 >
-                  Comment Automation
+                  DM & Comment Automation
                 </motion.h2>
               </motion.div>
               <motion.p 
@@ -162,7 +162,7 @@ export default function FeaturesPage() {
                 animate={responseInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.6, delay: responseInView ? 0.5 : 0 }}
               >
-                Automate replies to Comments on your Reels/Videos on YouTube and Instagram.
+                Automate replies to DM's & Comments on your Posts, Reels and Videos on Instagram and Youtube.
               </motion.p>
               <motion.ul 
                 className="space-y-3"
@@ -196,7 +196,7 @@ export default function FeaturesPage() {
               animate={responseInView ? { opacity: 1, x: 0, scale: 1 } : { opacity: 0, x: 50, scale: 0.9 }}
               transition={{ duration: 0.8, delay: responseInView ? 0.4 : 0 }}
             >
-              {/* Comment Automation Enhanced UI Mockup */}
+              {/* DM & Comment Automation Enhanced UI Mockup */}
               <div className="w-full h-full bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-4 relative overflow-hidden border border-blue-200 shadow-lg">
                 {/* Header with logo and controls */}
                 <div className="flex items-center justify-between mb-3 border-b border-blue-100 pb-2">
@@ -544,7 +544,7 @@ export default function FeaturesPage() {
                   <h2 className="text-3xl font-bold brand-text">Social Monitoring</h2>
                 </div>
                 <p className="text-lg font-bold mb-6" style={{ color: '#17633A' }}>
-                  Keep on top of what people are saying about you on online.
+                  Keep on top of what people are saying about you on online across all of your channels.
                 </p>
                 <motion.ul 
                   className="space-y-3"
@@ -880,7 +880,7 @@ export default function FeaturesPage() {
                 animate={aiInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                {/* AI Chatbot Enhanced UI Mockup */}
+                {/* AI Creator Sidekick Enhanced UI Mockup */}
                 <div className="w-full h-full bg-gradient-to-br from-gray-50 to-purple-50 rounded-lg p-4 relative overflow-hidden border border-purple-200 shadow-lg">
                   {/* Header with logo and controls */}
                   <div className="flex items-center justify-between mb-3 border-b border-purple-100 pb-2">
@@ -1061,10 +1061,10 @@ export default function FeaturesPage() {
                   >
                     <FaBrain className="text-purple-500 h-12 w-12" />
                   </motion.div>
-                  <h2 className="text-3xl font-bold brand-text">AI Chatbot</h2>
+                  <h2 className="text-3xl font-bold brand-text">AI Creator Sidekick</h2>
                 </div>
                 <p className="text-lg font-bold mb-6" style={{ color: '#17633A' }}>
-                  AI Chatbot that understands you and your community.
+                  Your personalized AI chatbot that understands you and your community.
                 </p>
                 <motion.ul 
                   className="space-y-3"

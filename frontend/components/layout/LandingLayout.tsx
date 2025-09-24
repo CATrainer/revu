@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
 import { AccountDropdown } from './AccountDropdown';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { VideoModal } from '@/components/ui/VideoModal';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -29,6 +30,7 @@ import {
 
 export function LandingLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
   const { isAuthenticated, isLoading, checkAuth } = useAuth();
   const router = useRouter();
 
@@ -38,6 +40,19 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Top Banner */}
+      <div className="bg-green-600 text-white py-2 px-4 text-center text-sm">
+        <div className="max-w-7xl mx-auto">
+          <span className="font-medium">Repruv is Your Creator Side-Kick to Scale → </span>
+          <button 
+            onClick={() => setVideoModalOpen(true)}
+            className="underline hover:no-underline font-medium cursor-pointer bg-transparent border-none text-white"
+          >
+            Watch How We Help Creators Here!
+          </button>
+        </div>
+      </div>
+      
       {/* Navigation */}
       <nav className="nav-background shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -107,9 +122,9 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                               <div className="flex items-center justify-center mb-2">
                                 <FaReply className="text-blue-500" size={20} />
                               </div>
-                              <div className="text-sm font-medium leading-none">Comment Automation</div>
+                              <div className="text-sm font-medium leading-none">DM & Comment Automation</div>
                               <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
-                                Automate replies to comments
+                                Automate replies to DM's & Comments
                               </p>
                             </Link>
                           </NavigationMenuLink>
@@ -133,9 +148,9 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                               <div className="flex items-center justify-center mb-2">
                                 <FaBrain className="text-purple-500" size={20} />
                               </div>
-                              <div className="text-sm font-medium leading-none">AI Chatbot</div>
+                              <div className="text-sm font-medium leading-none">AI Creator Sidekick</div>
                               <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
-                                Custom AI that knows your content
+                                Your personalized AI chatbot
                               </p>
                             </Link>
                           </NavigationMenuLink>
@@ -279,6 +294,14 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
       <div className="border-t border-[var(--border)]">
         <Footer />
       </div>
+      
+      {/* Video Modal */}
+      <VideoModal 
+        videoId="Vzg3Ltsmmw4"
+        isOpen={videoModalOpen}
+        onClose={() => setVideoModalOpen(false)}
+        isShort={false}
+      />
     </div>
   );
 }

@@ -14,9 +14,9 @@ interface Section {
 const allSections = {
   features: [
     { id: 'hero', name: 'Overview' },
-    { id: 'comment-automation', name: 'Comment Automation' },
+    { id: 'comment-automation', name: 'DM & Comment Automation' },
     { id: 'social-monitoring', name: 'Social Monitoring' },
-    { id: 'ai-responses', name: 'AI Chatbot' },
+    { id: 'ai-responses', name: 'AI Creator Sidekick' },
     { id: 'analytics-and-reports', name: 'Analytics & Reports' },
     { id: 'upcoming-features', name: 'Upcoming Features' }
   ],

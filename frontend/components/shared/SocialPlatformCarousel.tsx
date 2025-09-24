@@ -72,8 +72,9 @@ const SocialPlatformCarousel = () => {
     }
   ];
 
-  // Create repeated platforms for seamless loop
+  // Create seamless infinite loop
   const allPlatforms = [...supportedPlatforms, ...comingSoonPlatforms];
+  // Triple the platforms for seamless infinite scrolling
   const extendedPlatforms = [...allPlatforms, ...allPlatforms, ...allPlatforms];
 
   return (
@@ -84,12 +85,16 @@ const SocialPlatformCarousel = () => {
           <motion.div
             className="flex space-x-6"
             animate={{
-              x: [0, -300]
+              x: [0, `-${allPlatforms.length * 180}px`]
             }}
             transition={{
-              duration: 8,
+              duration: 20,
               repeat: Infinity,
-              ease: "linear"
+              ease: "linear",
+              repeatType: "loop"
+            }}
+            style={{
+              willChange: 'transform'
             }}
           >
             {extendedPlatforms.map((platform, index) => (
