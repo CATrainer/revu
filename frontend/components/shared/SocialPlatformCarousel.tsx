@@ -38,7 +38,7 @@ const SocialPlatformCarousel = () => {
       name: 'TikTok', 
       status: 'coming-soon',
       icon: (
-        <svg viewBox="0 0 24 24" className="w-6 h-6 fill-black">
+        <svg viewBox="0 0 24 24" className="w-6 h-6 fill-black dark:fill-white">
           <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-.88-.05A6.33 6.33 0 0 0 5.16 20.5a6.33 6.33 0 0 0 10.14-5.09V8.76a8.23 8.23 0 0 0 4.65 1.46V6.69h-.36Z"/>
         </svg>
       )
@@ -81,7 +81,7 @@ const SocialPlatformCarousel = () => {
     <div className="w-full max-w-4xl mx-auto">
       <div className="mb-2">
         {/* Conveyor Belt Container */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-gray-50 via-white to-gray-50 rounded-2xl p-4 shadow-lg border border-gray-200">
+        <div className="relative overflow-hidden bg-gradient-to-r from-gray-50 via-white to-gray-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 rounded-2xl p-4 shadow-lg border border-gray-200 dark:border-gray-600">
           <motion.div
             className="flex space-x-6"
             animate={{
@@ -102,8 +102,8 @@ const SocialPlatformCarousel = () => {
                 key={`${platform.name}-${index}`}
                 className={`flex items-center space-x-3 px-4 py-2 rounded-xl min-w-max shadow-md ${
                   platform.status === 'supported' 
-                    ? 'bg-green-100 border-2 border-green-200' 
-                    : 'bg-yellow-100 border-2 border-yellow-200'
+                    ? 'bg-green-100 dark:bg-green-900/40 border-2 border-green-200 dark:border-green-700' 
+                    : 'bg-yellow-100 dark:bg-yellow-900/40 border-2 border-yellow-200 dark:border-yellow-700'
                 }`}
                 whileHover={{ scale: 1.05, y: -2 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -119,7 +119,7 @@ const SocialPlatformCarousel = () => {
                   {platform.name}
                 </span>
                 {platform.status === 'coming-soon' && (
-                  <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full font-medium">
+                  <span className="text-xs bg-yellow-200 dark:bg-yellow-800/60 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-full font-medium">
                     Coming Soon
                   </span>
                 )}
@@ -128,8 +128,8 @@ const SocialPlatformCarousel = () => {
           </motion.div>
           
           {/* Gradient Overlay for smooth edges */}
-          <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-gray-50 to-transparent pointer-events-none"></div>
-          <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none"></div>
+          <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-transparent pointer-events-none"></div>
+          <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-gray-50 dark:from-gray-800 to-transparent pointer-events-none"></div>
         </div>
       </div>
     </div>

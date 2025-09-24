@@ -10,7 +10,7 @@ import { signupSchema, type SignupFormData } from '@/lib/validations/auth';
 import { FormInput } from '@/components/ui/form-input';
 import { LoadingButton } from '@/components/ui/loading-button';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AxiosError } from 'axios';

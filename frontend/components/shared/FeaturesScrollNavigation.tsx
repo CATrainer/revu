@@ -34,14 +34,12 @@ export function FeaturesScrollNavigation() {
   const [currentSection, setCurrentSection] = useState(0);
   const [isAtEnd, setIsAtEnd] = useState(false);
   const [activeSections, setActiveSections] = useState<Section[]>(sections);
-  const [pageType, setPageType] = useState<'features' | 'landing'>('features');
 
   useEffect(() => {
     // Detect the current page based on the URL
     const path = window.location.pathname;
     const isFeaturePage = path.includes('features');
     const currentPageType = isFeaturePage ? 'features' : 'landing';
-    setPageType(currentPageType);
     setActiveSections(allSections[currentPageType]);
   }, []);
 

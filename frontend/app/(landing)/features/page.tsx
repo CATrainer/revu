@@ -162,7 +162,7 @@ export default function FeaturesPage() {
                 animate={responseInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.6, delay: responseInView ? 0.5 : 0 }}
               >
-                Automate replies to DM's & Comments on your Posts, Reels and Videos on Instagram and Youtube.
+                Automate replies to DM&apos;s & Comments on your Posts, Reels and Videos on Instagram and Youtube.
               </motion.p>
               <motion.ul 
                 className="space-y-3"

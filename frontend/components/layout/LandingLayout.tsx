@@ -124,7 +124,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                               </div>
                               <div className="text-sm font-medium leading-none">DM & Comment Automation</div>
                               <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
-                                Automate replies to DM's & Comments
+                                Automate replies to DM&apos;s & Comments
                               </p>
                             </Link>
                           </NavigationMenuLink>
