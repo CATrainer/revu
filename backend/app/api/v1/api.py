@@ -26,6 +26,7 @@ from app.api.v1.endpoints import (
     chat,
 )
 from app.api.v1.endpoints import workflows as workflows_endpoints
+from app.api.v1.endpoints import marketing_admin
 
 # Create the main API router
 api_router = APIRouter()
@@ -35,6 +36,12 @@ api_router.include_router(
     admin.router,
     prefix="/admin",
     tags=["admin"],
+)
+
+api_router.include_router(
+    marketing_admin.router,
+    prefix="/admin",
+    tags=["admin","marketing"],
 )
 
 api_router.include_router(

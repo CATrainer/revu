@@ -18,6 +18,7 @@ from app.core.security import get_current_active_user, get_password_hash
 from app.models.user import User
 from app.schemas.user import UserUpdate, User as UserSchema, UserAccessUpdate, WaitlistJoin, WaitlistAccountCreate, DemoRequest, AdminNotes
 from app.tasks.email import send_welcome_email
+from app.tasks.marketing import sync_contact
 from app.schemas.membership import MembershipResponse
 
 router = APIRouter()
@@ -71,6 +72,11 @@ async def join_waitlist(
         # Fire-and-forget welcome email for new waitlist user
         try:
             send_welcome_email.delay(new_user.email, getattr(new_user, "full_name", None))
+            # Also sync this contact to SendGrid Marketing
+            try:
+                sync_contact.delay(new_user.email)
+            except Exception:
+                pass
         except Exception as e:
             # Do not fail request if email queueing fails
             from loguru import logger

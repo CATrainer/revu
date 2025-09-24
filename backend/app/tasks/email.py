@@ -108,13 +108,15 @@ async def _get_waitlist_position(email: str, offset: int = 55) -> int:
                 )
             )
             count_before_or_equal = int(count_res.scalar() or 0)
-            return offset + count_before_or_equal
+            # First user gets exactly `offset`, so subtract 1 from rank
+            return offset + max(count_before_or_equal - 1, 0)
 
         total_res = await session.execute(
             select(func.count()).where(User.access_status.in_(waiting_status))
         )
         total_waiting = int(total_res.scalar() or 0)
-        return offset + total_waiting + 1
+        # If not found, place at end (no +1 so first rank maps to offset)
+        return offset + total_waiting
 
 
 @celery_app.task(name="app.tasks.email.send_welcome_email")

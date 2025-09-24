@@ -13,7 +13,7 @@ case "${ROLE}" in
     ;;
   worker)
     # Celery worker subscribing to all configured queues
-    exec celery -A app.core.celery worker --loglevel=info -Q default,reviews,analytics,email,automation
+    exec celery -A app.core.celery worker --loglevel=info -Q default,reviews,analytics,email,automation,marketing
     ;;
   beat)
     # Celery beat (scheduler)

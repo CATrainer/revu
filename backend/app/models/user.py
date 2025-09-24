@@ -50,6 +50,14 @@ class User(Base):
     demo_completed = Column(Boolean, default=False, nullable=False)
     demo_completed_at = Column(DateTime(timezone=True))
     
+    # Marketing preferences & deliverability tracking
+    marketing_opt_in = Column(Boolean, default=True, nullable=False)
+    marketing_opt_in_at = Column(DateTime(timezone=True))
+    marketing_unsubscribed_at = Column(DateTime(timezone=True))
+    marketing_bounced_at = Column(DateTime(timezone=True))
+    marketing_last_event = Column(String(32))
+    marketing_last_event_at = Column(DateTime(timezone=True))
+    
     # Demo-specific information
     company_size = Column(String(50))
     current_solution = Column(String(255))
