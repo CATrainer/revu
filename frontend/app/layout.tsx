@@ -7,7 +7,7 @@ import HelpProvider from '@/components/help/HelpProvider';
 
 export const metadata: Metadata = {
 
-  title: 'Repruv - Social Media Intelligence Platform',
+  title: 'Repruv - Your Creator Side-Kick to Scale',
 
   description: 'Manage reviews, monitor competitors, and grow your reputation with AI-powered insights',
 };

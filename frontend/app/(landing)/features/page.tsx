@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { motion, LazyMotion, domAnimation, useInView } from 'framer-motion';
-import { FeaturesScrollNavigation } from '@/components/shared/FeaturesScrollNavigation';
 import { 
 } from 'lucide-react';
 import { 
@@ -1200,9 +1199,6 @@ export default function FeaturesPage() {
           </div>
         </motion.section>
     </div>
-    
-    {/* Features Scroll Navigation */}
-    <FeaturesScrollNavigation />
   </LazyMotion>
 );
 }

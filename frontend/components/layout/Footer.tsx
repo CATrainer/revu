@@ -27,7 +27,7 @@ export function Footer() {
             </Link>
             <p className="text-sm text-[var(--muted-foreground)] max-w-xs">
 
-              Your AI-Powered Creator Assistant.
+              Your Creator Side-Kick to Scale.
             </p>
           </div>
           
