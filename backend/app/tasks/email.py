@@ -6,6 +6,11 @@ from typing import Dict, List
 from celery import shared_task
 from loguru import logger
 
+import asyncio
+from sqlalchemy import select, func
+
+from app.core.database import async_session_maker
+from app.models.user import User
 from app.core.celery import celery_app
 from app.core.config import settings
 
@@ -75,6 +80,43 @@ def send_email(
         return False
 
 
+async def _get_waitlist_position(email: str, offset: int = 55) -> int:
+    """
+    Compute the user's waitlist position with a starting offset.
+
+    Position logic:
+    - Rank by (joined_waiting_list_at or created_at) ascending among users with
+      access_status in ("waiting", "waiting_list").
+    - Return offset + rank (1-based). If user not found, place at end + 1.
+    """
+    async with async_session_maker() as session:
+        res = await session.execute(select(User).where(User.email == email))
+        me = res.scalar_one_or_none()
+
+        waiting_status = ("waiting", "waiting_list")
+
+        if me is not None:
+            anchor = me.joined_waiting_list_at or me.created_at
+        else:
+            anchor = None
+
+        if anchor is not None:
+            count_res = await session.execute(
+                select(func.count()).where(
+                    User.access_status.in_(waiting_status),
+                    func.coalesce(User.joined_waiting_list_at, User.created_at) <= anchor,
+                )
+            )
+            count_before_or_equal = int(count_res.scalar() or 0)
+            return offset + count_before_or_equal
+
+        total_res = await session.execute(
+            select(func.count()).where(User.access_status.in_(waiting_status))
+        )
+        total_waiting = int(total_res.scalar() or 0)
+        return offset + total_waiting + 1
+
+
 @celery_app.task(name="app.tasks.email.send_welcome_email")
 def send_welcome_email(user_email: str, user_name: str | None = None) -> bool:
     """
@@ -89,6 +131,19 @@ def send_welcome_email(user_email: str, user_name: str | None = None) -> bool:
         bool: Success status
     """
     # If a SendGrid template is provided, use it
+    # Compute waitlist position (with base offset 55)
+    try:
+        try:
+            pos = asyncio.get_event_loop().run_until_complete(
+                _get_waitlist_position(user_email, 55)
+            )
+        except RuntimeError:
+            # If no running loop, use asyncio.run
+            pos = asyncio.run(_get_waitlist_position(user_email, 55))
+    except Exception:
+        # On any error, fall back to base offset
+        pos = 55
+
     if getattr(settings, "SENDGRID_API_KEY", None) and getattr(settings, "SENDGRID_WELCOME_TEMPLATE_ID", None):
         try:
             from sendgrid import SendGridAPIClient
@@ -104,6 +159,7 @@ def send_welcome_email(user_email: str, user_name: str | None = None) -> bool:
                 # "first_name": user_name or "",
                 "support_url": f"{settings.FRONTEND_URL}/help",
                 "site_url": settings.FRONTEND_URL,
+                "waitlist_position": pos,
             }
 
             sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
@@ -114,16 +170,14 @@ def send_welcome_email(user_email: str, user_name: str | None = None) -> bool:
             logger.error(f"SendGrid welcome send failed for {user_email}: {e}")
             # Fallback to raw HTML
 
-    subject = "Welcome to Repruv"
+    subject = "You're in — Welcome to Repruv 🎉"
     html_content = f"""
     <!doctype html>
     <html><body style=\"font-family:Arial,Helvetica,sans-serif; background:#f5f7fb; padding:24px;\">
     <div style=\"max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;padding:24px;\">
       <h1 style=\"margin:0 0 8px;color:#0f172a;font-weight:800;font-size:22px;\">Welcome to Repruv</h1>
-      <p style=\"margin:0 0 16px;color:#334155;font-size:14px;line-height:22px;\">Thanks for joining. We’ll email you as soon as early access opens. In the meantime, you can learn more about what’s coming.</p>
-      <div style=\"margin:20px 0;\">
-        <a href=\"{settings.FRONTEND_URL}/pricing#faq-section\" style=\"background:#16a34a;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:700;display:inline-block;\">View FAQs</a>
-      </div>
+      <p style=\"margin:0 0 16px;color:#334155;font-size:14px;line-height:22px;\">Thanks for joining! We’ll email you as soon as early access opens.</p>
+      <p style=\"margin:0 0 16px;color:#334155;font-size:14px;line-height:22px;\">You're number <strong>{pos}</strong> on our waiting list.</p>
       <p style=\"margin:8px 0 0;color:#64748b;font-size:12px;\">Need help? Reply to this email or visit our <a href=\"{settings.FRONTEND_URL}/help\" style=\"color:#16a34a;\">Help Center</a>.</p>
     </div>
     <p style=\"text-align:center;color:#94a3b8;font-size:12px;\"> Repruv</p>
