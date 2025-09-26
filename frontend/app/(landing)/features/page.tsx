@@ -44,16 +44,8 @@ export default function FeaturesPage() {
             animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.6, delay: heroInView ? 0.2 : 0 }}
           >
-            Everything You Need to Manage Community Engagement Like a Pro
+            Your Creator Side-Kick Tools to Boost Engagement, Growth & Monetisation
           </motion.h1>
-          <motion.p 
-            className="text-xl text-primary-dark font-bold mb-12 max-w-3xl mx-auto"
-            initial={{ opacity: 0, y: 20 }}
-            animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.6, delay: heroInView ? 0.4 : 0 }}
-          >
-            From multi-platform comment management to AI-powered insights, discover all the features that make Repruv the ultimate Community Engagement platform
-          </motion.p>
 
           {/* Quick Feature Navigation */}
           <motion.div 
@@ -122,7 +114,7 @@ export default function FeaturesPage() {
         <motion.section 
           id="comment-automation" 
           ref={responseRef}
-          className="theme-response max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 mb-32"
+          className="theme-response max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 mb-16"
           initial={{ opacity: 0, y: 50 }}
           animate={responseInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
           transition={{ duration: 0.8 }}
@@ -156,12 +148,13 @@ export default function FeaturesPage() {
                 </motion.h2>
               </motion.div>
               <motion.p 
-                className="text-lg text-primary-dark font-bold mb-6"
+                className="text-lg font-bold mb-6"
+                style={{ color: '#17633A' }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={responseInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.6, delay: responseInView ? 0.5 : 0 }}
               >
-                Automate replies to DM&apos;s & Comments on your Posts, Reels and Videos on Instagram and Youtube.
+                Create automation workflows to help you better respond to DM&apos;s and Comments from all your Posts, Reels and Videos on Instagram and Youtube.
               </motion.p>
               <motion.ul 
                 className="space-y-3"
@@ -170,11 +163,11 @@ export default function FeaturesPage() {
                 transition={{ duration: 0.6, delay: responseInView ? 0.6 : 0 }}
               >
                   {[
-                    'View all comments from YouTube and Instagram in our dashboard.',
-                    'Manual response to any comments.',
-                    'Define rules for Repruv AI to follow and respond autonomously on your behalf.',
+                    'View all comments and DMs in the dashboard',
+                    'Send manual responses or automated responses',
+                    'Create automation workflows that can use templates or ai to respond on your behalf',
                     'Built in approval system for responses that need your attention',
-                    'Automated comment moderation.'
+                    'Automated comment moderation'
                   ].map((item, index) => (
                     <motion.li 
                       key={index}
@@ -330,7 +323,7 @@ export default function FeaturesPage() {
         <motion.section 
           id="social-monitoring" 
           ref={socialRef}
-          className="theme-social section-background-alt py-32 mb-32"
+          className="theme-social section-background-alt py-20 mb-16"
           initial={{ opacity: 0, y: 50 }}
           animate={socialInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
           transition={{ duration: 0.8 }}
@@ -543,7 +536,7 @@ export default function FeaturesPage() {
                   <h2 className="text-3xl font-bold brand-text">Social Monitoring</h2>
                 </div>
                 <p className="text-lg font-bold mb-6" style={{ color: '#17633A' }}>
-                  Keep on top of what people are saying about you on online across all of your channels.
+                  Connect your socials and keep ontop of what people are saying about you.
                 </p>
                 <motion.ul 
                   className="space-y-3"
@@ -552,10 +545,8 @@ export default function FeaturesPage() {
                   transition={{ duration: 0.6, delay: 0.8 }}
                 >
                   {[
-                    'Real-time sentiment analysis and alerts',
-                    'Hashtag and keyword tracking across platforms',
-                    '@ mention identification and notifications',
-                    'Automated threat and opportunity detection'
+                    'All mentions are automatically classified so you can filter them',
+                    'Real-time sentiment analysis and alerts'
                   ].map((item, index) => (
                     <motion.li 
                       key={index}
@@ -578,7 +569,7 @@ export default function FeaturesPage() {
         <motion.section 
           id="analytics-and-reports" 
           ref={analyticsRef}
-          className="theme-analytics max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 mb-32"
+          className="theme-analytics max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 mb-16"
           initial={{ opacity: 0, y: 50 }}
           animate={analyticsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
           transition={{ duration: 0.8 }}
@@ -866,7 +857,7 @@ export default function FeaturesPage() {
         <motion.section 
           id="ai-responses" 
           ref={aiRef}
-          className="theme-ai max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 mb-32"
+          className="theme-ai max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 mb-16"
           initial={{ opacity: 0, y: 50 }}
           animate={aiInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
           transition={{ duration: 0.8 }}
@@ -1063,7 +1054,7 @@ export default function FeaturesPage() {
                   <h2 className="text-3xl font-bold brand-text">AI Creator Sidekick</h2>
                 </div>
                 <p className="text-lg font-bold mb-6" style={{ color: '#17633A' }}>
-                  Your personalized AI chatbot that understands you and your community.
+                  Your custom AI chatbot that can give you insights about your content and your community.
                 </p>
                 <motion.ul 
                   className="space-y-3"
@@ -1072,10 +1063,9 @@ export default function FeaturesPage() {
                   transition={{ duration: 0.6, delay: 0.8 }}
                 >
                   {[
-                    'Works like any AI, you can ask it anything.',
-                    'Answers questions about your content, such as "What was my most popular reel last month?"',
-                    'Assists you in the creative process.',
-                    'Helps you to monetise your online presence.'
+                    'Powered by GPT-5 and Claude 4.1 this powerful chatbot can answer any question you throw at it',
+                    'Has the added advantage of access to data on your content and audience',
+                    'Ask it for insights on your data or use it to generate your next viral idea'
                   ].map((item, index) => (
                     <motion.li 
                       key={index}
@@ -1134,24 +1124,24 @@ export default function FeaturesPage() {
               <div className="flex justify-between items-center relative">
                 {[
                   {
-                    title: "DM Automation",
-                    description: "AI assistant that manages your DMs for you",
-                    date: "Sep 20th",
-                    icon: "💬",
+                    title: "Platform Launch",
+                    description: "Official launch of Repruv platform with full features",
+                    date: "Oct 6th",
+                    icon: "??",
                     delay: 0.8
                   },
                   {
-                    title: "TikTok Integration",
-                    description: "Existing comment and DM features expanded to TikTok",
-                    date: "Oct 15th",
+                    title: "TikTok Support",
+                    description: "TikTok support for DM's, Comments and @ Mentions",
+                    date: "Oct 13th",
                     icon: "🎵",
                     delay: 1.0
                   },
                   {
-                    title: "Ideas Engine",
-                    description: "AI assistant that helps you generate new content ideas",
-                    date: "Nov 1st",
-                    icon: "💡",
+                    title: "LinkedIn Support",
+                    description: "LinkedIn support for DM's, Comments and @ Mentions",
+                    date: "Oct 20th",
+                    icon: "??",
                     delay: 1.2
                   }
                 ].map((feature, index) => (
