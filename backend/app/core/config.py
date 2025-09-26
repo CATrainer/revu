@@ -162,6 +162,8 @@ class Settings(BaseSettings):
 
     # Planned launch date (YYYY-MM-DD) used to populate contact field for segments
     PLANNED_LAUNCH_DATE: Optional[str] = None
+    # Optional precise launch timestamp (ISO8601, e.g., 2025-10-08T09:00:00Z). If not set, defaults to PLANNED_LAUNCH_DATE at 09:00:00Z
+    PLANNED_LAUNCH_AT: Optional[str] = None
 
     # SendGrid ASM group for waitlist marketing emails (enables one-click unsubscribe)
     SENDGRID_ASM_GROUP_ID_WAITLIST: Optional[int] = None

@@ -306,6 +306,171 @@ async def _get_user_waitlist_position(session, user: User, offset: int = 55) -> 
     return 55 + max(count_before_or_equal - 1, 0)
 
 
+def _parse_launch_at() -> datetime:
+    """Parse planned launch timestamp.
+
+    Order of precedence:
+    - settings.PLANNED_LAUNCH_AT (ISO8601 string, e.g., 2025-10-08T09:00:00Z)
+    - settings.PLANNED_LAUNCH_DATE at 09:00:00Z
+    - default: today at 09:00:00Z (avoids crashes)
+    """
+    iso = getattr(settings, "PLANNED_LAUNCH_AT", None)
+    if iso:
+        try:
+            # Accept trailing Z or offset-less; always treat as UTC
+            s = iso.replace("Z", "+00:00")
+            dt = datetime.fromisoformat(s)
+            if dt.tzinfo is None:
+                # Assume UTC if no tzinfo
+                from datetime import timezone as dt_tz
+                dt = dt.replace(tzinfo=dt_tz.utc)
+            return dt.astimezone(tz=None).astimezone(tz=None).astimezone()  # normalize
+        except Exception:
+            pass
+    date_str = getattr(settings, "PLANNED_LAUNCH_DATE", None)
+    if date_str:
+        try:
+            from datetime import timezone as dt_tz
+            d = datetime.strptime(date_str, "%Y-%m-%d").date()
+            return datetime(d.year, d.month, d.day, 9, 0, 0, tzinfo=dt_tz.utc)
+        except Exception:
+            pass
+    # Fallback: today 09:00Z
+    from datetime import timezone as dt_tz
+    today = datetime.utcnow().date()
+    return datetime(today.year, today.month, today.day, 9, 0, 0, tzinfo=dt_tz.utc)
+
+
+def _first_countdown_email_html(launch_date_str: str, waitlist_position: int | None) -> tuple[str, str]:
+    site_url = settings.FRONTEND_URL
+    support_url = f"{settings.FRONTEND_URL}/help"
+    pos_html = (
+        f"You’re number <strong>{waitlist_position}</strong> on our list." if waitlist_position else ""
+    )
+    subject = "You’re on the list — launch is coming"
+    body = f"""
+    <!doctype html>
+    <html><body style=\"font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:24px;\">
+      <div style=\"max-width:600px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;\">
+        <h1 style=\"margin:0 0 8px;color:#0f172a;font-weight:800;font-size:22px;\">Thanks for joining the waitlist</h1>
+        <p style=\"margin:0 0 12px;color:#334155;font-size:14px;line-height:22px;\">{pos_html}</p>
+        <p style=\"margin:0 0 16px;color:#334155;font-size:14px;line-height:22px;\">We’re launching on <strong>{launch_date_str}</strong>. We’ll email you 24 hours before launch and again when early access opens.</p>
+        <a href=\"{site_url}\" style=\"background:#16a34a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;display:inline-block;\">See what’s coming</a>
+        <p style=\"margin:12px 0 0;color:#64748b;font-size:12px;\">Questions? <a href=\"{support_url}\" style=\"color:#16a34a;\">Help Center</a>.</p>
+        {_marketing_footer_html()}
+      </div>
+      <p style=\"text-align:center;color:#94a3b8;font-size:12px;\">© Repruv</p>
+    </body></html>
+    """
+    return subject, body
+
+
+async def _send_join_plus_24h_batch(ignore_join_delay: bool, now_utc: datetime, launch_at_utc: datetime) -> dict:
+    sent = 0
+    failed = 0
+    async with async_session_maker() as session:
+        # Only while >48h to launch
+        if not (now_utc <= launch_at_utc - timedelta(hours=48)):
+            return {"sent": 0, "failed": 0, "skipped_reason": ">=48h_condition_not_met"}
+
+        q = select(User).where(
+            User.access_status.in_(["waiting", "waiting_list"]),
+            User.marketing_unsubscribed_at.is_(None),
+            User.marketing_bounced_at.is_(None),
+            User.countdown_t14_sent_at.is_(None),  # reuse as first email marker
+        ).order_by(User.joined_waiting_list_at.asc(), User.created_at.asc())
+
+        res = await session.execute(q)
+        users = list(res.scalars())
+        for u in users:
+            try:
+                join_ts = u.joined_waiting_list_at or u.created_at
+                if not ignore_join_delay and join_ts:
+                    if now_utc < (join_ts + timedelta(hours=24)):
+                        continue
+                # Compose and send
+                pos = await _get_user_waitlist_position(session, u)
+                subject, html = _first_countdown_email_html(launch_at_utc.date().isoformat(), pos)
+                ok = send_email(u.email, subject, html, asm_group_id=getattr(settings, "SENDGRID_ASM_GROUP_ID_WAITLIST", None))
+                if ok:
+                    u.countdown_t14_sent_at = datetime.utcnow()
+                    await session.commit()
+                    sent += 1
+                else:
+                    failed += 1
+            except Exception as e:  # noqa: BLE001
+                logger.error("Join+24h send failed for {}: {}", u.email, e)
+                failed += 1
+    return {"sent": sent, "failed": failed}
+
+
+async def _send_prelaunch_24h_batch(now_utc: datetime, launch_at_utc: datetime) -> dict:
+    # Only in the 24h window before launch
+    if not (launch_at_utc - timedelta(hours=24) <= now_utc < launch_at_utc):
+        return {"sent": 0, "failed": 0, "skipped_reason": "outside_24h_window"}
+    sent = 0
+    failed = 0
+    async with async_session_maker() as session:
+        q = select(User).where(
+            User.access_status.in_(["waiting", "waiting_list"]),
+            User.marketing_unsubscribed_at.is_(None),
+            User.marketing_bounced_at.is_(None),
+            User.countdown_t1_sent_at.is_(None),  # use as prelaunch marker
+        ).order_by(User.joined_waiting_list_at.asc(), User.created_at.asc())
+        res = await session.execute(q)
+        users = list(res.scalars())
+        for u in users:
+            try:
+                pos = await _get_user_waitlist_position(session, u)
+                subject, html = _countdown_email_html(1, pos)
+                ok = send_email(u.email, subject, html, asm_group_id=getattr(settings, "SENDGRID_ASM_GROUP_ID_WAITLIST", None))
+                if ok:
+                    u.countdown_t1_sent_at = datetime.utcnow()
+                    await session.commit()
+                    sent += 1
+                else:
+                    failed += 1
+            except Exception as e:  # noqa: BLE001
+                logger.error("Prelaunch-24h send failed for {}: {}", u.email, e)
+                failed += 1
+    return {"sent": sent, "failed": failed}
+
+
+async def _send_launch_batch(now_utc: datetime, launch_at_utc: datetime) -> dict:
+    # Only on/after launch
+    if now_utc < launch_at_utc:
+        return {"sent": 0, "failed": 0, "skipped_reason": "before_launch"}
+    sent = 0
+    failed = 0
+    async with async_session_maker() as session:
+        q = select(User).where(
+            User.access_status.in_(["waiting", "waiting_list"]),
+            User.marketing_bounced_at.is_(None),
+            User.launch_sent_at.is_(None),
+        ).order_by(User.joined_waiting_list_at.asc(), User.created_at.asc())
+        res = await session.execute(q)
+        users = list(res.scalars())
+        for u in users:
+            try:
+                pos = await _get_user_waitlist_position(session, u)
+                subject, html = _launch_email_html(pos)
+                ok = send_email(u.email, subject, html, asm_group_id=getattr(settings, "SENDGRID_ASM_GROUP_ID_WAITLIST", None))
+                if ok:
+                    # Grant access immediately
+                    u.access_status = "full"
+                    if not u.early_access_granted_at:
+                        u.early_access_granted_at = datetime.utcnow()
+                    u.launch_sent_at = datetime.utcnow()
+                    await session.commit()
+                    sent += 1
+                else:
+                    failed += 1
+            except Exception as e:  # noqa: BLE001
+                logger.error("Launch send failed for {}: {}", u.email, e)
+                failed += 1
+    return {"sent": sent, "failed": failed}
+
+
 async def _send_waitlist_batch(kind: str) -> dict:
     """Send countdown or launch emails to opted-in waiting list users.
 
@@ -369,40 +534,59 @@ async def _send_waitlist_batch(kind: str) -> dict:
         return {"sent": sent, "skipped": skipped, "failed": failures}
 
 
-@celery_app.task(name="app.tasks.email.send_waitlist_countdown_daily")
-def send_waitlist_countdown_daily() -> dict:
-    """Daily scheduler that sends T-14, T-7, T-1, or Launch emails based on PLANNED_LAUNCH_DATE.
-
-    Runs once per day via Celery Beat.
+@celery_app.task(name="app.tasks.email.send_waitlist_campaign_hourly")
+def send_waitlist_campaign_hourly() -> dict:
+    """Hourly scheduler that manages:
+    - Join+24h email (only when >48h to launch)
+    - 24h prelaunch email
+    - Launch email with access upgrade
     """
-    planned = getattr(settings, "PLANNED_LAUNCH_DATE", None)
-    if not planned:
-        logger.info("PLANNED_LAUNCH_DATE not set; skipping countdown scheduler")
-        return {"status": "skipped", "reason": "no_planned_date"}
-    try:
-        target = datetime.strptime(planned, "%Y-%m-%d").date()
-    except Exception:
-        logger.warning("Invalid PLANNED_LAUNCH_DATE format; expected YYYY-MM-DD")
-        return {"status": "skipped", "reason": "bad_date"}
-
-    today = datetime.utcnow().date()
-    delta = (target - today).days
-    logger.info(f"Countdown scheduler: days_to_launch={delta}")
+    launch_at = _parse_launch_at()
+    now_utc = datetime.utcnow().replace(tzinfo=None)
 
     import asyncio
-    if delta in (14, 7, 1):
-        kind = {14: "t14", 7: "t7", 1: "t1"}[delta]
+    results = {"first": None, "prelaunch": None, "launch": None}
+    try:
+        results["first"] = asyncio.get_event_loop().run_until_complete(
+            _send_join_plus_24h_batch(False, now_utc, launch_at.replace(tzinfo=None))
+        )
+    except RuntimeError:
+        results["first"] = asyncio.run(_send_join_plus_24h_batch(False, now_utc, launch_at.replace(tzinfo=None)))
+
+    # Prelaunch only in window strictly before launch
+    if now_utc < launch_at.replace(tzinfo=None):
         try:
-            return asyncio.get_event_loop().run_until_complete(_send_waitlist_batch(kind))
+            results["prelaunch"] = asyncio.get_event_loop().run_until_complete(
+                _send_prelaunch_24h_batch(now_utc, launch_at.replace(tzinfo=None))
+            )
         except RuntimeError:
-            return asyncio.run(_send_waitlist_batch(kind))
-    elif delta == 0:
+            results["prelaunch"] = asyncio.run(_send_prelaunch_24h_batch(now_utc, launch_at.replace(tzinfo=None)))
+
+    # Launch on/after the launch instant
+    if now_utc >= launch_at.replace(tzinfo=None):
         try:
-            return asyncio.get_event_loop().run_until_complete(_send_waitlist_batch("launch"))
+            results["launch"] = asyncio.get_event_loop().run_until_complete(
+                _send_launch_batch(now_utc, launch_at.replace(tzinfo=None))
+            )
         except RuntimeError:
-            return asyncio.run(_send_waitlist_batch("launch"))
-    else:
-        return {"status": "noop", "days_to_launch": delta}
+            results["launch"] = asyncio.run(_send_launch_batch(now_utc, launch_at.replace(tzinfo=None)))
+
+    logger.info(f"waitlist_campaign_hourly results: {results}")
+    return results
+
+
+@celery_app.task(name="app.tasks.email.kickoff_waitlist_first_email")
+def kickoff_waitlist_first_email() -> dict:
+    """Backfill the first waitlist email to everyone currently waiting, ignoring the join+24h rule, but only if >48h to launch."""
+    launch_at = _parse_launch_at()
+    now_utc = datetime.utcnow().replace(tzinfo=None)
+    import asyncio
+    try:
+        return asyncio.get_event_loop().run_until_complete(
+            _send_join_plus_24h_batch(True, now_utc, launch_at.replace(tzinfo=None))
+        )
+    except RuntimeError:
+        return asyncio.run(_send_join_plus_24h_batch(True, now_utc, launch_at.replace(tzinfo=None)))
 
 
 @celery_app.task(name="app.tasks.email.check_trial_expirations")
