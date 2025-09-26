@@ -23,11 +23,11 @@ export function SocialProof() {
       isShort: false,
       content: {
         text: [
-          "At Repruv, we believe every creator deserves authentic engagement without the time drain. In today's digital world, comments and messages shape your community — managing them shouldn't consume your creativity.",
-          "Repruv empowers creators to automate responses to comments and direct messages across TikTok, YouTube, and Instagram, using AI that sounds like you. Transform engagement into growth while staying true to your voice."
+          "At Repruv, we believe creators deserve more than just tools — they deserve a strategic partner for sustainable growth. Our philosophy goes beyond automation; we're building the infrastructure for creator economy success through intelligent engagement, audience insights, and monetization optimization.",
+          "We empower creators to transform their passion into profitable businesses by automating meaningful interactions, identifying growth opportunities, and maximizing revenue streams across TikTok, YouTube, and Instagram. Your creativity drives content, our AI drives your business growth."
         ],
-        quote: "Your responses, automated intelligently. Your voice, amplified authentically.",
-        attribution: "— The Repruv Team"
+        quote: "Where authentic engagement meets strategic growth and enhanced monetization.",
+        attribution: "— The Repruv Vision"
       }
     },
     {
@@ -38,14 +38,14 @@ export function SocialProof() {
       isShort: true,
       content: {
         bullets: [
-          "Save 10+ hrs/week responding to comments & DMs with AI.",
-          "Protect your personal brand reputation across all platforms.",
-          "Spot negative feedback instantly with real-time alerts.",
-          "Build stronger engagement = up to 3x more loyal followers.",
-          "One dashboard to handle YouTube, TikTok, Instagram responses & more."
+          "Reclaim 15+ hours weekly by automating comment & DM responses with your authentic voice.",
+          "Turn engagement into revenue with AI-powered audience insights and monetization opportunities.",
+          "Protect and enhance your brand reputation with intelligent response management across all platforms.",
+          "Build 3x stronger community connections through consistent, personalized interactions.",
+          "Scale your creator business with unified TikTok, YouTube, Instagram management from one dashboard."
         ],
-        quote: "Grow your audience authentically while staying true to your voice.",
-        attribution: "— Built for Creators"
+        quote: "Transform your passion into profit while maintaining authentic connections.",
+        attribution: "— Your Creator Success Partner"
       }
     },
     {
@@ -54,14 +54,14 @@ export function SocialProof() {
       icon: Briefcase,
       content: {
         bullets: [
-          "Manage multiple creator accounts from one central hub.",
-          "Scale creator engagement with AI that matches each creator's voice.",
-          "Monitor all your creators' mentions and comments in real-time.",
-          "Deliver growth reports showing engagement metrics & follower gains.",
-          "Reduce response management workload by 60% across your roster."
+          "Maximize creator portfolio ROI with unified management across all platforms and talent.",
+          "Drive measurable revenue growth for each creator using AI-powered engagement optimization.",
+          "Deliver comprehensive performance analytics showing engagement, growth, and monetization metrics.",
+          "Scale operations efficiently while reducing management overhead by 70% across your roster.",
+          "Enhance creator retention and satisfaction with personalized, authentic audience interactions."
         ],
-        quote: "Scale creator management with intelligent automation.",
-        attribution: "— Agency Partners"
+        quote: "Transform creator management into profitable portfolio growth.",
+        attribution: "— Your Strategic Growth Partner"
       }
     }
   ];
