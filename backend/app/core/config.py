@@ -153,6 +153,21 @@ class Settings(BaseSettings):
     SENDGRID_WELCOME_TEMPLATE_ID: Optional[str] = None
     SENDGRID_MARKETING_LIST_ID: Optional[str] = None
     SENDGRID_WEBHOOK_PUBLIC_KEY: Optional[str] = None
+    # Optional: Custom field IDs in SendGrid Marketing (e.g., e1_N, e2_T, etc.)
+    SENDGRID_CF_WAITLIST_POSITION: Optional[str] = None  # number field id
+    SENDGRID_CF_ACCESS_STATUS: Optional[str] = None      # text field id
+    SENDGRID_CF_USER_KIND: Optional[str] = None          # text field id
+    SENDGRID_CF_JOINED_WAITLIST_AT: Optional[str] = None # date field id (YYYY-MM-DD)
+    SENDGRID_CF_PLANNED_LAUNCH_DATE: Optional[str] = None# date field id (YYYY-MM-DD)
+
+    # Planned launch date (YYYY-MM-DD) used to populate contact field for segments
+    PLANNED_LAUNCH_DATE: Optional[str] = None
+
+    # SendGrid ASM group for waitlist marketing emails (enables one-click unsubscribe)
+    SENDGRID_ASM_GROUP_ID_WAITLIST: Optional[int] = None
+
+    # Compliance footer text (postal address)
+    COMPANY_POSTAL_ADDRESS: Optional[str] = None
 
     # Calendly
     CALENDLY_ACCESS_TOKEN: str

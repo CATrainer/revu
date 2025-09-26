@@ -104,6 +104,10 @@ celery_app.conf.beat_schedule = {
         "task": "app.tasks.marketing.sync_all_contacts",
         "schedule": crontab(hour=4, minute=15),  # Daily at 04:15 UTC
     },
+    "waitlist-countdown-daily": {
+        "task": "app.tasks.email.send_waitlist_countdown_daily",
+        "schedule": crontab(hour=9, minute=0),  # Daily at 09:00 UTC
+    },
 }
 
 

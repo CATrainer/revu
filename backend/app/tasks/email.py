@@ -21,6 +21,7 @@ def send_email(
     subject: str,
     html_content: str,
     from_email: str | None = None,
+    asm_group_id: int | None = None,
 ) -> bool:
     """
     Send an email using SendGrid if configured, otherwise Resend.
@@ -38,7 +39,7 @@ def send_email(
     if getattr(settings, "SENDGRID_API_KEY", None):
         try:
             from sendgrid import SendGridAPIClient
-            from sendgrid.helpers.mail import Mail, From, To, Content
+            from sendgrid.helpers.mail import Mail, From, To, Content, ASM
 
             message = Mail(
                 from_email=From(from_email or str(settings.EMAIL_FROM_ADDRESS), settings.EMAIL_FROM_NAME),
@@ -46,6 +47,13 @@ def send_email(
                 subject=subject,
                 html_content=Content("text/html", html_content),
             )
+            # Attach ASM group for one-click unsubscribe if provided (marketing only)
+            if asm_group_id is not None:
+                try:
+                    message.asm = ASM(group_id=int(asm_group_id))
+                except Exception:
+                    pass
+
             sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
             response = sg.send(message)
             logger.info(f"SendGrid email sent to {to}, status={response.status_code}")
@@ -186,6 +194,215 @@ def send_welcome_email(user_email: str, user_name: str | None = None) -> bool:
     </body></html>
     """
     return send_email(user_email, subject, html_content)
+
+
+def _marketing_footer_html() -> str:
+    addr = getattr(settings, "COMPANY_POSTAL_ADDRESS", None)
+    addr_html = f"<br><span>{addr}</span>" if addr else ""
+    return (
+        f"<p style=\"margin:16px 0 0;color:#94a3b8;font-size:12px;\">"
+        f"You are receiving this because you joined the Repruv waitlist. "
+        f"You can unsubscribe at any time using the link below.{addr_html}</p>"
+    )
+
+
+def _countdown_email_html(days_left: int, waitlist_position: int | None) -> tuple[str, str]:
+    site_url = settings.FRONTEND_URL
+    support_url = f"{settings.FRONTEND_URL}/help"
+    pos_html = (
+        f"You’re number <strong>{waitlist_position}</strong> on our list." if waitlist_position else ""
+    )
+    if days_left == 14:
+        subject = "Two weeks to launch — you’re on the list"
+        body = f"""
+        <!doctype html>
+        <html><body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:24px;">
+          <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;">
+            <h1 style="margin:0 0 8px;color:#0f172a;font-weight:800;font-size:22px;">We’re almost ready</h1>
+            <p style="margin:0 0 12px;color:#334155;font-size:14px;line-height:22px;">{pos_html}</p>
+            <p style="margin:0 0 16px;color:#334155;font-size:14px;line-height:22px;">Thanks for joining the Repruv waitlist. Launch is in <strong>14 days</strong>.</p>
+            <a href="{site_url}" style="background:#16a34a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;display:inline-block;">Learn more</a>
+            <p style="margin:12px 0 0;color:#64748b;font-size:12px;">Questions? <a href="{support_url}" style="color:#16a34a;">Help Center</a>.</p>
+            {_marketing_footer_html()}
+          </div>
+          <p style="text-align:center;color:#94a3b8;font-size:12px;">© Repruv</p>
+        </body></html>
+        """
+        return subject, body
+    if days_left == 7:
+        subject = "One week to launch — we’ll email your invite"
+        body = f"""
+        <!doctype html>
+        <html><body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:24px;">
+          <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;">
+            <h1 style="margin:0 0 8px;color:#0f172a;font-weight:800;font-size:22px;">One week to go</h1>
+            <p style="margin:0 0 12px;color:#334155;font-size:14px;line-height:22px;">{pos_html}</p>
+            <p style="margin:0 0 16px;color:#334155;font-size:14px;line-height:22px;">We’ll send your early access link on launch day.</p>
+            <a href="{site_url}" style="background:#16a34a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;display:inline-block;">See what’s coming</a>
+            <p style="margin:12px 0 0;color:#64748b;font-size:12px;">Questions? <a href="{support_url}" style="color:#16a34a;">Help Center</a>.</p>
+            {_marketing_footer_html()}
+          </div>
+          <p style="text-align:center;color:#94a3b8;font-size:12px;">© Repruv</p>
+        </body></html>
+        """
+        return subject, body
+    if days_left == 1:
+        subject = "Tomorrow: your early access invite"
+        body = f"""
+        <!doctype html>
+        <html><body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:24px;">
+          <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;">
+            <h1 style="margin:0 0 8px;color:#0f172a;font-weight:800;font-size:22px;">Launching tomorrow 🚀</h1>
+            <p style="margin:0 0 12px;color:#334155;font-size:14px;line-height:22px;">{pos_html}</p>
+            <p style="margin:0 0 16px;color:#334155;font-size:14px;line-height:22px;">You’ll get your invite first thing tomorrow.</p>
+            <a href="{site_url}" style="background:#16a34a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;display:inline-block;">Learn more</a>
+            <p style="margin:12px 0 0;color:#64748b;font-size:12px;">Questions? <a href="{support_url}" style="color:#16a34a;">Help Center</a>.</p>
+            {_marketing_footer_html()}
+          </div>
+          <p style="text-align:center;color:#94a3b8;font-size:12px;">© Repruv</p>
+        </body></html>
+        """
+        return subject, body
+    # Fallback
+    return "Update from Repruv", "<html><body>Update</body></html>"
+
+
+def _launch_email_html(waitlist_position: int | None) -> tuple[str, str]:
+    site_url = settings.FRONTEND_URL
+    support_url = f"{settings.FRONTEND_URL}/help"
+    pos_html = (
+        f"You’re number <strong>{waitlist_position}</strong> — thanks for waiting!" if waitlist_position else "Thanks for waiting!"
+    )
+    subject = "Your early access is ready 🎉"
+    body = f"""
+    <!doctype html>
+    <html><body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:24px;">
+      <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;">
+        <h1 style="margin:0 0 8px;color:#0f172a;font-weight:800;font-size:22px;">Your early access is ready 🎉</h1>
+        <p style="margin:0 0 12px;color:#334155;font-size:14px;line-height:22px;">{pos_html}</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:14px;line-height:22px;">Click below to start using Repruv.</p>
+        <a href="{site_url}/early-access" style="background:#16a34a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;display:inline-block;">Get Early Access</a>
+        <p style="margin:12px 0 0;color:#64748b;font-size:12px;">Need help? <a href="{support_url}" style="color:#16a34a;">Help Center</a>.</p>
+        {_marketing_footer_html()}
+      </div>
+      <p style="text-align:center;color:#94a3b8;font-size:12px;">© Repruv</p>
+    </body></html>
+    """
+    return subject, body
+
+
+async def _get_user_waitlist_position(session, user: User, offset: int = 55) -> int | None:
+    waiting_status = ("waiting", "waiting_list")
+    anchor = user.joined_waiting_list_at or user.created_at
+    if not anchor:
+        return None
+    res = await session.execute(
+        select(func.count()).where(
+            User.access_status.in_(waiting_status),
+            func.coalesce(User.joined_waiting_list_at, User.created_at) <= anchor,
+        )
+    )
+    count_before_or_equal = int(res.scalar() or 0)
+    return 55 + max(count_before_or_equal - 1, 0)
+
+
+async def _send_waitlist_batch(kind: str) -> dict:
+    """Send countdown or launch emails to opted-in waiting list users.
+
+    kind in {"t14","t7","t1","launch"}
+    """
+    sent = 0
+    skipped = 0
+    failures = 0
+
+    async with async_session_maker() as session:
+        # Base query: waiting list, consented, not bounced
+        q = select(User).where(
+            User.access_status.in_(["waiting", "waiting_list"]),
+            User.marketing_opt_in == True,  # noqa: E712
+            User.marketing_unsubscribed_at.is_(None),
+        )
+        # Exclude already sent for the target kind
+        if kind == "t14":
+            q = q.where(User.countdown_t14_sent_at.is_(None))
+        elif kind == "t7":
+            q = q.where(User.countdown_t7_sent_at.is_(None))
+        elif kind == "t1":
+            q = q.where(User.countdown_t1_sent_at.is_(None))
+        elif kind == "launch":
+            q = q.where(User.launch_sent_at.is_(None))
+
+        res = await session.execute(q.order_by(User.joined_waiting_list_at.asc(), User.created_at.asc()))
+        users = list(res.scalars())
+
+        for u in users:
+            try:
+                pos = await _get_user_waitlist_position(session, u)
+                if kind == "launch":
+                    subject, html = _launch_email_html(pos)
+                else:
+                    days_left = {"t14": 14, "t7": 7, "t1": 1}[kind]
+                    subject, html = _countdown_email_html(days_left, pos)
+                ok = send_email(
+                    u.email,
+                    subject,
+                    html,
+                    asm_group_id=getattr(settings, "SENDGRID_ASM_GROUP_ID_WAITLIST", None),
+                )
+                if ok:
+                    now = datetime.utcnow()
+                    if kind == "t14":
+                        u.countdown_t14_sent_at = now
+                    elif kind == "t7":
+                        u.countdown_t7_sent_at = now
+                    elif kind == "t1":
+                        u.countdown_t1_sent_at = now
+                    elif kind == "launch":
+                        u.launch_sent_at = now
+                    await session.commit()
+                    sent += 1
+                else:
+                    failures += 1
+            except Exception as e:  # noqa: BLE001
+                logger.error("Countdown send failed for {}: {}", u.email, e)
+                failures += 1
+        return {"sent": sent, "skipped": skipped, "failed": failures}
+
+
+@celery_app.task(name="app.tasks.email.send_waitlist_countdown_daily")
+def send_waitlist_countdown_daily() -> dict:
+    """Daily scheduler that sends T-14, T-7, T-1, or Launch emails based on PLANNED_LAUNCH_DATE.
+
+    Runs once per day via Celery Beat.
+    """
+    planned = getattr(settings, "PLANNED_LAUNCH_DATE", None)
+    if not planned:
+        logger.info("PLANNED_LAUNCH_DATE not set; skipping countdown scheduler")
+        return {"status": "skipped", "reason": "no_planned_date"}
+    try:
+        target = datetime.strptime(planned, "%Y-%m-%d").date()
+    except Exception:
+        logger.warning("Invalid PLANNED_LAUNCH_DATE format; expected YYYY-MM-DD")
+        return {"status": "skipped", "reason": "bad_date"}
+
+    today = datetime.utcnow().date()
+    delta = (target - today).days
+    logger.info(f"Countdown scheduler: days_to_launch={delta}")
+
+    import asyncio
+    if delta in (14, 7, 1):
+        kind = {14: "t14", 7: "t7", 1: "t1"}[delta]
+        try:
+            return asyncio.get_event_loop().run_until_complete(_send_waitlist_batch(kind))
+        except RuntimeError:
+            return asyncio.run(_send_waitlist_batch(kind))
+    elif delta == 0:
+        try:
+            return asyncio.get_event_loop().run_until_complete(_send_waitlist_batch("launch"))
+        except RuntimeError:
+            return asyncio.run(_send_waitlist_batch("launch"))
+    else:
+        return {"status": "noop", "days_to_launch": delta}
 
 
 @celery_app.task(name="app.tasks.email.check_trial_expirations")
