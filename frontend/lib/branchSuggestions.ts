@@ -2,13 +2,23 @@
  * Generate smart branch suggestions based on AI response content
  */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+
+interface BranchSuggestion {
+  label: string;
+  topic: string;
+}
+
 // Analyze conversation to suggest natural branching points
 export async function generateBranchSuggestions(messages: any[], context: any): Promise<BranchSuggestion[]> {
   const suggestions: string[] = [];
   
+  // Get the last message content
+  const lastMessage = messages[messages.length - 1]?.content || '';
+  
   // Detect numbered lists or bullet points - each could be a branch
-  const listItems = messages.map(m => m.message).join('\n').match(/(?:^|\n)\s*(?:\d+\.|[-•])\s*(.+?)(?=\n|$)/g);
+  const listItems = lastMessage.match(/(?:^|\n)\s*(?:\d+\.|[-•])\s*(.+?)(?=\n|$)/g);
   if (listItems && listItems.length >= 2) {
+    listItems.forEach((item: string) => {
       const cleaned = item.replace(/^\s*(?:\d+\.|[-•])\s*/, '').trim();
       if (cleaned.length > 10 && cleaned.length < 100) {
         suggestions.push(`Explore: ${cleaned}`);
@@ -17,7 +27,7 @@ export async function generateBranchSuggestions(messages: any[], context: any): 
   }
   
   // Detect questions in the response - these are natural branch points
-  const questions = message.match(/[^.!?]*\?/g);
+  const questions = lastMessage.match(/[^.!?]*\?/g);
   if (questions && questions.length > 0) {
     questions.slice(0, 2).forEach(q => {
       const cleaned = q.trim();
@@ -28,10 +38,10 @@ export async function generateBranchSuggestions(messages: any[], context: any): 
   }
   
   // Detect "alternatively" or "another approach" patterns
-  if (message.toLowerCase().includes('alternative')) {
+  if (lastMessage.toLowerCase().includes('alternative')) {
     suggestions.push('Compare different approaches');
   }
-  if (message.toLowerCase().includes('another') || message.toLowerCase().includes('also')) {
+  if (lastMessage.toLowerCase().includes('another') || lastMessage.toLowerCase().includes('also')) {
     suggestions.push('Explore other options');
   }
   
@@ -47,7 +57,7 @@ export async function generateBranchSuggestions(messages: any[], context: any): 
     'analytics': ['Deep-dive analytics', 'Create tracking system'],
   };
   
-  const lowerMessage = message.toLowerCase();
+  const lowerMessage = lastMessage.toLowerCase();
   Object.entries(keywords).forEach(([keyword, branchSuggestions]) => {
     if (lowerMessage.includes(keyword)) {
       suggestions.push(...branchSuggestions.slice(0, 1));
@@ -67,6 +77,10 @@ export async function generateBranchSuggestions(messages: any[], context: any): 
     suggestions.push(genericSuggestions.shift()!);
   }
   
-  // Remove duplicates and limit to 4
-  return [...new Set(suggestions)].slice(0, 4);
+  // Remove duplicates and limit to 4, convert to BranchSuggestion format
+  const uniqueSuggestions = [...new Set(suggestions)].slice(0, 4);
+  return uniqueSuggestions.map(label => ({
+    label,
+    topic: label
+  }));
 }
