@@ -293,8 +293,8 @@ async def get_messages(
         parent_id = session_data[0]
         branch_msg_id = session_data[1]
         
-        # Get context inheritance settings
-        context_inh = json.loads(session_data[2]) if session_data[2] else {}
+        # Get context inheritance settings (already deserialized from JSONB)
+        context_inh = session_data[2] if session_data[2] else {}
         inherit_count = context_inh.get("inherit_messages", 5)
         
         # Get parent messages up to branch point or last N messages
