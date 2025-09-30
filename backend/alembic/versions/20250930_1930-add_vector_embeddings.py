@@ -32,18 +32,19 @@ def upgrade() -> None:
     
     # Content embeddings for semantic search
     if "content_embeddings" not in existing_tables:
-        op.create_table(
-            "content_embeddings",
-            sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-            sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-            sa.Column("content_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("user_content_performance.id", ondelete="CASCADE"), nullable=False),
-            sa.Column("embedding", postgresql.ARRAY(sa.Float), nullable=False, comment="1536-dim OpenAI embedding"),
-            sa.Column("content_type", sa.String(50), nullable=False, comment="video, post, reel, etc"),
-            sa.Column("content_text", sa.Text(), nullable=True, comment="Text used for embedding"),
-            sa.Column("metadata", postgresql.JSONB(), nullable=True),
-            sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("NOW()"), nullable=False),
-            sa.UniqueConstraint("content_id", name="uq_content_id_embedding"),
-        )
+        op.execute("""
+            CREATE TABLE content_embeddings (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                content_id UUID NOT NULL REFERENCES user_content_performance(id) ON DELETE CASCADE,
+                embedding vector(1536) NOT NULL,
+                content_type VARCHAR(50) NOT NULL,
+                content_text TEXT,
+                metadata JSONB,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                CONSTRAINT uq_content_id_embedding UNIQUE (content_id)
+            )
+        """)
         
         # Vector index for fast similarity search (ivfflat)
         op.execute("""
@@ -59,18 +60,19 @@ def upgrade() -> None:
     
     # Conversation embeddings for chat history search
     if "conversation_embeddings" not in existing_tables:
-        op.create_table(
-            "conversation_embeddings",
-            sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-            sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-            sa.Column("session_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("ai_chat_sessions.id", ondelete="CASCADE"), nullable=False),
-            sa.Column("message_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("ai_chat_messages.id", ondelete="CASCADE"), nullable=True),
-            sa.Column("embedding", postgresql.ARRAY(sa.Float), nullable=False),
-            sa.Column("chunk_text", sa.Text(), nullable=False, comment="Conversation chunk"),
-            sa.Column("chunk_index", sa.Integer(), nullable=False, comment="Order in conversation"),
-            sa.Column("metadata", postgresql.JSONB(), nullable=True),
-            sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("NOW()"), nullable=False),
-        )
+        op.execute("""
+            CREATE TABLE conversation_embeddings (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                session_id UUID NOT NULL REFERENCES ai_chat_sessions(id) ON DELETE CASCADE,
+                message_id UUID REFERENCES ai_chat_messages(id) ON DELETE CASCADE,
+                embedding vector(1536) NOT NULL,
+                chunk_text TEXT NOT NULL,
+                chunk_index INTEGER NOT NULL,
+                metadata JSONB,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
         
         # Vector index for conversation search
         op.execute("""
@@ -85,15 +87,16 @@ def upgrade() -> None:
     
     # Template embeddings for smart template matching
     if "template_embeddings" not in existing_tables:
-        op.create_table(
-            "template_embeddings",
-            sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-            sa.Column("template_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("content_templates.id", ondelete="CASCADE"), nullable=False),
-            sa.Column("embedding", postgresql.ARRAY(sa.Float), nullable=False),
-            sa.Column("template_text", sa.Text(), nullable=False),
-            sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("NOW()"), nullable=False),
-            sa.UniqueConstraint("template_id", name="uq_template_id_embedding"),
-        )
+        op.execute("""
+            CREATE TABLE template_embeddings (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                template_id UUID NOT NULL REFERENCES content_templates(id) ON DELETE CASCADE,
+                embedding vector(1536) NOT NULL,
+                template_text TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                CONSTRAINT uq_template_id_embedding UNIQUE (template_id)
+            )
+        """)
         
         # Vector index for template matching
         op.execute("""
