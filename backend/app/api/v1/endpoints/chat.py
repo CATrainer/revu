@@ -25,6 +25,7 @@ from pydantic import BaseModel
 from app.core.database import get_async_session
 from app.core.security import get_current_active_user
 from app.models.user import User
+from app.services.rag import get_rag_context_for_chat
 
 try:  # Anthropic for Claude API
     from anthropic import Anthropic  # type: ignore
@@ -821,10 +822,15 @@ async def send_message(
                 if user_context_str:
                     system_prompt += f"\n\nUser Context: {user_context_str}\n\nUse this context to personalize your responses and provide more relevant advice specific to their channel, niche, and goals."
                 
-                # Add performance data context
+                # Add performance data context (legacy)
                 performance_context = await _get_performance_context(current_user.id, db)
                 if performance_context:
                     system_prompt += performance_context
+                
+                # Add RAG context (semantic search for relevant examples)
+                rag_context = await get_rag_context_for_chat(current_user.id, content, db, max_examples=3)
+                if rag_context:
+                    system_prompt += rag_context
                 
                 response = client.messages.create(
                     model=model,
@@ -878,10 +884,15 @@ async def send_message(
                 if user_context_str:
                     system_prompt += f"\n\nUser Context: {user_context_str}\n\nUse this context to personalize your responses and provide more relevant advice specific to their channel, niche, and goals."
                 
-                # Add performance data context
+                # Add performance data context (legacy)
                 performance_context = await _get_performance_context(current_user.id, db)
                 if performance_context:
                     system_prompt += performance_context
+                
+                # Add RAG context (semantic search for relevant examples)
+                rag_context = await get_rag_context_for_chat(current_user.id, content, db, max_examples=3)
+                if rag_context:
+                    system_prompt += rag_context
                 
                 with client.messages.stream(
                     model=model,

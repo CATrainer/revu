@@ -28,6 +28,7 @@ from app.api.v1.endpoints import (
     chat_intelligence,
     chat_templates,
     content_sync,
+    rag,
     context,
 )
 from app.api.v1.endpoints import workflows as workflows_endpoints
@@ -141,6 +142,12 @@ api_router.include_router(
     content_sync.router,
     prefix="/content",
     tags=["content", "sync"],
+)
+
+api_router.include_router(
+    rag.router,
+    prefix="/rag",
+    tags=["rag", "embeddings", "semantic-search"],
 )
 
 api_router.include_router(
