@@ -2,11 +2,15 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap } from 'lucide-react';
+import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap, Copy, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface Message {
   id: string;
@@ -152,140 +156,12 @@ export default function AIAssistantPage() {
     return title || 'New Chat';
   };
 
-  const formatMessageContent = (content: string) => {
-    // Simple markdown-like formatting
-    const lines = content.split('\n');
-    const formatted: JSX.Element[] = [];
-    let listItems: string[] = [];
-    let inCodeBlock = false;
-    let codeBlockContent: string[] = [];
-    let codeLanguage = '';
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-    const flushList = () => {
-      if (listItems.length > 0) {
-        formatted.push(
-          <ul key={formatted.length} className="list-disc list-inside space-y-1 my-2">
-            {listItems.map((item, i) => (
-              <li key={i} className="text-slate-700 dark:text-slate-300">{item}</li>
-            ))}
-          </ul>
-        );
-        listItems = [];
-      }
-    };
-
-    const flushCodeBlock = () => {
-      if (codeBlockContent.length > 0) {
-        formatted.push(
-          <div key={formatted.length} className="my-3">
-            {codeLanguage && (
-              <div className="bg-slate-800 text-slate-300 px-3 py-1 text-xs font-mono rounded-t-lg border-b border-slate-700">
-                {codeLanguage}
-              </div>
-            )}
-            <pre className={cn(
-              "bg-slate-900 text-slate-100 p-4 overflow-x-auto font-mono text-sm",
-              codeLanguage ? "rounded-b-lg" : "rounded-lg"
-            )}>
-              <code>{codeBlockContent.join('\n')}</code>
-            </pre>
-          </div>
-        );
-        codeBlockContent = [];
-        codeLanguage = '';
-      }
-    };
-
-    lines.forEach((line, index) => {
-      // Code block detection
-      if (line.trim().startsWith('```')) {
-        if (inCodeBlock) {
-          flushCodeBlock();
-          inCodeBlock = false;
-        } else {
-          flushList();
-          inCodeBlock = true;
-          codeLanguage = line.trim().substring(3).trim();
-        }
-        return;
-      }
-
-      if (inCodeBlock) {
-        codeBlockContent.push(line);
-        return;
-      }
-
-      // Bold text
-      line = line.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-slate-900 dark:text-slate-100">$1</strong>');
-      
-      // Italic text
-      line = line.replace(/\*(.+?)\*/g, '<em class="italic">$1</em>');
-      
-      // Inline code
-      line = line.replace(/`(.+?)`/g, '<code class="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>');
-
-      // Headings
-      if (line.startsWith('### ')) {
-        flushList();
-        formatted.push(
-          <h3 key={index} className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-4 mb-2">
-            {line.substring(4)}
-          </h3>
-        );
-        return;
-      } else if (line.startsWith('## ')) {
-        flushList();
-        formatted.push(
-          <h2 key={index} className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-4 mb-2">
-            {line.substring(3)}
-          </h2>
-        );
-        return;
-      } else if (line.startsWith('# ')) {
-        flushList();
-        formatted.push(
-          <h1 key={index} className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-4 mb-2">
-            {line.substring(2)}
-          </h1>
-        );
-        return;
-      }
-
-      // List items
-      if (line.trim().match(/^[-*]\s+/)) {
-        listItems.push(line.trim().substring(2));
-        return;
-      }
-
-      // Numbered lists
-      if (line.trim().match(/^\d+\.\s+/)) {
-        flushList();
-        const match = line.trim().match(/^\d+\.\s+(.+)/);
-        if (match) {
-          listItems.push(match[1]);
-        }
-        return;
-      }
-
-      // Regular paragraph
-      flushList();
-      if (line.trim()) {
-        formatted.push(
-          <p
-            key={index}
-            className="text-slate-700 dark:text-slate-300 leading-relaxed mb-2"
-            dangerouslySetInnerHTML={{ __html: line }}
-          />
-        );
-      } else {
-        formatted.push(<br key={index} />);
-      }
-    });
-
-    flushList();
-    flushCodeBlock();
-
-    return <div className="space-y-1">{formatted}</div>;
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedCode(id);
+    setTimeout(() => setCopiedCode(null), 2000);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -673,9 +549,112 @@ export default function AIAssistantPage() {
                     >
                       {message.content ? (
                         message.role === 'assistant' ? (
-                          <div className="prose prose-slate dark:prose-invert max-w-none">
-                            {formatMessageContent(message.content)}
-                          </div>
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            className="prose prose-slate dark:prose-invert max-w-none"
+                            components={{
+                              h1: ({ node, ...props }) => (
+                                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-6 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700" {...props} />
+                              ),
+                              h2: ({ node, ...props }) => (
+                                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-5 mb-2" {...props} />
+                              ),
+                              h3: ({ node, ...props }) => (
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-4 mb-2" {...props} />
+                              ),
+                              p: ({ node, ...props }) => (
+                                <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-3 text-[15px]" {...props} />
+                              ),
+                              ul: ({ node, ...props }) => (
+                                <ul className="space-y-2 my-4 ml-4" {...props} />
+                              ),
+                              ol: ({ node, ...props }) => (
+                                <ol className="space-y-2 my-4 ml-4 list-decimal" {...props} />
+                              ),
+                              li: ({ node, ...props }) => (
+                                <li className="text-slate-700 dark:text-slate-300 leading-relaxed pl-2" {...props} />
+                              ),
+                              strong: ({ node, ...props }) => (
+                                <strong className="font-semibold text-slate-900 dark:text-slate-100" {...props} />
+                              ),
+                              em: ({ node, ...props }) => (
+                                <em className="italic text-slate-700 dark:text-slate-300" {...props} />
+                              ),
+                              code: ({ node, inline, className, children, ...props }: any) => {
+                                const match = /language-(\w+)/.exec(className || '');
+                                const language = match ? match[1] : '';
+                                const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
+                                
+                                return !inline && language ? (
+                                  <div className="my-4 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+                                    <div className="flex items-center justify-between bg-slate-800 px-4 py-2 border-b border-slate-700">
+                                      <span className="text-xs font-mono text-slate-300 uppercase tracking-wide">
+                                        {language}
+                                      </span>
+                                      <button
+                                        onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), codeId)}
+                                        className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded transition-colors"
+                                      >
+                                        {copiedCode === codeId ? (
+                                          <>
+                                            <CheckCheck className="h-3 w-3" />
+                                            Copied!
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Copy className="h-3 w-3" />
+                                            Copy
+                                          </>
+                                        )}
+                                      </button>
+                                    </div>
+                                    <SyntaxHighlighter
+                                      style={vscDarkPlus}
+                                      language={language}
+                                      PreTag="div"
+                                      className="!m-0 !bg-slate-900"
+                                      customStyle={{
+                                        margin: 0,
+                                        padding: '1rem',
+                                        background: '#0f172a',
+                                        fontSize: '14px',
+                                        lineHeight: '1.6',
+                                      }}
+                                      {...props}
+                                    >
+                                      {String(children).replace(/\n$/, '')}
+                                    </SyntaxHighlighter>
+                                  </div>
+                                ) : (
+                                  <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded text-sm font-mono" {...props}>
+                                    {children}
+                                  </code>
+                                );
+                              },
+                              blockquote: ({ node, ...props }) => (
+                                <blockquote className="border-l-4 border-blue-500 dark:border-blue-600 pl-4 py-2 my-4 bg-blue-50 dark:bg-blue-950/20 rounded-r-lg" {...props} />
+                              ),
+                              table: ({ node, ...props }) => (
+                                <div className="my-4 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                                  <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700" {...props} />
+                                </div>
+                              ),
+                              thead: ({ node, ...props }) => (
+                                <thead className="bg-slate-50 dark:bg-slate-800" {...props} />
+                              ),
+                              th: ({ node, ...props }) => (
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-900 dark:text-slate-100 uppercase tracking-wider" {...props} />
+                              ),
+                              td: ({ node, ...props }) => (
+                                <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300 border-t border-slate-200 dark:border-slate-700" {...props} />
+                              ),
+                              a: ({ node, ...props }) => (
+                                <a className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline font-medium" target="_blank" rel="noopener noreferrer" {...props} />
+                              ),
+                            }}
+                          >
+                            {message.content}
+                          </ReactMarkdown>
                         ) : (
                           <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
                             {message.content}
