@@ -21,6 +21,8 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  status?: 'sending' | 'sent' | 'error' | 'streaming';
+  error?: string;
 }
 
 interface ChatSession {
@@ -37,6 +39,13 @@ interface ChatSession {
   child_count?: number;
 }
 
+// Session state manager for tracking active streams and loading states
+interface SessionState {
+  isStreaming: boolean;
+  isLoading: boolean;
+  abortController?: AbortController;
+}
+
 export default function AIAssistantPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -45,6 +54,8 @@ export default function AIAssistantPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [sessionStates, setSessionStates] = useState<Map<string, SessionState>>(new Map());
+  const [messageCache, setMessageCache] = useState<Map<string, Message[]>>(new Map());
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -53,7 +64,14 @@ export default function AIAssistantPage() {
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
   const [splitPaneSession, setSplitPaneSession] = useState<string | null>(null);
   const [splitPaneMessages, setSplitPaneMessages] = useState<Message[]>([]);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    // Initialize from localStorage
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ai-assistant-sidebar-collapsed');
+      return saved === 'true';
+    }
+    return false;
+  });
   const [showBranchSuggestions, setShowBranchSuggestions] = useState(false);
   const [pendingSession, setPendingSession] = useState<{parentId?: string, branchFromMessageId?: string, branchName?: string, openInSplitPane?: boolean} | null>(null);
   const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null);
@@ -80,10 +98,44 @@ export default function AIAssistantPage() {
     scrollSplitPaneToBottom();
   }, [splitPaneMessages]);
 
+  // Save sidebar collapsed state to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ai-assistant-sidebar-collapsed', String(sidebarCollapsed));
+    }
+  }, [sidebarCollapsed]);
+
   // Load sessions on mount
   useEffect(() => {
     loadSessions();
   }, []);
+
+  // Poll for updates when session is streaming
+  useEffect(() => {
+    if (!sessionId) return;
+    
+    const sessionState = sessionStates.get(sessionId);
+    if (!sessionState?.isStreaming) return;
+    
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await api.get(`/chat/messages/${sessionId}`);
+        const latestMessages: Message[] = (response.data.messages || []).map((msg: { id: string; role: string; content: string; created_at: string }) => ({
+          id: msg.id,
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content,
+          timestamp: new Date(msg.created_at),
+          status: 'sent',
+        }));
+        setMessages(latestMessages);
+        setMessageCache(prev => new Map(prev).set(sessionId, latestMessages));
+      } catch (err) {
+        console.error('Failed to poll messages:', err);
+      }
+    }, 2000); // Poll every 2 seconds
+    
+    return () => clearInterval(pollInterval);
+  }, [sessionId, sessionStates]);
 
   const loadSessions = async () => {
     try {
@@ -190,14 +242,26 @@ export default function AIAssistantPage() {
       const session = sessions.find(s => s.id === id);
       setCurrentSession(session || null);
       
+      // Check cache first for instant loading
+      const cachedMessages = messageCache.get(id);
+      if (cachedMessages) {
+        setMessages(cachedMessages);
+      }
+      
+      // Always fetch fresh data from server
       const response = await api.get(`/chat/messages/${id}`);
       const loadedMessages: Message[] = (response.data.messages || []).map((msg: { id: string; role: string; content: string; created_at: string }) => ({
         id: msg.id,
         role: msg.role as 'user' | 'assistant',
         content: msg.content,
         timestamp: new Date(msg.created_at),
+        status: 'sent',
       }));
+      
       setMessages(loadedMessages);
+      // Update cache
+      setMessageCache(prev => new Map(prev).set(id, loadedMessages));
+      
       setError(null);
       setSplitPaneSession(null); // Close split pane when switching to a different main session
       setShowBranchSuggestions(false); // Reset branch suggestions
@@ -208,7 +272,7 @@ export default function AIAssistantPage() {
     } finally {
       setLoadingSessionId(null);
     }
-  }, [sessions]);
+  }, [sessions, messageCache]);
 
   const toggleSessionCollapse = (sessionId: string) => {
     setCollapsedSessions(prev => {
@@ -305,6 +369,7 @@ export default function AIAssistantPage() {
       role: 'user',
       content: currentInput.trim(),
       timestamp: new Date(),
+      status: 'sending',
     };
 
     // Add message to correct pane
@@ -312,7 +377,14 @@ export default function AIAssistantPage() {
       setSplitPaneMessages((prev) => [...prev, userMessage]);
       setSplitPaneInput('');
     } else {
-      setMessages((prev) => [...prev, userMessage]);
+      setMessages((prev) => {
+        const newMessages = [...prev, userMessage];
+        // Update cache immediately
+        if (sessionId) {
+          setMessageCache(prevCache => new Map(prevCache).set(sessionId, newMessages));
+        }
+        return newMessages;
+      });
       setInput('');
     }
     
@@ -392,6 +464,14 @@ export default function AIAssistantPage() {
         throw new Error(`Failed to send message: ${response.status} - ${errorText}`);
       }
 
+      // Mark session as streaming
+      if (actualSessionId && actualSessionId !== 'pending') {
+        setSessionStates(prev => new Map(prev).set(actualSessionId, { 
+          isStreaming: true, 
+          isLoading: false 
+        }));
+      }
+
       // Create assistant message that will be updated with streaming content
       const assistantMessageId = (Date.now() + 1).toString();
       const assistantMessage: Message = {
@@ -399,12 +479,20 @@ export default function AIAssistantPage() {
         role: 'assistant',
         content: '',
         timestamp: new Date(),
+        status: 'streaming',
       };
       
       if (isForSplitPane) {
         setSplitPaneMessages((prev) => [...prev, assistantMessage]);
       } else {
-        setMessages((prev) => [...prev, assistantMessage]);
+        setMessages((prev) => {
+          const newMessages = [...prev, assistantMessage];
+          // Update cache with streaming message
+          if (actualSessionId && actualSessionId !== 'pending') {
+            setMessageCache(prevCache => new Map(prevCache).set(actualSessionId, newMessages));
+          }
+          return newMessages;
+        });
       }
 
       // Read the streaming response
@@ -433,21 +521,55 @@ export default function AIAssistantPage() {
                     setSplitPaneMessages((prev) => 
                       prev.map((msg) => 
                         msg.id === assistantMessageId
-                          ? { ...msg, content: msg.content + data.delta }
+                          ? { ...msg, content: msg.content + data.delta, status: 'streaming' as const }
                           : msg
                       )
                     );
                   } else {
-                    setMessages((prev) => 
+                    setMessages((prev) => {
+                      const updatedMessages = prev.map((msg) => 
+                        msg.id === assistantMessageId
+                          ? { ...msg, content: msg.content + data.delta, status: 'streaming' as const }
+                          : msg
+                      );
+                      // Update cache during streaming
+                      if (actualSessionId && actualSessionId !== 'pending') {
+                        setMessageCache(prevCache => new Map(prevCache).set(actualSessionId, updatedMessages));
+                      }
+                      return updatedMessages;
+                    });
+                  }
+                } else if (data.event === 'done') {
+                  // Streaming complete - mark message as sent
+                  if (isForSplitPane) {
+                    setSplitPaneMessages((prev) => 
                       prev.map((msg) => 
                         msg.id === assistantMessageId
-                          ? { ...msg, content: msg.content + data.delta }
+                          ? { ...msg, status: 'sent' as const }
                           : msg
                       )
                     );
+                  } else {
+                    setMessages((prev) => {
+                      const finalMessages = prev.map((msg) => 
+                        msg.id === assistantMessageId
+                          ? { ...msg, status: 'sent' as const }
+                          : msg
+                      );
+                      // Final cache update
+                      if (actualSessionId && actualSessionId !== 'pending') {
+                        setMessageCache(prevCache => new Map(prevCache).set(actualSessionId, finalMessages));
+                      }
+                      return finalMessages;
+                    });
                   }
-                } else if (data.event === 'done') {
-                  // Streaming complete
+                  // Mark streaming as complete
+                  if (actualSessionId && actualSessionId !== 'pending') {
+                    setSessionStates(prev => new Map(prev).set(actualSessionId, { 
+                      isStreaming: false, 
+                      isLoading: false 
+                    }));
+                  }
                   console.log('Streaming complete, latency:', data.latency_ms);
                 }
               } catch (err) {
