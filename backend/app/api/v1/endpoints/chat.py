@@ -167,13 +167,43 @@ async def create_session(
     current_user: User = Depends(get_current_active_user),
     title: Optional[str] = Body(None),
     mode: str = Body("general"),
+    parent_session_id: Optional[str] = Body(None),
+    branch_point_message_id: Optional[str] = Body(None),
+    branch_name: Optional[str] = Body(None),
+    inherit_messages: int = Body(5),  # Number of messages to inherit from parent
 ):
     await _rate_limit(db, current_user, "chat_create", 30)
     ctx = await _chat_context(db, current_user.id)
+    
+    # Calculate depth level
+    depth_level = 0
+    if parent_session_id:
+        parent_depth = await db.execute(
+            text("SELECT depth_level FROM ai_chat_sessions WHERE id=:pid"),
+            {"pid": parent_session_id}
+        )
+        parent_depth_val = parent_depth.scalar_one_or_none()
+        depth_level = (parent_depth_val or 0) + 1
+    
+    # Build context inheritance settings
+    context_inheritance = None
+    if parent_session_id:
+        context_inheritance = {
+            "inherit_messages": inherit_messages,
+            "inherit_user_context": True,
+            "created_at": datetime.utcnow().isoformat()
+        }
+    
     res = await db.execute(
         text(
-            """INSERT INTO ai_chat_sessions (id, user_id, title, context_tags, system_prompt, mode, status, created_at, updated_at)
-            VALUES (gen_random_uuid(), :uid, :title, :tags, :prompt, :mode, 'active', now(), now()) RETURNING id"""
+            """INSERT INTO ai_chat_sessions 
+            (id, user_id, title, context_tags, system_prompt, mode, status, 
+             parent_session_id, branch_point_message_id, branch_name, depth_level, 
+             context_inheritance, created_at, updated_at)
+            VALUES (gen_random_uuid(), :uid, :title, :tags, :prompt, :mode, 'active',
+                    :parent_id, :branch_msg_id, :branch_name, :depth, :context_inheritance,
+                    now(), now()) 
+            RETURNING id"""
         ),
         {
             "uid": str(current_user.id),
@@ -181,11 +211,16 @@ async def create_session(
             "tags": list({"dashboard", "monitoring"}),
             "prompt": json.dumps(ctx),
             "mode": mode,
+            "parent_id": parent_session_id,
+            "branch_msg_id": branch_point_message_id,
+            "branch_name": branch_name,
+            "depth": depth_level,
+            "context_inheritance": json.dumps(context_inheritance) if context_inheritance else None,
         },
     )
     sid = res.scalar_one()
     await db.commit()
-    return {"session_id": sid}
+    return {"session_id": sid, "depth_level": depth_level}
 
 
 @router.get("/sessions")
@@ -201,8 +236,10 @@ async def list_sessions(
     res = await db.execute(
         text(
             """SELECT s.id, s.title, s.mode, s.status, s.created_at, s.updated_at,
+            s.parent_session_id, s.branch_point_message_id, s.branch_name, s.depth_level,
             (SELECT count(*) FROM ai_chat_messages m WHERE m.session_id=s.id) AS message_count,
-            (SELECT max(created_at) FROM ai_chat_messages m WHERE m.session_id=s.id) AS last_activity
+            (SELECT max(created_at) FROM ai_chat_messages m WHERE m.session_id=s.id) AS last_activity,
+            (SELECT count(*) FROM ai_chat_sessions child WHERE child.parent_session_id=s.id) AS child_count
             FROM ai_chat_sessions s WHERE s.user_id=:uid AND s.status='active'
             ORDER BY last_activity DESC NULLS LAST, s.created_at DESC
             LIMIT :limit OFFSET :offset"""
@@ -224,15 +261,19 @@ async def get_messages(
     current_user: User = Depends(get_current_active_user),
     page: int = 1,
     page_size: int = 50,
+    include_inherited: bool = True,  # Include parent context
 ):
     await _rate_limit(db, current_user, "chat_history", 120)
     # Validate ownership
-    own = await db.execute(
-        text("SELECT 1 FROM ai_chat_sessions WHERE id=:sid AND user_id=:uid"),
+    session_info = await db.execute(
+        text("""SELECT parent_session_id, branch_point_message_id, context_inheritance 
+                FROM ai_chat_sessions WHERE id=:sid AND user_id=:uid"""),
         {"sid": str(session_id), "uid": str(current_user.id)},
     )
-    if not own.first():
+    session_data = session_info.first()
+    if not session_data:
         raise HTTPException(status_code=404, detail="Session not found")
+    
     offset = (page - 1) * page_size
     res = await db.execute(
         text(
@@ -245,7 +286,50 @@ async def get_messages(
         {k: _serialize_value(v) for k, v in dict(r._mapping).items()}
         for r in res.fetchall()
     ]
-    return {"messages": messages, "page": page, "page_size": page_size}
+    
+    # Get inherited context from parent if this is a branch
+    inherited_context = []
+    if include_inherited and session_data[0]:  # parent_session_id exists
+        parent_id = session_data[0]
+        branch_msg_id = session_data[1]
+        
+        # Get context inheritance settings
+        context_inh = json.loads(session_data[2]) if session_data[2] else {}
+        inherit_count = context_inh.get("inherit_messages", 5)
+        
+        # Get parent messages up to branch point or last N messages
+        if branch_msg_id:
+            parent_res = await db.execute(
+                text(
+                    """SELECT id, role, content, created_at FROM ai_chat_messages
+                    WHERE session_id=:pid AND created_at <= (
+                        SELECT created_at FROM ai_chat_messages WHERE id=:branch_id
+                    )
+                    ORDER BY created_at DESC LIMIT :limit"""
+                ),
+                {"pid": str(parent_id), "branch_id": str(branch_msg_id), "limit": inherit_count},
+            )
+        else:
+            parent_res = await db.execute(
+                text(
+                    """SELECT id, role, content, created_at FROM ai_chat_messages
+                    WHERE session_id=:pid ORDER BY created_at DESC LIMIT :limit"""
+                ),
+                {"pid": str(parent_id), "limit": inherit_count},
+            )
+        
+        inherited_context = [
+            {k: _serialize_value(v) for k, v in dict(r._mapping).items()}
+            for r in parent_res.fetchall()
+        ]
+        inherited_context.reverse()  # Oldest first
+    
+    return {
+        "messages": messages, 
+        "inherited_context": inherited_context,
+        "page": page, 
+        "page_size": page_size
+    }
 
 
 @router.delete("/sessions/{session_id}")

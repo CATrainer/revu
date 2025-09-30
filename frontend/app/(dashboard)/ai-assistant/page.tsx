@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap, Copy, CheckCheck, Settings2 } from 'lucide-react';
+import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap, Copy, CheckCheck, Settings2, GitBranch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { api } from '@/lib/api';
@@ -27,6 +27,11 @@ interface ChatSession {
   updated_at: string;
   message_count: number;
   last_activity: string | null;
+  parent_session_id?: string | null;
+  branch_point_message_id?: string | null;
+  branch_name?: string | null;
+  depth_level?: number;
+  child_count?: number;
 }
 
 export default function AIAssistantPage() {
@@ -75,11 +80,15 @@ export default function AIAssistantPage() {
     }
   };
 
-  const createNewSession = async (autoSwitch = true) => {
+  const createNewSession = async (autoSwitch = true, parentSessionId?: string, branchFromMessageId?: string, branchName?: string) => {
     try {
       const response = await api.post('/chat/sessions', {
-        title: 'New Chat',
+        title: branchName || (parentSessionId ? 'Branch Chat' : 'New Chat'),
         mode: 'general',
+        parent_session_id: parentSessionId,
+        branch_point_message_id: branchFromMessageId,
+        branch_name: branchName,
+        inherit_messages: 5,
       });
       const newSessionId = response.data.session_id;
       
@@ -88,11 +97,19 @@ export default function AIAssistantPage() {
       if (autoSwitch) {
         setSessionId(newSessionId);
         setMessages([]);
+        await loadSession(newSessionId);
       }
     } catch (err) {
       console.error('Failed to create session:', err);
       setError('Failed to create new chat session');
     }
+  };
+
+  const createBranchFromMessage = async (messageId: string) => {
+    if (!sessionId) return;
+    
+    const branchName = prompt('Name this branch (optional):');
+    await createNewSession(true, sessionId, messageId, branchName || undefined);
   };
 
   const loadSession = async (id: string) => {
@@ -321,13 +338,25 @@ export default function AIAssistantPage() {
           </div>
 
           {/* New Chat Button */}
-          <Button
-            onClick={() => createNewSession(true)}
-            className="w-full mb-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Chat
-          </Button>
+          <div className="space-y-2 mb-4">
+            <Button
+              onClick={() => createNewSession(true)}
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              New Chat
+            </Button>
+            {sessionId && (
+              <Button
+                onClick={() => createNewSession(true, sessionId, undefined, 'New Thread')}
+                variant="outline"
+                className="w-full"
+              >
+                <GitBranch className="h-4 w-4 mr-2" />
+                New Thread
+              </Button>
+            )}
+          </div>
 
           {/* Sessions List */}
           <div className="flex-1 overflow-y-auto space-y-1">
@@ -340,6 +369,7 @@ export default function AIAssistantPage() {
                     ? 'bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800'
                     : 'hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent'
                 )}
+                style={{ marginLeft: `${(session.depth_level || 0) * 12}px` }}
                 onClick={() => loadSession(session.id)}
               >
                 {editingSessionId === session.id ? (
@@ -371,12 +401,22 @@ export default function AIAssistantPage() {
                   <>
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
-                          {session.title}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {session.message_count || 0} messages
-                        </p>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          {session.depth_level && session.depth_level > 0 && (
+                            <GitBranch className="h-3 w-3 text-purple-500 dark:text-purple-400 flex-shrink-0" />
+                          )}
+                          <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                            {session.branch_name || session.title}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                          <span>{session.message_count || 0} messages</span>
+                          {session.child_count && session.child_count > 0 && (
+                            <span className="flex items-center gap-1">
+                              · {session.child_count} {session.child_count === 1 ? 'thread' : 'threads'}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
@@ -537,29 +577,32 @@ export default function AIAssistantPage() {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={cn(
-                    'flex gap-4 items-start animate-in fade-in slide-in-from-bottom-4 duration-500',
-                    message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-                  )}
+                  className="group relative"
                 >
-                  {/* Avatar */}
                   <div
                     className={cn(
-                      'flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm',
-                      message.role === 'user'
-                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
-                        : 'bg-gradient-to-br from-purple-500 to-purple-600 text-white'
+                      'flex gap-4 items-start animate-in fade-in slide-in-from-bottom-4 duration-500',
+                      message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                     )}
                   >
-                    {message.role === 'user' ? (
-                      <span className="text-xs font-bold">YOU</span>
-                    ) : (
-                      <Sparkles className="h-5 w-5" />
-                    )}
-                  </div>
+                    {/* Avatar */}
+                    <div
+                      className={cn(
+                        'flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm',
+                        message.role === 'user'
+                          ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                          : 'bg-gradient-to-br from-purple-500 to-purple-600 text-white'
+                      )}
+                    >
+                      {message.role === 'user' ? (
+                        <span className="text-xs font-bold">YOU</span>
+                      ) : (
+                        <Sparkles className="h-5 w-5" />
+                      )}
+                    </div>
 
-                  {/* Message Content */}
-                  <div className="flex-1 max-w-3xl">
+                    {/* Message Content */}
+                    <div className="flex-1 max-w-3xl">
                     <div
                       className={cn(
                         'rounded-2xl px-5 py-4',
@@ -694,6 +737,19 @@ export default function AIAssistantPage() {
                       )}
                     </div>
                   </div>
+                  </div>
+                  
+                  {/* Branch Button - appears on hover */}
+                  {!isLoading && message.content && (
+                    <button
+                      onClick={() => createBranchFromMessage(message.id)}
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm"
+                      title="Branch from this message"
+                    >
+                      <GitBranch className="h-3.5 w-3.5" />
+                      Branch
+                    </button>
+                  )}
                 </div>
               ))}
               <div ref={messagesEndRef} />
