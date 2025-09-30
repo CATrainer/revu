@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap, Copy, CheckCheck, Settings2, GitBranch } from 'lucide-react';
+import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap, Copy, CheckCheck, Settings2, GitBranch, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { api } from '@/lib/api';
@@ -12,6 +12,7 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ContextEditor } from '@/components/ai/ContextEditor';
+import { SessionTree } from '@/components/ai/SessionTree';
 
 interface Message {
   id: string;
@@ -45,6 +46,8 @@ export default function AIAssistantPage() {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [activeView, setActiveView] = useState<'chat' | 'context'>('chat');
+  const [collapsedSessions, setCollapsedSessions] = useState<Set<string>>(new Set());
+  const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -109,12 +112,14 @@ export default function AIAssistantPage() {
     if (!sessionId) return;
     
     const branchName = prompt('Name this branch (optional):');
-    await createNewSession(true, sessionId, messageId, branchName || undefined);
   };
 
   const loadSession = async (id: string) => {
     try {
       setSessionId(id);
+      const session = sessions.find(s => s.id === id);
+      setCurrentSession(session || null);
+      
       const response = await api.get(`/chat/messages/${id}`);
       const loadedMessages: Message[] = (response.data.messages || []).map((msg: { id: string; role: string; content: string; created_at: string }) => ({
         id: msg.id,
@@ -123,10 +128,46 @@ export default function AIAssistantPage() {
         timestamp: new Date(msg.created_at),
       }));
       setMessages(loadedMessages);
+      setError(null);
     } catch (err) {
-      console.error('Failed to load messages:', err);
-      setError('Failed to load conversation');
+      console.error('Failed to load session:', err);
+      setError('Failed to load chat history');
     }
+  };
+
+  const toggleSessionCollapse = (sessionId: string) => {
+    setCollapsedSessions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sessionId)) {
+        newSet.delete(sessionId);
+      } else {
+        newSet.add(sessionId);
+      }
+      return newSet;
+    });
+  };
+
+  const getSessionChildren = (parentId: string) => {
+    return sessions.filter(s => s.parent_session_id === parentId);
+  };
+
+  const getRootSessions = () => {
+    return sessions.filter(s => !s.parent_session_id);
+  };
+
+  const getBreadcrumbs = (session: ChatSession | null): ChatSession[] => {
+    if (!session) return [];
+    const path: ChatSession[] = [session];
+    let current = session;
+    
+    while (current.parent_session_id) {
+      const parent = sessions.find(s => s.id === current.parent_session_id);
+      if (!parent) break;
+      path.unshift(parent);
+      current = parent;
+    }
+    
+    return path;
   };
 
   const deleteSession = async (id: string) => {
@@ -358,8 +399,21 @@ export default function AIAssistantPage() {
             )}
           </div>
 
-          {/* Sessions List */}
-          <div className="flex-1 overflow-y-auto space-y-1">
+          {/* Sessions Tree */}
+          <div className="flex-1 overflow-y-auto">
+            <SessionTree
+              sessions={sessions}
+              activeSessionId={sessionId}
+              collapsedSessions={collapsedSessions}
+              onSelectSession={loadSession}
+              onToggleCollapse={toggleSessionCollapse}
+              onEdit={(id, title) => {
+                setEditingSessionId(id);
+                setEditingTitle(title);
+              }}
+              onDelete={deleteSession}
+            />
+            {/* Old list - keeping for reference, remove later
             {sessions.map((session) => (
               <div
                 key={session.id}
@@ -450,6 +504,7 @@ export default function AIAssistantPage() {
                 )}
               </div>
             ))}
+            */}
           </div>
         </div>
       </div>
@@ -476,6 +531,32 @@ export default function AIAssistantPage() {
         ) : (
           /* Chat View */
           <>
+        {/* Breadcrumbs */}
+        {currentSession && getBreadcrumbs(currentSession).length > 1 && (
+          <div className="border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm px-6 py-3">
+            <div className="flex items-center gap-2 text-sm">
+              {getBreadcrumbs(currentSession).map((session, idx, arr) => (
+                <div key={session.id} className="flex items-center gap-2">
+                  <button
+                    onClick={() => loadSession(session.id)}
+                    className={cn(
+                      "hover:text-blue-600 dark:hover:text-blue-400 transition-colors",
+                      idx === arr.length - 1 
+                        ? "font-semibold text-slate-900 dark:text-slate-100"
+                        : "text-slate-600 dark:text-slate-400"
+                    )}
+                  >
+                    {session.branch_name || session.title}
+                  </button>
+                  {idx < arr.length - 1 && (
+                    <ChevronRight className="h-4 w-4 text-slate-400" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
@@ -743,11 +824,10 @@ export default function AIAssistantPage() {
                   {!isLoading && message.content && (
                     <button
                       onClick={() => createBranchFromMessage(message.id)}
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm"
-                      title="Branch from this message"
+                      className="absolute -right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 p-2 text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-lg hover:shadow-md"
+                      title="Branch from here"
                     >
-                      <GitBranch className="h-3.5 w-3.5" />
-                      Branch
+                      <GitBranch className="h-4 w-4" />
                     </button>
                   )}
                 </div>
