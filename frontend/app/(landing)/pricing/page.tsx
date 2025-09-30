@@ -147,13 +147,13 @@ function FAQProgressNavigation({
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className="absolute right-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
               >
-                <div className="relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap">
+                <div className="relative glass-card px-4 py-2 rounded-xl shadow-lg">
+                  <span className="text-sm font-semibold text-primary-dark whitespace-nowrap">
                     {category.title}
                   </span>
                   <div className="absolute left-full top-1/2 transform -translate-y-1/2">
-                    <div className="w-0 h-0 border-l-[8px] border-l-white/95 dark:border-l-gray-900/95 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent" />
-                    <div className="absolute -left-px top-0 w-0 h-0 border-l-[8px] border-l-gray-200/50 dark:border-l-gray-700/50 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent" />
+                    <div className="w-0 h-0 border-l-[8px] border-l-[var(--card)] border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent" />
+                    <div className="absolute -left-px top-0 w-0 h-0 border-l-[8px] border-l-[var(--border)] border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent" />
                   </div>
                 </div>
               </motion.div>
@@ -217,7 +217,7 @@ function FAQProgressNavigation({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.3, ease: "easeOut" }}
         >
-          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+          <div className="glass-card rounded-full px-3 py-1 shadow-lg">
             <motion.span
               className="text-xs font-bold text-green-600"
               key={currentSection}
