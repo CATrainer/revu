@@ -110,13 +110,50 @@ export default function AIAssistantPage() {
     loadSessions();
   }, []);
 
-  // Poll for updates when session is streaming
+  // Poll for updates when session is streaming or on initial load
   useEffect(() => {
     if (!sessionId) return;
     
     const sessionState = sessionStates.get(sessionId);
-    if (!sessionState?.isStreaming) return;
+    const shouldPoll = sessionState?.isStreaming;
     
+    // Initial check for any incomplete messages
+    const checkForIncompleteMessages = async () => {
+      try {
+        const response = await api.get(`/chat/messages/${sessionId}`);
+        const latestMessages: Message[] = (response.data.messages || []).map((msg: { id: string; role: string; content: string; created_at: string }) => ({
+          id: msg.id,
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content,
+          timestamp: new Date(msg.created_at),
+          status: 'sent',
+        }));
+        
+        // Check if last message looks incomplete (no proper ending)
+        if (latestMessages.length > 0) {
+          const lastMsg = latestMessages[latestMessages.length - 1];
+          if (lastMsg.role === 'assistant' && lastMsg.content.length < 50) {
+            // Likely incomplete - mark as streaming
+            setSessionStates(prev => new Map(prev).set(sessionId, { 
+              isStreaming: true, 
+              isLoading: false 
+            }));
+          }
+        }
+        
+        setMessages(latestMessages);
+        setMessageCache(prev => new Map(prev).set(sessionId, latestMessages));
+      } catch (err) {
+        console.error('Failed to check messages:', err);
+      }
+    };
+    
+    // Check immediately on session load
+    checkForIncompleteMessages();
+    
+    if (!shouldPoll) return;
+    
+    // Poll every 2 seconds while streaming
     const pollInterval = setInterval(async () => {
       try {
         const response = await api.get(`/chat/messages/${sessionId}`);
@@ -127,15 +164,35 @@ export default function AIAssistantPage() {
           timestamp: new Date(msg.created_at),
           status: 'sent',
         }));
+        
         setMessages(latestMessages);
         setMessageCache(prev => new Map(prev).set(sessionId, latestMessages));
+        
+        // Check if generation is complete (no more changes)
+        const currentLastMsg = messages[messages.length - 1];
+        const newLastMsg = latestMessages[latestMessages.length - 1];
+        
+        if (currentLastMsg && newLastMsg && 
+            currentLastMsg.content === newLastMsg.content &&
+            currentLastMsg.content.length > 100) {
+          // Message hasn't changed and has substantial content - likely complete
+          setSessionStates(prev => new Map(prev).set(sessionId, { 
+            isStreaming: false, 
+            isLoading: false 
+          }));
+        }
       } catch (err) {
         console.error('Failed to poll messages:', err);
+        // Stop polling on error
+        setSessionStates(prev => new Map(prev).set(sessionId, { 
+          isStreaming: false, 
+          isLoading: false 
+        }));
       }
-    }, 2000); // Poll every 2 seconds
+    }, 2000);
     
     return () => clearInterval(pollInterval);
-  }, [sessionId, sessionStates]);
+  }, [sessionId, sessionStates, messages]);
 
   const loadSessions = async () => {
     try {
@@ -160,22 +217,55 @@ export default function AIAssistantPage() {
     }
   };
 
-  const prepareNewSession = (parentSessionId?: string, branchFromMessageId?: string, branchName?: string, openInSplitPane = false) => {
-    // Don't create the session yet, just prepare the state
-    if (openInSplitPane) {
-      // Prepare split pane session
+  const prepareNewSession = async (parentSessionId?: string, branchFromMessageId?: string, branchName?: string, openInSplitPane = false) => {
+    // For threads (openInSplitPane with parent), create immediately with auto_start
+    if (openInSplitPane && parentSessionId) {
+      setSplitPaneSession('pending');
+      setSplitPaneMessages([]);
+      setShowBranchSuggestions(false);
+      
+      try {
+        // Create thread session immediately with auto_start
+        const { sessionId: newSessionId, initialMessage } = await createNewSession(
+          parentSessionId,
+          branchFromMessageId,
+          branchName,
+          true // auto_start for threads
+        );
+        
+        setSplitPaneSession(newSessionId);
+        
+        // Add initial AI message if present
+        if (initialMessage) {
+          setSplitPaneMessages([{
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: initialMessage,
+            timestamp: new Date(),
+            status: 'sent',
+          }]);
+        }
+        
+        await loadSessions(); // Refresh session list
+      } catch (err) {
+        console.error('Failed to create thread:', err);
+        setSplitPaneSession(null);
+      }
+    } else if (openInSplitPane) {
+      // Non-thread split pane (shouldn't happen but handle it)
       setSplitPaneSession('pending');
       setSplitPaneMessages([]);
       setPendingSession({ parentId: parentSessionId, branchFromMessageId, branchName, openInSplitPane: true });
+      setShowBranchSuggestions(false);
     } else {
-      // Prepare main session
+      // Prepare main session (don't create until first message)
       setSessionId(null);
       setMessages([]);
       setSplitPaneSession(null);
       setCurrentSession(null);
       setPendingSession({ parentId: parentSessionId, branchFromMessageId, branchName, openInSplitPane: false });
+      setShowBranchSuggestions(false);
     }
-    setShowBranchSuggestions(false);
   };
 
   const createNewSession = async (parentSessionId?: string, branchFromMessageId?: string, branchName?: string, autoStart = false) => {
@@ -227,10 +317,10 @@ export default function AIAssistantPage() {
       setSessionId(splitPaneSession);
       setMessages(splitPaneMessages);
       setCurrentSession(sessions.find(s => s.id === splitPaneSession) || null);
-      prepareNewSession(splitPaneSession, messageId, branchName, true);
+      await prepareNewSession(splitPaneSession, messageId, branchName, true);
     } else {
       // Creating from main chat, open in split pane
-      prepareNewSession(sourceSessionId, messageId, branchName, true);
+      await prepareNewSession(sourceSessionId, messageId, branchName, true);
     }
     setShowBranchSuggestions(false);
   };
@@ -397,46 +487,30 @@ export default function AIAssistantPage() {
     try {
       let actualSessionId = isForSplitPane ? splitPaneSession : sessionId;
       
-      // If there's a pending session, create it now
-      if (pendingSession && pendingSession.openInSplitPane === isForSplitPane) {
-        const { parentId, branchFromMessageId, branchName, openInSplitPane } = pendingSession;
+      // If there's a pending session (only for main chat now, split pane created immediately)
+      if (pendingSession && !isForSplitPane) {
+        const { parentId, branchFromMessageId, branchName } = pendingSession;
         const { sessionId: newSessionId, initialMessage } = await createNewSession(
           parentId,
           branchFromMessageId,
           branchName,
-          !!parentId // auto_start if it's a thread
+          false // main chat doesn't auto_start
         );
         
         actualSessionId = newSessionId;
+        setSessionId(newSessionId);
         
-        if (openInSplitPane) {
-          setSplitPaneSession(newSessionId);
-          // If there's an initial AI message, prepend it before the user message
-          if (initialMessage) {
-            setSplitPaneMessages((prev) => {
-              // Remove the user message temporarily, add AI message, then user message
-              const userMsg = prev[prev.length - 1];
-              return [{
-                id: (Date.now() - 1).toString(),
-                role: 'assistant',
-                content: initialMessage,
-                timestamp: new Date(),
-              }, userMsg];
-            });
-          }
-        } else {
-          setSessionId(newSessionId);
-          if (initialMessage) {
-            setMessages((prev) => {
-              const userMsg = prev[prev.length - 1];
-              return [{
-                id: (Date.now() - 1).toString(),
-                role: 'assistant',
-                content: initialMessage,
-                timestamp: new Date(),
-              }, userMsg];
-            });
-          }
+        if (initialMessage) {
+          setMessages((prev) => {
+            const userMsg = prev[prev.length - 1];
+            return [{
+              id: (Date.now() - 1).toString(),
+              role: 'assistant',
+              content: initialMessage,
+              timestamp: new Date(),
+              status: 'sent',
+            }, userMsg];
+          });
         }
         
         setPendingSession(null);

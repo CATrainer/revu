@@ -147,15 +147,42 @@ def _estimate_tokens(text: str) -> int:
     return max(1, len(text) // 4)
 
 
-async def _insert_message(db: AsyncSession, session_id: UUID, user_id: UUID, role: str, content: str, tokens: Optional[int] = None, latency_ms: Optional[int] = None) -> UUID:
+async def _insert_message(db: AsyncSession, session_id: UUID, user_id: UUID, role: str, content: str, tokens: Optional[int] = None, latency_ms: Optional[int] = None, status: str = "completed", is_streaming: bool = False) -> UUID:
+    """Insert a new message with status tracking."""
     res = await db.execute(
         text(
-            """INSERT INTO ai_chat_messages (id, session_id, user_id, role, content, tokens, latency_ms, created_at)
-            VALUES (gen_random_uuid(), :sid, :uid, :role, :content, :tokens, :latency, now()) RETURNING id"""
+            """INSERT INTO ai_chat_messages (id, session_id, user_id, role, content, tokens, latency_ms, status, is_streaming, created_at, last_updated)
+            VALUES (gen_random_uuid(), :sid, :uid, :role, :content, :tokens, :latency, :status, :streaming, now(), now()) RETURNING id"""
         ),
-        {"sid": str(session_id), "uid": str(user_id), "role": role, "content": content, "tokens": tokens, "latency": latency_ms},
+        {"sid": str(session_id), "uid": str(user_id), "role": role, "content": content, "tokens": tokens, "latency": latency_ms, "status": status, "streaming": is_streaming},
     )
     return res.scalar_one()
+
+
+async def _update_message_content(db: AsyncSession, message_id: UUID, content: str, status: str = "generating") -> None:
+    """Update message content incrementally during streaming."""
+    await db.execute(
+        text(
+            """UPDATE ai_chat_messages 
+            SET content = :content, status = :status, last_updated = now()
+            WHERE id = :mid"""
+        ),
+        {"mid": str(message_id), "content": content, "status": status},
+    )
+    await db.commit()
+
+
+async def _finalize_message(db: AsyncSession, message_id: UUID, tokens: int, latency_ms: int) -> None:
+    """Mark message as complete and set final metadata."""
+    await db.execute(
+        text(
+            """UPDATE ai_chat_messages 
+            SET status = 'completed', is_streaming = false, tokens = :tokens, latency_ms = :latency, last_updated = now()
+            WHERE id = :mid"""
+        ),
+        {"mid": str(message_id), "tokens": tokens, "latency": latency_ms},
+    )
+    await db.commit()
 
 
 async def _generate_thread_intro(db: AsyncSession, user_id: UUID, session_id: UUID, parent_session_id: str, branch_name: str) -> str:
@@ -569,6 +596,51 @@ async def generate_session_title(
     return {"session_id": str(session_id), "title": title}
 
 
+@router.get("/sessions/{session_id}/status")
+async def get_session_status(
+    *,
+    session_id: UUID,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Check if session has actively generating messages."""
+    await _rate_limit(db, current_user, "chat_status", 200)
+    
+    # Verify ownership
+    own = await db.execute(
+        text("SELECT 1 FROM ai_chat_sessions WHERE id=:sid AND user_id=:uid"),
+        {"sid": str(session_id), "uid": str(current_user.id)},
+    )
+    if not own.first():
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    # Check for generating messages
+    generating = await db.execute(
+        text(
+            """SELECT id, content, last_updated FROM ai_chat_messages 
+            WHERE session_id=:sid AND status='generating' 
+            ORDER BY created_at DESC LIMIT 1"""
+        ),
+        {"sid": str(session_id)},
+    )
+    gen_msg = generating.first()
+    
+    if gen_msg:
+        return {
+            "has_active_generation": True,
+            "generating_message_id": str(gen_msg[0]),
+            "partial_content": gen_msg[1],
+            "last_updated": _serialize_value(gen_msg[2]),
+        }
+    
+    return {
+        "has_active_generation": False,
+        "generating_message_id": None,
+        "partial_content": None,
+        "last_updated": None,
+    }
+
+
 @router.delete("/sessions/{session_id}")
 async def delete_session(
     *,
@@ -632,8 +704,16 @@ async def send_message(
     client = Anthropic(api_key=api_key) if Anthropic and api_key else None
     model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-3-5-sonnet-latest"
 
-    async def _finalize(assistant_text: str, tokens: int, latency_ms: int):
-        await _insert_message(db, session_id, current_user.id, "assistant", assistant_text, tokens=tokens, latency_ms=latency_ms)
+    # Create assistant message immediately with generating status
+    assistant_msg_id = await _insert_message(
+        db, session_id, current_user.id, "assistant", "", 
+        status="generating", is_streaming=True
+    )
+    await db.commit()
+
+    async def _finalize(assistant_text: str, tokens: int, latency_ms: int, message_id: UUID):
+        """Finalize the assistant message."""
+        await _finalize_message(db, message_id, tokens, latency_ms)
         await db.execute(
             text("UPDATE ai_chat_sessions SET last_message_at=now(), updated_at=now() WHERE id=:sid"),
             {"sid": str(session_id)},
@@ -682,12 +762,16 @@ async def send_message(
             assistant_text = "I'm currently unavailable. Please check your API configuration."
         
         latency_ms = int((time.perf_counter() - start) * 1000)
-        await _finalize(assistant_text, _estimate_tokens(assistant_text), latency_ms)
+        # Update the message content for non-streaming
+        await _update_message_content(db, assistant_msg_id, assistant_text, status="completed")
+        await _finalize(assistant_text, _estimate_tokens(assistant_text), latency_ms, assistant_msg_id)
         return {"message": assistant_text, "latency_ms": latency_ms}
 
     async def event_stream():
         assistant_text_parts: List[str] = []
         completion_tokens = 0
+        chunk_count = 0
+        
         if client:
             try:
                 # Build messages for Claude - filter out system messages from history
@@ -718,11 +802,21 @@ async def send_message(
                     for text in stream.text_stream:
                         assistant_text_parts.append(text)
                         completion_tokens += _estimate_tokens(text)
+                        chunk_count += 1
+                        
+                        # Save to database every 5 chunks for resilience
+                        if chunk_count % 5 == 0:
+                            current_content = "".join(assistant_text_parts)
+                            await _update_message_content(db, assistant_msg_id, current_content, status="generating")
+                        
                         yield f"data: {json.dumps({'delta': text})}\n\n"
                 
                 assistant_text = "".join(assistant_text_parts)
             except Exception as e:  # noqa: BLE001
+                from loguru import logger
+                logger.error(f"Streaming error: {e}")
                 assistant_text = f"I apologize, but I encountered an error. Please try again."  # fallback
+                await _update_message_content(db, assistant_msg_id, assistant_text, status="error")
                 yield f"data: {json.dumps({'delta': assistant_text})}\n\n"
         else:
             # Fallback when Claude client not available
@@ -730,10 +824,13 @@ async def send_message(
             assistant_text_parts.append(fallback)
             assistant_text = fallback
             completion_tokens = _estimate_tokens(assistant_text)
+            await _update_message_content(db, assistant_msg_id, assistant_text, status="error")
             yield f"data: {json.dumps({'delta': assistant_text})}\n\n"
         
         latency_ms = int((time.perf_counter() - start) * 1000)
-        await _finalize(assistant_text, completion_tokens, latency_ms)
+        # Final update with complete content
+        await _update_message_content(db, assistant_msg_id, assistant_text, status="generating")
+        await _finalize(assistant_text, completion_tokens, latency_ms, assistant_msg_id)
         yield f"data: {json.dumps({'event': 'done', 'latency_ms': latency_ms})}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
