@@ -580,7 +580,12 @@ export default function AIAssistantPage() {
                               em: ({ node, ...props }) => (
                                 <em className="italic text-slate-700 dark:text-slate-300" {...props} />
                               ),
-                              code: ({ node, inline, className, children, ...props }: any) => {
+                              code: ({ node, inline, className, children, ...props }: {
+                                node?: unknown;
+                                inline?: boolean;
+                                className?: string;
+                                children?: React.ReactNode;
+                              }) => {
                                 const match = /language-(\w+)/.exec(className || '');
                                 const language = match ? match[1] : '';
                                 const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
