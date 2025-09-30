@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import SocialPlatformCarousel from '@/components/shared/SocialPlatformCarousel';
+import { CountdownBanner } from '@/components/shared/CountdownBanner';
 
 export function Hero() {
   const router = useRouter();
@@ -44,20 +45,22 @@ export function Hero() {
   };
 
   return (
-    <motion.section 
-      id="hero" 
-      className="relative min-h-[90vh] section-background-alt overflow-hidden"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.8 }}
-    >
-      {/* Professional Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, rgb(51, 65, 85) 1px, transparent 0)`,
-          backgroundSize: '24px 24px'
-        }}></div>
-      </div>
+    <>
+      <CountdownBanner />
+      <motion.section 
+        id="hero" 
+        className="relative min-h-[90vh] section-background-alt overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+      >
+        {/* Professional Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, rgb(51, 65, 85) 1px, transparent 0)`,
+            backgroundSize: '24px 24px'
+          }}></div>
+        </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <div ref={ref} className="relative">
@@ -197,5 +200,6 @@ export function Hero() {
         <div className="w-96 h-96 brand-background rounded-full opacity-20 blur-3xl"></div>
       </motion.div>
     </motion.section>
+    </>
   );
 }

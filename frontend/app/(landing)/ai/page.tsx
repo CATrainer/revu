@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import Rect, { useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { 
@@ -22,7 +22,8 @@ import {
   FaHashtag,
   FaGlobe,
   FaReply,
-  FaUsers
+  FaUsers,
+  FaCheck
 } from 'react-icons/fa';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
@@ -39,188 +40,27 @@ export default function AIPage() {
   }, []);
 
   return (
-    <div className={`py-24 section-background transition-all duration-1000 ${
+    <div className={`py-16 section-background transition-all duration-1000 ${
       pageLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
     }`}>
-      {/* Repruv AI Hero */}
-      <Hero />
-      
-      {/* AI Features Overview */}
-      <AIFeatures />
-      
-      {/* Repruv Content Creation Framework */}
+      {/* Repruv Content Creation Framework with Snake Animation */}
       <ContentCreationFramework />
     </div>
   );
 }
 
 function Hero() {
-  const heroRef = useRef(null);
-
-  return (
-    <section 
-      ref={heroRef}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center opacity-100 transition-opacity duration-800"
-    >
-      <h1 
-        className="text-4xl md:text-5xl font-bold text-green-600 mb-6 opacity-100 translate-y-0 transition-all duration-800 delay-400"
-      >
-        Repruv AI Enhances Your Community Engagement
-      </h1>
-      <p 
-        className="text-xl text-green-700 font-medium mb-8 max-w-3xl mx-auto opacity-100 translate-y-0 transition-all duration-600 delay-600"
-      >
-        Our AI-powered platform optimizes every stage of your content journey
-      </p>
-      <div 
-        className="flex justify-center opacity-100 translate-y-0 transition-all duration-800 delay-800"
-      >
-        <Button size="lg" className="px-8 py-6 text-lg bg-green-500 hover:bg-green-400 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300" asChild>
-          <Link href="/#hero">Get Early Access</Link>
-        </Button>
-      </div>
-    </section>
-  );
+  return null; // Remove the hero section entirely since we're moving content up
 }
 
-// AI Features Overview Section
-function AIFeatures() {
-  const [isVisible, setIsVisible] = useState(false);
-  const featuresRef = useRef(null);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          // Add a slight delay for dramatic effect
-          setTimeout(() => setIsVisible(true), 100);
-        }
-      },
-      { threshold: 0.15, rootMargin: '-30px 0px' }
-    );
 
-    if (featuresRef.current) {
-      observer.observe(featuresRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  const features = [
-    {
-      icon: <FaLightbulb className="h-8 w-8" />,
-      title: "AI-Powered Content Planning",
-      description: "Intelligent research, ideation, and strategic planning that identifies trending topics and optimizes content calendars for maximum engagement.",
-      highlights: ["Trend Analysis", "Content Calendar Optimization", "Topic Research", "Audience Targeting"]
-    },
-    {
-      icon: <FaEdit className="h-8 w-8" />,
-      title: "Automated Content Creation",
-      description: "Generate high-quality scripts, captions, and visual concepts with AI assistance that maintains your unique brand voice and style.",
-      highlights: ["Script Generation", "Caption Writing", "Visual Concepts", "Brand Voice Consistency"]
-    },
-    {
-      icon: <FaBullhorn className="h-8 w-8" />,
-      title: "Smart Distribution & Optimization",
-      description: "Optimize posting schedules, cross-platform distribution, and engagement strategies using AI-driven insights and automation.",
-      highlights: ["Optimal Timing", "Cross-Platform Publishing", "Engagement Optimization", "Automated Workflows"]
-    },
-    {
-      icon: <FaChartLine className="h-8 w-8" />,
-      title: "Advanced Performance Analytics",
-      description: "Comprehensive analytics with AI-powered insights that track performance, identify growth opportunities, and predict content success.",
-      highlights: ["Performance Tracking", "Growth Insights", "Success Prediction", "ROI Analysis"]
-    }
-  ];
-
-  return (
-    <section ref={featuresRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 mb-16">
-      <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-        {features.map((feature, index) => (
-          <div 
-            key={index}
-            className={`bg-white rounded-2xl p-8 shadow-lg border border-gray-100 hover:shadow-2xl transition-all duration-1000 hover:-translate-y-2 hover:rotate-1 ${
-              isVisible 
-                ? 'opacity-100 translate-y-0 scale-100 rotate-0' 
-                : 'opacity-0 translate-y-24 scale-90 -rotate-3'
-            }`}
-            style={{ 
-              transitionDelay: isVisible ? `${300 + (index * 200)}ms` : '0ms',
-              transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-              transformOrigin: 'center bottom'
-            }}
-          >
-            <div className="flex items-start gap-4">
-              <div className={`flex-shrink-0 w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center text-green-600 transition-all duration-700 ${
-                isVisible ? 'scale-100 rotate-0' : 'scale-75 rotate-45'
-              }`} style={{ 
-                transitionDelay: isVisible ? `${400 + (index * 200)}ms` : '0ms',
-                transitionTimingFunction: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
-              }}>
-                <div className={`transition-all duration-500 ${isVisible ? 'scale-100' : 'scale-0'}`} 
-                     style={{ transitionDelay: isVisible ? `${500 + (index * 200)}ms` : '0ms' }}>
-                  {feature.icon}
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className={`text-xl font-bold text-gray-900 mb-3 transition-all duration-700 ${
-                  isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
-                }`} style={{ 
-                  transitionDelay: isVisible ? `${600 + (index * 200)}ms` : '0ms',
-                  transitionTimingFunction: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-                }}>
-                  {feature.title}
-                </h3>
-                <p className={`text-gray-600 mb-4 leading-relaxed transition-all duration-700 ${
-                  isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
-                }`} style={{ 
-                  transitionDelay: isVisible ? `${700 + (index * 200)}ms` : '0ms' 
-                }}>
-                  {feature.description}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {feature.highlights.map((highlight, idx) => (
-                    <span 
-                      key={idx}
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700 border border-green-200 transition-all duration-600 ${
-                        isVisible ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-95 rotate-6'
-                      }`}
-                      style={{ 
-                        transitionDelay: isVisible ? `${800 + (index * 200) + (idx * 100)}ms` : '0ms',
-                        transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
-                      }}
-                    >
-                      {highlight}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className={`text-center mt-12 transition-all duration-1000 ${
-        isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
-      }`} style={{ 
-        transitionDelay: isVisible ? '800ms' : '0ms',
-        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)'
-      }}>
-        <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-6 py-3 rounded-full text-base font-medium hover:bg-blue-100 transition-colors duration-300">
-          <FaCog className="h-5 w-5" />
-          Fully Integrated AI Workflow Management
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// The Repruv Content Creation Framework Component with circular animation
+// The Repruv Content Creation Framework Component with Snake Animation
 function ContentCreationFramework() {
-  const [openDialog, setOpenDialog] = useState(false);
-  const [selectedStage, setSelectedStage] = useState<number | null>(null);
+
   const [isClient, setIsClient] = useState(false);
-  const [isFrameworkVisible, setIsFrameworkVisible] = useState(true); // Start visible to ensure content shows
+  const [isFrameworkVisible, setIsFrameworkVisible] = useState(false);
+  const [hoveredStage, setHoveredStage] = useState<number | null>(null);
   const frameworkRef = useRef(null);
   
   // Ensure this only runs on client-side
@@ -236,746 +76,633 @@ function ContentCreationFramework() {
           setIsFrameworkVisible(true);
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.1, rootMargin: '50px' }
     );
 
     if (frameworkRef.current) {
       observer.observe(frameworkRef.current);
+    } else {
+      // Fallback - show animation after a delay if ref is not available
+      const timer = setTimeout(() => {
+        setIsFrameworkVisible(true);
+      }, 1000);
+      return () => clearTimeout(timer);
     }
 
     return () => observer.disconnect();
   }, []);
+
+  // Force animation to show after component mounts
+  useEffect(() => {
+    const forceShowTimer = setTimeout(() => {
+      setIsFrameworkVisible(true);
+    }, 2000);
+
+    return () => clearTimeout(forceShowTimer);
+  }, []);
   
-  // Framework stages data with icons
+  // Framework stages data with icons and AI-focused descriptions
   const stages = [
     { 
       id: 1, 
       title: "Inspiration", 
-      description: "Trends, audience questions and idea gaps",
-      icon: <FaLightbulb className="w-6 h-6" />
+      description: "Repruv AI analyzes trends, identifies content gaps, and provides creative insights",
+      features: [
+        "Trend analysis & forecasting",
+        "Content gap identification", 
+        "Creative concept generation",
+        "Viral content pattern insights"
+      ],
+      aiHelp: "Trend analysis, audience research insights, competitor gap identification, viral content patterns",
+      icon: <FaLightbulb className="w-6 h-6" />,
+      category: "Planning"
     },
     { 
       id: 2, 
       title: "Strategy", 
-      description: "Goals, pillars and editorial calendar",
-      icon: <FaClipboardList className="w-6 h-6" />
+      description: "Repruv AI generates strategic recommendations and content calendar insights",
+      features: [
+        "Content pillar optimization",
+        "Optimal posting schedule",
+        "Audience targeting insights",
+        "Performance predictions"
+      ],
+      aiHelp: "Content pillar suggestions, optimal posting schedules, audience targeting insights, performance predictions",
+      icon: <FaClipboardList className="w-6 h-6" />,
+      category: "Planning"
     },
     { 
       id: 3, 
       title: "Research", 
-      description: "Briefs, facts and script drafts",
-      icon: <FaSearch className="w-6 h-6" />
+      description: "Repruv AI provides comprehensive research insights and topic analysis",
+      features: [
+        "Automated topic research",
+        "Key point extraction",
+        "Audience question analysis",
+        "SEO keyword insights"
+      ],
+      aiHelp: "Topic research summaries, key point extraction, audience questions analysis, SEO insights",
+      icon: <FaSearch className="w-6 h-6" />,
+      category: "Planning"
     },
     { 
       id: 4, 
       title: "Pre-production", 
-      description: "Shot plans, briefs & collaborator packs",
-      icon: <FaFileAlt className="w-6 h-6" />
+      description: "Repruv AI offers planning insights and workflow optimization recommendations",
+      features: [
+        "Planning checklists",
+        "Resource allocation insights",
+        "Timeline optimization",
+        "Workflow recommendations"
+      ],
+      aiHelp: "Planning checklists, resource allocation insights, timeline optimization, collaboration tips",
+      icon: <FaFileAlt className="w-6 h-6" />,
+      category: "Creation"
     },
     { 
       id: 5, 
       title: "Production", 
-      description: "Filming: footage, audio and B-roll",
-      icon: <FaVideo className="w-6 h-6" />
+      description: "Repruv AI provides production insights and quality improvement recommendations",
+      features: [
+        "Quality assessment insights",
+        "Composition feedback",
+        "Pacing recommendations",
+        "B-roll suggestions"
+      ],
+      aiHelp: "Quality assessment insights, composition feedback, pacing recommendations, B-roll suggestions",
+      icon: <FaVideo className="w-6 h-6" />,
+      category: "Creation"
     },
     { 
       id: 6, 
       title: "Editing", 
-      description: "Cuts, color, sound & motion polish",
-      icon: <FaEdit className="w-6 h-6" />
+      description: "Repruv AI analyzes content and suggests editing improvements and optimizations",
+      features: [
+        "Engagement optimization",
+        "Pacing analysis",
+        "Highlight identification",
+        "Cut suggestions"
+      ],
+      aiHelp: "Engagement optimization insights, pacing analysis, highlight identification, improvement suggestions",
+      icon: <FaEdit className="w-6 h-6" />,
+      category: "Creation"
     },
     { 
       id: 7, 
       title: "Optimization", 
-      description: "Thumbnails, metadata & localization",
-      icon: <FaCog className="w-6 h-6" />
+      description: "Repruv AI analyzes and recommends metadata, SEO, and platform optimizations",
+      features: [
+        "SEO recommendations",
+        "Metadata optimization",
+        "Hashtag analysis",
+        "Platform-specific tips"
+      ],
+      aiHelp: "SEO recommendations, metadata insights, hashtag analysis, platform-specific optimization tips",
+      icon: <FaCog className="w-6 h-6" />,
+      category: "Distribution"
     },
     { 
       id: 8, 
       title: "Distribution", 
-      description: "Scheduling & staged releases",
-      icon: <FaShare className="w-6 h-6" />
+      description: "Repruv AI provides timing insights and multi-platform distribution analysis",
+      features: [
+        "Optimal timing analysis",
+        "Platform performance insights",
+        "Audience activity patterns",
+        "Reach predictions"
+      ],
+      aiHelp: "Optimal timing analysis, platform performance insights, audience activity patterns, reach predictions",
+      icon: <FaShare className="w-6 h-6" />,
+      category: "Distribution"
     },
     { 
       id: 9, 
       title: "Engagement", 
-      description: "Comments, DMs and moderation",
-      icon: <FaComment className="w-6 h-6" />
+      description: "Repruv AI analyzes engagement patterns and provides community insights",
+      features: [
+        "Engagement pattern analysis",
+        "Sentiment insights",
+        "Response suggestions",
+        "Community growth tracking"
+      ],
+      aiHelp: "Engagement analysis, sentiment insights, response suggestions, community growth patterns",
+      icon: <FaComment className="w-6 h-6" />,
+      category: "Distribution"
     },
     { 
       id: 10, 
       title: "Promotion", 
-      description: "Paid boosts, audiences & testing",
-      icon: <FaAd className="w-6 h-6" />
+      description: "Repruv AI provides advertising insights and audience targeting recommendations",
+      features: [
+        "Audience segmentation",
+        "Ad performance analysis",
+        "Budget optimization",
+        "Targeting recommendations"
+      ],
+      aiHelp: "Audience segmentation insights, ad performance analysis, budget optimization recommendations, targeting suggestions",
+      icon: <FaAd className="w-6 h-6" />,
+      category: "Analysis"
     },
     { 
       id: 11, 
       title: "Analytics", 
-      description: "Insights, KPIs & playbooks",
-      icon: <FaChartBar className="w-6 h-6" />
+      description: "Repruv AI delivers comprehensive performance insights and growth recommendations",
+      features: [
+        "Performance analysis",
+        "Growth insights",
+        "Success pattern identification",
+        "Improvement recommendations"
+      ],
+      aiHelp: "Performance analysis, growth insights, success pattern identification, improvement recommendations",
+      icon: <FaChartBar className="w-6 h-6" />,
+      category: "Analysis"
     },
     { 
       id: 12, 
       title: "Repurposing", 
-      description: "Clips, threads & evergreen plans",
-      icon: <FaRecycle className="w-6 h-6" />
+      description: "Repruv AI identifies repurposing opportunities and content lifecycle insights",
+      features: [
+        "Content repurposing insights",
+        "Format adaptation suggestions",
+        "Evergreen content identification",
+        "Lifecycle analysis"
+      ],
+      aiHelp: "Content repurposing insights, format adaptation recommendations, evergreen content identification, lifecycle analysis",
+      icon: <FaRecycle className="w-6 h-6" />,
+      category: "Analysis"
     }
   ];
   
-  const handleStageClick = (stageId: number) => {
-    setSelectedStage(stageId);
-    setOpenDialog(true);
-  };
 
-  // No helper functions needed here
-  
-  // Increased circle size for perfect circular positioning of all 12 stages
-  const circleRadius = 360;  // Adjusted for optimal spacing
-  const centerSize = 160;   // Slightly reduced for better proportions
-  
-  // Define framework sections for visual grouping with clearer color coding
+
+  // Define framework sections for visual grouping - updated colors
   const frameworkSections = [
     { 
       title: "Planning", 
-      stages: [1, 2, 3], // Inspiration, Strategy, Research
-      color: "#0ea5e9", // blue
-      bgColor: "from-blue-50 to-green-50",
-      darkColor: "from-blue-900/20 to-green-900/20",
-      shadowText: "PLAN",
-      textColor: "text-green-800 dark:text-green-300",
-      iconBgColor: "bg-cyan-100 dark:bg-cyan-900/40"
+      stages: [1, 2, 3],
+      color: "#3b82f6", // Blue
+      gradientFrom: "#3b82f6",
+      gradientTo: "#1d4ed8"
     },
     { 
       title: "Creation", 
-      stages: [4, 5, 6], // Pre-production, Production, Editing
-      color: "#10b981", // green
-      bgColor: "from-green-50 to-teal-50",
-      darkColor: "from-green-900/20 to-teal-900/20",
-      shadowText: "CREATE",
-      textColor: "text-green-800 dark:text-green-300",
-      iconBgColor: "bg-green-100 dark:bg-green-900/40"
+      stages: [4, 5, 6],
+      color: "#10b981", // Green
+      gradientFrom: "#10b981",
+      gradientTo: "#059669"
     },
     { 
       title: "Distribution", 
-      stages: [7, 8, 9], // Optimization, Distribution, Engagement
-      color: "#14b8a6", // teal
-      bgColor: "from-teal-50 to-cyan-50",
-      darkColor: "from-teal-900/20 to-cyan-900/20",
-      shadowText: "SHARE",
-      textColor: "text-green-800 dark:text-green-300",
-      iconBgColor: "bg-teal-100 dark:bg-teal-900/40"
+      stages: [7, 8, 9],
+      color: "#f59e0b", // Orange
+      gradientFrom: "#f59e0b",
+      gradientTo: "#d97706"
     },
     { 
       title: "Analysis", 
-      stages: [10, 11, 12], // Promotion, Analytics, Repurposing
-      color: "#3b82f6", // blue
-      bgColor: "from-cyan-50 to-blue-50",
-      darkColor: "from-cyan-900/20 to-blue-900/20",
-      shadowText: "ANALYZE",
-      textColor: "text-green-800 dark:text-green-300",
-      iconBgColor: "bg-blue-100 dark:bg-blue-900/40"
+      stages: [10, 11, 12],
+      color: "#8b5cf6", // Purple
+      gradientFrom: "#8b5cf6",
+      gradientTo: "#7c3aed"
     }
   ];
 
-  // Selected stage data
-  const selectedStageData = selectedStage ? stages.find(s => s.id === selectedStage) : null;
+  // Snake path calculation for modern flowing layout
+  const getSnakePosition = (index: number) => {
+    const containerWidth = 1100;
+    const containerHeight = 950;
+    const padding = 80;
+    const verticalSpacing = 280;
+    
+    // Create a proper snake pattern with 4 stages per row for better visual flow
+    const stagesPerRow = 4;
+    const row = Math.floor(index / stagesPerRow);
+    const col = index % stagesPerRow;
+    
+    // Create snake pattern - alternate direction each row
+    const actualCol = row % 2 === 0 ? col : stagesPerRow - 1 - col;
+    
+    // Calculate position with proper spacing
+    const availableWidth = containerWidth - 2 * padding;
+    const stageSpacing = availableWidth / (stagesPerRow - 1);
+    const x = padding + actualCol * stageSpacing;
+    const y = padding + row * verticalSpacing;
+    
+    return { x, y };
+  };
 
-  // Prevent SSR issues with framer-motion
+  // Function to get perfect perimeter-to-perimeter connection points
+  const getConnectionPoint = (fromIndex: number, toIndex: number) => {
+    const fromPos = getSnakePosition(fromIndex);
+    const toPos = getSnakePosition(toIndex);
+    
+    // Updated box dimensions (w-60 = 240px, h-48 = 192px)
+    // Cards are positioned with: left: position.x - 120px, top: position.y - 96px
+    // So the actual box boundaries are:
+    // Left edge: position.x - 120, Right edge: position.x - 120 + 240 = position.x + 120
+    // Top edge: position.y - 96, Bottom edge: position.y - 96 + 192 = position.y + 96
+    
+    const deltaX = toPos.x - fromPos.x;
+    const deltaY = toPos.y - fromPos.y;
+    
+    let fromPoint, toPoint;
+    
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      // Horizontal connection - connect left/right borders perfectly
+      if (deltaX > 0) {
+        // Moving right: right border of from-box to left border of to-box
+        fromPoint = { x: fromPos.x + 120, y: fromPos.y }; // Right edge of from-box
+        toPoint = { x: toPos.x - 120, y: toPos.y }; // Left edge of to-box
+      } else {
+        // Moving left: left border of from-box to right border of to-box
+        fromPoint = { x: fromPos.x - 120, y: fromPos.y }; // Left edge of from-box
+        toPoint = { x: toPos.x + 120, y: toPos.y }; // Right edge of to-box
+      }
+    } else {
+      // Vertical connection - connect top/bottom borders perfectly
+      if (deltaY > 0) {
+        // Moving down: bottom border of from-box to top border of to-box
+        fromPoint = { x: fromPos.x, y: fromPos.y + 96 }; // Bottom edge of from-box
+        toPoint = { x: toPos.x, y: toPos.y - 96 }; // Top edge of to-box
+      } else {
+        // Moving up: top border of from-box to bottom border of to-box
+        fromPoint = { x: fromPos.x, y: fromPos.y - 96 }; // Top edge of from-box
+        toPoint = { x: toPos.x, y: toPos.y + 96 }; // Bottom edge of to-box
+      }
+    }
+    
+    return { from: fromPoint, to: toPoint };
+  };
+
+  // Get stage section color
+  const getStageSection = (stageId: number) => {
+    return frameworkSections.find(section => section.stages.includes(stageId)) || frameworkSections[0];
+  };
+
+  // Selected stage data
+
+
+  // Prevent SSR issues
   if (!isClient) {
     return (
       <section className="flex flex-col items-center justify-center min-h-screen">
-        <div className="w-full flex flex-col items-center">
-          <div className="text-center mb-8 mt-20">
-            <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-6 py-3 rounded-full text-base font-medium shadow-md border border-green-200">
-              <FaRecycle className="h-5 w-5" />
-              Creator Content Lifecycle
-            </div>
-          </div>
-          <div>Loading...</div>
-        </div>
+        <div className="animate-pulse text-2xl font-bold text-green-600">Loading Repruv AI Framework...</div>
       </section>
     );
   }
 
   return (
-    <section className="flex flex-col items-center justify-center min-h-screen mb-24 pb-16">
-      <div className="w-full flex flex-col items-center">
+    <>
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(50px) scale(0.8);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        @keyframes pathDraw {
+          from {
+            stroke-dashoffset: 100;
+          }
+          to {
+            stroke-dashoffset: 0;
+          }
+        }
+      `}</style>
+      <section className="py-12 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
         <div
           ref={frameworkRef}
-          className={`transition-all duration-1000 ${
+          className={`text-center mb-12 transition-all duration-1000 ${
             isFrameworkVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
           }`}
         >
-          <div className={`text-center mb-8 mt-20 transition-all duration-800 ${
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+            Repruv AI Empowers You To <span className="text-purple-600 dark:text-purple-400">Engage.</span> <span className="text-blue-600 dark:text-blue-400">Grow.</span> <span className="text-green-600 dark:text-green-400">Monetise.</span>
+          </h1>
+          <p className="text-xl md:text-2xl text-green-600 dark:text-green-400 max-w-4xl mx-auto leading-relaxed font-medium">
+            Our AI-powered 12 stage framework guides you through every step of your creative journey.
+          </p>
+        </div>
+
+        {/* 12 Stages Overview - Aligned with snake layout */}
+        <div 
+          className={`mb-12 mx-auto transition-all duration-1000 ${
             isFrameworkVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-          }`} style={{ transitionDelay: isFrameworkVisible ? '200ms' : '0ms' }}>
-            <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-6 py-3 rounded-full text-base font-medium shadow-md border border-green-200">
-              <FaRecycle className="h-5 w-5" />
-              Creator Content Lifecycle
-            </div>
-          </div>
-          
-          {/* Circle Animation Container - Square layout with proper centering */}
-        <div className="relative flex items-center justify-center mx-auto" 
-             style={{ 
-               width: '1000px', 
-               height: '1000px',
-               maxWidth: '100vw',
-               maxHeight: '100vh',
-               overflow: 'visible'
-             }}>
-          {/* Section backgrounds with clearer quadrant separation */}
-          <svg 
-            width="1000" 
-            height="1000" 
-            className={`absolute transition-all duration-1000 ${
-              isFrameworkVisible ? 'opacity-100' : 'opacity-0'
-            }`} 
-            style={{ 
-              left: '50%', 
-              top: '50%', 
-              transform: 'translate(-50%, -50%)',
-              transitionDelay: isFrameworkVisible ? '300ms' : '0ms'
-            }}
-          >
-            <defs>
-              {/* Define gradients for each section */}
-              {frameworkSections.map((section, sectionIndex) => (
-                <radialGradient 
-                  key={`gradient-${sectionIndex}`} 
-                  id={`sectionGradient-${sectionIndex}`} 
-                  cx="50%" 
-                  cy="50%" 
-                  r="50%" 
-                  gradientUnits="objectBoundingBox"
-                >
-                  <stop offset="30%" stopColor="#ffffff" stopOpacity="0.02" />
-                  <stop offset="70%" stopColor={section.color} stopOpacity="0.15" />
-                  <stop offset="100%" stopColor={section.color} stopOpacity="0.25" />
-                </radialGradient>
-              ))}
-              
-            </defs>
-            
-            {/* Draw quadrant sections */}
+          }`}
+          style={{ 
+            width: '1100px', 
+            maxWidth: '100%',
+            transitionDelay: isFrameworkVisible ? '400ms' : '0ms' 
+          }}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {frameworkSections.map((section, sectionIndex) => {
-              // Calculate angles for each quadrant (90° per section)
-              const startAngle = (sectionIndex * Math.PI / 2) - (Math.PI / 2); // Start from top
-              const endAngle = ((sectionIndex + 1) * Math.PI / 2) - (Math.PI / 2);
-              
-              // Calculate coordinates for the quadrant path
-              const outerRadius = circleRadius + 180;
-              const centerX = 500;
-              const centerY = 500;
-              
-              const startX = centerX + outerRadius * Math.cos(startAngle);
-              const startY = centerY + outerRadius * Math.sin(startAngle);
-              const endX = centerX + outerRadius * Math.cos(endAngle);
-              const endY = centerY + outerRadius * Math.sin(endAngle);
-              
-              // Create sector path
-              const path = [
-                `M ${centerX} ${centerY}`, // Move to center
-                `L ${startX} ${startY}`, // Line to start point
-                `A ${outerRadius} ${outerRadius} 0 0 1 ${endX} ${endY}`, // Arc to end point
-                'Z' // Close path
-              ].join(' ');
-              
-              // Calculate label position - professional angled placement
-              const labelAngle = (startAngle + endAngle) / 2;
-              const labelDistance = outerRadius - 40;
-              const labelX = centerX + labelDistance * Math.cos(labelAngle);
-              const labelY = centerY + labelDistance * Math.sin(labelAngle);
-              // Angle text appropriately based on quadrant
-              const labelRotation = (labelAngle * (180 / Math.PI)) + 90;
+              // Contextually relevant graphics for each section
+              const sectionGraphics = {
+                'Planning': <FaLightbulb className="h-12 w-12" />,
+                'Creation': <FaEdit className="h-12 w-12" />,
+                'Distribution': <FaShare className="h-12 w-12" />,
+                'Analysis': <FaChartBar className="h-12 w-12" />
+              };
               
               return (
-                <g key={`section-${sectionIndex}`}>
-                  {/* Section background with gradient and rounded corners */}
-                  <path
-                    d={path}
-                    fill={`url(#sectionGradient-${sectionIndex})`}
-                    stroke="none"
-                    rx="20"
-                    ry="20"
-                    className={`transition-all duration-1000 ${
-                      isFrameworkVisible ? 'opacity-100' : 'opacity-0'
-                    }`}
+                <div 
+                  key={section.title}
+                  className="relative text-center p-8 rounded-2xl border border-transparent transition-all duration-500 hover:scale-105 hover:shadow-2xl group overflow-hidden"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${section.gradientFrom}08, ${section.gradientTo}15)`,
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: `0 8px 32px ${section.color}15`
+                  }}
+                >
+                  {/* Animated background pattern */}
+                  <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity duration-500">
+                    <div className="absolute top-4 right-4 w-16 h-16 rounded-full" style={{ backgroundColor: section.color }} />
+                    <div className="absolute bottom-6 left-6 w-8 h-8 rounded-full" style={{ backgroundColor: section.color }} />
+                    <div className="absolute top-1/2 left-8 w-4 h-4 rounded-full" style={{ backgroundColor: section.color }} />
+                  </div>
+                  
+                  {/* Main graphic icon */}
+                  <div 
+                    className="flex justify-center mb-6 text-current transform group-hover:scale-110 transition-transform duration-500"
+                    style={{ color: section.color }}
+                  >
+                    {sectionGraphics[section.title as keyof typeof sectionGraphics]}
+                  </div>
+                  
+                  {/* Section title */}
+                  <h3 
+                    className="font-bold text-2xl mb-4 group-hover:text-opacity-90 transition-all duration-300"
+                    style={{ color: section.color }}
+                  >
+                    {section.title}
+                  </h3>
+                  
+                  {/* Stage numbers with sleek design */}
+                  <div className="flex justify-center gap-3 mb-4">
+                    {section.stages.map((stageId, idx) => (
+                      <div
+                        key={stageId}
+                        className="relative w-11 h-11 rounded-xl flex items-center justify-center text-sm font-bold text-white shadow-lg transform group-hover:scale-110 transition-all duration-300"
+                        style={{ 
+                          backgroundColor: section.color,
+                          transitionDelay: `${idx * 50}ms`
+                        }}
+                      >
+                        <div 
+                          className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"
+                          style={{ backgroundColor: 'white' }}
+                        />
+                        {stageId}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Subtle stage range indicator */}
+                  <div 
+                    className="inline-block px-4 py-2 rounded-full text-xs font-semibold text-white/90 backdrop-blur-sm"
+                    style={{ backgroundColor: `${section.color}60` }}
+                  >
+                    Stages {section.stages[0]}-{section.stages[section.stages.length - 1]}
+                  </div>
+                  
+                  {/* Sleek border gradient effect */}
+                  <div 
+                    className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                     style={{ 
-                      transformOrigin: `${centerX}px ${centerY}px`,
-                      transform: isFrameworkVisible ? 'scale(1) rotate(0deg)' : 'scale(0.8) rotate(-10deg)',
-                      transitionDelay: isFrameworkVisible ? `${100 + (sectionIndex * 150)}ms` : '0ms',
-                      transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+                      background: `linear-gradient(135deg, ${section.color}20, transparent 50%, ${section.color}10)`,
+                      border: `1px solid ${section.color}30`
                     }}
                   />
-                  
-                  {/* Section title - Professional angled layout */}
-                  <text
-                    x={labelX}
-                    y={labelY}
-                    className={`font-bold text-green-800 dark:text-green-300 transition-all duration-800 ${
-                      isFrameworkVisible ? 'opacity-95' : 'opacity-0'
-                    }`}
-                    style={{ 
-                      fontSize: '22px', 
-                      fontWeight: '700',
-                      letterSpacing: '0.5px',
-                      textShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                      transform: isFrameworkVisible ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(15deg)',
-                      transformOrigin: `${labelX}px ${labelY}px`,
-                      transitionDelay: isFrameworkVisible ? `${300 + (sectionIndex * 150)}ms` : '0ms',
-                      transitionTimingFunction: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
-                    }}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    transform={`rotate(${labelRotation}, ${labelX}, ${labelY})`}
-                  >
-                    {section.title.toUpperCase()}
-                  </text>
-                  
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Snake Animation Container - Expanded for larger boxes */}
+        <div className="relative mx-auto" style={{ width: '1100px', height: '950px', minHeight: '950px' }}>
+          {/* Animated connection lines (SVG Path) */}
+          <svg 
+            className="absolute inset-0 w-full h-full pointer-events-none z-10"
+            viewBox="0 0 1100 950"
+            style={{ width: '100%', height: '100%' }}
+          >
+            <defs>
+              <linearGradient id="snakeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.6" />
+                <stop offset="25%" stopColor="#10b981" stopOpacity="0.6" />
+                <stop offset="50%" stopColor="#f59e0b" stopOpacity="0.6" />
+                <stop offset="75%" stopColor="#8b5cf6" stopOpacity="0.6" />
+                <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.6" />
+              </linearGradient>
+              
+              {/* Section-specific gradients for snake path */}
+              <linearGradient id="planningGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#1d4ed8" stopOpacity="0.8" />
+              </linearGradient>
+              <linearGradient id="creationGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#10b981" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#059669" stopOpacity="0.8" />
+              </linearGradient>
+              <linearGradient id="distributionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#d97706" stopOpacity="0.8" />
+              </linearGradient>
+              <linearGradient id="analysisGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#7c3aed" stopOpacity="0.8" />
+              </linearGradient>
+              
+              {/* Single appealing gradient for the snake */}
+              <linearGradient id="multiSectionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.9" />
+                <stop offset="50%" stopColor="#1e40af" stopOpacity="0.95" />
+                <stop offset="100%" stopColor="#1d4ed8" stopOpacity="0.9" />
+              </linearGradient>
+            </defs>
+            
+            {/* Complete continuous snake path connecting ALL stages */}
+            {/* Connecting lines between all stages */}
+            {stages.slice(0, -1).map((stage, index) => {
+              const connection = getConnectionPoint(index, index + 1);
+              const fromPoint = connection.from;
+              const toPoint = connection.to;
+              
+              return (
+                <g key={`connection-${index}`}>
+                  {/* Main connecting line */}
+                  <path
+                    d={`M ${fromPoint.x} ${fromPoint.y} L ${toPoint.x} ${toPoint.y}`}
+                    stroke="#3b82f6"
+                    strokeWidth="4"
+                    fill="none"
+                    strokeLinecap="round"
+                    opacity="0.8"
+                  />
+                  {/* Optional: Add arrow indicator */}
+                  <circle
+                    cx={toPoint.x}
+                    cy={toPoint.y}
+                    r="3"
+                    fill="#3b82f6"
+                    opacity="0.6"
+                  />
                 </g>
               );
             })}
           </svg>
-          
-          {/* Center Circle - Clean professional design */}
-          <div 
-            className={`absolute rounded-full bg-gradient-to-br from-emerald-600 to-green-600 flex items-center justify-center z-20 hover:scale-102 transition-all duration-1200 ${
-              isFrameworkVisible ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 rotate-180'
-            }`}
-            style={{ 
-              width: `${centerSize}px`, 
-              height: `${centerSize}px`,
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              border: '2px solid rgba(255, 255, 255, 0.1)',
-              transitionDelay: isFrameworkVisible ? '200ms' : '0ms',
-              transitionTimingFunction: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
-            }}
-          >
-            {/* Inner content - NO shiny effects */}
-            <div className="flex flex-col items-center justify-center text-center p-2">
-              <div className={`relative mb-2 transition-all duration-800 ${
-                isFrameworkVisible ? 'scale-100 rotate-0' : 'scale-0 rotate-45'
-              }`} style={{ 
-                transitionDelay: isFrameworkVisible ? '400ms' : '0ms',
-                transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
-              }}>
-                <FaMagic className="h-8 w-8 text-white" />
-              </div>
-              <span className={`text-white text-xl font-bold leading-tight transition-all duration-700 ${
-                isFrameworkVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-              }`} style={{ 
-                transitionDelay: isFrameworkVisible ? '500ms' : '0ms' 
-              }}>Repruv AI</span>
-              <span className={`text-white/90 text-xs mt-1 tracking-wider uppercase font-light transition-all duration-700 ${
-                isFrameworkVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-              }`} style={{ 
-                transitionDelay: isFrameworkVisible ? '600ms' : '0ms' 
-              }}>Content Framework</span>
-            </div>
-          </div>
 
-          {/* Orbit path indicators - one per section */}
-          <svg
-            className="absolute z-10 pointer-events-none"
-            style={{
-              width: '900px', 
-              height: '900px',
-              left: '50%', 
-              top: '50%', 
-              transform: 'translate(-50%, -50%)'
-            }}
-          >
-          </svg>
-          
-          {/* Stages arranged in a perfect circle around the center */}
-          {stages.map((stage) => {
-            // Find which section this stage belongs to
-            const sectionIndex = frameworkSections.findIndex(section => 
-              section.stages.includes(stage.id)
-            );
-            
-            // Calculate the angle for each stage in a perfect circle
-            // We have 12 stages, so each stage is 30 degrees (360/12), starting from the top (-90 degrees)
-            const angle = ((stage.id - 1) * (Math.PI * 2) / 12) - (Math.PI / 2);
-            
-            // Use a consistent radius for perfect circular alignment
-            // All stages are positioned at the same distance from the center
-            const stageRadius = circleRadius * 0.85; // Consistent radius for perfect circle
-            
-            // Calculate position using the angle and radius - add safety checks
-            const x = isNaN(angle) ? 0 : stageRadius * Math.cos(angle);
-            const y = isNaN(angle) ? 0 : stageRadius * Math.sin(angle);
-            
-            // Use section colors for consistent styling
-            const section = frameworkSections[sectionIndex];
-            // Convert section color to rgba formats for different opacities
-            const sectionColorRGB = section.color.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ') || '16, 185, 129';
-            const hoverBgColor = `rgba(${sectionColorRGB}, 0.1)`;
-            
-            // Generate a unique key for the group - Important: Using a key prop for React fragments
-            const stageKey = `stage-group-${stage.id}`;
-            
-            return (
-              <React.Fragment key={stageKey}>
-                {/* Stage bubble - Larger size for better text fit */}
+          {/* Stage Cards arranged in snake pattern */}
+          <div className="relative w-full h-full">
+            {stages.map((stage, index) => {
+              const position = getSnakePosition(index);
+              const section = getStageSection(stage.id);
+              const isHovered = hoveredStage === stage.id;
+              
+              return (
                 <div
-                  className={`absolute bg-white dark:bg-gray-800 rounded-full cursor-pointer transition-all duration-1000 flex flex-col items-center justify-center z-30 ${
-                    isFrameworkVisible ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-180'
+                  key={stage.id}
+                  className={`absolute transition-all duration-700 transform-gpu opacity-100 translate-y-0 scale-100 ${
+                    isHovered ? 'z-50' : 'z-20'
                   }`}
-                  style={{ 
-                    width: '130px', 
-                    height: '130px',
-                    left: '50%',
-                    top: '50%',
-                    transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
-                    border: `2px solid ${section.color}`,
-                    boxShadow: `0 4px 12px rgba(0,0,0,0.08), 0 0 0 2px rgba(255,255,255,0.8)`,
-                    transitionDelay: isFrameworkVisible ? `${400 + (stage.id * 120)}ms` : '0ms',
-                    transitionTimingFunction: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+                  style={{
+                    left: `${position.x - 120}px`,
+                    top: `${position.y - 96}px`,
+                    transform: `translate3d(0, 0, 0) ${isHovered ? 'scale(1.05)' : 'scale(1)'}`,
+                    filter: isHovered ? 'drop-shadow(0 20px 40px rgba(0,0,0,0.15))' : 'drop-shadow(0 8px 16px rgba(0,0,0,0.1))',
+                    animation: `slideIn 0.8s ease-out ${index * 0.1}s both`
                   }}
-                  onClick={() => handleStageClick(stage.id)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(1.08)`;
-                    e.currentTarget.style.boxShadow = `0 8px 20px rgba(0,0,0,0.12), 0 0 0 3px ${section.color}20`;
-                    e.currentTarget.style.borderColor = section.color;
-                    e.currentTarget.style.backgroundColor = hoverBgColor;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(1)`;
-                    e.currentTarget.style.boxShadow = `0 4px 12px rgba(0,0,0,0.08), 0 0 0 2px rgba(255,255,255,0.8)`;
-                    e.currentTarget.style.borderColor = section.color;
-                    e.currentTarget.style.backgroundColor = '';
-                  }}
+                  onMouseEnter={() => setHoveredStage(stage.id)}
+                  onMouseLeave={() => setHoveredStage(null)}
                 >
-                  {/* Stage number badge - Refined styling */}
+                  {/* Stage Card - Expanded for tick features */}
                   <div 
-                    className="absolute top-0 right-0 flex items-center justify-center rounded-full z-10 font-bold text-xs"
+                    className="relative w-60 h-48 rounded-2xl p-4 border-2 transition-all duration-300 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95 overflow-hidden"
                     style={{
-                      width: '26px',
-                      height: '26px',
-                      backgroundColor: section.color,
-                      color: 'white',
-                      transform: 'translate(25%, -25%)',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                      background: `linear-gradient(135deg, ${section.gradientFrom}15, ${section.gradientTo}25)`,
+                      borderColor: isHovered ? section.color : `${section.color}40`,
+                      boxShadow: isHovered 
+                        ? `0 8px 25px ${section.color}30` 
+                        : `0 4px 15px rgba(0,0,0,0.1)`
                     }}
                   >
-                    {stage.id}
-                  </div>
-                  
-                  <div className={`${section.iconBgColor} p-3 rounded-full mb-2 transition-all duration-700 ${
-                    isFrameworkVisible ? 'scale-100 rotate-0' : 'scale-75 rotate-45'
-                  }`} style={{ 
-                    transitionDelay: isFrameworkVisible ? `${600 + (stage.id * 120)}ms` : '0ms',
-                    transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
-                  }}>
+                    {/* Stage Number Badge */}
                     <div 
-                      className={`${section.textColor} hover:rotate-12 transition-all duration-500 ${
-                        isFrameworkVisible ? 'scale-100' : 'scale-0'
-                      }`}
+                      className="absolute -top-3 -right-3 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg transform transition-all duration-300"
                       style={{ 
-                        transitionDelay: isFrameworkVisible ? `${700 + (stage.id * 120)}ms` : '0ms',
-                        transitionTimingFunction: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+                        backgroundColor: section.color,
+                        transform: isHovered ? 'scale(1.2) rotate(15deg)' : 'scale(1) rotate(0deg)'
+                      }}
+                    >
+                      {stage.id}
+                    </div>
+
+                    {/* Category Tag */}
+                    <div 
+                      className="absolute -top-2 left-4 px-2 py-1 rounded-full text-xs font-medium text-white shadow-sm"
+                      style={{ backgroundColor: `${section.color}90` }}
+                    >
+                      {stage.category}
+                    </div>
+
+                    {/* Stage Icon */}
+                    <div 
+                      className="flex items-center justify-center w-12 h-12 rounded-xl mb-2 transition-all duration-300"
+                      style={{ 
+                        backgroundColor: `${section.color}20`,
+                        color: section.color,
+                        transform: isHovered ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
                       }}
                     >
                       {stage.icon}
                     </div>
-                  </div>
-                  <div className={`font-semibold text-xs text-center px-2 leading-tight ${section.textColor} transition-all duration-600 ${
-                    isFrameworkVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                  }`} style={{ 
-                    transitionDelay: isFrameworkVisible ? `${800 + (stage.id * 120)}ms` : '0ms' 
-                  }}>
-                    {stage.title}
+
+                    {/* Stage Title - Always visible */}
+                    <h3 
+                      className="font-bold text-sm mb-2 transition-all duration-300 text-center line-clamp-2"
+                      style={{ 
+                        color: section.color,
+                        textShadow: isHovered ? '0 0 8px rgba(255,255,255,0.8)' : 'none'
+                      }}
+                    >
+                      {stage.title}
+                    </h3>
+                    
+                    {/* AI Features - Tick boxes */}
+                    <div className="space-y-1 text-left">
+                      {stage.features?.map((feature, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs">
+                          <FaCheck 
+                            className="h-2.5 w-2.5 text-green-500 flex-shrink-0" 
+                            style={{ color: section.color }}
+                          />
+                          <span className="text-gray-600 dark:text-gray-400 leading-tight">
+                            {feature}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-                
-                {/* We'll create orbit paths separately for each section, not per stage */}
-              </React.Fragment>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
-        {/* Popup Dialog for Stage Details - Enhanced with better visuals */}
-        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-          <DialogContent className="sm:max-w-lg md:max-w-2xl border-0 shadow-2xl">
-            {selectedStage && (
-              <React.Fragment key={`dialog-content-${selectedStage}`}>
-                {(() => {
-                  // Find which section this selected stage belongs to
-                  const sectionIndex = frameworkSections.findIndex(section => 
-                    section.stages.includes(selectedStage)
-                  );
-                  
-                  // Get section data
-                  const section = frameworkSections[sectionIndex];
-                  const sectionColor = section.color;
-                  const sectionRgb = sectionColor.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ');
-                  
-                  return (
-                    <div className="overflow-hidden">
-                      {/* Visual header with gradient and stage number */}
-                      <div 
-                        className="relative h-16 flex items-center justify-between px-5 overflow-hidden"
-                        style={{
-                          background: `linear-gradient(135deg, ${sectionColor}30, ${sectionColor}60)`
-                        }}
-                      >
-                        {/* Background patterns */}
-                        <div className="absolute inset-0 opacity-10">
-                          {Array.from({ length: 10 }).map((_, i) => (
-                            <div 
-                              key={`bg-pattern-${selectedStage}-${i}`} 
-                              className="absolute rounded-full" 
-                              style={{
-                                width: `${20 + Math.random() * 60}px`,
-                                height: `${20 + Math.random() * 60}px`,
-                                left: `${Math.random() * 100}%`,
-                                top: `${Math.random() * 100}%`,
-                                background: sectionColor,
-                                opacity: 0.1 + Math.random() * 0.2
-                              }}
-                            />
-                          ))}
-                        </div>
-                        
-                        {/* Section label */}
-                        <div className="flex items-center gap-2">
-                          <div className="text-xs font-medium uppercase tracking-wider py-1 px-2.5 rounded-full bg-white/80 text-gray-800">
-                            {section.title}
-                          </div>
-                        </div>
-                        
-                        {/* Stage number */}
-                        <div 
-                          className="h-12 w-12 rounded-full flex items-center justify-center text-xl font-bold text-white"
-                          style={{ 
-                            background: sectionColor,
-                            boxShadow: `0 3px 10px ${sectionColor}50` 
-                          }}
-                        >
-                          {selectedStageData?.id}
-                        </div>
-                      </div>
-                      
-                      <DialogHeader className="pb-3 border-b border-gray-200 pt-5 px-6">
-                        <DialogTitle className={`flex items-center gap-3 text-2xl font-bold`} style={{ color: sectionColor }}>
-                          <div className={`${section.iconBgColor} p-2.5 rounded-full`}>
-                            {selectedStageData?.icon}
-                          </div>
-                          <span>{selectedStageData?.title}</span>
-                        </DialogTitle>
-                        <DialogDescription className="text-gray-700 dark:text-gray-300 pt-2 text-lg">
-                          {selectedStageData?.description}
-                        </DialogDescription>
-                      </DialogHeader>
-                      
-                      <div className="p-6">
-                        <h3 className={`text-base font-medium mb-4 flex items-center gap-2`} style={{ color: sectionColor }}>
-                          <FaMagic className="h-4 w-4" />
-                          <span>How Repruv AI helps with {selectedStageData?.title}:</span>
-                        </h3>
-                        
-                        <div className="text-gray-700 dark:text-gray-300">
-                          <p className="mb-4">Our AI platform provides advanced functionality to enhance your {selectedStageData?.title.toLowerCase()} process:</p>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {(() => {
-                              // Generate specific AI features based on the stage
-                              let features = [];
-                              
-                              switch(selectedStage) {
-                                // Planning section
-                                case 1: // Inspiration
-                                  features = [
-                                    { icon: <FaLightbulb className="h-4 w-4" />, text: "AI-powered trend analysis and content gap identification" },
-                                    { icon: <FaSearch className="h-4 w-4" />, text: "Audience question mining from social platforms and forums" },
-                                    { icon: <FaMagic className="h-4 w-4" />, text: "Creative prompt generation tailored to your niche" },
-                                    { icon: <FaChartBar className="h-4 w-4" />, text: "Competitive analysis of content performance" }
-                                  ];
-                                  break;
-                                case 2: // Strategy
-                                  features = [
-                                    { icon: <FaClipboardList className="h-4 w-4" />, text: "Data-driven content pillar suggestions" },
-                                    { icon: <FaChartBar className="h-4 w-4" />, text: "Optimal posting schedule based on audience activity" },
-                                    { icon: <FaRecycle className="h-4 w-4" />, text: "Content calendar automation with smart reuse options" },
-                                    { icon: <FaSearch className="h-4 w-4" />, text: "Keyword and topic research with volume data" }
-                                  ];
-                                  break;
-                                case 3: // Research
-                                  features = [
-                                    { icon: <FaSearch className="h-4 w-4" />, text: "Comprehensive topic research with key points" },
-                                    { icon: <FaFileAlt className="h-4 w-4" />, text: "Automated brief generation with audience insights" },
-                                    { icon: <FaEdit className="h-4 w-4" />, text: "Script outline creation with engagement hooks" },
-                                    { icon: <FaClipboardList className="h-4 w-4" />, text: "Reference material organization and summarization" }
-                                  ];
-                                  break;
-                                
-                                // Creation section
-                                case 4: // Pre-production
-                                  features = [
-                                    { icon: <FaFileAlt className="h-4 w-4" />, text: "AI-assisted shot planning and storyboarding" },
-                                    { icon: <FaClipboardList className="h-4 w-4" />, text: "Auto-generated pre-production checklists" },
-                                    { icon: <FaEdit className="h-4 w-4" />, text: "Script refinement and engagement optimization" },
-                                    { icon: <FaFileAlt className="h-4 w-4" />, text: "Automatic brief creation for team members" }
-                                  ];
-                                  break;
-                                case 5: // Production
-                                  features = [
-                                    { icon: <FaVideo className="h-4 w-4" />, text: "Shot list and filming guidance suggestions" },
-                                    { icon: <FaCog className="h-4 w-4" />, text: "Real-time feedback on video composition" },
-                                    { icon: <FaFileAlt className="h-4 w-4" />, text: "Auto-generated B-roll recommendations" },
-                                    { icon: <FaClipboardList className="h-4 w-4" />, text: "Production timeline optimization" }
-                                  ];
-                                  break;
-                                case 6: // Editing
-                                  features = [
-                                    { icon: <FaEdit className="h-4 w-4" />, text: "Smart editing suggestions for maximum engagement" },
-                                    { icon: <FaCog className="h-4 w-4" />, text: "AI-assisted content pacing recommendations" },
-                                    { icon: <FaVideo className="h-4 w-4" />, text: "Automatic highlight identification" },
-                                    { icon: <FaMagic className="h-4 w-4" />, text: "Visual enhancement recommendations" }
-                                  ];
-                                  break;
-                                
-                                // Distribution section
-                                case 7: // Optimization
-                                  features = [
-                                    { icon: <FaCog className="h-4 w-4" />, text: "AI-optimized titles, descriptions and metadata" },
-                                    { icon: <FaHashtag className="h-4 w-4" />, text: "Smart hashtag and keyword recommendations" },
-                                    { icon: <FaEdit className="h-4 w-4" />, text: "Thumbnail optimization with A/B testing" },
-                                    { icon: <FaGlobe className="h-4 w-4" />, text: "Cross-platform content adaptation" }
-                                  ];
-                                  break;
-                                case 8: // Distribution
-                                  features = [
-                                    { icon: <FaShare className="h-4 w-4" />, text: "Cross-platform distribution scheduling" },
-                                    { icon: <FaChartBar className="h-4 w-4" />, text: "Optimal timing recommendations by platform" },
-                                    { icon: <FaCog className="h-4 w-4" />, text: "Sequential release strategy planning" },
-                                    { icon: <FaGlobe className="h-4 w-4" />, text: "Geographic targeting optimization" }
-                                  ];
-                                  break;
-                                case 9: // Engagement
-                                  features = [
-                                    { icon: <FaComment className="h-4 w-4" />, text: "Smart comment moderation and engagement tools" },
-                                    { icon: <FaReply className="h-4 w-4" />, text: "AI-powered response suggestions" },
-                                    { icon: <FaSearch className="h-4 w-4" />, text: "Sentiment analysis on audience feedback" },
-                                    { icon: <FaUsers className="h-4 w-4" />, text: "Community management automation" }
-                                  ];
-                                  break;
-                                
-                                // Analysis section
-                                case 10: // Promotion
-                                  features = [
-                                    { icon: <FaAd className="h-4 w-4" />, text: "Targeted promotion strategies based on performance" },
-                                    { icon: <FaUsers className="h-4 w-4" />, text: "Audience segment identification for ads" },
-                                    { icon: <FaChartBar className="h-4 w-4" />, text: "Budget optimization recommendations" },
-                                    { icon: <FaSearch className="h-4 w-4" />, text: "Competitor promotion analysis" }
-                                  ];
-                                  break;
-                                case 11: // Analytics
-                                  features = [
-                                    { icon: <FaChartBar className="h-4 w-4" />, text: "Advanced analytics with actionable insights" },
-                                    { icon: <FaSearch className="h-4 w-4" />, text: "Content performance pattern identification" },
-                                    { icon: <FaUsers className="h-4 w-4" />, text: "Audience growth and engagement metrics" },
-                                    { icon: <FaClipboardList className="h-4 w-4" />, text: "Automated performance reports" }
-                                  ];
-                                  break;
-                                case 12: // Repurposing
-                                  features = [
-                                    { icon: <FaRecycle className="h-4 w-4" />, text: "Smart content repurposing across platforms" },
-                                    { icon: <FaMagic className="h-4 w-4" />, text: "Automated clip generation from long-form content" },
-                                    { icon: <FaFileAlt className="h-4 w-4" />, text: "Text transformation from video transcripts" },
-                                    { icon: <FaEdit className="h-4 w-4" />, text: "Format adaptation recommendations" }
-                                  ];
-                                  break;
-                                  
-                                default:
-                                  features = [
-                                    { icon: <FaMagic className="h-4 w-4" />, text: "Smart assistance tailored to this stage" },
-                                    { icon: <FaCog className="h-4 w-4" />, text: "Time-saving automation of repetitive tasks" },
-                                    { icon: <FaChartBar className="h-4 w-4" />, text: "Intelligent recommendations based on performance data" },
-                                    { icon: <FaLightbulb className="h-4 w-4" />, text: "Creative enhancement tools" }
-                                  ];
-                              }
-                              
-                              return features.map((feature, idx) => (
-                                <div 
-                                  key={`feature-${selectedStage}-${idx}`}
-                                  className="flex items-start gap-3 p-4 rounded-lg bg-white dark:bg-gray-800/60 shadow-sm border border-gray-100 dark:border-gray-700 opacity-100 translate-y-0 transition-all duration-300"
-                                  style={{ transitionDelay: `${0.1 * idx}00ms` }}
-                                >
-                                  <div 
-                                    className={`p-2 rounded-full shrink-0`} 
-                                    style={{ 
-                                      backgroundColor: `rgba(${sectionRgb}, 0.15)`,
-                                      color: sectionColor
-                                    }}
-                                  >
-                                    {feature.icon}
-                                  </div>
-                                  <span className="text-sm">{feature.text}</span>
-                                </div>
-                              ));
-                            })()}
-                          </div>
-                          
-                          {/* Stage position in the framework */}
-                          <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-700">
-                            <h4 className="text-sm font-medium mb-3" style={{ color: sectionColor }}>Stage Position in Framework:</h4>
-                            <div className="relative h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800/50">
-                              {/* Framework sections visualization */}
-                              <div className="flex h-full">
-                                {frameworkSections.map((sec, idx) => (
-                                  <div 
-                                    key={`section-framework-${selectedStage}-${idx}`}
-                                    className="flex-1 flex items-center justify-center relative"
-                                    style={{ 
-                                      backgroundColor: `${sec.color}20`,
-                                      borderRight: idx < frameworkSections.length - 1 ? `1px dashed ${sec.color}40` : 'none'
-                                    }}
-                                  >
-                                    <span className={`text-xs font-medium opacity-${sectionIndex === idx ? '100' : '50'}`} style={{ color: sec.color }}>
-                                      {sec.title}
-                                    </span>
-                                    
-                                    {/* Show stages in this section */}
-                                    <div className="absolute bottom-0 left-0 right-0 flex justify-around">
-                                      {sec.stages.map(stageId => (
-                                        <div 
-                                          key={`stage-indicator-${selectedStage}-${stageId}`}
-                                          className={`h-1.5 w-5 rounded-t-sm transition-all duration-300 ${stageId === selectedStage ? 'h-3' : ''}`}
-                                          style={{ 
-                                            backgroundColor: sec.color,
-                                            opacity: stageId === selectedStage ? 1 : 0.3
-                                          }}
-                                        />
-                                      ))}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="mt-6 p-3 rounded-md bg-gray-50 dark:bg-gray-800/30 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2 border border-gray-100 dark:border-gray-700">
-                            <FaMagic className="h-3.5 w-3.5" style={{ color: sectionColor }} />
-                            <span>Experience the complete Repruv AI Content Framework with early access</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </React.Fragment>
-            )}
-          </DialogContent>
-        </Dialog>
+
+
+
       </div>
-    </div>
     </section>
+    </>
   );
 }
-
 
