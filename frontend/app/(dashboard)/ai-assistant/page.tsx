@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check } from 'lucide-react';
+import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { api } from '@/lib/api';
@@ -132,6 +132,162 @@ export default function AIAssistantPage() {
     }
   };
 
+  const generateSessionTitle = (firstMessage: string): string => {
+    // Generate a smart title based on the first message
+    const maxLength = 40;
+    let title = firstMessage.trim();
+    
+    // Remove common question words and clean up
+    title = title.replace(/^(can you|could you|please|help me|how do i|how to|what|why|when|where)/gi, '');
+    title = title.trim();
+    
+    // Capitalize first letter
+    title = title.charAt(0).toUpperCase() + title.slice(1);
+    
+    // Truncate if too long
+    if (title.length > maxLength) {
+      title = title.substring(0, maxLength).trim() + '...';
+    }
+    
+    return title || 'New Chat';
+  };
+
+  const formatMessageContent = (content: string) => {
+    // Simple markdown-like formatting
+    const lines = content.split('\n');
+    const formatted: JSX.Element[] = [];
+    let listItems: string[] = [];
+    let inCodeBlock = false;
+    let codeBlockContent: string[] = [];
+    let codeLanguage = '';
+
+    const flushList = () => {
+      if (listItems.length > 0) {
+        formatted.push(
+          <ul key={formatted.length} className="list-disc list-inside space-y-1 my-2">
+            {listItems.map((item, i) => (
+              <li key={i} className="text-slate-700 dark:text-slate-300">{item}</li>
+            ))}
+          </ul>
+        );
+        listItems = [];
+      }
+    };
+
+    const flushCodeBlock = () => {
+      if (codeBlockContent.length > 0) {
+        formatted.push(
+          <div key={formatted.length} className="my-3">
+            {codeLanguage && (
+              <div className="bg-slate-800 text-slate-300 px-3 py-1 text-xs font-mono rounded-t-lg border-b border-slate-700">
+                {codeLanguage}
+              </div>
+            )}
+            <pre className={cn(
+              "bg-slate-900 text-slate-100 p-4 overflow-x-auto font-mono text-sm",
+              codeLanguage ? "rounded-b-lg" : "rounded-lg"
+            )}>
+              <code>{codeBlockContent.join('\n')}</code>
+            </pre>
+          </div>
+        );
+        codeBlockContent = [];
+        codeLanguage = '';
+      }
+    };
+
+    lines.forEach((line, index) => {
+      // Code block detection
+      if (line.trim().startsWith('```')) {
+        if (inCodeBlock) {
+          flushCodeBlock();
+          inCodeBlock = false;
+        } else {
+          flushList();
+          inCodeBlock = true;
+          codeLanguage = line.trim().substring(3).trim();
+        }
+        return;
+      }
+
+      if (inCodeBlock) {
+        codeBlockContent.push(line);
+        return;
+      }
+
+      // Bold text
+      line = line.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-slate-900 dark:text-slate-100">$1</strong>');
+      
+      // Italic text
+      line = line.replace(/\*(.+?)\*/g, '<em class="italic">$1</em>');
+      
+      // Inline code
+      line = line.replace(/`(.+?)`/g, '<code class="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>');
+
+      // Headings
+      if (line.startsWith('### ')) {
+        flushList();
+        formatted.push(
+          <h3 key={index} className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-4 mb-2">
+            {line.substring(4)}
+          </h3>
+        );
+        return;
+      } else if (line.startsWith('## ')) {
+        flushList();
+        formatted.push(
+          <h2 key={index} className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-4 mb-2">
+            {line.substring(3)}
+          </h2>
+        );
+        return;
+      } else if (line.startsWith('# ')) {
+        flushList();
+        formatted.push(
+          <h1 key={index} className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-4 mb-2">
+            {line.substring(2)}
+          </h1>
+        );
+        return;
+      }
+
+      // List items
+      if (line.trim().match(/^[-*]\s+/)) {
+        listItems.push(line.trim().substring(2));
+        return;
+      }
+
+      // Numbered lists
+      if (line.trim().match(/^\d+\.\s+/)) {
+        flushList();
+        const match = line.trim().match(/^\d+\.\s+(.+)/);
+        if (match) {
+          listItems.push(match[1]);
+        }
+        return;
+      }
+
+      // Regular paragraph
+      flushList();
+      if (line.trim()) {
+        formatted.push(
+          <p
+            key={index}
+            className="text-slate-700 dark:text-slate-300 leading-relaxed mb-2"
+            dangerouslySetInnerHTML={{ __html: line }}
+          />
+        );
+      } else {
+        formatted.push(<br key={index} />);
+      }
+    });
+
+    flushList();
+    flushCodeBlock();
+
+    return <div className="space-y-1">{formatted}</div>;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading || !sessionId) return;
@@ -147,6 +303,15 @@ export default function AIAssistantPage() {
     setInput('');
     setIsLoading(true);
     setError(null);
+
+    // Auto-generate title if this is the first message
+    const isFirstMessage = messages.length === 0;
+    if (isFirstMessage) {
+      const newTitle = generateSessionTitle(userMessage.content);
+      setSessions(sessions.map(s => 
+        s.id === sessionId ? { ...s, title: newTitle } : s
+      ));
+    }
 
     try {
       // Use EventSource for streaming responses
@@ -394,64 +559,76 @@ export default function AIAssistantPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-3xl px-4">
                 <button
-                  onClick={() => setInput('Why has my subscriber count gone down?')}
+                  onClick={() => setInput('Analyze my content strategy and suggest improvements')}
                   className="group p-4 text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md transition-all duration-200"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-blue-50 dark:bg-blue-950 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900 transition-colors">
-                      <Brain className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-sm">
+                      <TrendingUp className="h-5 w-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                        Why has my subscriber count gone down?
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
+                        Content Strategy
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Get data-driven insights for growth
                       </p>
                     </div>
                   </div>
                 </button>
                 
                 <button
-                  onClick={() => setInput('Can you help me come up with a viral video idea?')}
+                  onClick={() => setInput('Help me come up with 10 viral video ideas for my niche')}
                   className="group p-4 text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all duration-200"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-purple-50 dark:bg-purple-950 rounded-lg group-hover:bg-purple-100 dark:group-hover:bg-purple-900 transition-colors">
-                      <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-sm">
+                      <Video className="h-5 w-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                        Can you help me come up with a viral video idea?
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
+                        Viral Ideas
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Brainstorm trending content concepts
                       </p>
                     </div>
                   </div>
                 </button>
                 
                 <button
-                  onClick={() => setInput('What are the best times to post on social media?')}
+                  onClick={() => setInput('How can I better engage with my audience and build community?')}
                   className="group p-4 text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all duration-200"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-emerald-50 dark:bg-emerald-950 rounded-lg group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900 transition-colors">
-                      <Brain className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg shadow-sm">
+                      <Users className="h-5 w-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                        What are the best times to post on social media?
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
+                        Audience Growth
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Build stronger connections
                       </p>
                     </div>
                   </div>
                 </button>
                 
                 <button
-                  onClick={() => setInput('How can I improve engagement with my audience?')}
+                  onClick={() => setInput('Create a 30-day content calendar optimized for maximum reach')}
                   className="group p-4 text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md transition-all duration-200"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-amber-50 dark:bg-amber-950 rounded-lg group-hover:bg-amber-100 dark:group-hover:bg-amber-900 transition-colors">
-                      <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <div className="p-2 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg shadow-sm">
+                      <Zap className="h-5 w-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                        How can I improve engagement with my audience?
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
+                        Content Calendar
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Plan your posting schedule
                       </p>
                     </div>
                   </div>
@@ -488,20 +665,26 @@ export default function AIAssistantPage() {
                   <div className="flex-1 max-w-3xl">
                     <div
                       className={cn(
-                        'rounded-2xl px-4 py-3',
+                        'rounded-2xl px-5 py-4',
                         message.role === 'user'
-                          ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100'
-                          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100'
+                          ? 'bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-800/80 text-slate-900 dark:text-slate-100 shadow-sm'
+                          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-sm'
                       )}
                     >
                       {message.content ? (
-                        <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
-                          {message.content}
-                        </p>
+                        message.role === 'assistant' ? (
+                          <div className="prose prose-slate dark:prose-invert max-w-none">
+                            {formatMessageContent(message.content)}
+                          </div>
+                        ) : (
+                          <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+                            {message.content}
+                          </p>
+                        )
                       ) : (
                         <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          <span className="text-sm">Thinking...</span>
+                          <span className="text-sm font-medium">Thinking...</span>
                         </div>
                       )}
                     </div>
@@ -514,47 +697,65 @@ export default function AIAssistantPage() {
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-          <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="border-t border-slate-200 dark:border-slate-800 bg-gradient-to-b from-white/95 to-white dark:from-slate-900/95 dark:to-slate-900 backdrop-blur-xl">
+          <div className="max-w-4xl mx-auto px-4 py-5">
             {/* Error Display */}
             {error && (
-              <div className="mb-3 flex items-center gap-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 px-4 py-3 rounded-xl border border-red-200 dark:border-red-900">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                <span>{error}</span>
+              <div className="mb-4 flex items-start gap-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 px-4 py-3 rounded-xl border border-red-200 dark:border-red-900/50">
+                <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-medium mb-1">Error</p>
+                  <p className="text-xs opacity-90">{error}</p>
+                </div>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="flex gap-3 items-end">
-              <div className="flex-1 relative">
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask me anything..."
-                  className="w-full min-h-[56px] max-h-32 px-4 py-4 pr-12 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent resize-none transition-all"
-                  disabled={isLoading || !sessionId}
-                  rows={1}
-                />
+            <form onSubmit={handleSubmit} className="relative">
+              <div className="flex gap-3 items-end">
+                <div className="flex-1 relative">
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask about content strategy, viral ideas, audience growth..."
+                    className="w-full min-h-[60px] max-h-40 px-5 py-4 text-[15px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-600/30 focus:border-blue-500 dark:focus:border-blue-600 resize-none transition-all shadow-sm"
+                    disabled={isLoading || !sessionId}
+                    rows={1}
+                  />
+                  {input.length > 0 && (
+                    <div className="absolute bottom-2 right-3 text-xs text-slate-400 dark:text-slate-500">
+                      {input.length} characters
+                    </div>
+                  )}
+                </div>
+                
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="h-[60px] w-[60px] rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                  disabled={isLoading || !input.trim() || !sessionId}
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : (
+                    <Send className="h-6 w-6" />
+                  )}
+                </Button>
               </div>
               
-              <Button
-                type="submit"
-                size="icon"
-                className="h-14 w-14 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={isLoading || !input.trim() || !sessionId}
-              >
-                {isLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Send className="h-5 w-5" />
+              <div className="flex items-center justify-between mt-3 px-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <kbd className="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-[10px] font-medium shadow-sm">↵ Enter</kbd> to send · 
+                  <kbd className="ml-1 px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-[10px] font-medium shadow-sm">Shift + ↵</kbd> for new line
+                </p>
+                {!isLoading && sessionId && (
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    Powered by Claude AI
+                  </p>
                 )}
-              </Button>
+              </div>
             </form>
-            
-            <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-3">
-              Press <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px] font-medium">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px] font-medium">Shift + Enter</kbd> for new line
-            </p>
           </div>
         </div>
       </div>
