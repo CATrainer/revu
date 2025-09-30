@@ -49,17 +49,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
   <div className="h-screen flex overflow-hidden section-background">
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex">
-        <Sidebar />
-      </div>
-      
-      {/* Mobile Sidebar */}
-      <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-        <SheetContent side="left" className="p-0 w-64">
-          <Sidebar />
-        </SheetContent>
-      </Sheet>
+      {/* Sidebar removed - navigation now in header */}
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">

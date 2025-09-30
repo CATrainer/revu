@@ -475,7 +475,7 @@ export default function AIAssistantPage() {
   }, [handleSubmit]);
 
   return (
-    <div className="fixed inset-0 top-16 flex overflow-hidden bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+    <div className="fixed inset-0 top-16 left-0 flex overflow-hidden bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
       {/* Sidebar */}
       <div
         className={cn(

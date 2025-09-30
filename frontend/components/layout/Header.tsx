@@ -3,10 +3,13 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Bell, Menu, Search, X } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Bell, Menu, Search, X, BarChart3, Brain, ChartPie, Settings as SettingsIcon, MessageSquare, Zap, Radio } from 'lucide-react';
 import { PauseCircle, PlayCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,9 +32,20 @@ interface HeaderProps {
   onMenuClick: () => void;
 }
 
+const navigation = [
+  { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
+  { name: 'Interactions', href: '/comments', icon: MessageSquare },
+  { name: 'Automation', href: '/automation', icon: Zap },
+  { name: 'Analytics', href: '/analytics', icon: ChartPie },
+  { name: 'Social Monitoring', href: '/social-monitoring', icon: Radio },
+  { name: 'AI Assistant', href: '/ai-assistant', icon: Brain },
+  { name: 'Settings', href: '/settings', icon: SettingsIcon },
+];
+
 export function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const { notifications, markNotificationsRead, notificationPrefs, badgeRespectsMute, setBadgeRespectsMute, alertHistory } = useStore();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -170,35 +184,73 @@ export function Header({ onMenuClick }: HeaderProps) {
       )}
   <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onMenuClick}
-              aria-label="Open sidebar menu"
-              className="lg:hidden hover-background h-10 w-10" // Ensure 44px+ touch target
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            {/* Mobile logo to ensure brand visibility on small screens */}
-            <div className="flex items-center gap-2 ml-1 lg:hidden">
-              <Image src="/logo/mark.png" alt="Repruv" width={28} height={28} className="h-7 w-7" priority />
-            </div>
-            <div className="hidden lg:flex items-center gap-3 ml-2">
+          <div className="flex items-center gap-6">
+            {/* Mobile Menu */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm" className="lg:hidden h-10 w-10 p-0">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 p-0">
+                <div className="flex flex-col h-full bg-white dark:bg-slate-900">
+                  <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+                    <Link href="/dashboard" className="flex items-center gap-2">
+                      <Image src="/logo/mark.png" alt="Repruv" width={32} height={32} className="h-8 w-8" priority />
+                      <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">Repruv</span>
+                    </Link>
+                  </div>
+                  <nav className="flex-1 p-4 space-y-1">
+                    {navigation.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = pathname === item.href;
+                      return (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            isActive
+                              ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          <Icon className="h-5 w-5" />
+                          {item.name}
+                        </Link>
+                      );
+                    })}
+                  </nav>
+                </div>
+              </SheetContent>
+            </Sheet>
+            
+            {/* Logo */}
+            <Link href="/dashboard" className="flex items-center gap-2">
               <Image src="/logo/mark.png" alt="Repruv" width={32} height={32} className="h-8 w-8" priority />
-              {/* Location selector appears only when relevant (org/agency or demo agency) */}
-              <LocationSelector />
-              {features.showAutomationButton && (
-                <button
-                  className="ml-2 text-xs px-2 py-1 rounded border border-[var(--border)] hover-background"
-                  onClick={() => router.push('/automation')}
-                  title="Open Automation"
-                >Automation</button>
-              )}
-            </div>
-            <div className="hidden sm:block lg:hidden ml-4">
-              <LocationSelector />
-            </div>
+              <span className="hidden md:block text-lg font-semibold text-slate-900 dark:text-slate-100">Repruv</span>
+            </Link>
+            
+            {/* Navigation Links - Desktop */}
+            <nav className="hidden lg:flex items-center gap-1">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
 
           <div className="flex items-center space-x-4">
