@@ -8,7 +8,8 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_async_session, get_current_active_user
+from app.core.database import get_async_session
+from app.core.security import get_current_active_user
 from app.models.user import User
 from app.models.ai_context import UserAIContext
 from app.services.context_analyzer import ContextAnalyzer
