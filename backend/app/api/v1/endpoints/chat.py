@@ -283,7 +283,7 @@ async def send_message(
         ),
         {"sid": str(session_id)},
     )
-    history = [dict(r) for r in history_res.fetchall()][::-1]
+    history = [dict(r._mapping) for r in history_res.fetchall()][::-1]
 
     # Use Claude/Anthropic client
     api_key = os.getenv("CLAUDE_API_KEY", getattr(settings, "CLAUDE_API_KEY", None))
