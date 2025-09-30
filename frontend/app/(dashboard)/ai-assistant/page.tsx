@@ -23,6 +23,8 @@ interface Message {
   timestamp: Date;
   status?: 'sending' | 'sent' | 'error' | 'streaming';
   error?: string;
+  isRegenerating?: boolean;
+  canRegenerate?: boolean;
 }
 
 interface ChatSession {
@@ -76,10 +78,16 @@ export default function AIAssistantPage() {
   const [pendingSession, setPendingSession] = useState<{parentId?: string, branchFromMessageId?: string, branchName?: string, openInSplitPane?: boolean} | null>(null);
   const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null);
   const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const splitPaneMessagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const splitPaneInputRef = useRef<HTMLTextAreaElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -97,6 +105,21 @@ export default function AIAssistantPage() {
   useEffect(() => {
     scrollSplitPaneToBottom();
   }, [splitPaneMessages]);
+
+  // Detect scroll position for scroll-to-bottom button
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollButton(!isNearBottom && messages.length > 3);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [messages.length]);
 
   // Save sidebar collapsed state to localStorage
   useEffect(() => {
@@ -445,6 +468,69 @@ export default function AIAssistantPage() {
     navigator.clipboard.writeText(text);
     setCopiedCode(id);
     setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  const stopGeneration = () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+    }
+    setIsGenerating(false);
+    setIsLoading(false);
+  };
+
+  const regenerateMessage = async (messageIndex: number) => {
+    if (!sessionId) return;
+    
+    // Remove this message and all messages after it
+    const newMessages = messages.slice(0, messageIndex);
+    setMessages(newMessages);
+    
+    // Get the last user message before this point
+    const lastUserMessage = [...newMessages].reverse().find(m => m.role === 'user');
+    if (!lastUserMessage) return;
+    
+    // Resend that message
+    const formEvent = new Event('submit', { bubbles: true, cancelable: true }) as unknown as React.FormEvent;
+    setInput(lastUserMessage.content);
+    // We'll trigger regeneration by setting a flag
+    setTimeout(() => {
+      setInput('');
+      handleSubmit(formEvent, false);
+    }, 100);
+  };
+
+  const editMessage = (messageId: string, content: string) => {
+    setEditingMessageId(messageId);
+    setEditingContent(content);
+  };
+
+  const saveEditedMessage = async (messageId: string) => {
+    if (!editingContent.trim()) return;
+    
+    // Find the message index
+    const messageIndex = messages.findIndex(m => m.id === messageId);
+    if (messageIndex === -1) return;
+    
+    // Update the message content
+    const updatedMessages = [...messages];
+    updatedMessages[messageIndex] = {
+      ...updatedMessages[messageIndex],
+      content: editingContent.trim()
+    };
+    
+    // Remove all messages after this one
+    setMessages(updatedMessages.slice(0, messageIndex + 1));
+    setEditingMessageId(null);
+    setEditingContent('');
+    
+    // Regenerate from this point
+    await regenerateMessage(messageIndex + 1);
+  };
+
+  const copyMessage = (content: string) => {
+    navigator.clipboard.writeText(content);
+    // Could show a toast here
   };
 
   const handleSubmit = async (e: React.FormEvent, isForSplitPane: boolean = false) => {
