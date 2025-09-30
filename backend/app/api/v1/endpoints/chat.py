@@ -64,6 +64,15 @@ async def _rate_limit(db: AsyncSession, user: User, key: str, limit: int, window
         raise HTTPException(status_code=429, detail="Rate limit exceeded")
 
 
+def _serialize_value(value: Any) -> Any:
+    """Convert non-JSON-serializable values to JSON-compatible types."""
+    if isinstance(value, datetime):
+        return value.isoformat()
+    elif isinstance(value, (UUID, bytes)):
+        return str(value)
+    return value
+
+
 async def _chat_context(db: AsyncSession, user_id: UUID) -> Dict[str, Any]:
     """Get context for chat - gracefully handles missing database functions/tables."""
     context: Dict[str, Any] = {
@@ -79,8 +88,11 @@ async def _chat_context(db: AsyncSession, user_id: UUID) -> Dict[str, Any]:
             ),
             {"uid": str(user_id)},
         )
-        # Convert rows to dicts properly using _mapping
-        context["recent_sentiment"] = [dict(r._mapping) for r in sentiment.fetchall()]
+        # Convert rows to dicts and serialize datetime objects
+        context["recent_sentiment"] = [
+            {k: _serialize_value(v) for k, v in dict(r._mapping).items()}
+            for r in sentiment.fetchall()
+        ]
     except Exception as e:
         # Sentiment function may not exist - that's okay
         from loguru import logger
@@ -95,8 +107,11 @@ async def _chat_context(db: AsyncSession, user_id: UUID) -> Dict[str, Any]:
             ),
             {"uid": str(user_id)},
         )
-        # Convert rows to dicts properly using _mapping
-        context["top_threads"] = [dict(r._mapping) for r in threads.fetchall()]
+        # Convert rows to dicts and serialize datetime objects
+        context["top_threads"] = [
+            {k: _serialize_value(v) for k, v in dict(r._mapping).items()}
+            for r in threads.fetchall()
+        ]
     except Exception as e:
         # Narrative threads table may not exist - that's okay
         from loguru import logger
@@ -171,7 +186,10 @@ async def list_sessions(
         ),
         {"uid": str(current_user.id), "limit": page_size, "offset": offset},
     )
-    items = [dict(r) for r in res.fetchall()]
+    items = [
+        {k: _serialize_value(v) for k, v in dict(r._mapping).items()}
+        for r in res.fetchall()
+    ]
     return {"items": items, "page": page, "page_size": page_size}
 
 
@@ -200,7 +218,11 @@ async def get_messages(
         ),
         {"sid": str(session_id), "limit": page_size, "offset": offset},
     )
-    return {"messages": [dict(r) for r in res.fetchall()], "page": page, "page_size": page_size}
+    messages = [
+        {k: _serialize_value(v) for k, v in dict(r._mapping).items()}
+        for r in res.fetchall()
+    ]
+    return {"messages": messages, "page": page, "page_size": page_size}
 
 
 @router.delete("/sessions/{session_id}")
