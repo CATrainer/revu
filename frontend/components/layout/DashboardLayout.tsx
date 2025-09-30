@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { Header } from "@/components/layout/Header";
 import { features } from '@/lib/features';
 
 import { Sheet, SheetContent } from '@/components/ui/sheet';
