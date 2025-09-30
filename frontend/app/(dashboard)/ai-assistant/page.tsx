@@ -13,6 +13,9 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ContextEditor } from '@/components/ai/ContextEditor';
 import { SessionTree } from '@/components/ai/SessionTree';
+import { BranchCard } from '@/components/ai/BranchCard';
+import { ThreadSwitcher } from '@/components/ai/ThreadSwitcher';
+import { generateBranchSuggestions } from '@/lib/branchSuggestions';
 
 interface Message {
   id: string;
