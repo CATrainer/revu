@@ -15,6 +15,12 @@ import { SessionTree } from '@/components/ai/SessionTree';
 import { BranchCard } from '@/components/ai/BranchCard';
 import { ThreadSwitcher } from '@/components/ai/ThreadSwitcher';
 import { generateBranchSuggestions } from '@/lib/branchSuggestions';
+import { FollowUpSuggestions } from '@/components/ai/FollowUpSuggestions';
+import { ConversationSummary } from '@/components/ai/ConversationSummary';
+import { MessageActions } from '@/components/ai/MessageActions';
+import { ResponseRating } from '@/components/ai/ResponseRating';
+import { TemplateLibrary } from '@/components/ai/TemplateLibrary';
+import { PreferencesDialog } from '@/components/ai/PreferencesDialog';
 
 interface Message {
   id: string;
@@ -848,6 +854,14 @@ export default function AIAssistantPage() {
                   New Thread
                 </Button>
               )}
+              
+              {/* Template Library */}
+              <TemplateLibrary
+                onSelectTemplate={async (template: any) => {
+                  // Load the new session created from template
+                  await loadSession(template.sessionId);
+                }}
+              />
             </div>
           )}
 
@@ -966,6 +980,13 @@ export default function AIAssistantPage() {
               </div>
             ))}
             */}
+            </div>
+          )}
+          
+          {/* Sidebar Footer - Preferences */}
+          {!sidebarCollapsed && (
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+              <PreferencesDialog />
             </div>
           )}
         </div>
@@ -1111,6 +1132,16 @@ export default function AIAssistantPage() {
             </div>
           ) : (
             <div className="w-full py-6 px-4 space-y-6">
+              {/* Conversation Summary */}
+              {sessionId && messages.length >= 10 && (
+                <div className="mb-6">
+                  <ConversationSummary 
+                    sessionId={sessionId} 
+                    messageCount={messages.length}
+                  />
+                </div>
+              )}
+              
               {messages.map((message, idx) => (
                 <React.Fragment key={message.id}>
                   <div
@@ -1277,6 +1308,19 @@ export default function AIAssistantPage() {
                     </div>
                     </div>
                     
+                    {/* Message Actions - appears on hover */}
+                    <div className="absolute -right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MessageActions
+                        messageId={message.id}
+                        content={message.content || ''}
+                        role={message.role}
+                        canRegenerate={message.role === 'assistant' && idx === messages.length - 1}
+                        onCopy={copyMessage}
+                        onEdit={editMessage}
+                        onRegenerate={() => regenerateMessage(idx)}
+                      />
+                    </div>
+                    
                     {/* Branch Button - appears on hover */}
                     {!isLoading && message.content && (
                       <button
@@ -1288,6 +1332,25 @@ export default function AIAssistantPage() {
                       </button>
                     )}
                   </div>
+                  
+                  {/* Response Rating - for assistant messages */}
+                  {message.role === 'assistant' && message.status === 'sent' && (
+                    <div className="mt-2 flex items-center gap-3">
+                      <ResponseRating messageId={message.id} />
+                    </div>
+                  )}
+                  
+                  {/* Follow-up Suggestions - for last assistant message */}
+                  {message.role === 'assistant' && idx === messages.length - 1 && !isLoading && message.status === 'sent' && (
+                    <FollowUpSuggestions
+                      messageId={message.id}
+                      onSelect={(suggestion: string) => {
+                        setInput(suggestion);
+                        inputRef.current?.focus();
+                      }}
+                    />
+                  )}
+                  
                   {message.role === 'assistant' && !isLoading && idx === messages.length - 1 && (
                     <div className="mt-2">
                       {!showBranchSuggestions ? (

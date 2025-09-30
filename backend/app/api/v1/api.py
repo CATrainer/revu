@@ -21,9 +21,12 @@ from app.api.v1.endpoints import (
     youtube_content,
     platforms,
     users,
+    user_preferences,
     webhooks,
     social_monitoring,
     chat,
+    chat_intelligence,
+    chat_templates,
     context,
 )
 from app.api.v1.endpoints import workflows as workflows_endpoints
@@ -55,6 +58,12 @@ api_router.include_router(
     users.router,
     prefix="/users",
     tags=["users"],
+)
+
+api_router.include_router(
+    user_preferences.router,
+    prefix="/users",
+    tags=["users", "preferences"],
 )
 
 # Removed: organizations, locations, reviews - not needed for social media focus
@@ -113,6 +122,18 @@ api_router.include_router(
     chat.router,
     prefix="/chat",
     tags=["chat"],
+)
+
+api_router.include_router(
+    chat_intelligence.router,
+    prefix="/chat",
+    tags=["chat", "intelligence"],
+)
+
+api_router.include_router(
+    chat_templates.router,
+    prefix="/chat",
+    tags=["chat", "templates"],
 )
 
 api_router.include_router(
