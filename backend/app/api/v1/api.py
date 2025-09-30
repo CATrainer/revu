@@ -27,6 +27,7 @@ from app.api.v1.endpoints import (
     chat,
     chat_intelligence,
     chat_templates,
+    content_sync,
     context,
 )
 from app.api.v1.endpoints import workflows as workflows_endpoints
@@ -134,6 +135,12 @@ api_router.include_router(
     chat_templates.router,
     prefix="/chat",
     tags=["chat", "templates"],
+)
+
+api_router.include_router(
+    content_sync.router,
+    prefix="/content",
+    tags=["content", "sync"],
 )
 
 api_router.include_router(

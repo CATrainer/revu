@@ -41,6 +41,87 @@ class SendMessageRequest(BaseModel):
     session_id: UUID
     content: str
 
+
+async def _get_performance_context(user_id: UUID, db: AsyncSession) -> str:
+    """Get user's content performance data to enhance AI responses."""
+    try:
+        # Check if user has any performance data
+        perf_check = await db.execute(
+            text("""
+                SELECT COUNT(*) as count
+                FROM user_content_performance
+                WHERE user_id = :uid
+            """),
+            {"uid": str(user_id)}
+        )
+        
+        count = perf_check.scalar_one()
+        if count == 0:
+            return ""
+        
+        # Get performance summary
+        summary = await db.execute(
+            text("""
+                SELECT 
+                    platform,
+                    COUNT(*) as video_count,
+                    AVG(engagement_rate) as avg_engagement,
+                    SUM(views) as total_views,
+                    MAX(engagement_rate) as best_engagement
+                FROM user_content_performance
+                WHERE user_id = :uid
+                AND posted_at > NOW() - INTERVAL '30 days'
+                GROUP BY platform
+            """),
+            {"uid": str(user_id)}
+        )
+        
+        platforms_data = []
+        for row in summary.fetchall():
+            platforms_data.append(
+                f"{row.platform.title()}: {row.video_count} videos, "
+                f"{row.avg_engagement:.1f}% avg engagement, "
+                f"{row.total_views:,} total views"
+            )
+        
+        if not platforms_data:
+            return ""
+        
+        # Get top performing content
+        top_content = await db.execute(
+            text("""
+                SELECT caption, engagement_rate, views
+                FROM user_content_performance
+                WHERE user_id = :uid
+                AND posted_at > NOW() - INTERVAL '30 days'
+                ORDER BY engagement_rate DESC
+                LIMIT 3
+            """),
+            {"uid": str(user_id)}
+        )
+        
+        top_videos = []
+        for video in top_content.fetchall():
+            if video.caption:
+                top_videos.append(
+                    f'"{video.caption[:50]}..." ({video.engagement_rate:.1f}% engagement, {video.views:,} views)'
+                )
+        
+        context = "\n\n📊 User's Recent Performance:\n"
+        context += "\n".join(f"- {data}" for data in platforms_data)
+        
+        if top_videos:
+            context += "\n\nTop Performing Content:\n"
+            context += "\n".join(f"- {video}" for video in top_videos)
+        
+        context += "\n\nUse this data to provide personalized, data-driven recommendations."
+        
+        return context
+        
+    except Exception as e:
+        # Silently fail - performance context is optional
+        return ""
+
 # In-memory websocket session map {session_id: {"connections": [...], "buffer": []}}
 _ws_sessions: Dict[str, Dict[str, Any]] = {}
 
@@ -740,6 +821,11 @@ async def send_message(
                 if user_context_str:
                     system_prompt += f"\n\nUser Context: {user_context_str}\n\nUse this context to personalize your responses and provide more relevant advice specific to their channel, niche, and goals."
                 
+                # Add performance data context
+                performance_context = await _get_performance_context(current_user.id, db)
+                if performance_context:
+                    system_prompt += performance_context
+                
                 response = client.messages.create(
                     model=model,
                     max_tokens=int(os.getenv("CLAUDE_MAX_TOKENS", "1024")),
@@ -791,6 +877,11 @@ async def send_message(
                 # Add user-specific context if available
                 if user_context_str:
                     system_prompt += f"\n\nUser Context: {user_context_str}\n\nUse this context to personalize your responses and provide more relevant advice specific to their channel, niche, and goals."
+                
+                # Add performance data context
+                performance_context = await _get_performance_context(current_user.id, db)
+                if performance_context:
+                    system_prompt += performance_context
                 
                 with client.messages.stream(
                     model=model,
