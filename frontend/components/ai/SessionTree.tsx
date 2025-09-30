@@ -34,19 +34,9 @@ interface SessionTreeProps {
   onDelete: (id: string) => void;
 }
 
-function SessionTreeItem({
-  session,
-  children,
-  isActive,
-  isCollapsed,
-  onSelect,
-  onToggle,
-  onEdit,
-  onDelete,
-  level = 0,
-}: {
+interface SessionTreeItemProps {
   session: ChatSession;
-  children?: ChatSession[];
+  childSessions?: ChatSession[];
   isActive: boolean;
   isCollapsed: boolean;
   onSelect: () => void;
@@ -54,8 +44,34 @@ function SessionTreeItem({
   onEdit: () => void;
   onDelete: () => void;
   level?: number;
-}) {
-  const hasChildren = children && children.length > 0;
+  allSessions: ChatSession[];
+  activeSessionId: string | null;
+  collapsedSessions: Set<string>;
+  onSelectSession: (id: string) => void;
+  onToggleCollapse: (id: string) => void;
+  onEditSession: (id: string, title: string) => void;
+  onDeleteSession: (id: string) => void;
+}
+
+function SessionTreeItem({
+  session,
+  childSessions,
+  isActive,
+  isCollapsed,
+  onSelect,
+  onToggle,
+  onEdit,
+  onDelete,
+  level = 0,
+  allSessions,
+  activeSessionId,
+  collapsedSessions,
+  onSelectSession,
+  onToggleCollapse,
+  onEditSession,
+  onDeleteSession,
+}: SessionTreeItemProps) {
+  const hasChildren = childSessions && childSessions.length > 0;
 
   return (
     <div className="select-none">
@@ -135,22 +151,37 @@ function SessionTreeItem({
       {/* Render children */}
       {hasChildren && !isCollapsed && (
         <div className="ml-4 mt-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-700 pl-2">
-          {children!.map((child) => (
-            <SessionTreeItemWrapper
-              key={child.id}
-              session={child}
-              {...({ onSelect, onToggle, onEdit, onDelete } as any)}
-              level={level + 1}
-            />
-          ))}
+          {childSessions!.map((child) => {
+            const childChildren = allSessions.filter(s => s.parent_session_id === child.id);
+            const childIsActive = child.id === activeSessionId;
+            const childIsCollapsed = collapsedSessions.has(child.id);
+            
+            return (
+              <SessionTreeItem
+                key={child.id}
+                session={child}
+                childSessions={childChildren}
+                isActive={childIsActive}
+                isCollapsed={childIsCollapsed}
+                onSelect={() => onSelectSession(child.id)}
+                onToggle={() => onToggleCollapse(child.id)}
+                onEdit={() => onEditSession(child.id, child.title)}
+                onDelete={() => onDeleteSession(child.id)}
+                level={level + 1}
+                allSessions={allSessions}
+                activeSessionId={activeSessionId}
+                collapsedSessions={collapsedSessions}
+                onSelectSession={onSelectSession}
+                onToggleCollapse={onToggleCollapse}
+                onEditSession={onEditSession}
+                onDeleteSession={onDeleteSession}
+              />
+            );
+          })}
         </div>
       )}
     </div>
   );
-}
-
-function SessionTreeItemWrapper(props: any) {
-  return <SessionTreeItem {...props} />;
 }
 
 export function SessionTree({
@@ -166,7 +197,7 @@ export function SessionTree({
   const getChildren = (parentId: string) => sessions.filter(s => s.parent_session_id === parentId);
 
   const renderSession = (session: ChatSession, level = 0): JSX.Element => {
-    const children = getChildren(session.id);
+    const childSessions = getChildren(session.id);
     const isActive = session.id === activeSessionId;
     const isCollapsed = collapsedSessions.has(session.id);
 
@@ -174,7 +205,7 @@ export function SessionTree({
       <SessionTreeItem
         key={session.id}
         session={session}
-        children={children}
+        childSessions={childSessions}
         isActive={isActive}
         isCollapsed={isCollapsed}
         onSelect={() => onSelectSession(session.id)}
@@ -182,6 +213,13 @@ export function SessionTree({
         onEdit={() => onEdit(session.id, session.title)}
         onDelete={() => onDelete(session.id)}
         level={level}
+        allSessions={sessions}
+        activeSessionId={activeSessionId}
+        collapsedSessions={collapsedSessions}
+        onSelectSession={onSelectSession}
+        onToggleCollapse={onToggleCollapse}
+        onEditSession={onEdit}
+        onDeleteSession={onDelete}
       />
     );
   };
