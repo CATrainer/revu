@@ -5,9 +5,6 @@ import { motion } from 'framer-motion';
 import { Calendar, Clock } from 'lucide-react';
 
 export function CountdownBanner() {
-  // Target date: October 7th, 2025 at 12:00 PM UK time
-  const targetDate = new Date('2025-10-07T12:00:00+01:00'); // UK timezone (BST)
-  
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -18,6 +15,9 @@ export function CountdownBanner() {
   const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
+    // Target date: October 7th, 2025 at 12:00 PM UK time
+    const targetDate = new Date('2025-10-07T12:00:00+01:00'); // UK timezone (BST)
+    
     const calculateTimeLeft = () => {
       const now = new Date().getTime();
       const target = targetDate.getTime();
@@ -43,7 +43,7 @@ export function CountdownBanner() {
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [targetDate]);
+  }, []);
 
   if (isExpired) {
     return (
@@ -55,7 +55,7 @@ export function CountdownBanner() {
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10 flex items-center justify-center gap-2 text-sm font-medium">
           <Calendar className="w-4 h-4" />
-          <span>🎉 We're Live! Join the future of social media management</span>
+          <span>🎉 We&apos;re Live! Join the future of social media management</span>
         </div>
       </motion.div>
     );

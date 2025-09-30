@@ -75,17 +75,54 @@ if __name__ == "__main__":
         logger.exception("Import error inside app.api.v1.api; check referenced endpoint modules.")
         sys.exit(1)
 
+    # Optionally enqueue a one-time kickoff of the first waitlist email on deploy.
+    # Guarded by env var and by a DB check to avoid duplicate sends across redeploys.
     try:
-        
+        flag = os.environ.get("WAITLIST_FIRST_EMAIL_KICKOFF_ON_DEPLOY", "").strip().lower()
+        if flag in ("1", "true", "yes"):  # explicitly enabled
+            from sqlalchemy import select, func
+            from app.core.database import async_session_maker
+            from app.models.user import User
+
+            async def _should_kickoff() -> bool:
+                async with async_session_maker() as session:
+                    # Kick off only if there exist waiting-list users without the first email marker
+                    from sqlalchemy import or_, and_
+                    res = await session.execute(
+                        select(func.count()).where(
+                            User.access_status.in_(["waiting", "waiting_list"]),
+                            User.countdown_t14_sent_at.is_(None),
+                        )
+                    )
+                    missing = int(res.scalar() or 0) > 0
+                    return missing
+
+            import asyncio
+            do_kickoff = False
+            try:
+                do_kickoff = asyncio.get_event_loop().run_until_complete(_should_kickoff())
+            except RuntimeError:
+                do_kickoff = asyncio.run(_should_kickoff())
+
+            if do_kickoff:
+                from app.tasks.email import kickoff_waitlist_first_email
+                kickoff_waitlist_first_email.delay()
+                logger.info("Enqueued kickoff_waitlist_first_email due to WAITLIST_FIRST_EMAIL_KICKOFF_ON_DEPLOY=1")
+            else:
+                logger.info("Kickoff skipped: first email already sent previously (marker found)")
+    except Exception:
+        logger.exception("Failed to evaluate/enqueue kickoff_waitlist_first_email")
+
+    try:
         uvicorn.run(
-            "app.main:app", 
-            host="0.0.0.0", 
+            "app.main:app",
+            host="0.0.0.0",
             port=port,
-            log_level="info", 
-            ws="websockets", 
-            ws_ping_interval=20, 
+            log_level="info",
+            ws="websockets",
+            ws_ping_interval=20,
             ws_ping_timeout=20
-            )
+        )
     except Exception:
         logger.exception("Uvicorn failed to start")
         sys.exit(1)

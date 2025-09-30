@@ -445,6 +445,7 @@ async def _send_launch_batch(now_utc: datetime, launch_at_utc: datetime) -> dict
     async with async_session_maker() as session:
         q = select(User).where(
             User.access_status.in_(["waiting", "waiting_list"]),
+            User.marketing_unsubscribed_at.is_(None),
             User.marketing_bounced_at.is_(None),
             User.launch_sent_at.is_(None),
         ).order_by(User.joined_waiting_list_at.asc(), User.created_at.asc())

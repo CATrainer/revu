@@ -1,10 +1,7 @@
 'use client';
 
-import Rect, { useRef, useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import React, { useRef, useState, useEffect } from 'react';
 import { 
-  FaMagic, 
   FaLightbulb,
   FaClipboardList,
   FaSearch,
@@ -16,16 +13,9 @@ import {
   FaComment,
   FaAd,
   FaChartBar,
-  FaChartLine,
-  FaBullhorn,
   FaRecycle,
-  FaHashtag,
-  FaGlobe,
-  FaReply,
-  FaUsers,
   FaCheck
 } from 'react-icons/fa';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export default function AIPage() {
   const [pageLoaded, setPageLoaded] = useState(false);
@@ -49,9 +39,6 @@ export default function AIPage() {
   );
 }
 
-function Hero() {
-  return null; // Remove the hero section entirely since we're moving content up
-}
 
 
 
@@ -310,7 +297,6 @@ function ContentCreationFramework() {
   // Snake path calculation for modern flowing layout
   const getSnakePosition = (index: number) => {
     const containerWidth = 1100;
-    const containerHeight = 950;
     const padding = 80;
     const verticalSpacing = 280;
     
@@ -442,7 +428,7 @@ function ContentCreationFramework() {
           }}
         >
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {frameworkSections.map((section, sectionIndex) => {
+            {frameworkSections.map((section) => {
               // Contextually relevant graphics for each section
               const sectionGraphics = {
                 'Planning': <FaLightbulb className="h-12 w-12" />,
