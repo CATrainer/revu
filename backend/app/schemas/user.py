@@ -32,6 +32,7 @@ class WaitlistJoin(BaseModel):
     phone: Optional[str] = Field(None, max_length=50)
     company_name: Optional[str] = Field(None, max_length=255)
     industry: Optional[str] = Field(None, max_length=100)
+    marketing_opt_in: Optional[bool] = False
 
 
 class UserCreate(UserBase):

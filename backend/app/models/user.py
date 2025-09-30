@@ -58,6 +58,12 @@ class User(Base):
     marketing_last_event = Column(String(32))
     marketing_last_event_at = Column(DateTime(timezone=True))
     
+    # Waitlist campaign send markers
+    countdown_t14_sent_at = Column(DateTime(timezone=True))
+    countdown_t7_sent_at = Column(DateTime(timezone=True))
+    countdown_t1_sent_at = Column(DateTime(timezone=True))
+    launch_sent_at = Column(DateTime(timezone=True))
+
     # Demo-specific information
     company_size = Column(String(50))
     current_solution = Column(String(255))
