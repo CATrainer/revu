@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { GitBranch, Sparkles, ChevronRight } from 'lucide-react';
 
 interface BranchCardProps {
   suggestions: string[];

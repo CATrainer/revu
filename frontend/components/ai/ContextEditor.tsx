@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Loader2, Sparkles, RefreshCw, Save, Edit3, TrendingUp, User, Globe, Video, Calendar, Target } from 'lucide-react';
+import { api } from '@/lib/api';
 
 interface AIContext {
   user_id: string;
