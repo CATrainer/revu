@@ -64,9 +64,17 @@ export default function AIAssistantPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const scrollSplitPaneToBottom = () => {
+    splitPaneMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    scrollSplitPaneToBottom();
+  }, [splitPaneMessages]);
 
   // Load sessions on mount
   useEffect(() => {
@@ -275,7 +283,7 @@ export default function AIAssistantPage() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, targetPane?: 'main' | 'split') => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
@@ -286,16 +294,24 @@ export default function AIAssistantPage() {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    // Determine which pane to send to
+    const isForSplitPane = targetPane === 'split' || (splitPaneSession && splitPaneSession !== 'pending' && !targetPane);
+    
+    if (isForSplitPane) {
+      setSplitPaneMessages((prev) => [...prev, userMessage]);
+    } else {
+      setMessages((prev) => [...prev, userMessage]);
+    }
+    
     setInput('');
     setIsLoading(true);
     setError(null);
 
     // Track if this is the first message for auto-titling later
-    const isFirstMessage = messages.length === 0;
+    const isFirstMessage = isForSplitPane ? splitPaneMessages.length === 0 : messages.length === 0;
 
     try {
-      let actualSessionId = sessionId;
+      let actualSessionId = isForSplitPane ? splitPaneSession : sessionId;
       
       // If there's a pending session, create it now
       if (pendingSession) {
@@ -312,12 +328,12 @@ export default function AIAssistantPage() {
         if (openInSplitPane) {
           setSplitPaneSession(newSessionId);
           if (initialMessage) {
-            setSplitPaneMessages([{
+            setSplitPaneMessages((prev) => [{
               id: Date.now().toString(),
               role: 'assistant',
               content: initialMessage,
               timestamp: new Date(),
-            }, ...splitPaneMessages]);
+            }, ...prev]);
           }
         } else {
           setSessionId(newSessionId);
@@ -335,7 +351,7 @@ export default function AIAssistantPage() {
         await loadSessions(); // Refresh the session list
       }
       
-      if (!actualSessionId) return;
+      if (!actualSessionId || actualSessionId === 'pending') return;
 
       // Use EventSource for streaming responses
       const response = await fetch(`${api.defaults.baseURL}/chat/messages?stream=true`, {
@@ -365,7 +381,11 @@ export default function AIAssistantPage() {
         timestamp: new Date(),
       };
       
-      setMessages((prev) => [...prev, assistantMessage]);
+      if (isForSplitPane) {
+        setSplitPaneMessages((prev) => [...prev, assistantMessage]);
+      } else {
+        setMessages((prev) => [...prev, assistantMessage]);
+      }
 
       // Read the streaming response
       const reader = response.body?.getReader();
@@ -388,14 +408,24 @@ export default function AIAssistantPage() {
                 const data = JSON.parse(line.slice(6));
                 
                 if (data.delta) {
-                  // Append delta to assistant message
-                  setMessages((prev) => 
-                    prev.map((msg) => 
-                      msg.id === assistantMessageId
-                        ? { ...msg, content: msg.content + data.delta }
-                        : msg
-                    )
-                  );
+                  // Append delta to assistant message in the correct pane
+                  if (isForSplitPane) {
+                    setSplitPaneMessages((prev) => 
+                      prev.map((msg) => 
+                        msg.id === assistantMessageId
+                          ? { ...msg, content: msg.content + data.delta }
+                          : msg
+                      )
+                    );
+                  } else {
+                    setMessages((prev) => 
+                      prev.map((msg) => 
+                        msg.id === assistantMessageId
+                          ? { ...msg, content: msg.content + data.delta }
+                          : msg
+                      )
+                    );
+                  }
                 } else if (data.event === 'done') {
                   // Streaming complete
                   console.log('Streaming complete, latency:', data.latency_ms);
@@ -748,7 +778,7 @@ export default function AIAssistantPage() {
               </div>
             </div>
           ) : (
-            <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
+            <div className="w-full py-6 px-4 space-y-6">
               {messages.map((message, idx) => (
                 <React.Fragment key={message.id}>
                   <div
@@ -956,7 +986,7 @@ export default function AIAssistantPage() {
 
         {/* Input Area */}
         <div className="border-t border-slate-200 dark:border-slate-800 bg-gradient-to-b from-white/95 to-white dark:from-slate-900/95 dark:to-slate-900 backdrop-blur-xl">
-          <div className="max-w-4xl mx-auto px-4 py-5">
+          <div className="w-full px-4 py-5">
             {/* Error Display */}
             {error && (
               <div className="mb-4 flex items-start gap-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 px-4 py-3 rounded-xl border border-red-200 dark:border-red-900/50">
@@ -1041,7 +1071,7 @@ export default function AIAssistantPage() {
 
                 {/* Split Pane Messages */}
                 <div className="flex-1 overflow-y-auto overflow-x-hidden">
-                  <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
+                  <div className="w-full py-6 px-4 space-y-6">
                     {splitPaneMessages.map((message, idx) => (
                       <div key={message.id} className="group relative">
                         <div className={cn('flex gap-4 items-start animate-in fade-in slide-in-from-bottom-4 duration-500', message.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
@@ -1067,11 +1097,43 @@ export default function AIAssistantPage() {
                   </div>
                 </div>
 
-                {/* Split Pane Input - Placeholder for now */}
-                <div className="border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-4">
-                  <p className="text-xs text-center text-slate-500 dark:text-slate-400">
-                    Split pane messaging coming soon...
-                  </p>
+                {/* Split Pane Input */}
+                <div className="border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
+                  <div className="w-full px-4 py-5">
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      // Handle split pane message submission
+                      if (!input.trim() || isLoading || splitPaneSession === 'pending') return;
+                      handleSubmit(e);
+                    }} className="relative">
+                      <div className="flex gap-3 items-end">
+                        <div className="flex-1 relative">
+                          <textarea
+                            ref={inputRef}
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Continue the thread conversation..."
+                            className="w-full min-h-[60px] max-h-40 px-5 py-4 text-[15px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-slate-50 dark:bg-slate-800/50 border-2 border-purple-200 dark:border-purple-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-purple-600/30 focus:border-purple-500 dark:focus:border-purple-600 resize-none transition-all shadow-sm"
+                            disabled={isLoading}
+                            rows={1}
+                          />
+                        </div>
+                        <Button
+                          type="submit"
+                          size="icon"
+                          className="h-[60px] w-[60px] rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                          disabled={isLoading || !input.trim() || splitPaneSession === 'pending'}
+                        >
+                          {isLoading ? (
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                          ) : (
+                            <Send className="h-6 w-6" />
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
               </div>
             )}
