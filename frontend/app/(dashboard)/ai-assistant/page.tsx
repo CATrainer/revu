@@ -40,6 +40,7 @@ interface ChatSession {
 export default function AIAssistantPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  const [splitPaneInput, setSplitPaneInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +61,7 @@ export default function AIAssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const splitPaneMessagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const splitPaneInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -291,27 +293,29 @@ export default function AIAssistantPage() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const handleSubmit = async (e: React.FormEvent, targetPane?: 'main' | 'split') => {
+  const handleSubmit = async (e: React.FormEvent, isForSplitPane: boolean = false) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    
+    // Get the correct input value based on which pane is submitting
+    const currentInput = isForSplitPane ? splitPaneInput : input;
+    if (!currentInput.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input.trim(),
+      content: currentInput.trim(),
       timestamp: new Date(),
     };
 
-    // Determine which pane to send to
-    const isForSplitPane = targetPane === 'split' || (splitPaneSession && splitPaneSession !== 'pending' && !targetPane);
-    
+    // Add message to correct pane
     if (isForSplitPane) {
       setSplitPaneMessages((prev) => [...prev, userMessage]);
+      setSplitPaneInput('');
     } else {
       setMessages((prev) => [...prev, userMessage]);
+      setInput('');
     }
     
-    setInput('');
     setIsLoading(true);
     setError(null);
 
@@ -322,7 +326,7 @@ export default function AIAssistantPage() {
       let actualSessionId = isForSplitPane ? splitPaneSession : sessionId;
       
       // If there's a pending session, create it now
-      if (pendingSession) {
+      if (pendingSession && pendingSession.openInSplitPane === isForSplitPane) {
         const { parentId, branchFromMessageId, branchName, openInSplitPane } = pendingSession;
         const { sessionId: newSessionId, initialMessage } = await createNewSession(
           parentId,
@@ -335,23 +339,31 @@ export default function AIAssistantPage() {
         
         if (openInSplitPane) {
           setSplitPaneSession(newSessionId);
+          // If there's an initial AI message, prepend it before the user message
           if (initialMessage) {
-            setSplitPaneMessages((prev) => [{
-              id: Date.now().toString(),
-              role: 'assistant',
-              content: initialMessage,
-              timestamp: new Date(),
-            }, ...prev]);
+            setSplitPaneMessages((prev) => {
+              // Remove the user message temporarily, add AI message, then user message
+              const userMsg = prev[prev.length - 1];
+              return [{
+                id: (Date.now() - 1).toString(),
+                role: 'assistant',
+                content: initialMessage,
+                timestamp: new Date(),
+              }, userMsg];
+            });
           }
         } else {
           setSessionId(newSessionId);
           if (initialMessage) {
-            setMessages((prev) => [{
-              id: Date.now().toString(),
-              role: 'assistant',
-              content: initialMessage,
-              timestamp: new Date(),
-            }, ...prev]);
+            setMessages((prev) => {
+              const userMsg = prev[prev.length - 1];
+              return [{
+                id: (Date.now() - 1).toString(),
+                role: 'assistant',
+                content: initialMessage,
+                timestamp: new Date(),
+              }, userMsg];
+            });
           }
         }
         
@@ -470,9 +482,9 @@ export default function AIAssistantPage() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const formEvent = new Event('submit', { bubbles: true, cancelable: true }) as unknown as React.FormEvent;
-      handleSubmit(formEvent);
+      handleSubmit(formEvent, false);
     }
-  }, [handleSubmit]);
+  }, []);
 
   return (
     <div className="fixed inset-0 top-16 left-0 flex overflow-hidden bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
@@ -1069,18 +1081,6 @@ export default function AIAssistantPage() {
                   )}
                 </Button>
               </div>
-              
-              <div className="flex items-center justify-between mt-3 px-1">
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  <kbd className="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-[10px] font-medium shadow-sm">↵ Enter</kbd> to send · 
-                  <kbd className="ml-1 px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-[10px] font-medium shadow-sm">Shift + ↵</kbd> for new line
-                </p>
-                {!isLoading && (sessionId || pendingSession) && (
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
-                    Powered by Claude AI
-                  </p>
-                )}
-              </div>
             </form>
           </div>
         </div>
@@ -1138,19 +1138,20 @@ export default function AIAssistantPage() {
                 {/* Split Pane Input */}
                 <div className="border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
                   <div className="w-full px-4 py-5">
-                    <form onSubmit={(e) => {
-                      e.preventDefault();
-                      // Handle split pane message submission
-                      if (!input.trim() || isLoading || splitPaneSession === 'pending') return;
-                      handleSubmit(e);
-                    }} className="relative">
+                    <form onSubmit={(e) => handleSubmit(e, true)} className="relative">
                       <div className="flex gap-3 items-end">
                         <div className="flex-1 relative">
                           <textarea
-                            ref={inputRef}
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={handleKeyDown}
+                            ref={splitPaneInputRef}
+                            value={splitPaneInput}
+                            onChange={(e) => setSplitPaneInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                const formEvent = new Event('submit', { bubbles: true, cancelable: true }) as unknown as React.FormEvent;
+                                handleSubmit(formEvent, true);
+                              }
+                            }}
                             placeholder="Continue the thread conversation..."
                             className="w-full min-h-[60px] max-h-40 px-5 py-4 text-[15px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-slate-50 dark:bg-slate-800/50 border-2 border-purple-200 dark:border-purple-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-purple-600/30 focus:border-purple-500 dark:focus:border-purple-600 resize-none transition-all shadow-sm"
                             disabled={isLoading}
@@ -1161,7 +1162,7 @@ export default function AIAssistantPage() {
                           type="submit"
                           size="icon"
                           className="h-[60px] w-[60px] rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none active:scale-95"
-                          disabled={isLoading || !input.trim() || splitPaneSession === 'pending'}
+                          disabled={isLoading || !splitPaneInput.trim() || splitPaneSession === 'pending'}
                         >
                           {isLoading ? (
                             <Loader2 className="h-6 w-6 animate-spin" />
