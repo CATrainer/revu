@@ -41,9 +41,11 @@ export default function AIAssistantPage() {
           title: 'New Chat',
           mode: 'general',
         });
+        console.log('Session created:', response.data);
         setSessionId(response.data.session_id);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to create session:', err);
+        console.error('Error details:', err.response?.data);
         setError('Failed to initialize chat session');
       }
     };
@@ -81,7 +83,9 @@ export default function AIAssistantPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        const errorText = await response.text();
+        console.error('Backend error:', errorText);
+        throw new Error(`Failed to send message: ${response.status} - ${errorText}`);
       }
 
       // Create assistant message that will be updated with streaming content
