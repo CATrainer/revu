@@ -1,6 +1,5 @@
 // frontend/app/(dashboard)/ai-assistant/page.tsx
 'use client';
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap, Copy, CheckCheck, Settings2, GitBranch, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -95,14 +94,28 @@ export default function AIAssistantPage() {
         branch_point_message_id: branchFromMessageId,
         branch_name: branchName,
         inherit_messages: 5,
+        auto_start: parentSessionId ? true : false, // Auto-generate initial message for threads
       });
       const newSessionId = response.data.session_id;
+      const initialMessage = response.data.initial_message;
       
       await loadSessions(); // Refresh session list
       
       if (autoSwitch) {
         setSessionId(newSessionId);
-        setMessages([]);
+        
+        // If there's an initial message from the AI, add it to messages
+        if (initialMessage) {
+          setMessages([{
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: initialMessage,
+            timestamp: new Date(),
+          }]);
+        } else {
+          setMessages([]);
+        }
+        
         await loadSession(newSessionId);
       }
     } catch (err) {
@@ -193,8 +206,7 @@ export default function AIAssistantPage() {
 
   const updateSessionTitle = async (id: string, newTitle: string) => {
     try {
-      // Note: You'll need to add an update endpoint to the backend
-      // For now, we'll just update locally
+      await api.put(`/chat/sessions/${id}/title`, { title: newTitle });
       setSessions(sessions.map(s => s.id === id ? { ...s, title: newTitle } : s));
       setEditingSessionId(null);
     } catch (err) {
@@ -202,24 +214,19 @@ export default function AIAssistantPage() {
     }
   };
 
-  const generateSessionTitle = (firstMessage: string): string => {
-    // Generate a smart title based on the first message
-    const maxLength = 40;
-    let title = firstMessage.trim();
-    
-    // Remove common question words and clean up
-    title = title.replace(/^(can you|could you|please|help me|how do i|how to|what|why|when|where)/gi, '');
-    title = title.trim();
-    
-    // Capitalize first letter
-    title = title.charAt(0).toUpperCase() + title.slice(1);
-    
-    // Truncate if too long
-    if (title.length > maxLength) {
-      title = title.substring(0, maxLength).trim() + '...';
+  const autoGenerateTitle = async (id: string) => {
+    try {
+      const response = await api.post(`/chat/sessions/${id}/generate-title`);
+      const newTitle = response.data.title;
+      setSessions(sessions.map(s => s.id === id ? { ...s, title: newTitle } : s));
+      if (currentSession?.id === id) {
+        setCurrentSession({ ...currentSession, title: newTitle });
+      }
+      return newTitle;
+    } catch (err) {
+      console.error('Failed to auto-generate title:', err);
+      return null;
     }
-    
-    return title || 'New Chat';
   };
 
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -246,16 +253,10 @@ export default function AIAssistantPage() {
     setIsLoading(true);
     setError(null);
 
-    // Auto-generate title if this is the first message
+    // Track if this is the first message for auto-titling later
     const isFirstMessage = messages.length === 0;
-    if (isFirstMessage) {
-      const newTitle = generateSessionTitle(userMessage.content);
-      setSessions(sessions.map(s => 
-        s.id === sessionId ? { ...s, title: newTitle } : s
-      ));
-    }
 
-    try {
+    try{
       // Use EventSource for streaming responses
       const response = await fetch(`${api.defaults.baseURL}/chat/messages?stream=true`, {
         method: 'POST',
@@ -334,7 +335,15 @@ export default function AIAssistantPage() {
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
-      // Refresh session list to update message counts
+      
+      // Auto-generate title after first message (delayed slightly to ensure message is saved)
+      if (isFirstMessage && sessionId) {
+        setTimeout(() => {
+          autoGenerateTitle(sessionId);
+        }, 1000);
+      }
+      
+      // Refresh session list to update message counts and ordering
       loadSessions();
     }
   };

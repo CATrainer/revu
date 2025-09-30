@@ -158,6 +158,79 @@ async def _insert_message(db: AsyncSession, session_id: UUID, user_id: UUID, rol
     return res.scalar_one()
 
 
+async def _generate_thread_intro(db: AsyncSession, user_id: UUID, session_id: UUID, parent_session_id: str, branch_name: str) -> str:
+    """Generate an initial AI message for a new thread to further the conversation."""
+    try:
+        # Get context from parent conversation
+        parent_history = await db.execute(
+            text(
+                "SELECT role, content FROM ai_chat_messages WHERE session_id=:pid ORDER BY created_at DESC LIMIT 5"
+            ),
+            {"pid": parent_session_id},
+        )
+        history = [dict(r._mapping) for r in parent_history.fetchall()][::-1]
+        
+        # Use Claude to generate thread intro
+        api_key = os.getenv("CLAUDE_API_KEY", getattr(settings, "CLAUDE_API_KEY", None))
+        client = Anthropic(api_key=api_key) if Anthropic and api_key else None
+        
+        if not client:
+            return f"Let's explore {branch_name}. What would you like to know?"
+        
+        # Build prompt for thread intro
+        system_prompt = (
+            "You are Repruv AI. The user just created a new conversation thread to explore a specific topic. "
+            "Generate a brief, engaging opening message (2-3 sentences) that:"
+            "1. Acknowledges the new thread topic\n"
+            "2. Shows you understand the context from the parent conversation\n"
+            "3. Invites the user to continue the discussion\n"
+            "Be warm, concise, and actionable. Do not use phrases like 'I see you want to' or 'I notice'."
+        )
+        
+        messages = []
+        for h in history[-3:]:  # Last 3 messages for context
+            if h["role"] in ["user", "assistant"]:
+                messages.append({"role": h["role"], "content": h["content"]})
+        
+        messages.append({
+            "role": "user",
+            "content": f"I want to start a new thread about: {branch_name}"
+        })
+        
+        response = client.messages.create(
+            model="claude-3-5-sonnet-latest",
+            max_tokens=200,
+            system=system_prompt,
+            messages=messages,
+            temperature=0.8,
+        )
+        
+        content_blocks = getattr(response, "content", [])
+        if isinstance(content_blocks, list) and content_blocks:
+            first_block = content_blocks[0]
+            intro_text = getattr(first_block, "text", None) or f"Let's explore {branch_name}. What would you like to know?"
+        else:
+            intro_text = f"Let's explore {branch_name}. What would you like to know?"
+        
+        # Save the intro message
+        await _insert_message(
+            db, session_id, user_id, "assistant", intro_text, 
+            tokens=_estimate_tokens(intro_text)
+        )
+        await db.commit()
+        
+        return intro_text
+        
+    except Exception as e:
+        from loguru import logger
+        logger.error(f"Failed to generate thread intro: {e}")
+        # Fallback intro
+        intro = f"Let's explore {branch_name}. What would you like to know?"
+        await _insert_message(db, session_id, user_id, "assistant", intro, tokens=_estimate_tokens(intro))
+        await db.commit()
+        return intro
+
+
 # -------------------- Endpoints --------------------
 
 @router.post("/sessions")
@@ -171,6 +244,7 @@ async def create_session(
     branch_point_message_id: Optional[str] = Body(None),
     branch_name: Optional[str] = Body(None),
     inherit_messages: int = Body(5),  # Number of messages to inherit from parent
+    auto_start: bool = Body(False),  # Auto-generate initial AI message for threads
 ):
     await _rate_limit(db, current_user, "chat_create", 30)
     ctx = await _chat_context(db, current_user.id)
@@ -220,7 +294,17 @@ async def create_session(
     )
     sid = res.scalar_one()
     await db.commit()
-    return {"session_id": sid, "depth_level": depth_level}
+    
+    # Auto-generate initial AI message for threads if requested
+    initial_message = None
+    if auto_start and parent_session_id and branch_name:
+        initial_message = await _generate_thread_intro(db, current_user.id, sid, parent_session_id, branch_name)
+    
+    return {
+        "session_id": sid, 
+        "depth_level": depth_level,
+        "initial_message": initial_message
+    }
 
 
 @router.get("/sessions")
@@ -233,15 +317,43 @@ async def list_sessions(
 ):
     await _rate_limit(db, current_user, "chat_list", 60)
     offset = (page - 1) * page_size
+    
+    # For proper "most recently used" ordering, we need to consider:
+    # 1. When a thread is used, promote the entire root conversation
+    # 2. Use the most recent activity from any child session
     res = await db.execute(
         text(
-            """SELECT s.id, s.title, s.mode, s.status, s.created_at, s.updated_at,
+            """WITH RECURSIVE session_roots AS (
+                -- Find the root session for each session
+                SELECT id, id as root_id FROM ai_chat_sessions WHERE parent_session_id IS NULL
+                UNION ALL
+                SELECT c.id, sr.root_id 
+                FROM ai_chat_sessions c
+                INNER JOIN session_roots sr ON c.parent_session_id = sr.id
+            ),
+            root_activities AS (
+                -- Get the most recent activity for each root (considering all descendants)
+                SELECT sr.root_id, 
+                       MAX(COALESCE(
+                           (SELECT MAX(m.created_at) FROM ai_chat_messages m WHERE m.session_id = s.id),
+                           s.updated_at
+                       )) as last_activity
+                FROM ai_chat_sessions s
+                INNER JOIN session_roots sr ON s.id = sr.id
+                WHERE s.user_id = :uid AND s.status = 'active'
+                GROUP BY sr.root_id
+            )
+            SELECT s.id, s.title, s.mode, s.status, s.created_at, s.updated_at,
             s.parent_session_id, s.branch_point_message_id, s.branch_name, s.depth_level,
             (SELECT count(*) FROM ai_chat_messages m WHERE m.session_id=s.id) AS message_count,
             (SELECT max(created_at) FROM ai_chat_messages m WHERE m.session_id=s.id) AS last_activity,
-            (SELECT count(*) FROM ai_chat_sessions child WHERE child.parent_session_id=s.id) AS child_count
-            FROM ai_chat_sessions s WHERE s.user_id=:uid AND s.status='active'
-            ORDER BY last_activity DESC NULLS LAST, s.created_at DESC
+            (SELECT count(*) FROM ai_chat_sessions child WHERE child.parent_session_id=s.id) AS child_count,
+            COALESCE(ra.last_activity, s.updated_at) as root_last_activity
+            FROM ai_chat_sessions s
+            LEFT JOIN session_roots sr ON s.id = sr.id
+            LEFT JOIN root_activities ra ON sr.root_id = ra.root_id
+            WHERE s.user_id=:uid AND s.status='active'
+            ORDER BY root_last_activity DESC NULLS LAST, s.created_at DESC
             LIMIT :limit OFFSET :offset"""
         ),
         {"uid": str(current_user.id), "limit": page_size, "offset": offset},
@@ -330,6 +442,131 @@ async def get_messages(
         "page": page, 
         "page_size": page_size
     }
+
+
+@router.put("/sessions/{session_id}/title")
+async def update_session_title(
+    *,
+    session_id: UUID,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+    title: str = Body(..., embed=True),
+):
+    """Update the title of a chat session."""
+    await _rate_limit(db, current_user, "chat_update", 60)
+    
+    # Verify ownership
+    own = await db.execute(
+        text("SELECT 1 FROM ai_chat_sessions WHERE id=:sid AND user_id=:uid"),
+        {"sid": str(session_id), "uid": str(current_user.id)},
+    )
+    if not own.first():
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    await db.execute(
+        text("UPDATE ai_chat_sessions SET title=:title, updated_at=now() WHERE id=:sid"),
+        {"sid": str(session_id), "title": title},
+    )
+    await db.commit()
+    return {"session_id": str(session_id), "title": title}
+
+
+@router.post("/sessions/{session_id}/generate-title")
+async def generate_session_title(
+    *,
+    session_id: UUID,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Auto-generate a title for a chat session based on its content using Claude."""
+    await _rate_limit(db, current_user, "chat_update", 60)
+    
+    # Verify ownership and get messages
+    own = await db.execute(
+        text("SELECT 1 FROM ai_chat_sessions WHERE id=:sid AND user_id=:uid"),
+        {"sid": str(session_id), "uid": str(current_user.id)},
+    )
+    if not own.first():
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    # Get first few messages
+    messages_res = await db.execute(
+        text(
+            "SELECT role, content FROM ai_chat_messages WHERE session_id=:sid ORDER BY created_at ASC LIMIT 4"
+        ),
+        {"sid": str(session_id)},
+    )
+    messages = [dict(r._mapping) for r in messages_res.fetchall()]
+    
+    if not messages:
+        raise HTTPException(status_code=400, detail="Cannot generate title for empty conversation")
+    
+    # Use Claude to generate title
+    api_key = os.getenv("CLAUDE_API_KEY", getattr(settings, "CLAUDE_API_KEY", None))
+    client = Anthropic(api_key=api_key) if Anthropic and api_key else None
+    
+    if not client:
+        # Fallback to simple title generation
+        first_user_msg = next((m["content"] for m in messages if m["role"] == "user"), "")
+        title = first_user_msg[:50].strip()
+        if len(first_user_msg) > 50:
+            title += "..."
+        title = title or "New Chat"
+    else:
+        try:
+            # Build context for title generation
+            conversation_text = "\n".join([
+                f"{m['role'].upper()}: {m['content'][:200]}"
+                for m in messages[:4]
+            ])
+            
+            system_prompt = (
+                "Generate a short, descriptive title (max 50 characters) for this conversation. "
+                "The title should capture the main topic or question. "
+                "Do not use quotes, just return the title text directly. "
+                "Be concise and specific."
+            )
+            
+            response = client.messages.create(
+                model="claude-3-5-sonnet-latest",
+                max_tokens=60,
+                system=system_prompt,
+                messages=[{
+                    "role": "user",
+                    "content": f"Generate a title for this conversation:\n\n{conversation_text}"
+                }],
+                temperature=0.5,
+            )
+            
+            content_blocks = getattr(response, "content", [])
+            if isinstance(content_blocks, list) and content_blocks:
+                first_block = content_blocks[0]
+                title = getattr(first_block, "text", None) or "New Chat"
+                # Clean up the title
+                title = title.strip().strip('"').strip("'")
+                if len(title) > 60:
+                    title = title[:57] + "..."
+            else:
+                title = "New Chat"
+                
+        except Exception as e:
+            from loguru import logger
+            logger.error(f"Failed to generate title with Claude: {e}")
+            # Fallback
+            first_user_msg = next((m["content"] for m in messages if m["role"] == "user"), "")
+            title = first_user_msg[:50].strip()
+            if len(first_user_msg) > 50:
+                title += "..."
+            title = title or "New Chat"
+    
+    # Update the session title
+    await db.execute(
+        text("UPDATE ai_chat_sessions SET title=:title, updated_at=now() WHERE id=:sid"),
+        {"sid": str(session_id), "title": title},
+    )
+    await db.commit()
+    
+    return {"session_id": str(session_id), "title": title}
 
 
 @router.delete("/sessions/{session_id}")
