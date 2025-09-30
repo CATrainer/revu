@@ -161,146 +161,193 @@ export default function AIAssistantPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-8rem)] max-w-5xl mx-auto px-4 md:px-0 flex flex-col">
-      {/* Header */}
-      <div className="text-center mb-6 flex-shrink-0">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Sparkles className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl md:text-3xl font-bold text-primary-dark">Ask Repruv AI Anything</h1>
-        </div>
-        <p className="text-sm md:text-base text-secondary-dark">
-          Get answers on anything, including your content, audience or niche
-        </p>
-      </div>
-
-      {/* Chat Messages */}
-      <Card className="flex-1 flex flex-col overflow-hidden mb-4">
-        <CardContent className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+      {/* Chat Container */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center text-muted-dark space-y-4">
-              <Brain className="h-16 w-16 opacity-20" />
-              <div>
-                <p className="font-medium text-lg mb-2">Start a conversation</p>
-                <p className="text-sm">
-                  Ask me anything about content creation, audience growth, or creative ideas!
-                </p>
+            <div className="h-full flex flex-col items-center justify-center px-4 py-12">
+              <div className="relative mb-8">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur-2xl opacity-20 animate-pulse"></div>
+                <div className="relative bg-gradient-to-br from-blue-500 to-purple-600 p-4 rounded-2xl shadow-lg">
+                  <Sparkles className="h-8 w-8 text-white" />
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-6 max-w-2xl">
+              
+              <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-slate-100 mb-3">
+                Repruv AI Assistant
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400 text-center max-w-lg mb-8">
+                Your intelligent companion for content strategy, audience insights, and creative inspiration
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-3xl px-4">
                 <button
                   onClick={() => setInput('Why has my subscriber count gone down?')}
-                  className="p-3 text-left text-sm border border-[var(--border)] rounded-lg hover:bg-accent transition-colors"
+                  className="group p-4 text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md transition-all duration-200"
                 >
-                  Why has my subscriber count gone down?
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-blue-50 dark:bg-blue-950 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900 transition-colors">
+                      <Brain className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        Why has my subscriber count gone down?
+                      </p>
+                    </div>
+                  </div>
                 </button>
+                
                 <button
                   onClick={() => setInput('Can you help me come up with a viral video idea?')}
-                  className="p-3 text-left text-sm border border-[var(--border)] rounded-lg hover:bg-accent transition-colors"
+                  className="group p-4 text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all duration-200"
                 >
-                  Can you help me come up with a viral video idea?
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-purple-50 dark:bg-purple-950 rounded-lg group-hover:bg-purple-100 dark:group-hover:bg-purple-900 transition-colors">
+                      <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        Can you help me come up with a viral video idea?
+                      </p>
+                    </div>
+                  </div>
                 </button>
+                
                 <button
                   onClick={() => setInput('What are the best times to post on social media?')}
-                  className="p-3 text-left text-sm border border-[var(--border)] rounded-lg hover:bg-accent transition-colors"
+                  className="group p-4 text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all duration-200"
                 >
-                  What are the best times to post on social media?
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-emerald-50 dark:bg-emerald-950 rounded-lg group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900 transition-colors">
+                      <Brain className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        What are the best times to post on social media?
+                      </p>
+                    </div>
+                  </div>
                 </button>
+                
                 <button
                   onClick={() => setInput('How can I improve engagement with my audience?')}
-                  className="p-3 text-left text-sm border border-[var(--border)] rounded-lg hover:bg-accent transition-colors"
+                  className="group p-4 text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md transition-all duration-200"
                 >
-                  How can I improve engagement with my audience?
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-amber-50 dark:bg-amber-950 rounded-lg group-hover:bg-amber-100 dark:group-hover:bg-amber-900 transition-colors">
+                      <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        How can I improve engagement with my audience?
+                      </p>
+                    </div>
+                  </div>
                 </button>
               </div>
             </div>
           ) : (
-            <>
+            <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
               {messages.map((message) => (
                 <div
                   key={message.id}
                   className={cn(
-                    'flex gap-3 items-start',
+                    'flex gap-4 items-start animate-in fade-in slide-in-from-bottom-4 duration-500',
                     message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                   )}
                 >
                   {/* Avatar */}
                   <div
                     className={cn(
-                      'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
+                      'flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm',
                       message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-accent text-accent-foreground'
+                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                        : 'bg-gradient-to-br from-purple-500 to-purple-600 text-white'
                     )}
                   >
                     {message.role === 'user' ? (
-                      <span className="text-sm font-semibold">You</span>
+                      <span className="text-xs font-bold">YOU</span>
                     ) : (
-                      <Brain className="h-4 w-4" />
+                      <Sparkles className="h-5 w-5" />
                     )}
                   </div>
 
                   {/* Message Content */}
-                  <div
-                    className={cn(
-                      'flex-1 rounded-lg p-3 max-w-[80%]',
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-accent text-accent-foreground'
-                    )}
-                  >
-                    <p className="text-sm whitespace-pre-wrap break-words">
-                      {message.content || (
-                        <span className="flex items-center gap-2 text-muted-foreground">
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          Thinking...
-                        </span>
+                  <div className="flex-1 max-w-3xl">
+                    <div
+                      className={cn(
+                        'rounded-2xl px-4 py-3',
+                        message.role === 'user'
+                          ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100'
+                          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100'
                       )}
-                    </p>
+                    >
+                      {message.content ? (
+                        <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+                          {message.content}
+                        </p>
+                      ) : (
+                        <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="text-sm">Thinking...</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
               <div ref={messagesEndRef} />
-            </>
-          )}
-        </CardContent>
-
-        {/* Error Display */}
-        {error && (
-          <div className="px-4 pb-2">
-            <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
-              <AlertCircle className="h-4 w-4" />
-              {error}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Input Area */}
-        <div className="border-t border-[var(--border)] p-4">
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)"
-              className="flex-1 min-h-[44px] max-h-32 px-4 py-3 text-primary-dark placeholder:text-muted-dark border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent card-background resize-none"
-              disabled={isLoading || !sessionId}
-              rows={1}
-            />
-            <Button
-              type="submit"
-              size="icon"
-              className="h-11 w-11 flex-shrink-0"
-              disabled={isLoading || !input.trim() || !sessionId}
-            >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Send className="h-5 w-5" />
-              )}
-            </Button>
-          </form>
+        <div className="border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            {/* Error Display */}
+            {error && (
+              <div className="mb-3 flex items-center gap-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 px-4 py-3 rounded-xl border border-red-200 dark:border-red-900">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="flex gap-3 items-end">
+              <div className="flex-1 relative">
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask me anything..."
+                  className="w-full min-h-[56px] max-h-32 px-4 py-4 pr-12 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent resize-none transition-all"
+                  disabled={isLoading || !sessionId}
+                  rows={1}
+                />
+              </div>
+              
+              <Button
+                type="submit"
+                size="icon"
+                className="h-14 w-14 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading || !input.trim() || !sessionId}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
+              </Button>
+            </form>
+            
+            <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-3">
+              Press <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px] font-medium">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px] font-medium">Shift + Enter</kbd> for new line
+            </p>
+          </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
