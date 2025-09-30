@@ -65,24 +65,44 @@ async def _rate_limit(db: AsyncSession, user: User, key: str, limit: int, window
 
 
 async def _chat_context(db: AsyncSession, user_id: UUID) -> Dict[str, Any]:
-    # Summaries for context injection (recent sentiment + threads)
-    sentiment = await db.execute(
-        text(
-            "SELECT bucket_start, avg_sentiment FROM get_sentiment_timeline(:uid, now() - interval '3 days', now(), '12 hours') ORDER BY bucket_start DESC LIMIT 6"
-        ),
-        {"uid": str(user_id)},
-    )
-    threads = await db.execute(
-        text(
-            """SELECT title, sentiment, mention_count FROM narrative_threads
-            WHERE user_id=:uid ORDER BY last_seen_at DESC NULLS LAST LIMIT 5"""
-        ),
-        {"uid": str(user_id)},
-    )
-    return {
-        "recent_sentiment": [dict(r) for r in sentiment.fetchall()],
-        "top_threads": [dict(r) for r in threads.fetchall()],
+    """Get context for chat - gracefully handles missing database functions/tables."""
+    context: Dict[str, Any] = {
+        "recent_sentiment": [],
+        "top_threads": [],
     }
+    
+    # Try to get sentiment data if available
+    try:
+        sentiment = await db.execute(
+            text(
+                "SELECT bucket_start, avg_sentiment FROM get_sentiment_timeline(:uid, now() - interval '3 days', now(), '12 hours') ORDER BY bucket_start DESC LIMIT 6"
+            ),
+            {"uid": str(user_id)},
+        )
+        # Convert rows to dicts properly using _mapping
+        context["recent_sentiment"] = [dict(r._mapping) for r in sentiment.fetchall()]
+    except Exception as e:
+        # Sentiment function may not exist - that's okay
+        from loguru import logger
+        logger.debug(f"Could not fetch sentiment context: {e}")
+    
+    # Try to get narrative threads if available
+    try:
+        threads = await db.execute(
+            text(
+                """SELECT title, sentiment, mention_count FROM narrative_threads
+                WHERE user_id=:uid ORDER BY last_seen_at DESC NULLS LAST LIMIT 5"""
+            ),
+            {"uid": str(user_id)},
+        )
+        # Convert rows to dicts properly using _mapping
+        context["top_threads"] = [dict(r._mapping) for r in threads.fetchall()]
+    except Exception as e:
+        # Narrative threads table may not exist - that's okay
+        from loguru import logger
+        logger.debug(f"Could not fetch threads context: {e}")
+    
+    return context
 
 
 def _estimate_tokens(text: str) -> int:
