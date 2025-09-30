@@ -54,6 +54,7 @@ export default function AIAssistantPage() {
   const [splitPaneMessages, setSplitPaneMessages] = useState<Message[]>([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showBranchSuggestions, setShowBranchSuggestions] = useState(false);
+  const [pendingSession, setPendingSession] = useState<{parentId?: string, branchFromMessageId?: string, branchName?: string, openInSplitPane?: boolean} | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const splitPaneMessagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -78,19 +79,39 @@ export default function AIAssistantPage() {
       setSessions(response.data.items || []);
       
       // If no active session and we have sessions, load the most recent one
-      if (!sessionId && response.data.items?.length > 0) {
+      if (!sessionId && !pendingSession && response.data.items?.length > 0) {
         const mostRecent = response.data.items[0];
         await loadSession(mostRecent.id);
-      } else if (!sessionId) {
-        // No sessions exist, create a new one
-        await createNewSession();
+      } else if (!sessionId && !pendingSession) {
+        // No sessions exist, prepare for a new one (but don't create it yet)
+        setMessages([]);
+        setSessionId(null);
+        setPendingSession({});
       }
     } catch (err) {
       console.error('Failed to load sessions:', err);
     }
   };
 
-  const createNewSession = async (autoSwitch = true, parentSessionId?: string, branchFromMessageId?: string, branchName?: string, openInSplitPane = false) => {
+  const prepareNewSession = (parentSessionId?: string, branchFromMessageId?: string, branchName?: string, openInSplitPane = false) => {
+    // Don't create the session yet, just prepare the state
+    if (openInSplitPane) {
+      // Prepare split pane session
+      setSplitPaneSession('pending');
+      setSplitPaneMessages([]);
+      setPendingSession({ parentId: parentSessionId, branchFromMessageId, branchName, openInSplitPane: true });
+    } else {
+      // Prepare main session
+      setSessionId(null);
+      setMessages([]);
+      setSplitPaneSession(null);
+      setCurrentSession(null);
+      setPendingSession({ parentId: parentSessionId, branchFromMessageId, branchName, openInSplitPane: false });
+    }
+    setShowBranchSuggestions(false);
+  };
+
+  const createNewSession = async (parentSessionId?: string, branchFromMessageId?: string, branchName?: string, autoStart = false) => {
     try {
       const response = await api.post('/chat/sessions', {
         title: branchName || (parentSessionId ? 'Branch Chat' : 'New Chat'),
@@ -99,50 +120,16 @@ export default function AIAssistantPage() {
         branch_point_message_id: branchFromMessageId,
         branch_name: branchName,
         inherit_messages: 5,
-        auto_start: parentSessionId ? true : false, // Auto-generate initial message for threads
+        auto_start: autoStart,
       });
       const newSessionId = response.data.session_id;
       const initialMessage = response.data.initial_message;
       
-      await loadSessions(); // Refresh session list
-      
-      if (autoSwitch) {
-        if (openInSplitPane && parentSessionId) {
-          // Open thread in split pane
-          setSplitPaneSession(newSessionId);
-          if (initialMessage) {
-            setSplitPaneMessages([{
-              id: Date.now().toString(),
-              role: 'assistant',
-              content: initialMessage,
-              timestamp: new Date(),
-            }]);
-          } else {
-            setSplitPaneMessages([]);
-          }
-          await loadSplitPaneSession(newSessionId);
-        } else {
-          setSessionId(newSessionId);
-          
-          // If there's an initial message from the AI, add it to messages
-          if (initialMessage) {
-            setMessages([{
-              id: Date.now().toString(),
-              role: 'assistant',
-              content: initialMessage,
-              timestamp: new Date(),
-            }]);
-          } else {
-            setMessages([]);
-          }
-          
-          await loadSession(newSessionId);
-          setSplitPaneSession(null); // Close split pane when creating new main chat
-        }
-      }
+      return { sessionId: newSessionId, initialMessage };
     } catch (err) {
       console.error('Failed to create session:', err);
       setError('Failed to create new chat session');
+      throw err;
     }
   };
 
@@ -162,21 +149,21 @@ export default function AIAssistantPage() {
   };
 
   const createBranchFromMessage = async (messageId: string, topic?: string) => {
-    const sourceSessionId = splitPaneSession || sessionId;
+    const sourceSessionId = splitPaneSession === 'pending' ? null : (splitPaneSession || sessionId);
     if (!sourceSessionId) return;
     
     const branchName = topic || prompt('What would you like to explore?');
     if (!branchName) return;
     
     // If creating from split pane (thread), move current split pane to main and open new thread in split pane
-    if (splitPaneSession) {
+    if (splitPaneSession && splitPaneSession !== 'pending') {
       setSessionId(splitPaneSession);
       setMessages(splitPaneMessages);
       setCurrentSession(sessions.find(s => s.id === splitPaneSession) || null);
-      await createNewSession(true, splitPaneSession, messageId, branchName, true);
+      prepareNewSession(splitPaneSession, messageId, branchName, true);
     } else {
       // Creating from main chat, open in split pane
-      await createNewSession(true, sourceSessionId, messageId, branchName, true);
+      prepareNewSession(sourceSessionId, messageId, branchName, true);
     }
     setShowBranchSuggestions(false);
   };
@@ -198,6 +185,7 @@ export default function AIAssistantPage() {
       setError(null);
       setSplitPaneSession(null); // Close split pane when switching to a different main session
       setShowBranchSuggestions(false); // Reset branch suggestions
+      setPendingSession(null); // Clear any pending session
     } catch (err) {
       console.error('Failed to load session:', err);
       setError('Failed to load chat history');
@@ -289,7 +277,7 @@ export default function AIAssistantPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading || !sessionId) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -306,7 +294,49 @@ export default function AIAssistantPage() {
     // Track if this is the first message for auto-titling later
     const isFirstMessage = messages.length === 0;
 
-    try{
+    try {
+      let actualSessionId = sessionId;
+      
+      // If there's a pending session, create it now
+      if (pendingSession) {
+        const { parentId, branchFromMessageId, branchName, openInSplitPane } = pendingSession;
+        const { sessionId: newSessionId, initialMessage } = await createNewSession(
+          parentId,
+          branchFromMessageId,
+          branchName,
+          !!parentId // auto_start if it's a thread
+        );
+        
+        actualSessionId = newSessionId;
+        
+        if (openInSplitPane) {
+          setSplitPaneSession(newSessionId);
+          if (initialMessage) {
+            setSplitPaneMessages([{
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: initialMessage,
+              timestamp: new Date(),
+            }, ...splitPaneMessages]);
+          }
+        } else {
+          setSessionId(newSessionId);
+          if (initialMessage) {
+            setMessages((prev) => [{
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: initialMessage,
+              timestamp: new Date(),
+            }, ...prev]);
+          }
+        }
+        
+        setPendingSession(null);
+        await loadSessions(); // Refresh the session list
+      }
+      
+      if (!actualSessionId) return;
+
       // Use EventSource for streaming responses
       const response = await fetch(`${api.defaults.baseURL}/chat/messages?stream=true`, {
         method: 'POST',
@@ -315,7 +345,7 @@ export default function AIAssistantPage() {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
         },
         body: JSON.stringify({
-          session_id: sessionId,
+          session_id: actualSessionId,
           content: userMessage.content,
         }),
       });
@@ -460,15 +490,15 @@ export default function AIAssistantPage() {
           {!sidebarCollapsed && (
             <div className="space-y-2 mb-4">
               <Button
-                onClick={() => createNewSession(true)}
+                onClick={() => prepareNewSession()}
                 className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 New Chat
               </Button>
-              {sessionId && (
+              {sessionId && !pendingSession && (
                 <Button
-                  onClick={() => createNewSession(true, sessionId, undefined, 'New Thread', true)}
+                  onClick={() => prepareNewSession(sessionId, undefined, 'New Thread', true)}
                   variant="outline"
                   className="w-full"
                 >
@@ -948,7 +978,7 @@ export default function AIAssistantPage() {
                     onKeyDown={handleKeyDown}
                     placeholder="Ask about content strategy, viral ideas, audience growth..."
                     className="w-full min-h-[60px] max-h-40 px-5 py-4 text-[15px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-600/30 focus:border-blue-500 dark:focus:border-blue-600 resize-none transition-all shadow-sm"
-                    disabled={isLoading || !sessionId}
+                    disabled={isLoading}
                     rows={1}
                   />
                   {input.length > 0 && (
@@ -962,7 +992,7 @@ export default function AIAssistantPage() {
                   type="submit"
                   size="icon"
                   className="h-[60px] w-[60px] rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-                  disabled={isLoading || !input.trim() || !sessionId}
+                  disabled={isLoading || !input.trim() || (!sessionId && !pendingSession)}
                 >
                   {isLoading ? (
                     <Loader2 className="h-6 w-6 animate-spin" />
@@ -977,7 +1007,7 @@ export default function AIAssistantPage() {
                   <kbd className="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-[10px] font-medium shadow-sm">↵ Enter</kbd> to send · 
                   <kbd className="ml-1 px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-[10px] font-medium shadow-sm">Shift + ↵</kbd> for new line
                 </p>
-                {!isLoading && sessionId && (
+                {!isLoading && (sessionId || pendingSession) && (
                   <p className="text-xs text-slate-400 dark:text-slate-500">
                     Powered by Claude AI
                   </p>
