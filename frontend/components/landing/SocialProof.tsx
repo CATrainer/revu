@@ -93,7 +93,7 @@ export function SocialProof() {
     // Reduced padding on mobile for better spacing
     <motion.section 
       id="vision" 
-      className="py-16 md:py-24 section-background-alt"
+      className="py-16 md:py-24 section-background"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}

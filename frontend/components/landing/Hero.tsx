@@ -49,7 +49,7 @@ export function Hero() {
       <CountdownBanner />
       <motion.section 
         id="hero" 
-        className="relative min-h-[90vh] section-background-alt overflow-hidden"
+        className="relative min-h-[90vh] section-background overflow-hidden"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
