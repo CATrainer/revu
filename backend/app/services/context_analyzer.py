@@ -29,14 +29,15 @@ class ContextAnalyzer:
         if not connection:
             return context
         
-        context["channel_name"] = connection.channel_title
-        context["subscriber_count"] = connection.subscriber_count
+        context["channel_name"] = connection.channel_name
         context["primary_platform"] = "YouTube"
+        # Note: subscriber_count would need to be fetched from YouTube API
+        # For now, we'll calculate metrics from videos
         
         # Get recent videos (last 50)
         videos_result = await db.execute(
             select(YouTubeVideo)
-            .where(YouTubeVideo.connection_id == connection.id)
+            .where(YouTubeVideo.channel_id == connection.id)
             .order_by(YouTubeVideo.published_at.desc())
             .limit(50)
         )
