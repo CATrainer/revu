@@ -1,7 +1,7 @@
 // frontend/app/(dashboard)/ai-assistant/page.tsx
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap, Copy, CheckCheck, Settings2, GitBranch, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -111,10 +111,13 @@ export default function AIAssistantPage() {
     }
   };
 
-  const createBranchFromMessage = async (messageId: string) => {
+  const createBranchFromMessage = async (messageId: string, topic?: string) => {
     if (!sessionId) return;
     
-    const branchName = prompt('Name this branch (optional):');
+    const branchName = topic || prompt('What would you like to explore?');
+    if (!branchName) return;
+    
+    await createNewSession(true, sessionId, messageId, branchName);
   };
 
   const loadSession = async (id: string) => {
@@ -534,31 +537,12 @@ export default function AIAssistantPage() {
         ) : (
           /* Chat View */
           <>
-        {/* Breadcrumbs */}
-        {currentSession && getBreadcrumbs(currentSession).length > 1 && (
-          <div className="border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm px-6 py-3">
-            <div className="flex items-center gap-2 text-sm">
-              {getBreadcrumbs(currentSession).map((session, idx, arr) => (
-                <div key={session.id} className="flex items-center gap-2">
-                  <button
-                    onClick={() => loadSession(session.id)}
-                    className={cn(
-                      "hover:text-blue-600 dark:hover:text-blue-400 transition-colors",
-                      idx === arr.length - 1 
-                        ? "font-semibold text-slate-900 dark:text-slate-100"
-                        : "text-slate-600 dark:text-slate-400"
-                    )}
-                  >
-                    {session.branch_name || session.title}
-                  </button>
-                  {idx < arr.length - 1 && (
-                    <ChevronRight className="h-4 w-4 text-slate-400" />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        
+        <ThreadSwitcher 
+          sessions={sessions}
+          activeSessionId={sessionId}
+          onSelectSession={loadSession}
+        />
         
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto">
@@ -658,182 +642,191 @@ export default function AIAssistantPage() {
             </div>
           ) : (
             <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className="group relative"
-                >
+              {messages.map((message, idx) => (
+                <React.Fragment key={message.id}>
                   <div
-                    className={cn(
-                      'flex gap-4 items-start animate-in fade-in slide-in-from-bottom-4 duration-500',
-                      message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-                    )}
+                    key={message.id}
+                    className="group relative"
                   >
-                    {/* Avatar */}
                     <div
                       className={cn(
-                        'flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm',
-                        message.role === 'user'
-                          ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
-                          : 'bg-gradient-to-br from-purple-500 to-purple-600 text-white'
+                        'flex gap-4 items-start animate-in fade-in slide-in-from-bottom-4 duration-500',
+                        message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                       )}
                     >
-                      {message.role === 'user' ? (
-                        <span className="text-xs font-bold">YOU</span>
-                      ) : (
-                        <Sparkles className="h-5 w-5" />
-                      )}
-                    </div>
-
-                    {/* Message Content */}
-                    <div className="flex-1 max-w-3xl">
-                    <div
-                      className={cn(
-                        'rounded-2xl px-5 py-4',
-                        message.role === 'user'
-                          ? 'bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-800/80 text-slate-900 dark:text-slate-100 shadow-sm'
-                          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-sm'
-                      )}
-                    >
-                      {message.content ? (
-                        message.role === 'assistant' ? (
-                          <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
-                            className="prose prose-slate dark:prose-invert max-w-none"
-                            components={{
-                              h1: ({ node, ...props }) => (
-                                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-6 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700" {...props} />
-                              ),
-                              h2: ({ node, ...props }) => (
-                                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-5 mb-2" {...props} />
-                              ),
-                              h3: ({ node, ...props }) => (
-                                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-4 mb-2" {...props} />
-                              ),
-                              p: ({ node, ...props }) => (
-                                <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-3 text-[15px]" {...props} />
-                              ),
-                              ul: ({ node, ...props }) => (
-                                <ul className="space-y-2 my-4 ml-4" {...props} />
-                              ),
-                              ol: ({ node, ...props }) => (
-                                <ol className="space-y-2 my-4 ml-4 list-decimal" {...props} />
-                              ),
-                              li: ({ node, ...props }) => (
-                                <li className="text-slate-700 dark:text-slate-300 leading-relaxed pl-2" {...props} />
-                              ),
-                              strong: ({ node, ...props }) => (
-                                <strong className="font-semibold text-slate-900 dark:text-slate-100" {...props} />
-                              ),
-                              em: ({ node, ...props }) => (
-                                <em className="italic text-slate-700 dark:text-slate-300" {...props} />
-                              ),
-                              code: ({ node, inline, className, children, ...props }: {
-                                node?: unknown;
-                                inline?: boolean;
-                                className?: string;
-                                children?: React.ReactNode;
-                              }) => {
-                                const match = /language-(\w+)/.exec(className || '');
-                                const language = match ? match[1] : '';
-                                const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
-                                
-                                return !inline && language ? (
-                                  <div className="my-4 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
-                                    <div className="flex items-center justify-between bg-slate-800 px-4 py-2 border-b border-slate-700">
-                                      <span className="text-xs font-mono text-slate-300 uppercase tracking-wide">
-                                        {language}
-                                      </span>
-                                      <button
-                                        onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), codeId)}
-                                        className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded transition-colors"
-                                      >
-                                        {copiedCode === codeId ? (
-                                          <>
-                                            <CheckCheck className="h-3 w-3" />
-                                            Copied!
-                                          </>
-                                        ) : (
-                                          <>
-                                            <Copy className="h-3 w-3" />
-                                            Copy
-                                          </>
-                                        )}
-                                      </button>
-                                    </div>
-                                    <SyntaxHighlighter
-                                      style={vscDarkPlus}
-                                      language={language}
-                                      PreTag="div"
-                                      className="!m-0 !bg-slate-900"
-                                      customStyle={{
-                                        margin: 0,
-                                        padding: '1rem',
-                                        background: '#0f172a',
-                                        fontSize: '14px',
-                                        lineHeight: '1.6',
-                                      }}
-                                      {...props}
-                                    >
-                                      {String(children).replace(/\n$/, '')}
-                                    </SyntaxHighlighter>
-                                  </div>
-                                ) : (
-                                  <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded text-sm font-mono" {...props}>
-                                    {children}
-                                  </code>
-                                );
-                              },
-                              blockquote: ({ node, ...props }) => (
-                                <blockquote className="border-l-4 border-blue-500 dark:border-blue-600 pl-4 py-2 my-4 bg-blue-50 dark:bg-blue-950/20 rounded-r-lg" {...props} />
-                              ),
-                              table: ({ node, ...props }) => (
-                                <div className="my-4 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-                                  <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700" {...props} />
-                                </div>
-                              ),
-                              thead: ({ node, ...props }) => (
-                                <thead className="bg-slate-50 dark:bg-slate-800" {...props} />
-                              ),
-                              th: ({ node, ...props }) => (
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-900 dark:text-slate-100 uppercase tracking-wider" {...props} />
-                              ),
-                              td: ({ node, ...props }) => (
-                                <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300 border-t border-slate-200 dark:border-slate-700" {...props} />
-                              ),
-                              a: ({ node, ...props }) => (
-                                <a className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline font-medium" target="_blank" rel="noopener noreferrer" {...props} />
-                              ),
-                            }}
-                          >
-                            {message.content}
-                          </ReactMarkdown>
+                      {/* Avatar */}
+                      <div
+                        className={cn(
+                          'flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm',
+                          message.role === 'user'
+                            ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                            : 'bg-gradient-to-br from-purple-500 to-purple-600 text-white'
+                        )}
+                      >
+                        {message.role === 'user' ? (
+                          <span className="text-xs font-bold">YOU</span>
                         ) : (
-                          <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
-                            {message.content}
-                          </p>
-                        )
-                      ) : (
-                        <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span className="text-sm font-medium">Thinking...</span>
-                        </div>
-                      )}
+                          <Sparkles className="h-5 w-5" />
+                        )}
+                      </div>
+
+                      {/* Message Content */}
+                      <div className="flex-1 max-w-3xl">
+                      <div
+                        className={cn(
+                          'rounded-2xl px-5 py-4',
+                          message.role === 'user'
+                            ? 'bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-800/80 text-slate-900 dark:text-slate-100 shadow-sm'
+                            : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-sm'
+                        )}
+                      >
+                        {message.content ? (
+                          message.role === 'assistant' ? (
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              className="prose prose-slate dark:prose-invert max-w-none"
+                              components={{
+                                h1: ({ node, ...props }) => (
+                                  <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-6 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700" {...props} />
+                                ),
+                                h2: ({ node, ...props }) => (
+                                  <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-5 mb-2" {...props} />
+                                ),
+                                h3: ({ node, ...props }) => (
+                                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-4 mb-2" {...props} />
+                                ),
+                                p: ({ node, ...props }) => (
+                                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-3 text-[15px]" {...props} />
+                                ),
+                                ul: ({ node, ...props }) => (
+                                  <ul className="space-y-2 my-4 ml-4" {...props} />
+                                ),
+                                ol: ({ node, ...props }) => (
+                                  <ol className="space-y-2 my-4 ml-4 list-decimal" {...props} />
+                                ),
+                                li: ({ node, ...props }) => (
+                                  <li className="text-slate-700 dark:text-slate-300 leading-relaxed pl-2" {...props} />
+                                ),
+                                strong: ({ node, ...props }) => (
+                                  <strong className="font-semibold text-slate-900 dark:text-slate-100" {...props} />
+                                ),
+                                em: ({ node, ...props }) => (
+                                  <em className="italic text-slate-700 dark:text-slate-300" {...props} />
+                                ),
+                                code: ({ node, inline, className, children, ...props }: {
+                                  node?: unknown;
+                                  inline?: boolean;
+                                  className?: string;
+                                  children?: React.ReactNode;
+                                }) => {
+                                  const match = /language-(\w+)/.exec(className || '');
+                                  const language = match ? match[1] : '';
+                                  const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
+                                  
+                                  return !inline && language ? (
+                                    <div className="my-4 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+                                      <div className="flex items-center justify-between bg-slate-800 px-4 py-2 border-b border-slate-700">
+                                        <span className="text-xs font-mono text-slate-300 uppercase tracking-wide">
+                                          {language}
+                                        </span>
+                                        <button
+                                          onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), codeId)}
+                                          className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded transition-colors"
+                                        >
+                                          {copiedCode === codeId ? (
+                                            <>
+                                              <CheckCheck className="h-3 w-3" />
+                                              Copied!
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Copy className="h-3 w-3" />
+                                              Copy
+                                            </>
+                                          )}
+                                        </button>
+                                      </div>
+                                      <SyntaxHighlighter
+                                        style={vscDarkPlus}
+                                        language={language}
+                                        PreTag="div"
+                                        className="!m-0 !bg-slate-900"
+                                        customStyle={{
+                                          margin: 0,
+                                          padding: '1rem',
+                                          background: '#0f172a',
+                                          fontSize: '14px',
+                                          lineHeight: '1.6',
+                                        }}
+                                        {...props}
+                                      >
+                                        {String(children).replace(/\n$/, '')}
+                                      </SyntaxHighlighter>
+                                    </div>
+                                  ) : (
+                                    <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded text-sm font-mono" {...props}>
+                                      {children}
+                                    </code>
+                                  );
+                                },
+                                blockquote: ({ node, ...props }) => (
+                                  <blockquote className="border-l-4 border-blue-500 dark:border-blue-600 pl-4 py-2 my-4 bg-blue-50 dark:bg-blue-950/20 rounded-r-lg" {...props} />
+                                ),
+                                table: ({ node, ...props }) => (
+                                  <div className="my-4 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                                    <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700" {...props} />
+                                  </div>
+                                ),
+                                thead: ({ node, ...props }) => (
+                                  <thead className="bg-slate-50 dark:bg-slate-800" {...props} />
+                                ),
+                                th: ({ node, ...props }) => (
+                                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-900 dark:text-slate-100 uppercase tracking-wider" {...props} />
+                                ),
+                                td: ({ node, ...props }) => (
+                                  <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300 border-t border-slate-200 dark:border-slate-700" {...props} />
+                                ),
+                                a: ({ node, ...props }) => (
+                                  <a className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline font-medium" target="_blank" rel="noopener noreferrer" {...props} />
+                                ),
+                              }}
+                            >
+                              {message.content}
+                            </ReactMarkdown>
+                          ) : (
+                            <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+                              {message.content}
+                            </p>
+                          )
+                        ) : (
+                          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm font-medium">Thinking...</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    </div>
+                    
+                    {/* Branch Button - appears on hover */}
+                    {!isLoading && message.content && (
+                      <button
+                        onClick={() => createBranchFromMessage(message.id)}
+                        className="absolute -right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 p-2 text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-lg hover:shadow-md"
+                        title="Branch from here"
+                      >
+                        <GitBranch className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
-                  </div>
-                  
-                  {/* Branch Button - appears on hover */}
-                  {!isLoading && message.content && (
-                    <button
-                      onClick={() => createBranchFromMessage(message.id)}
-                      className="absolute -right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 p-2 text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-lg hover:shadow-md"
-                      title="Branch from here"
-                    >
-                      <GitBranch className="h-4 w-4" />
-                    </button>
+                  {message.role === 'assistant' && !isLoading && idx === messages.length - 1 && (
+                    <BranchCard
+                      suggestions={generateBranchSuggestions(message.content)}
+                      onBranch={(topic) => createBranchFromMessage(message.id, topic)}
+                      messageId={message.id}
+                    />
                   )}
-                </div>
+                </React.Fragment>
               ))}
               <div ref={messagesEndRef} />
             </div>
