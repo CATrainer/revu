@@ -1,6 +1,6 @@
 // frontend/app/(dashboard)/ai-assistant/page.tsx
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap, Copy, CheckCheck, Settings2, GitBranch, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -55,6 +55,8 @@ export default function AIAssistantPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showBranchSuggestions, setShowBranchSuggestions] = useState(false);
   const [pendingSession, setPendingSession] = useState<{parentId?: string, branchFromMessageId?: string, branchName?: string, openInSplitPane?: boolean} | null>(null);
+  const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const splitPaneMessagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -83,6 +85,7 @@ export default function AIAssistantPage() {
 
   const loadSessions = async () => {
     try {
+      setSessionsLoading(true);
       const response = await api.get('/chat/sessions');
       setSessions(response.data.items || []);
       
@@ -98,6 +101,8 @@ export default function AIAssistantPage() {
       }
     } catch (err) {
       console.error('Failed to load sessions:', err);
+    } finally {
+      setSessionsLoading(false);
     }
   };
 
@@ -176,8 +181,9 @@ export default function AIAssistantPage() {
     setShowBranchSuggestions(false);
   };
 
-  const loadSession = async (id: string) => {
+  const loadSession = useCallback(async (id: string) => {
     try {
+      setLoadingSessionId(id);
       setSessionId(id);
       const session = sessions.find(s => s.id === id);
       setCurrentSession(session || null);
@@ -197,8 +203,10 @@ export default function AIAssistantPage() {
     } catch (err) {
       console.error('Failed to load session:', err);
       setError('Failed to load chat history');
+    } finally {
+      setLoadingSessionId(null);
     }
-  };
+  }, [sessions]);
 
   const toggleSessionCollapse = (sessionId: string) => {
     setCollapsedSessions(prev => {
@@ -458,13 +466,13 @@ export default function AIAssistantPage() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const formEvent = new Event('submit', { bubbles: true, cancelable: true }) as unknown as React.FormEvent;
       handleSubmit(formEvent);
     }
-  };
+  }, [handleSubmit]);
 
   return (
     <div className="h-[calc(100vh-4rem)] flex overflow-hidden bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
@@ -521,18 +529,28 @@ export default function AIAssistantPage() {
             <div className="space-y-2 mb-4">
               <Button
                 onClick={() => prepareNewSession()}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                disabled={loadingSessionId !== null || isLoading}
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 transition-all"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                {loadingSessionId || isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4 mr-2" />
+                )}
                 New Chat
               </Button>
               {sessionId && !pendingSession && (
                 <Button
                   onClick={() => prepareNewSession(sessionId, undefined, 'New Thread', true)}
                   variant="outline"
-                  className="w-full"
+                  disabled={loadingSessionId !== null || isLoading}
+                  className="w-full disabled:opacity-50 transition-all"
                 >
-                  <GitBranch className="h-4 w-4 mr-2" />
+                  {loadingSessionId || isLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <GitBranch className="h-4 w-4 mr-2" />
+                  )}
                   New Thread
                 </Button>
               )}
@@ -542,18 +560,26 @@ export default function AIAssistantPage() {
           {/* Sessions Tree */}
           {!sidebarCollapsed && (
             <div className="flex-1 overflow-y-auto">
-            <SessionTree
-              sessions={sessions}
-              activeSessionId={sessionId}
-              collapsedSessions={collapsedSessions}
-              onSelectSession={loadSession}
-              onToggleCollapse={toggleSessionCollapse}
-              onEdit={(id: string, title: string) => {
-                setEditingSessionId(id);
-                setEditingTitle(title);
-              }}
-              onDelete={deleteSession}
-            />
+            {sessionsLoading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-14 bg-slate-100 dark:bg-slate-800/50 rounded-lg animate-pulse"></div>
+                ))}
+              </div>
+            ) : (
+              <SessionTree
+                sessions={sessions}
+                activeSessionId={sessionId}
+                collapsedSessions={collapsedSessions}
+                onSelectSession={loadSession}
+                onToggleCollapse={toggleSessionCollapse}
+                onEdit={(id: string, title: string) => {
+                  setEditingSessionId(id);
+                  setEditingTitle(title);
+                }}
+                onDelete={deleteSession}
+              />
+            )}
             {/* Old list - keeping for reference, remove later
             {sessions.map((session) => (
               <div
@@ -683,7 +709,19 @@ export default function AIAssistantPage() {
         
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
-          {messages.length === 0 ? (
+          {loadingSessionId && messages.length === 0 ? (
+            <div className="w-full py-6 px-4 space-y-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-4 items-start animate-pulse">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700"></div>
+                  <div className="flex-1 space-y-3">
+                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
+                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center px-4 py-12">
               <div className="relative mb-8">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur-2xl opacity-20 animate-pulse"></div>
@@ -1021,13 +1059,13 @@ export default function AIAssistantPage() {
                 <Button
                   type="submit"
                   size="icon"
-                  className="h-[60px] w-[60px] rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                  className="h-[60px] w-[60px] rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none active:scale-95"
                   disabled={isLoading || !input.trim() || (!sessionId && !pendingSession)}
                 >
                   {isLoading ? (
                     <Loader2 className="h-6 w-6 animate-spin" />
                   ) : (
-                    <Send className="h-6 w-6" />
+                    <Send className="h-6 w-6 transition-transform group-hover:translate-x-0.5" />
                   )}
                 </Button>
               </div>
@@ -1122,13 +1160,13 @@ export default function AIAssistantPage() {
                         <Button
                           type="submit"
                           size="icon"
-                          className="h-[60px] w-[60px] rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                          className="h-[60px] w-[60px] rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none active:scale-95"
                           disabled={isLoading || !input.trim() || splitPaneSession === 'pending'}
                         >
                           {isLoading ? (
                             <Loader2 className="h-6 w-6 animate-spin" />
                           ) : (
-                            <Send className="h-6 w-6" />
+                            <Send className="h-6 w-6 transition-transform group-hover:translate-x-0.5" />
                           )}
                         </Button>
                       </div>
