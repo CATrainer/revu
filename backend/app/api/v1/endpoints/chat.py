@@ -20,6 +20,7 @@ from fastapi import (
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+from pydantic import BaseModel
 
 from app.core.database import get_async_session
 from app.core.security import get_current_active_user
@@ -34,6 +35,11 @@ import os
 from app.core.config import settings
 
 router = APIRouter()
+
+# Request models
+class SendMessageRequest(BaseModel):
+    session_id: UUID
+    content: str
 
 # In-memory websocket session map {session_id: {"connections": [...], "buffer": []}}
 _ws_sessions: Dict[str, Dict[str, Any]] = {}
@@ -252,10 +258,11 @@ async def send_message(
     *,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
-    session_id: UUID = Body(...),
-    content: str = Body(...),
+    request: SendMessageRequest,
     stream: bool = Query(True),
 ):
+    session_id = request.session_id
+    content = request.content
     await _rate_limit(db, current_user, "chat_send", 120)
     # Validate session
     own = await db.execute(
