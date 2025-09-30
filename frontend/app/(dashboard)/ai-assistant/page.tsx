@@ -43,9 +43,11 @@ export default function AIAssistantPage() {
         });
         console.log('Session created:', response.data);
         setSessionId(response.data.session_id);
-      } catch (err: any) {
+      } catch (err) {
         console.error('Failed to create session:', err);
-        console.error('Error details:', err.response?.data);
+        if (err && typeof err === 'object' && 'response' in err) {
+          console.error('Error details:', (err as { response?: { data?: unknown } }).response?.data);
+        }
         setError('Failed to initialize chat session');
       }
     };
