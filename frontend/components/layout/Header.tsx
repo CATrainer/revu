@@ -35,9 +35,6 @@ interface HeaderProps {
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
   { name: 'Interactions', href: '/comments', icon: MessageSquare },
-  { name: 'Automation', href: '/automation', icon: Zap },
-  { name: 'Analytics', href: '/analytics', icon: ChartPie },
-  { name: 'Social Monitoring', href: '/social-monitoring', icon: Radio },
   { name: 'AI Assistant', href: '/ai-assistant', icon: Brain },
   { name: 'Settings', href: '/settings', icon: SettingsIcon },
 ];
