@@ -149,7 +149,8 @@ export default function AIAssistantPage() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(e as any);
+      const formEvent = new Event('submit', { bubbles: true, cancelable: true }) as unknown as React.FormEvent;
+      handleSubmit(formEvent);
     }
   };
 
