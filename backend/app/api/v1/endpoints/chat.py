@@ -25,10 +25,13 @@ from app.core.database import get_async_session
 from app.core.security import get_current_active_user
 from app.models.user import User
 
-try:  # OpenAI optional; degrade gracefully
-    from openai import OpenAI  # type: ignore
+try:  # Anthropic for Claude API
+    from anthropic import Anthropic  # type: ignore
 except Exception:  # noqa: BLE001
-    OpenAI = None  # type: ignore
+    Anthropic = None  # type: ignore
+
+import os
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -233,8 +236,10 @@ async def send_message(
     )
     history = [dict(r) for r in history_res.fetchall()][::-1]
 
-    client = OpenAI(api_key=None) if OpenAI else None  # relies on env var inside SDK if None
-    model = "gpt-4o-mini"
+    # Use Claude/Anthropic client
+    api_key = os.getenv("CLAUDE_API_KEY", getattr(settings, "CLAUDE_API_KEY", None))
+    client = Anthropic(api_key=api_key) if Anthropic and api_key else None
+    model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-3-5-sonnet-latest"
 
     async def _finalize(assistant_text: str, tokens: int, latency_ms: int):
         await _insert_message(db, session_id, current_user.id, "assistant", assistant_text, tokens=tokens, latency_ms=latency_ms)
@@ -245,8 +250,42 @@ async def send_message(
         await db.commit()
 
     if not stream:
-        # Non-streaming simple completion
-        assistant_text = "(streaming disabled placeholder response)"
+        # Non-streaming Claude completion
+        if client:
+            try:
+                messages = []
+                for h in history:
+                    if h["role"] in ["user", "assistant"]:
+                        messages.append({"role": h["role"], "content": h["content"]})
+                messages.append({"role": "user", "content": content})
+                
+                system_prompt = (
+                    "You are Repruv AI, a helpful assistant for content creators and influencers. "
+                    "You help with content strategy, audience insights, social media management, and creative ideas. "
+                    "Be friendly, concise, and actionable in your responses."
+                )
+                
+                response = client.messages.create(
+                    model=model,
+                    max_tokens=int(os.getenv("CLAUDE_MAX_TOKENS", "1024")),
+                    system=system_prompt,
+                    messages=messages,
+                    temperature=0.7,
+                )
+                
+                # Extract text from Claude response
+                content_blocks = getattr(response, "content", [])
+                if isinstance(content_blocks, list) and content_blocks:
+                    first_block = content_blocks[0]
+                    assistant_text = getattr(first_block, "text", None) or ""
+                else:
+                    assistant_text = "I apologize, but I couldn't generate a response."
+                    
+            except Exception as e:
+                assistant_text = "I apologize, but I encountered an error. Please try again."
+        else:
+            assistant_text = "I'm currently unavailable. Please check your API configuration."
+        
         latency_ms = int((time.perf_counter() - start) * 1000)
         await _finalize(assistant_text, _estimate_tokens(assistant_text), latency_ms)
         return {"message": assistant_text, "latency_ms": latency_ms}
@@ -256,33 +295,44 @@ async def send_message(
         completion_tokens = 0
         if client:
             try:
-                resp = client.chat.completions.create(
-                    model=model,
-                    stream=True,
-                    messages=[
-                        {"role": "system", "content": "You are a helpful assistant that knows the user's monitoring dashboard."},
-                        *[{"role": h["role"], "content": h["content"]} for h in history],
-                        {"role": "user", "content": content},
-                    ],
+                # Build messages for Claude - filter out system messages from history
+                messages = []
+                for h in history:
+                    if h["role"] in ["user", "assistant"]:
+                        messages.append({"role": h["role"], "content": h["content"]})
+                messages.append({"role": "user", "content": content})
+                
+                # Claude API with streaming
+                system_prompt = (
+                    "You are Repruv AI, a helpful assistant for content creators and influencers. "
+                    "You help with content strategy, audience insights, social media management, and creative ideas. "
+                    "Be friendly, concise, and actionable in your responses."
                 )
-                for chunk in resp:  # type: ignore[assignment]
-                    delta = getattr(chunk.choices[0].delta, "content", None)  # type: ignore[attr-defined]
-                    if delta:
-                        assistant_text_parts.append(delta)
-                        completion_tokens += _estimate_tokens(delta)
-                        yield f"data: {json.dumps({'delta': delta})}\n\n"
+                
+                with client.messages.stream(
+                    model=model,
+                    max_tokens=int(os.getenv("CLAUDE_MAX_TOKENS", "1024")),
+                    system=system_prompt,
+                    messages=messages,
+                    temperature=0.7,
+                ) as stream:
+                    for text in stream.text_stream:
+                        assistant_text_parts.append(text)
+                        completion_tokens += _estimate_tokens(text)
+                        yield f"data: {json.dumps({'delta': text})}\n\n"
+                
                 assistant_text = "".join(assistant_text_parts)
             except Exception as e:  # noqa: BLE001
-                assistant_text = f"Error generating response: {e}"  # fallback
+                assistant_text = f"I apologize, but I encountered an error. Please try again."  # fallback
+                yield f"data: {json.dumps({'delta': assistant_text})}\n\n"
         else:
-            # Fallback streaming simulation
-            fallback = "Assistant response unavailable (no OpenAI client)."
-            for seg in fallback.split():
-                assistant_text_parts.append(seg + " ")
-                await asyncio.sleep(0.05)
-                yield f"data: {json.dumps({'delta': seg + ' '})}\n\n"
-            assistant_text = "".join(assistant_text_parts)
+            # Fallback when Claude client not available
+            fallback = "I'm currently unavailable. Please check your API configuration."
+            assistant_text_parts.append(fallback)
+            assistant_text = fallback
             completion_tokens = _estimate_tokens(assistant_text)
+            yield f"data: {json.dumps({'delta': assistant_text})}\n\n"
+        
         latency_ms = int((time.perf_counter() - start) * 1000)
         await _finalize(assistant_text, completion_tokens, latency_ms)
         yield f"data: {json.dumps({'event': 'done', 'latency_ms': latency_ms})}\n\n"
