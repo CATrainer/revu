@@ -24,6 +24,7 @@ from app.api.v1.endpoints import (
     webhooks,
     social_monitoring,
     chat,
+    context,
 )
 from app.api.v1.endpoints import workflows as workflows_endpoints
 from app.api.v1.endpoints import marketing_admin
@@ -112,6 +113,12 @@ api_router.include_router(
     chat.router,
     prefix="/chat",
     tags=["chat"],
+)
+
+api_router.include_router(
+    context.router,
+    prefix="/ai",
+    tags=["ai", "context"],
 )
 
 api_router.include_router(

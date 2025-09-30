@@ -6,6 +6,7 @@ from app.models.automation import AutomationRule
 from app.models.template import ResponseTemplate
 from app.models.analytics import AnalyticsSnapshot
 from app.models.ai_training import AITrainingData
+from app.models.ai_context import UserAIContext
 from app.models.audit import AuditLog
 from app.models.workflow import Workflow, WorkflowApproval
 from app.models.youtube import (
@@ -25,6 +26,7 @@ __all__ = [
     "ResponseTemplate",
     "AnalyticsSnapshot",
     "AITrainingData",
+    "UserAIContext",
     "AuditLog",
     "Workflow",
     "WorkflowApproval",

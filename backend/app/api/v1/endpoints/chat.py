@@ -84,6 +84,7 @@ async def _chat_context(db: AsyncSession, user_id: UUID) -> Dict[str, Any]:
     context: Dict[str, Any] = {
         "recent_sentiment": [],
         "top_threads": [],
+        "user_context": None,
     }
     
     # Try to get sentiment data if available
@@ -122,6 +123,22 @@ async def _chat_context(db: AsyncSession, user_id: UUID) -> Dict[str, Any]:
         # Narrative threads table may not exist - that's okay
         from loguru import logger
         logger.debug(f"Could not fetch threads context: {e}")
+    
+    # Get user AI context if available
+    try:
+        from sqlalchemy import select
+        from app.models.ai_context import UserAIContext
+        
+        result = await db.execute(
+            select(UserAIContext).where(UserAIContext.user_id == user_id)
+        )
+        ai_context = result.scalar_one_or_none()
+        
+        if ai_context:
+            context["user_context"] = ai_context.to_context_string()
+    except Exception as e:
+        from loguru import logger
+        logger.debug(f"Could not fetch user AI context: {e}")
     
     return context
 
@@ -276,6 +293,10 @@ async def send_message(
     user_tokens = _estimate_tokens(content)
     await _insert_message(db, session_id, current_user.id, "user", content, tokens=user_tokens)
 
+    # Get user AI context
+    ctx = await _chat_context(db, current_user.id)
+    user_context_str = ctx.get("user_context", "")
+
     # Build context (last 20 messages)
     history_res = await db.execute(
         text(
@@ -313,6 +334,10 @@ async def send_message(
                     "You help with content strategy, audience insights, social media management, and creative ideas. "
                     "Be friendly, concise, and actionable in your responses."
                 )
+                
+                # Add user-specific context if available
+                if user_context_str:
+                    system_prompt += f"\n\nUser Context: {user_context_str}\n\nUse this context to personalize your responses and provide more relevant advice specific to their channel, niche, and goals."
                 
                 response = client.messages.create(
                     model=model,
@@ -357,6 +382,10 @@ async def send_message(
                     "You help with content strategy, audience insights, social media management, and creative ideas. "
                     "Be friendly, concise, and actionable in your responses."
                 )
+                
+                # Add user-specific context if available
+                if user_context_str:
+                    system_prompt += f"\n\nUser Context: {user_context_str}\n\nUse this context to personalize your responses and provide more relevant advice specific to their channel, niche, and goals."
                 
                 with client.messages.stream(
                     model=model,

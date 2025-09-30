@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap, Copy, CheckCheck } from 'lucide-react';
+import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap, Copy, CheckCheck, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { api } from '@/lib/api';
@@ -11,6 +11,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { ContextEditor } from '@/components/ai/ContextEditor';
 
 interface Message {
   id: string;
@@ -38,6 +39,7 @@ export default function AIAssistantPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
+  const [activeView, setActiveView] = useState<'chat' | 'context'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -297,14 +299,25 @@ export default function AIAssistantPage() {
               <MessageSquare className="h-5 w-5" />
               Conversations
             </h2>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setActiveView(activeView === 'chat' ? 'context' : 'chat')}
+                className="h-8 w-8 p-0"
+                title={activeView === 'chat' ? 'View Context' : 'View Chat'}
+              >
+                <Settings2 className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* New Chat Button */}
@@ -415,6 +428,14 @@ export default function AIAssistantPage() {
           </Button>
         )}
 
+        {activeView === 'context' ? (
+          /* Context Editor View */
+          <div className="flex-1 overflow-y-auto p-8">
+            <ContextEditor />
+          </div>
+        ) : (
+          /* Chat View */
+          <>
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
@@ -742,6 +763,8 @@ export default function AIAssistantPage() {
             </form>
           </div>
         </div>
+        </>
+        )}
       </div>
     </div>
   );
