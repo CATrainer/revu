@@ -50,7 +50,12 @@ export default function AIAssistantPage() {
   const [activeView, setActiveView] = useState<'chat' | 'context'>('chat');
   const [collapsedSessions, setCollapsedSessions] = useState<Set<string>>(new Set());
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
+  const [splitPaneSession, setSplitPaneSession] = useState<string | null>(null);
+  const [splitPaneMessages, setSplitPaneMessages] = useState<Message[]>([]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showBranchSuggestions, setShowBranchSuggestions] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const splitPaneMessagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
@@ -85,7 +90,7 @@ export default function AIAssistantPage() {
     }
   };
 
-  const createNewSession = async (autoSwitch = true, parentSessionId?: string, branchFromMessageId?: string, branchName?: string) => {
+  const createNewSession = async (autoSwitch = true, parentSessionId?: string, branchFromMessageId?: string, branchName?: string, openInSplitPane = false) => {
     try {
       const response = await api.post('/chat/sessions', {
         title: branchName || (parentSessionId ? 'Branch Chat' : 'New Chat'),
@@ -102,21 +107,38 @@ export default function AIAssistantPage() {
       await loadSessions(); // Refresh session list
       
       if (autoSwitch) {
-        setSessionId(newSessionId);
-        
-        // If there's an initial message from the AI, add it to messages
-        if (initialMessage) {
-          setMessages([{
-            id: Date.now().toString(),
-            role: 'assistant',
-            content: initialMessage,
-            timestamp: new Date(),
-          }]);
+        if (openInSplitPane && parentSessionId) {
+          // Open thread in split pane
+          setSplitPaneSession(newSessionId);
+          if (initialMessage) {
+            setSplitPaneMessages([{
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: initialMessage,
+              timestamp: new Date(),
+            }]);
+          } else {
+            setSplitPaneMessages([]);
+          }
+          await loadSplitPaneSession(newSessionId);
         } else {
-          setMessages([]);
+          setSessionId(newSessionId);
+          
+          // If there's an initial message from the AI, add it to messages
+          if (initialMessage) {
+            setMessages([{
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: initialMessage,
+              timestamp: new Date(),
+            }]);
+          } else {
+            setMessages([]);
+          }
+          
+          await loadSession(newSessionId);
+          setSplitPaneSession(null); // Close split pane when creating new main chat
         }
-        
-        await loadSession(newSessionId);
       }
     } catch (err) {
       console.error('Failed to create session:', err);
@@ -124,13 +146,39 @@ export default function AIAssistantPage() {
     }
   };
 
+  const loadSplitPaneSession = async (id: string) => {
+    try {
+      const response = await api.get(`/chat/messages/${id}`);
+      const loadedMessages: Message[] = (response.data.messages || []).map((msg: { id: string; role: string; content: string; created_at: string }) => ({
+        id: msg.id,
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+        timestamp: new Date(msg.created_at),
+      }));
+      setSplitPaneMessages(loadedMessages);
+    } catch (err) {
+      console.error('Failed to load split pane session:', err);
+    }
+  };
+
   const createBranchFromMessage = async (messageId: string, topic?: string) => {
-    if (!sessionId) return;
+    const sourceSessionId = splitPaneSession || sessionId;
+    if (!sourceSessionId) return;
     
     const branchName = topic || prompt('What would you like to explore?');
     if (!branchName) return;
     
-    await createNewSession(true, sessionId, messageId, branchName);
+    // If creating from split pane (thread), move current split pane to main and open new thread in split pane
+    if (splitPaneSession) {
+      setSessionId(splitPaneSession);
+      setMessages(splitPaneMessages);
+      setCurrentSession(sessions.find(s => s.id === splitPaneSession) || null);
+      await createNewSession(true, splitPaneSession, messageId, branchName, true);
+    } else {
+      // Creating from main chat, open in split pane
+      await createNewSession(true, sourceSessionId, messageId, branchName, true);
+    }
+    setShowBranchSuggestions(false);
   };
 
   const loadSession = async (id: string) => {
@@ -148,6 +196,8 @@ export default function AIAssistantPage() {
       }));
       setMessages(loadedMessages);
       setError(null);
+      setSplitPaneSession(null); // Close split pane when switching to a different main session
+      setShowBranchSuggestions(false); // Reset branch suggestions
     } catch (err) {
       console.error('Failed to load session:', err);
       setError('Failed to load chat history');
@@ -357,30 +407,43 @@ export default function AIAssistantPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+    <div className="h-[calc(100vh-4rem)] flex overflow-hidden bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
       {/* Sidebar */}
       <div
         className={cn(
           'flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out overflow-hidden',
-          sidebarOpen ? 'w-80' : 'w-0'
+          sidebarOpen ? (sidebarCollapsed ? 'w-16' : 'w-80') : 'w-0'
         )}
       >
-        <div className="h-full flex flex-col p-4 w-80">
+        <div className={cn("h-full flex flex-col transition-all duration-300", sidebarCollapsed ? "p-2 w-16" : "p-4 w-80")}>
           {/* Sidebar Header */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Conversations
-            </h2>
+            {!sidebarCollapsed && (
+              <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Conversations
+              </h2>
+            )}
             <div className="flex gap-1">
+              {!sidebarCollapsed && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setActiveView(activeView === 'chat' ? 'context' : 'chat')}
+                  className="h-8 w-8 p-0"
+                  title={activeView === 'chat' ? 'View Context' : 'View Chat'}
+                >
+                  <Settings2 className="h-4 w-4" />
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => setActiveView(activeView === 'chat' ? 'context' : 'chat')}
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
                 className="h-8 w-8 p-0"
-                title={activeView === 'chat' ? 'View Context' : 'View Chat'}
+                title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               >
-                <Settings2 className="h-4 w-4" />
+                <ChevronRight className={cn("h-4 w-4 transition-transform", sidebarCollapsed ? "rotate-0" : "rotate-180")} />
               </Button>
               <Button
                 size="sm"
@@ -394,35 +457,38 @@ export default function AIAssistantPage() {
           </div>
 
           {/* New Chat Button */}
-          <div className="space-y-2 mb-4">
-            <Button
-              onClick={() => createNewSession(true)}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New Chat
-            </Button>
-            {sessionId && (
+          {!sidebarCollapsed && (
+            <div className="space-y-2 mb-4">
               <Button
-                onClick={() => createNewSession(true, sessionId, undefined, 'New Thread')}
-                variant="outline"
-                className="w-full"
+                onClick={() => createNewSession(true)}
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
               >
-                <GitBranch className="h-4 w-4 mr-2" />
-                New Thread
+                <Plus className="h-4 w-4 mr-2" />
+                New Chat
               </Button>
-            )}
-          </div>
+              {sessionId && (
+                <Button
+                  onClick={() => createNewSession(true, sessionId, undefined, 'New Thread', true)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <GitBranch className="h-4 w-4 mr-2" />
+                  New Thread
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Sessions Tree */}
-          <div className="flex-1 overflow-y-auto">
+          {!sidebarCollapsed && (
+            <div className="flex-1 overflow-y-auto">
             <SessionTree
               sessions={sessions}
               activeSessionId={sessionId}
               collapsedSessions={collapsedSessions}
               onSelectSession={loadSession}
               onToggleCollapse={toggleSessionCollapse}
-              onEdit={(id, title) => {
+              onEdit={(id: string, title: string) => {
                 setEditingSessionId(id);
                 setEditingTitle(title);
               }}
@@ -520,12 +586,13 @@ export default function AIAssistantPage() {
               </div>
             ))}
             */}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Chat Container */}
-      <div className="flex-1 overflow-hidden flex flex-col relative">
+      <div className="flex-1 overflow-hidden flex relative">
         {/* Mobile Sidebar Toggle */}
         {!sidebarOpen && (
           <Button
@@ -544,17 +611,18 @@ export default function AIAssistantPage() {
             <ContextEditor />
           </div>
         ) : (
-          /* Chat View */
-          <>
-        
-        <ThreadSwitcher 
-          sessions={sessions}
-          activeSessionId={sessionId}
-          onSelectSession={loadSession}
-        />
+          /* Chat View - Split Pane Support */
+          <div className="flex-1 flex overflow-hidden">
+            {/* Main Chat Pane */}
+            <div className={cn("flex flex-col overflow-hidden transition-all duration-300", splitPaneSession ? "flex-1" : "w-full")}>
+              <ThreadSwitcher 
+                sessions={sessions}
+                activeSessionId={sessionId}
+                onSelectSession={loadSession}
+              />
         
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center px-4 py-12">
               <div className="relative mb-8">
@@ -829,11 +897,25 @@ export default function AIAssistantPage() {
                     )}
                   </div>
                   {message.role === 'assistant' && !isLoading && idx === messages.length - 1 && (
-                    <BranchCard
-                      suggestions={generateBranchSuggestions(message.content)}
-                      onBranch={(topic) => createBranchFromMessage(message.id, topic)}
-                      messageId={message.id}
-                    />
+                    <div className="mt-2">
+                      {!showBranchSuggestions ? (
+                        <button
+                          onClick={() => setShowBranchSuggestions(true)}
+                          className="text-xs text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 flex items-center gap-1 transition-colors"
+                        >
+                          <GitBranch className="h-3 w-3" />
+                          <span>Explore further...</span>
+                        </button>
+                      ) : (
+                        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                          <BranchCard
+                            suggestions={generateBranchSuggestions(message.content)}
+                            onBranch={(topic) => createBranchFromMessage(message.id, topic)}
+                            messageId={message.id}
+                          />
+                        </div>
+                      )}
+                    </div>
                   )}
                 </React.Fragment>
               ))}
@@ -904,7 +986,66 @@ export default function AIAssistantPage() {
             </form>
           </div>
         </div>
-        </>
+            </div>
+
+            {/* Split Pane for Threads */}
+            {splitPaneSession && (
+              <div className="flex-1 flex flex-col overflow-hidden border-l-2 border-purple-500/30 bg-gradient-to-br from-purple-50/30 to-transparent dark:from-purple-950/10">
+                {/* Split Pane Header */}
+                <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+                  <div className="flex items-center gap-2">
+                    <GitBranch className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      Thread: {sessions.find(s => s.id === splitPaneSession)?.branch_name || 'Exploring...'}
+                    </h3>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setSplitPaneSession(null)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Split Pane Messages */}
+                <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                  <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
+                    {splitPaneMessages.map((message, idx) => (
+                      <div key={message.id} className="group relative">
+                        <div className={cn('flex gap-4 items-start animate-in fade-in slide-in-from-bottom-4 duration-500', message.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
+                          <div className={cn('flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm', message.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 'bg-gradient-to-br from-purple-500 to-purple-600 text-white')}>
+                            {message.role === 'user' ? <span className="text-xs font-bold">YOU</span> : <Sparkles className="h-5 w-5" />}
+                          </div>
+                          <div className="flex-1 max-w-3xl">
+                            <div className={cn('rounded-2xl px-5 py-4', message.role === 'user' ? 'bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-800/80 text-slate-900 dark:text-slate-100 shadow-sm' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-sm')}>
+                              {message.content ? (
+                                <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
+                              ) : (
+                                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span className="text-sm font-medium">Thinking...</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={splitPaneMessagesEndRef} />
+                  </div>
+                </div>
+
+                {/* Split Pane Input - Placeholder for now */}
+                <div className="border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-4">
+                  <p className="text-xs text-center text-slate-500 dark:text-slate-400">
+                    Split pane messaging coming soon...
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
