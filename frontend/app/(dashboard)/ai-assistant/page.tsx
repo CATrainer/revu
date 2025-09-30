@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Brain, Sparkles, Send, Loader2, AlertCircle } from 'lucide-react';
+import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { api } from '@/lib/api';
@@ -15,12 +15,25 @@ interface Message {
   timestamp: Date;
 }
 
+interface ChatSession {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  message_count: number;
+  last_activity: string | null;
+}
+
 export default function AIAssistantPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -33,26 +46,91 @@ export default function AIAssistantPage() {
     scrollToBottom();
   }, [messages]);
 
-  // Create session on mount
+  // Load sessions on mount
   useEffect(() => {
-    const createSession = async () => {
-      try {
-        const response = await api.post('/chat/sessions', {
-          title: 'New Chat',
-          mode: 'general',
-        });
-        console.log('Session created:', response.data);
-        setSessionId(response.data.session_id);
-      } catch (err) {
-        console.error('Failed to create session:', err);
-        if (err && typeof err === 'object' && 'response' in err) {
-          console.error('Error details:', (err as { response?: { data?: unknown } }).response?.data);
-        }
-        setError('Failed to initialize chat session');
-      }
-    };
-    createSession();
+    loadSessions();
   }, []);
+
+  const loadSessions = async () => {
+    try {
+      const response = await api.get('/chat/sessions');
+      setSessions(response.data.items || []);
+      
+      // If no active session and we have sessions, load the most recent one
+      if (!sessionId && response.data.items?.length > 0) {
+        const mostRecent = response.data.items[0];
+        await loadSession(mostRecent.id);
+      } else if (!sessionId) {
+        // No sessions exist, create a new one
+        await createNewSession();
+      }
+    } catch (err) {
+      console.error('Failed to load sessions:', err);
+    }
+  };
+
+  const createNewSession = async (autoSwitch = true) => {
+    try {
+      const response = await api.post('/chat/sessions', {
+        title: 'New Chat',
+        mode: 'general',
+      });
+      const newSessionId = response.data.session_id;
+      
+      await loadSessions(); // Refresh session list
+      
+      if (autoSwitch) {
+        setSessionId(newSessionId);
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error('Failed to create session:', err);
+      setError('Failed to create new chat session');
+    }
+  };
+
+  const loadSession = async (id: string) => {
+    try {
+      setSessionId(id);
+      const response = await api.get(`/chat/messages/${id}`);
+      const loadedMessages: Message[] = (response.data.messages || []).map((msg: { id: string; role: string; content: string; created_at: string }) => ({
+        id: msg.id,
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+        timestamp: new Date(msg.created_at),
+      }));
+      setMessages(loadedMessages);
+    } catch (err) {
+      console.error('Failed to load messages:', err);
+      setError('Failed to load conversation');
+    }
+  };
+
+  const deleteSession = async (id: string) => {
+    try {
+      await api.delete(`/chat/sessions/${id}`);
+      await loadSessions();
+      
+      // If we deleted the active session, create a new one
+      if (id === sessionId) {
+        await createNewSession();
+      }
+    } catch (err) {
+      console.error('Failed to delete session:', err);
+      setError('Failed to delete conversation');
+    }
+  };
+
+  const updateSessionTitle = async (id: string, newTitle: string) => {
+    try {
+      // Note: You'll need to add an update endpoint to the backend
+      // For now, we'll just update locally
+      setSessions(sessions.map(s => s.id === id ? { ...s, title: newTitle } : s));
+      setEditingSessionId(null);
+    } catch (err) {
+      console.error('Failed to update session title:', err);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,6 +227,8 @@ export default function AIAssistantPage() {
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
+      // Refresh session list to update message counts
+      loadSessions();
     }
   };
 
@@ -161,9 +241,139 @@ export default function AIAssistantPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+    <div className="h-[calc(100vh-4rem)] flex bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+      {/* Sidebar */}
+      <div
+        className={cn(
+          'flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out overflow-hidden',
+          sidebarOpen ? 'w-80' : 'w-0'
+        )}
+      >
+        <div className="h-full flex flex-col p-4 w-80">
+          {/* Sidebar Header */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Conversations
+            </h2>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* New Chat Button */}
+          <Button
+            onClick={() => createNewSession(true)}
+            className="w-full mb-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Chat
+          </Button>
+
+          {/* Sessions List */}
+          <div className="flex-1 overflow-y-auto space-y-1">
+            {sessions.map((session) => (
+              <div
+                key={session.id}
+                className={cn(
+                  'group relative rounded-lg p-3 cursor-pointer transition-all',
+                  session.id === sessionId
+                    ? 'bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800'
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent'
+                )}
+                onClick={() => loadSession(session.id)}
+              >
+                {editingSessionId === session.id ? (
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="text"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      className="flex-1 px-2 py-1 text-sm bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          updateSessionTitle(session.id, editingTitle);
+                        } else if (e.key === 'Escape') {
+                          setEditingSessionId(null);
+                        }
+                      }}
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0"
+                      onClick={() => updateSessionTitle(session.id, editingTitle)}
+                    >
+                      <Check className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                          {session.title}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {session.message_count || 0} messages
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingSessionId(session.id);
+                            setEditingTitle(session.title);
+                          }}
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm('Delete this conversation?')) {
+                              deleteSession(session.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Chat Container */}
-      <div className="flex-1 overflow-hidden flex flex-col">
+      <div className="flex-1 overflow-hidden flex flex-col relative">
+        {/* Mobile Sidebar Toggle */}
+        {!sidebarOpen && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setSidebarOpen(true)}
+            className="absolute top-4 left-4 z-10 bg-white dark:bg-slate-800 shadow-md"
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+        )}
+
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
