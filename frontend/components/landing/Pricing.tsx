@@ -64,7 +64,7 @@ export function Pricing() {
 
 	return (
 		<LazyMotion features={domAnimation}>
-			<section id="pricing" ref={ref} className="py-16 section-background-alt">
+			<section id="pricing" ref={ref} className="py-16 section-background">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
 					<motion.div 
 						className="text-center mb-12"
