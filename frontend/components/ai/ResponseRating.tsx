@@ -53,7 +53,7 @@ export function ResponseRating({ messageId, onRate }: ResponseRatingProps) {
 
   const handleFeedbackSubmit = async () => {
     if (rating) {
-      await handleRate(rating as any);
+      await handleRate(rating as 'helpful' | 'not_helpful' | 'amazing');
     }
   };
 

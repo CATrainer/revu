@@ -23,7 +23,7 @@ interface UserPreferences {
   response_style: string;
   expertise_level: string;
   tone: string;
-  preferences: Record<string, any>;
+  preferences: Record<string, unknown>;
 }
 
 export function PreferencesDialog() {
@@ -111,8 +111,9 @@ export function PreferencesDialog() {
       
       setSuccessMessage('Preferences optimized based on your usage!');
       setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err: any) {
-      if (err?.response?.status === 400) {
+    } catch (err: unknown) {
+      const error = err as { response?: { status?: number } };
+      if (error?.response?.status === 400) {
         setError('Need at least 10 messages to analyze. Keep chatting!');
       } else {
         setError('Failed to analyze preferences');

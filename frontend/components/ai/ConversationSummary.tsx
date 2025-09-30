@@ -40,9 +40,10 @@ export function ConversationSummary({ sessionId, messageCount = 0 }: Conversatio
       if (response.data) {
         setSummary(response.data);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // 404 means no summary yet, that's okay
-      if (err?.response?.status !== 404) {
+      const error = err as { response?: { status?: number } };
+      if (error?.response?.status !== 404) {
         console.error('Failed to fetch summary:', err);
       }
     } finally {
@@ -58,6 +59,7 @@ export function ConversationSummary({ sessionId, messageCount = 0 }: Conversatio
     } else {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, messageCount]);
 
   const handleRegenerate = () => {
@@ -130,7 +132,7 @@ export function ConversationSummary({ sessionId, messageCount = 0 }: Conversatio
               Action Items
             </h4>
             <ul className="space-y-1.5">
-              {summary.action_items.map((task: any, idx: number) => (
+              {summary.action_items.map((task, idx: number) => (
                 <li
                   key={idx}
                   className="text-sm text-slate-700 dark:text-slate-300 flex items-start gap-2"

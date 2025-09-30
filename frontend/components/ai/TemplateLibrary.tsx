@@ -19,17 +19,12 @@ import {
   Sparkles,
   TrendingUp,
   BarChart3,
-  Users,
-  Lightbulb,
   Shield,
   Palette,
   Calendar,
   Target,
   Instagram,
-  Youtube,
-  Music,
   DollarSign,
-  Handshake,
   Loader2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -49,7 +44,7 @@ interface TemplateLibraryProps {
   onSelectTemplate: (template: Template) => void;
 }
 
-const categoryIcons: Record<string, any> = {
+const categoryIcons: Record<string, typeof Sparkles> = {
   strategy: Target,
   content_creation: Sparkles,
   analytics: BarChart3,
@@ -86,6 +81,7 @@ export function TemplateLibrary({ onSelectTemplate }: TemplateLibraryProps) {
   useEffect(() => {
     fetchTemplates();
     fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
   const fetchTemplates = async () => {
@@ -124,7 +120,7 @@ export function TemplateLibrary({ onSelectTemplate }: TemplateLibraryProps) {
       onSelectTemplate({
         ...template,
         sessionId: response.data.session_id,
-      } as any);
+      } as Template & { sessionId: string });
     } catch (error) {
       console.error('Failed to use template:', error);
     } finally {
