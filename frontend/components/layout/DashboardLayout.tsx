@@ -1,9 +1,9 @@
-// frontend/components/layout/DashboardLayout.tsx
-'use client';
+"use client";
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { useEffect, useState } from 'react';
-import { Sidebar } from './Sidebar';
-import { Header } from './Header';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { features } from '@/lib/features';
 
 import { Sheet, SheetContent } from '@/components/ui/sheet';

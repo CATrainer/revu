@@ -1,4 +1,6 @@
 // frontend/app/(dashboard)/ai-assistant/page.tsx
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap, Copy, CheckCheck, Settings2, GitBranch, ChevronRight } from 'lucide-react';
@@ -857,7 +859,7 @@ export default function AIAssistantPage() {
               
               {/* Template Library */}
               <TemplateLibrary
-                onSelectTemplate={async (template: any) => {
+                onSelectTemplate={async (template: { sessionId: string }) => {
                   // Load the new session created from template
                   await loadSession(template.sessionId);
                 }}

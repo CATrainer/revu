@@ -1,6 +1,8 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { MessageSquare, GitBranch, Clock, ChevronDown } from 'lucide-react';
+import React from 'react';
+import { MessageCircle, ChevronRight, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';

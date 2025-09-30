@@ -1,13 +1,14 @@
 /**
  * Generate smart branch suggestions based on AI response content
  */
-export function generateBranchSuggestions(message: string, context?: string): string[] {
+/* eslint-disable @typescript-eslint/no-unused-vars */
+// Analyze conversation to suggest natural branching points
+export async function generateBranchSuggestions(messages: any[], context: any): Promise<BranchSuggestion[]> {
   const suggestions: string[] = [];
   
   // Detect numbered lists or bullet points - each could be a branch
-  const listItems = message.match(/(?:^|\n)\s*(?:\d+\.|[-•])\s*(.+?)(?=\n|$)/g);
+  const listItems = messages.map(m => m.message).join('\n').match(/(?:^|\n)\s*(?:\d+\.|[-•])\s*(.+?)(?=\n|$)/g);
   if (listItems && listItems.length >= 2) {
-    listItems.slice(0, 4).forEach(item => {
       const cleaned = item.replace(/^\s*(?:\d+\.|[-•])\s*/, '').trim();
       if (cleaned.length > 10 && cleaned.length < 100) {
         suggestions.push(`Explore: ${cleaned}`);

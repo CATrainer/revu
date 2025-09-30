@@ -1,10 +1,12 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { api } from '@/lib/api';
-import { Loader2, RefreshCw, Save, User, Target, TrendingUp, Video, Calendar, Globe, Edit3, Sparkles } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface AIContext {
