@@ -44,10 +44,16 @@ export function useChatStreaming() {
     // Initialize content buffer
     contentBuffers.current.set(streamKey, '');
 
-    // Create SSE connection
+    // Get access token for SSE (EventSource doesn't support headers)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    if (!token) {
+      onError('Not authenticated');
+      return () => {};
+    }
+
+    // Create SSE connection with token in URL (EventSource limitation)
     const eventSource = new EventSource(
-      `${api.defaults.baseURL}/chat/stream/${sessionId}?message_id=${messageId}`,
-      { withCredentials: true }
+      `${api.defaults.baseURL}/chat/stream/${sessionId}?message_id=${messageId}&token=${encodeURIComponent(token)}`
     );
 
     eventSource.onmessage = (event) => {

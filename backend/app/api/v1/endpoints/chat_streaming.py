@@ -5,7 +5,7 @@ import json
 import asyncio
 from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, Header
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
@@ -13,7 +13,7 @@ from loguru import logger
 
 from app.core.database import get_async_session
 from app.core.redis_client import get_redis
-from app.core.security import get_current_active_user
+from app.core.security import get_current_active_user, decode_token
 from app.models.user import User
 from app.tasks.chat_tasks import generate_chat_response
 
@@ -21,18 +21,55 @@ from app.tasks.chat_tasks import generate_chat_response
 router = APIRouter()
 
 
+async def get_user_from_token_or_header(
+    token: Optional[str] = Query(None),
+    authorization: Optional[str] = Header(None),
+    db: AsyncSession = Depends(get_async_session),
+) -> User:
+    """Get user from token (query param for SSE or header for regular requests)."""
+    access_token = None
+    
+    # Try query parameter first (for SSE which can't use headers)
+    if token:
+        access_token = token
+    # Fall back to Authorization header
+    elif authorization and authorization.startswith("Bearer "):
+        access_token = authorization.replace("Bearer ", "")
+    
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    try:
+        payload = decode_token(access_token)
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        result = await db.execute(text("SELECT * FROM users WHERE id = :uid"), {"uid": user_id})
+        user_data = result.first()
+        if not user_data:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        return User(**dict(user_data._mapping))
+    except Exception as e:
+        logger.error(f"Token validation error: {e}")
+        raise HTTPException(status_code=401, detail="Invalid authentication")
+
+
 @router.get("/stream/{session_id}")
 async def stream_chat_session(
     session_id: UUID,
     message_id: Optional[UUID] = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_user_from_token_or_header),
 ):
     """
     Server-Sent Events endpoint for streaming chat responses.
     
     Subscribes to Redis pub/sub for real-time updates from Celery workers.
     Returns existing chunks if reconnecting to an in-progress stream.
+    
+    Auth: Accepts token via query param (?token=...) for SSE compatibility
     """
     # Verify session ownership
     own = await db.execute(
@@ -40,7 +77,7 @@ async def stream_chat_session(
         {"sid": str(session_id), "uid": str(current_user.id)},
     )
     if not own.first():
-        return {"error": "Session not found"}
+        raise HTTPException(status_code=404, detail="Session not found")
     
     redis_client = get_redis()
     pubsub = redis_client.pubsub()
