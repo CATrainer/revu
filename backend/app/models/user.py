@@ -63,6 +63,14 @@ class User(Base):
     countdown_t7_sent_at = Column(DateTime(timezone=True))
     countdown_t1_sent_at = Column(DateTime(timezone=True))
     launch_sent_at = Column(DateTime(timezone=True))
+    
+    # Trial/subscription tracking
+    trial_start_date = Column(DateTime(timezone=True), nullable=True, comment="When user started trial")
+    trial_end_date = Column(DateTime(timezone=True), nullable=True, comment="When trial expires")
+    trial_notified_7d = Column(Boolean, default=False, nullable=False, comment="7-day expiration notice sent")
+    trial_notified_3d = Column(Boolean, default=False, nullable=False, comment="3-day expiration notice sent")
+    trial_notified_1d = Column(Boolean, default=False, nullable=False, comment="1-day expiration notice sent")
+    subscription_status = Column(String(20), default="trial", nullable=False, comment="trial, active, cancelled, expired")
 
     # Demo-specific information
     company_size = Column(String(50))

@@ -594,21 +594,215 @@ def kickoff_waitlist_first_email() -> dict:
 def check_trial_expirations() -> Dict[str, int]:
     """
     Check for expiring trials and send reminder emails.
-
+    
+    Checks for trials expiring in 7, 3, or 1 days and sends reminder emails
+    to users who haven't been notified yet.
     
     Returns:
         dict: Summary of emails sent
     """
     logger.info("Checking for trial expirations")
     
-    # TODO: Query organizations with expiring trials
-    # For now, return mock results
-    return {
-        "checked": 0,
-        "expiring_soon": 0,
-        "emails_sent": 0,
-        "completed_at": datetime.utcnow().isoformat(),
-    }
+    async def _check_trials():
+        from app.core.database import get_async_session
+        from app.models.user import User
+        from sqlalchemy import select, and_
+        from datetime import timedelta
+        
+        async for db in get_async_session():
+            try:
+                now = datetime.utcnow()
+                
+                # Calculate date ranges for notifications
+                days_7_from_now = now + timedelta(days=7)
+                days_3_from_now = now + timedelta(days=3)
+                days_1_from_now = now + timedelta(days=1)
+                
+                emails_sent = 0
+                checked = 0
+                
+                # Check for 7-day expiration (within 24 hours of 7 days from now)
+                result = await db.execute(
+                    select(User).where(
+                        and_(
+                            User.trial_end_date.isnot(None),
+                            User.trial_end_date >= days_7_from_now - timedelta(hours=12),
+                            User.trial_end_date <= days_7_from_now + timedelta(hours=12),
+                            User.trial_notified_7d == False,
+                            User.subscription_status == "trial",
+                            User.is_active == True
+                        )
+                    )
+                )
+                users_7d = result.scalars().all()
+                checked += len(users_7d)
+                
+                for user in users_7d:
+                    if await _send_trial_expiration_email(user.email, user.full_name or "there", 7):
+                        user.trial_notified_7d = True
+                        emails_sent += 1
+                
+                # Check for 3-day expiration
+                result = await db.execute(
+                    select(User).where(
+                        and_(
+                            User.trial_end_date.isnot(None),
+                            User.trial_end_date >= days_3_from_now - timedelta(hours=12),
+                            User.trial_end_date <= days_3_from_now + timedelta(hours=12),
+                            User.trial_notified_3d == False,
+                            User.subscription_status == "trial",
+                            User.is_active == True
+                        )
+                    )
+                )
+                users_3d = result.scalars().all()
+                checked += len(users_3d)
+                
+                for user in users_3d:
+                    if await _send_trial_expiration_email(user.email, user.full_name or "there", 3):
+                        user.trial_notified_3d = True
+                        emails_sent += 1
+                
+                # Check for 1-day expiration
+                result = await db.execute(
+                    select(User).where(
+                        and_(
+                            User.trial_end_date.isnot(None),
+                            User.trial_end_date >= days_1_from_now - timedelta(hours=12),
+                            User.trial_end_date <= days_1_from_now + timedelta(hours=12),
+                            User.trial_notified_1d == False,
+                            User.subscription_status == "trial",
+                            User.is_active == True
+                        )
+                    )
+                )
+                users_1d = result.scalars().all()
+                checked += len(users_1d)
+                
+                for user in users_1d:
+                    if await _send_trial_expiration_email(user.email, user.full_name or "there", 1):
+                        user.trial_notified_1d = True
+                        emails_sent += 1
+                
+                await db.commit()
+                
+                logger.info(f"Trial expiration check complete: {checked} users checked, {emails_sent} emails sent")
+                
+                return {
+                    "checked": checked,
+                    "expiring_soon": checked,
+                    "emails_sent": emails_sent,
+                    "completed_at": datetime.utcnow().isoformat(),
+                }
+                
+            except Exception as e:
+                logger.error(f"Error checking trial expirations: {e}")
+                await db.rollback()
+                return {
+                    "checked": 0,
+                    "expiring_soon": 0,
+                    "emails_sent": 0,
+                    "error": str(e),
+                    "completed_at": datetime.utcnow().isoformat(),
+                }
+    
+    return asyncio.run(_check_trials())
+
+
+async def _send_trial_expiration_email(email: str, name: str, days_left: int) -> bool:
+    """
+    Send trial expiration reminder email.
+    
+    Args:
+        email: User's email address
+        name: User's name
+        days_left: Number of days until trial expires (7, 3, or 1)
+    
+    Returns:
+        bool: True if email sent successfully
+    """
+    try:
+        client = get_resend_client()
+        if not client:
+            logger.warning("Resend client not available")
+            return False
+        
+        # Customize message based on days left
+        if days_left == 7:
+            subject = "Your Repruv trial ends in 7 days 🎯"
+            urgency = "You have one week left"
+        elif days_left == 3:
+            subject = "Only 3 days left in your Repruv trial ⚡"
+            urgency = "Your trial is ending soon"
+        else:  # 1 day
+            subject = "Last day of your Repruv trial! 🚨"
+            urgency = "This is your final reminder"
+        
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 28px;">Repruv</h1>
+                </div>
+                
+                <div style="padding: 40px 20px;">
+                    <h2 style="color: #333; margin-top: 0;">Hi {name},</h2>
+                    
+                    <p style="font-size: 16px; color: #555;">
+                        {urgency} — your Repruv trial expires in <strong>{days_left} day{"s" if days_left > 1 else ""}</strong>.
+                    </p>
+                    
+                    <p style="font-size: 16px; color: #555;">
+                        Don't lose access to:
+                    </p>
+                    
+                    <ul style="font-size: 16px; color: #555;">
+                        <li>🤖 AI-powered content assistance</li>
+                        <li>📊 Performance analytics</li>
+                        <li>⚡ Smart automation workflows</li>
+                        <li>💬 Comment management</li>
+                    </ul>
+                    
+                    <div style="text-align: center; margin: 40px 0;">
+                        <a href="{settings.FRONTEND_URL}/settings?tab=billing" 
+                           style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                  color: white; 
+                                  padding: 16px 32px; 
+                                  text-decoration: none; 
+                                  border-radius: 8px; 
+                                  font-weight: bold;
+                                  display: inline-block;">
+                            Upgrade Now
+                        </a>
+                    </div>
+                    
+                    <p style="font-size: 14px; color: #777; margin-top: 40px;">
+                        Questions? Reply to this email or contact us at support@repruv.com
+                    </p>
+                </div>
+                
+                <div style="background: #f7f7f7; padding: 20px; text-align: center; font-size: 12px; color: #999;">
+                    <p>Repruv · AI-Powered Social Media Management</p>
+                    <p>© 2025 Repruv. All rights reserved.</p>
+                </div>
+            </body>
+        </html>
+        """
+        
+        params = {
+            "from": f"Repruv <{settings.EMAIL_FROM}>",
+            "to": [email],
+            "subject": subject,
+            "html": html_content,
+        }
+        
+        result = client.emails.send(params)
+        logger.info(f"Trial expiration email sent to {email} ({days_left} days left): {result}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to send trial expiration email to {email}: {e}")
+        return False
 
 
 @celery_app.task(name="app.tasks.email.send_review_alert")
