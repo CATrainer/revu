@@ -155,21 +155,29 @@ DEFAULT_TEMPLATES = [
 async def ensure_default_templates(db: AsyncSession):
     """Ensure default templates exist in database."""
     for template in DEFAULT_TEMPLATES:
-        await db.execute(
-            text("""
-                INSERT INTO content_templates 
-                (id, title, description, category, initial_prompt, system_instructions, is_active)
-                VALUES (gen_random_uuid(), :title, :desc, :cat, :prompt, :sys, true)
-                ON CONFLICT (title) DO NOTHING
-            """),
-            {
-                "title": template["title"],
-                "desc": template["description"],
-                "cat": template["category"],
-                "prompt": template["initial_prompt"],
-                "sys": template["system_instructions"]
-            }
+        # Check if template already exists
+        result = await db.execute(
+            text("SELECT id FROM content_templates WHERE title = :title LIMIT 1"),
+            {"title": template["title"]}
         )
+        existing = result.scalar_one_or_none()
+        
+        if not existing:
+            # Insert only if it doesn't exist
+            await db.execute(
+                text("""
+                    INSERT INTO content_templates 
+                    (id, title, description, category, initial_prompt, system_instructions, is_active)
+                    VALUES (gen_random_uuid(), :title, :desc, :cat, :prompt, :sys, true)
+                """),
+                {
+                    "title": template["title"],
+                    "desc": template["description"],
+                    "cat": template["category"],
+                    "prompt": template["initial_prompt"],
+                    "sys": template["system_instructions"]
+                }
+            )
     await db.commit()
 
 
