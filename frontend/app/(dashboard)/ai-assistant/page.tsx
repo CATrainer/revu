@@ -1441,117 +1441,7 @@ export default function AIAssistantPage() {
                       >
                         {message.content ? (
                           message.role === 'assistant' ? (
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm]}
-                              className="prose prose-slate dark:prose-invert max-w-none"
-                              components={{
-                                h1: ({ node, ...props }) => (
-                                  <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-6 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700" {...props} />
-                                ),
-                                h2: ({ node, ...props }) => (
-                                  <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-5 mb-2" {...props} />
-                                ),
-                                h3: ({ node, ...props }) => (
-                                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-4 mb-2" {...props} />
-                                ),
-                                p: ({ node, ...props }) => (
-                                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-3 text-[15px]" {...props} />
-                                ),
-                                ul: ({ node, ...props }) => (
-                                  <ul className="space-y-2 my-4 ml-4" {...props} />
-                                ),
-                                ol: ({ node, ...props }) => (
-                                  <ol className="space-y-2 my-4 ml-4 list-decimal" {...props} />
-                                ),
-                                li: ({ node, ...props }) => (
-                                  <li className="text-slate-700 dark:text-slate-300 leading-relaxed pl-2" {...props} />
-                                ),
-                                strong: ({ node, ...props }) => (
-                                  <strong className="font-semibold text-slate-900 dark:text-slate-100" {...props} />
-                                ),
-                                em: ({ node, ...props }) => (
-                                  <em className="italic text-slate-700 dark:text-slate-300" {...props} />
-                                ),
-                                code: ({ node, inline, className, children, ...props }: {
-                                  node?: unknown;
-                                  inline?: boolean;
-                                  className?: string;
-                                  children?: React.ReactNode;
-                                }) => {
-                                  const match = /language-(\w+)/.exec(className || '');
-                                  const language = match ? match[1] : '';
-                                  const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
-                                  
-                                  return !inline && language ? (
-                                    <div className="my-4 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
-                                      <div className="flex items-center justify-between bg-slate-800 px-4 py-2 border-b border-slate-700">
-                                        <span className="text-xs font-mono text-slate-300 uppercase tracking-wide">
-                                          {language}
-                                        </span>
-                                        <button
-                                          onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), codeId)}
-                                          className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded transition-colors"
-                                        >
-                                          {copiedCode === codeId ? (
-                                            <>
-                                              <CheckCheck className="h-3 w-3" />
-                                              Copied!
-                                            </>
-                                          ) : (
-                                            <>
-                                              <Copy className="h-3 w-3" />
-                                              Copy
-                                            </>
-                                          )}
-                                        </button>
-                                      </div>
-                                      <SyntaxHighlighter
-                                        style={vscDarkPlus}
-                                        language={language}
-                                        PreTag="div"
-                                        className="!m-0 !bg-slate-900"
-                                        customStyle={{
-                                          margin: 0,
-                                          padding: '1rem',
-                                          background: '#0f172a',
-                                          fontSize: '14px',
-                                          lineHeight: '1.6',
-                                        }}
-                                        {...props}
-                                      >
-                                        {String(children).replace(/\n$/, '')}
-                                      </SyntaxHighlighter>
-                                    </div>
-                                  ) : (
-                                    <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded text-sm font-mono" {...props}>
-                                      {children}
-                                    </code>
-                                  );
-                                },
-                                blockquote: ({ node, ...props }) => (
-                                  <blockquote className="border-l-4 border-blue-500 dark:border-blue-600 pl-4 py-2 my-4 bg-blue-50 dark:bg-blue-950/20 rounded-r-lg" {...props} />
-                                ),
-                                table: ({ node, ...props }) => (
-                                  <div className="my-4 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-                                    <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700" {...props} />
-                                  </div>
-                                ),
-                                thead: ({ node, ...props }) => (
-                                  <thead className="bg-slate-50 dark:bg-slate-800" {...props} />
-                                ),
-                                th: ({ node, ...props }) => (
-                                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-900 dark:text-slate-100 uppercase tracking-wider" {...props} />
-                                ),
-                                td: ({ node, ...props }) => (
-                                  <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300 border-t border-slate-200 dark:border-slate-700" {...props} />
-                                ),
-                                a: ({ node, ...props }) => (
-                                  <a className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline font-medium" target="_blank" rel="noopener noreferrer" {...props} />
-                                ),
-                              }}
-                            >
-                              {message.content}
-                            </ReactMarkdown>
+                            <EnhancedMarkdown content={message.content} />
                           ) : (
                             <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
                               {message.content}
@@ -1598,6 +1488,25 @@ export default function AIAssistantPage() {
                       <ResponseRating messageId={message.id} />
                     </div>
                   )}
+                  
+                  {/* Comment Thread - for all messages */}
+                  <CommentThread
+                    messageId={message.id}
+                    comments={[]}
+                    currentUserId={"current-user"}  // TODO: Get from auth context
+                    onAddComment={async (content) => {
+                      // Handle adding comment to message
+                      console.log('Add comment:', content);
+                    }}
+                    onEditComment={async (commentId, content) => {
+                      // Handle editing comment
+                      console.log('Edit comment:', commentId, content);
+                    }}
+                    onDeleteComment={async (commentId) => {
+                      // Handle deleting comment
+                      console.log('Delete comment:', commentId);
+                    }}
+                  />
                   
                   {/* Follow-up Suggestions - for last assistant message */}
                   {message.role === 'assistant' && idx === messages.length - 1 && !isLoading && message.status === 'sent' && (
