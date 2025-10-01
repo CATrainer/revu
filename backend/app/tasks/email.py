@@ -805,58 +805,17 @@ async def _send_trial_expiration_email(email: str, name: str, days_left: int) ->
         return False
 
 
-@celery_app.task(name="app.tasks.email.send_review_alert")
-def send_review_alert(
-    user_email: str,
-    location_name: str,
-    review_summary: dict,
-) -> bool:
-    """
-    Send alert about new review requiring attention.
-    
-    Args:
-        user_email: Recipient email
-        location_name: Name of the location
-        review_summary: Review details
-        
-    Returns:
-        bool: Success status
-    """
-    rating = review_summary.get("rating", 0)
-    author = review_summary.get("author_name", "A customer")
-    platform = review_summary.get("platform", "review platform")
-    
-    subject = f"⚠️ New {rating}-star review needs your response - {location_name}"
-    
-    html_content = f"""
-    <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #EF4444;">New Review Needs Attention</h2>
-                
-                <div style="background: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <p><strong>Location:</strong> {location_name}</p>
-                    <p><strong>Platform:</strong> {platform.title()}</p>
-                    <p><strong>Rating:</strong> {'⭐' * rating}</p>
-                    <p><strong>From:</strong> {author}</p>
-                </div>
-                
-                <p>This review requires your immediate attention.</p>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="{settings.FRONTEND_URL}/reviews" 
-                       style="background-color: #6366F1; color: white; padding: 12px 30px; 
-                              text-decoration: none; border-radius: 6px; display: inline-block;">
-                        Respond Now
-                    </a>
-                </div>
-                
-                <p style="color: #666; font-size: 14px;">
-                    You're receiving this because you have review alerts enabled.
-                </p>
-            </div>
-        </body>
-    </html>
-    """
-    
-    return send_email(user_email, subject, html_content)
+# DEPRECATED: Review feature removed - this task is no longer used
+# @celery_app.task(name="app.tasks.email.send_review_alert")
+# def send_review_alert(
+#     user_email: str,
+#     location_name: str,
+#     review_summary: dict,
+# ) -> bool:
+#     """
+#     Send alert about new review requiring attention.
+#     
+#     DEPRECATED: Review system removed for social media focus.
+#     Kept for reference only - can be deleted.
+#     """
+#     pass

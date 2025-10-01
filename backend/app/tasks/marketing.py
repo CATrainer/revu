@@ -85,7 +85,7 @@ def sync_contact(email: str) -> bool:
                 list_id = list_id_cfg if bool(getattr(u, "marketing_opt_in", False)) else None
                 return bool(marketing_client.upsert_contact(email, custom_fields=fields.get("custom_fields"), list_id=list_id))
         import asyncio
-        return asyncio.get_event_loop().run_until_complete(_run())
+        return asyncio.run(_run())
     except Exception as e:  # noqa: BLE001
         logger.error("sync_contact exception for {}: {}", email, e)
         return False
@@ -116,8 +116,6 @@ def sync_all_contacts(limit: int = 1000) -> Dict[str, int]:
 
     import asyncio
     try:
-        asyncio.get_event_loop().run_until_complete(_run())
-    except RuntimeError:
         asyncio.run(_run())
     except Exception as e:  # noqa: BLE001
         logger.error("sync_all_contacts fatal: {}", e)
