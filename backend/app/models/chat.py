@@ -60,7 +60,7 @@ class ChatMessage(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     role = Column(String, nullable=False)  # 'user' or 'assistant'
     content = Column(Text, nullable=False)
-    metadata = Column(JSONB, nullable=True)
+    message_metadata = Column('metadata', JSONB, nullable=True)  # Use different Python name
     tokens_used = Column(Integer, nullable=True)
     model = Column(String, nullable=True)
     
