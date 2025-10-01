@@ -146,13 +146,12 @@ api_router.include_router(
     tags=["chat", "templates"],
 )
 
-# TEMPORARILY DISABLED: chat_enhancements needs full async conversion (50+ sync db.query() calls)
-# See URGENT_ASYNC_FIX_NEEDED.md for details
-# api_router.include_router(
-#     chat_enhancements.router,
-#     prefix="/chat",
-#     tags=["chat", "enhancements"],
-# )
+# ✅ FULLY ASYNC CONVERTED - All queries now use async/await patterns
+api_router.include_router(
+    chat_enhancements.router,
+    prefix="/chat",
+    tags=["chat", "enhancements"],
+)
 
 api_router.include_router(
     content_sync.router,

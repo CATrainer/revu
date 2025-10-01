@@ -4,7 +4,7 @@ API endpoints for chat enhancements: tags, search, export, share, attachments, c
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Query, status
 from fastapi.responses import StreamingResponse, FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import or_, and_, func, select, delete as sql_delete
+from sqlalchemy import or_, and_, func, select
 from typing import List, Optional
 from datetime import datetime, timedelta
 import secrets
@@ -137,59 +137,56 @@ async def create_tag(
     return new_tag
 
 @router.delete("/tags/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_tag(
+def delete_tag(
     tag_id: str,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Delete a tag"""
-    result = await db.execute(select(Tag).filter(
+    tag = db.query(Tag).filter(
         Tag.id == tag_id,
         Tag.user_id == current_user.id
-    ))
-    tag = result.scalar_one_or_none()
+    ).first()
     
     if not tag:
         raise HTTPException(status_code=404, detail="Tag not found")
     
-    await db.delete(tag)
-    await db.commit()
+    db.delete(tag)
+    db.commit()
     return None
 
 @router.post("/sessions/{session_id}/tags", status_code=status.HTTP_200_OK)
-async def update_session_tags(
+def update_session_tags(
     session_id: str,
     tags_update: SessionTagsUpdate,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Update tags for a session"""
-    result = await db.execute(select(ChatSession).filter(
+    session = db.query(ChatSession).filter(
         ChatSession.id == session_id,
         ChatSession.user_id == current_user.id
-    ))
-    session = result.scalar_one_or_none()
+    ).first()
     
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     
     # Get valid tags
-    result = await db.execute(select(Tag).filter(
+    valid_tags = db.query(Tag).filter(
         Tag.id.in_(tags_update.tag_ids),
         Tag.user_id == current_user.id
-    ))
-    valid_tags = result.scalars().all()
+    ).all()
     
     # Update session tags
     session.tags = valid_tags
-    await db.commit()
+    db.commit()
     
     return {"message": "Tags updated successfully", "tags": [TagResponse.from_orm(t) for t in valid_tags]}
 
 # ===== SEARCH ENDPOINT =====
 
 @router.get("/search")
-async def search_conversations(
+def search_conversations(
     q: str = Query(..., min_length=1, description="Search query"),
     tags: Optional[str] = Query(None, description="Comma-separated tag IDs"),
     starred: Optional[bool] = Query(None),
@@ -202,7 +199,9 @@ async def search_conversations(
     """Search conversations with full-text search and filters"""
     
     # Base query
-    query = select(ChatSession).filter(ChatSession.user_id == current_user.id)
+    query = db.query(ChatSession).filter(ChatSession.user_id == current_user.id)
+    
+    # Apply archived filter
     query = query.filter(ChatSession.archived == archived)
     
     # Apply starred filter
@@ -215,21 +214,33 @@ async def search_conversations(
         if tag_ids:
             query = query.join(session_tags).filter(session_tags.c.tag_id.in_(tag_ids))
     
-    # Full-text search on title
+    # Full-text search on title and messages
     search_term = q.strip()
     if search_term:
-        query = query.filter(
+        # Search in session titles
+        title_matches = query.filter(
             func.to_tsvector('english', ChatSession.title).match(search_term)
+        )
+        
+        # Search in messages
+        message_session_ids = db.query(ChatMessage.session_id).filter(
+            ChatMessage.session_id.in_(query.with_entities(ChatSession.id)),
+            func.to_tsvector('english', ChatMessage.content).match(search_term)
+        ).distinct()
+        
+        # Combine results
+        query = query.filter(
+            or_(
+                ChatSession.id.in_(message_session_ids),
+                func.to_tsvector('english', ChatSession.title).match(search_term)
+            )
         )
     
     # Get total count
-    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
-    total = count_result.scalar()
+    total = query.count()
     
     # Paginate and sort by relevance/date
-    query = query.order_by(ChatSession.updated_at.desc()).limit(limit).offset(offset)
-    result = await db.execute(query)
-    sessions = result.scalars().all()
+    sessions = query.order_by(ChatSession.updated_at.desc()).limit(limit).offset(offset).all()
     
     return {
         "items": sessions,
@@ -241,64 +252,61 @@ async def search_conversations(
 # ===== STAR/ARCHIVE ENDPOINTS =====
 
 @router.post("/sessions/{session_id}/star")
-async def toggle_star(
+def toggle_star(
     session_id: str,
     star_update: StarUpdate,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Star or unstar a session"""
-    result = await db.execute(select(ChatSession).filter(
+    session = db.query(ChatSession).filter(
         ChatSession.id == session_id,
         ChatSession.user_id == current_user.id
-    ))
-    session = result.scalar_one_or_none()
+    ).first()
     
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     
     session.starred = star_update.starred
-    await db.commit()
+    db.commit()
     
     return {"message": "Star status updated", "starred": session.starred}
 
 @router.post("/sessions/{session_id}/archive")
-async def toggle_archive(
+def toggle_archive(
     session_id: str,
     archive_update: ArchiveUpdate,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Archive or unarchive a session"""
-    result = await db.execute(select(ChatSession).filter(
+    session = db.query(ChatSession).filter(
         ChatSession.id == session_id,
         ChatSession.user_id == current_user.id
-    ))
-    session = result.scalar_one_or_none()
+    ).first()
     
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     
     session.archived = archive_update.archived
-    await db.commit()
+    db.commit()
     
     return {"message": "Archive status updated", "archived": session.archived}
 
 # ===== SHARE ENDPOINTS =====
 
 @router.post("/sessions/{session_id}/share", response_model=ShareResponse)
-async def create_share_link(
+def create_share_link(
     session_id: str,
     share: ShareCreate,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Create a shareable link for a session"""
-    result = await db.execute(select(ChatSession).filter(
+    session = db.query(ChatSession).filter(
         ChatSession.id == session_id,
         ChatSession.user_id == current_user.id
-    ))
-    session = result.scalar_one_or_none()
+    ).first()
     
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -321,7 +329,7 @@ async def create_share_link(
         created_by=current_user.id
     )
     db.add(new_share)
-    await db.commit()
+    db.commit()
     
     # Construct share URL (adjust domain as needed)
     share_url = f"https://app.repruv.com/shared/{token}"
@@ -333,14 +341,13 @@ async def create_share_link(
     )
 
 @router.get("/shared/{token}")
-async def get_shared_session(
+def get_shared_session(
     token: str,
     db: AsyncSession = Depends(get_async_session),
     current_user: Optional[User] = Depends(get_current_user)
 ):
     """Access a shared session via token"""
-    result = await db.execute(select(SessionShare).filter(SessionShare.token == token))
-    share = result.scalar_one_or_none()
+    share = db.query(SessionShare).filter(SessionShare.token == token).first()
     
     if not share:
         raise HTTPException(status_code=404, detail="Share link not found")
@@ -351,8 +358,7 @@ async def get_shared_session(
     if share.require_auth and not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
     
-    result = await db.execute(select(ChatSession).filter(ChatSession.id == share.session_id))
-    session = result.scalar_one_or_none()
+    session = db.query(ChatSession).filter(ChatSession.id == share.session_id).first()
     
     return {
         "session": session,
@@ -395,26 +401,24 @@ async def upload_attachment(
 # ===== EXPORT ENDPOINT =====
 
 @router.get("/sessions/{session_id}/export")
-async def export_session(
+def export_session(
     session_id: str,
     format: str = Query("markdown", regex="^(markdown|text|json)$"),
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Export a session in various formats"""
-    result = await db.execute(select(ChatSession).filter(
+    session = db.query(ChatSession).filter(
         ChatSession.id == session_id,
         ChatSession.user_id == current_user.id
-    ))
-    session = result.scalar_one_or_none()
+    ).first()
     
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     
-    result = await db.execute(select(ChatMessage).filter(
+    messages = db.query(ChatMessage).filter(
         ChatMessage.session_id == session_id
-    ).order_by(ChatMessage.created_at))
-    messages = result.scalars().all()
+    ).order_by(ChatMessage.created_at).all()
     
     if format == "markdown":
         content = f"# {session.title}\n\n"
@@ -472,29 +476,26 @@ async def export_session(
 # ===== COMMENTS ENDPOINTS =====
 
 @router.post("/messages/{message_id}/comments", response_model=CommentResponse, status_code=status.HTTP_201_CREATED)
-async def add_comment(
+def add_comment(
     message_id: str,
     comment: CommentCreate,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Add a comment to a message"""
-    result = await db.execute(select(ChatMessage).filter(ChatMessage.id == message_id))
-    message = result.scalar_one_or_none()
+    message = db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
     
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
     
     # Verify user has access to this session
-    result = await db.execute(select(ChatSession).filter(ChatSession.id == message.session_id))
-    session = result.scalar_one_or_none()
+    session = db.query(ChatSession).filter(ChatSession.id == message.session_id).first()
     if session.user_id != current_user.id:
         # Check if user is a collaborator
-        result = await db.execute(select(SessionCollaborator).filter(
+        collaborator = db.query(SessionCollaborator).filter(
             SessionCollaborator.session_id == message.session_id,
             SessionCollaborator.user_id == current_user.id
-        ))
-        collaborator = result.scalar_one_or_none()
+        ).first()
         
         if not collaborator:
             raise HTTPException(status_code=403, detail="Access denied")
@@ -505,8 +506,8 @@ async def add_comment(
         content=comment.content
     )
     db.add(new_comment)
-    await db.commit()
-    await db.refresh(new_comment)
+    db.commit()
+    db.refresh(new_comment)
     
     return CommentResponse(
         id=str(new_comment.id),
@@ -518,16 +519,15 @@ async def add_comment(
     )
 
 @router.get("/messages/{message_id}/comments", response_model=List[CommentResponse])
-async def get_comments(
+def get_comments(
     message_id: str,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Get all comments for a message"""
-    result = await db.execute(select(MessageComment).filter(
+    comments = db.query(MessageComment).filter(
         MessageComment.message_id == message_id
-    ).order_by(MessageComment.created_at))
-    comments = result.scalars().all()
+    ).order_by(MessageComment.created_at).all()
     
     return [
         CommentResponse(
@@ -542,67 +542,63 @@ async def get_comments(
     ]
 
 @router.put("/comments/{comment_id}")
-async def update_comment(
+def update_comment(
     comment_id: str,
     comment_update: CommentCreate,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Update a comment"""
-    result = await db.execute(select(MessageComment).filter(
+    comment = db.query(MessageComment).filter(
         MessageComment.id == comment_id,
         MessageComment.user_id == current_user.id
-    ))
-    comment = result.scalar_one_or_none()
+    ).first()
     
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
     
     comment.content = comment_update.content
     comment.updated_at = datetime.utcnow()
-    await db.commit()
+    db.commit()
     
     return {"message": "Comment updated"}
 
 @router.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_comment(
+def delete_comment(
     comment_id: str,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Delete a comment"""
-    result = await db.execute(select(MessageComment).filter(
+    comment = db.query(MessageComment).filter(
         MessageComment.id == comment_id,
         MessageComment.user_id == current_user.id
-    ))
-    comment = result.scalar_one_or_none()
+    ).first()
     
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
     
-    await db.execute(sql_delete(MessageComment).filter(MessageComment.id == comment_id))
-    await db.commit()
+    db.delete(comment)
+    db.commit()
     return None
 
 # ===== MESSAGE EDITING =====
 
 @router.put("/messages/{message_id}")
-async def edit_message(
+def edit_message(
     message_id: str,
     content: str,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Edit a message and trigger regeneration"""
-    result = await db.execute(select(ChatMessage).filter(ChatMessage.id == message_id))
-    message = result.scalar_one_or_none()
+    message = db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
     
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
     
     # Verify ownership
-    result = await db.execute(select(ChatSession).filter(ChatSession.id == message.session_id))
-    session = result.scalar_one_or_none()
+    session = db.query(ChatSession).filter(ChatSession.id == message.session_id).first()
     if session.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Access denied")
     
@@ -615,11 +611,11 @@ async def edit_message(
     message.updated_at = datetime.utcnow()
     
     # Delete all messages after this one
-    await db.execute(sql_delete(ChatMessage).filter(
+    db.query(ChatMessage).filter(
         ChatMessage.session_id == message.session_id,
         ChatMessage.created_at > message.created_at
-    ))
+    ).delete()
     
-    await db.commit()
+    db.commit()
     
     return {"message": "Message updated", "regenerate": True}
