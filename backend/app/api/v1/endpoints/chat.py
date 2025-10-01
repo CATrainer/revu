@@ -307,7 +307,7 @@ async def _generate_thread_intro(db: AsyncSession, user_id: UUID, session_id: UU
         })
         
         response = client.messages.create(
-            model="claude-3-5-sonnet-latest",
+            model="claude-3-5-sonnet-20241022",
             max_tokens=200,
             system=system_prompt,
             messages=messages,
@@ -637,7 +637,7 @@ async def generate_session_title(
             )
             
             response = client.messages.create(
-                model="claude-3-5-sonnet-latest",
+                model="claude-3-5-sonnet-20241022",
                 max_tokens=60,
                 system=system_prompt,
                 messages=[{
@@ -784,7 +784,7 @@ async def send_message(
     # Use Claude/Anthropic client
     api_key = os.getenv("CLAUDE_API_KEY", getattr(settings, "CLAUDE_API_KEY", None))
     client = Anthropic(api_key=api_key) if Anthropic and api_key else None
-    model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-3-5-sonnet-latest"
+    model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-3-5-sonnet-20241022"
 
     # Create assistant message immediately with generating status
     assistant_msg_id = await _insert_message(

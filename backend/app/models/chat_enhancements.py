@@ -25,6 +25,7 @@ class Tag(Base):
     name = Column(String(50), nullable=False)
     color = Column(String(7), nullable=False, default='#3b82f6')
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=True, onupdate=datetime.utcnow)
     
     # Relationships
     user = relationship("User", back_populates="tags")
