@@ -13,8 +13,8 @@ from loguru import logger
 
 from app.core.database import get_async_session
 from app.core.redis_client import get_redis
+from app.core.security import get_current_active_user
 from app.models.user import User
-from app.api.dependencies import get_current_active_user
 from app.tasks.chat_tasks import generate_chat_response
 
 
