@@ -1,7 +1,7 @@
 """enhance ai assistant features
 
-Revision ID: enhance_ai_assistant
-Revises: 20250930_1850
+Revision ID: 20251001_1100
+Revises: 20250930_1930
 Create Date: 2025-10-01 11:00:00
 
 """
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 import uuid
 
-revision = 'enhance_ai_assistant'
-down_revision = '20250930_1850'
+revision = '20251001_1100'
+down_revision = '20250930_1930'
 branch_labels = None
 depends_on = None
 
