@@ -751,11 +751,19 @@ async def send_message(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
     request: SendMessageRequest,
-    stream: bool = Query(True),
+    use_celery: bool = Query(True, description="Use async Celery processing (recommended)"),
 ):
+    """
+    Send a chat message and get AI response.
+    
+    - use_celery=True (default): Queue task in Celery for async processing. Returns immediately.
+      Client should connect to SSE endpoint to receive streaming response.
+    - use_celery=False: Synchronous inline processing (legacy, blocks until complete).
+    """
     session_id = request.session_id
     content = request.content
     await _rate_limit(db, current_user, "chat_send", 120)
+    
     # Validate session
     own = await db.execute(
         text("SELECT 1 FROM ai_chat_sessions WHERE id=:sid AND user_id=:uid"),
@@ -766,32 +774,79 @@ async def send_message(
 
     start = time.perf_counter()
     user_tokens = _estimate_tokens(content)
-    await _insert_message(db, session_id, current_user.id, "user", content, tokens=user_tokens)
+    user_msg_id = await _insert_message(db, session_id, current_user.id, "user", content, tokens=user_tokens)
 
     # Get user AI context
     ctx = await _chat_context(db, current_user.id)
     user_context_str = ctx.get("user_context", "")
 
-    # Build context (last 20 messages)
+    # Build system prompt
+    system_prompt = (
+        "You are Repruv AI, a helpful assistant for content creators and influencers. "
+        "You help with content strategy, audience insights, social media management, and creative ideas. "
+        "Be friendly, concise, and actionable in your responses."
+    )
+    
+    if user_context_str:
+        system_prompt += f"\n\nUser Context: {user_context_str}\n\nUse this context to personalize your responses."
+    
+    # Get performance context
+    performance_context = await _get_performance_context(current_user.id, db)
+    if performance_context:
+        system_prompt += performance_context
+    
+    # Get RAG context
+    rag_context = await get_rag_context_for_chat(current_user.id, content, db, max_examples=3)
+    if rag_context:
+        system_prompt += rag_context
+
+    # Build conversation history
     history_res = await db.execute(
-        text(
-            "SELECT role, content FROM ai_chat_messages WHERE session_id=:sid ORDER BY created_at DESC LIMIT 20"
-        ),
+        text("SELECT role, content FROM ai_chat_messages WHERE session_id=:sid ORDER BY created_at DESC LIMIT 20"),
         {"sid": str(session_id)},
     )
     history = [dict(r._mapping) for r in history_res.fetchall()][::-1]
 
-    # Use Claude/Anthropic client
+    # Create assistant message immediately with queued status
+    assistant_msg_id = await _insert_message(
+        db, session_id, current_user.id, "assistant", "", 
+        status="queued" if use_celery else "generating"
+    )
+    await db.commit()
+    
+    if use_celery:
+        # Queue Celery task for async processing
+        from app.tasks.chat_tasks import generate_chat_response
+        from app.core.redis_client import get_redis
+        
+        task = generate_chat_response.delay(
+            session_id=str(session_id),
+            message_id=str(assistant_msg_id),
+            user_id=str(current_user.id),
+            user_content=content,
+            history=history,
+            system_prompt=system_prompt,
+        )
+        
+        # Mark as generating in Redis
+        redis_client = get_redis()
+        redis_client.setex(f"chat:status:{session_id}:{assistant_msg_id}", 3600, "queued")
+        redis_client.setex(f"chat:task:{session_id}:{assistant_msg_id}", 3600, task.id)
+        
+        return {
+            "success": True,
+            "message_id": str(assistant_msg_id),
+            "user_message_id": str(user_msg_id),
+            "session_id": str(session_id),
+            "task_id": task.id,
+            "status": "queued",
+            "stream_url": f"/api/v1/chat/stream/{session_id}?message_id={assistant_msg_id}"
+        }
+    
+    # Legacy synchronous processing (fallback)
     api_key = os.getenv("CLAUDE_API_KEY", getattr(settings, "CLAUDE_API_KEY", None))
     client = Anthropic(api_key=api_key) if Anthropic and api_key else None
     model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-3-5-sonnet-20240620"
-
-    # Create assistant message immediately with generating status
-    assistant_msg_id = await _insert_message(
-        db, session_id, current_user.id, "assistant", "", 
-        status="generating", is_streaming=True
-    )
-    await db.commit()
 
     async def _finalize(assistant_text: str, tokens: int, latency_ms: int, message_id: UUID):
         """Finalize the assistant message."""

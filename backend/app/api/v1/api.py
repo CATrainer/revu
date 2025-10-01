@@ -26,6 +26,7 @@ from app.api.v1.endpoints import (
     chat_intelligence,
     chat_templates,
     chat_enhancements,
+    chat_streaming,
     content_sync,
     rag,
     context,
@@ -144,21 +145,27 @@ api_router.include_router(
 )
 
 api_router.include_router(
+    chat_streaming.router,
+    prefix="/chat",
+    tags=["chat", "streaming"],
+)
+
+api_router.include_router(
     content_sync.router,
     prefix="/content",
     tags=["content", "sync"],
 )
 
 api_router.include_router(
-    rag.router,
-    prefix="/rag",
-    tags=["rag", "embeddings", "semantic-search"],
-)
-
-api_router.include_router(
     context.router,
     prefix="/ai",
     tags=["ai", "context"],
+)
+
+api_router.include_router(
+    rag.router,
+    prefix="/rag",
+    tags=["rag"],
 )
 
 api_router.include_router(

@@ -40,6 +40,7 @@ celery_app.conf.update(
     imports=[
         "app.tasks.email",
         "app.tasks.marketing",
+        "app.tasks.chat_tasks",
     ],
 
     # Worker settings
@@ -55,6 +56,7 @@ celery_app.conf.update(
     task_routes={
         "app.tasks.email.*": {"queue": "email"},
         "app.tasks.marketing.*": {"queue": "marketing"},
+        "app.tasks.chat_tasks.*": {"queue": "chat"},
     },
 
     # Queue settings
@@ -82,6 +84,10 @@ celery_app.conf.beat_schedule = {
     "waitlist-campaign-hourly": {
         "task": "app.tasks.email.send_waitlist_campaign_hourly",
         "schedule": crontab(minute=0),  # Hourly on the hour UTC
+    },
+    "cleanup-chat-streams": {
+        "task": "chat.cleanup_old_streams",
+        "schedule": crontab(minute=0),  # Every hour
     },
 }
 
