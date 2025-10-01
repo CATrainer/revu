@@ -81,6 +81,8 @@ class User(Base):
     response_templates = relationship("ResponseTemplate", back_populates="created_by")
     automation_rules = relationship("AutomationRule", back_populates="created_by")
     audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan")
+    chat_sessions = relationship("ChatSession", back_populates="user", cascade="all, delete-orphan")
+    tags = relationship("Tag", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<User(email='{self.email}')>"
