@@ -124,11 +124,7 @@
 - ✅ Templates are user-specific (filtered by created_by_id)
 - ✅ Function returns actual data from DB
 
-**Note:** Migration needed to alter response_templates table:
-```sql
-ALTER TABLE response_templates ALTER COLUMN location_id DROP NOT NULL;
-ALTER TABLE response_templates ALTER COLUMN created_by_id SET NOT NULL;
-```
+**Migration:** ✅ Created `20251001_2101_update_response_templates.py`
 
 **Commit:** Ready to commit
 
@@ -172,16 +168,7 @@ ALTER TABLE response_templates ALTER COLUMN created_by_id SET NOT NULL;
 - ✅ No duplicate notifications (flags prevent re-sending)
 - ✅ Returns summary dict with metrics
 
-**Note:** Migration needed to add trial fields to users table:
-```sql
-ALTER TABLE users 
-  ADD COLUMN trial_start_date TIMESTAMP,
-  ADD COLUMN trial_end_date TIMESTAMP,
-  ADD COLUMN trial_notified_7d BOOLEAN DEFAULT FALSE,
-  ADD COLUMN trial_notified_3d BOOLEAN DEFAULT FALSE,
-  ADD COLUMN trial_notified_1d BOOLEAN DEFAULT FALSE,
-  ADD COLUMN subscription_status VARCHAR(20) DEFAULT 'trial';
-```
+**Migration:** ✅ Created `20251001_2100_add_trial_tracking.py`
 
 **Commit:** Ready to commit
 
