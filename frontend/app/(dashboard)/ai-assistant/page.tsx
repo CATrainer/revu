@@ -746,9 +746,9 @@ export default function AIAssistantPage() {
     try {
       let actualSessionId = isForSplitPane ? splitPaneSession : sessionId;
       
-      // If there's a pending session (only for main chat now, split pane created immediately)
-      if (pendingSession && !isForSplitPane) {
-        const { parentId, branchFromMessageId, branchName } = pendingSession;
+      // If there's no session yet (first message) or pending session, create one
+      if ((pendingSession || !actualSessionId) && !isForSplitPane) {
+        const { parentId, branchFromMessageId, branchName } = pendingSession || {};
         const { sessionId: newSessionId, initialMessage } = await createNewSession(
           parentId,
           branchFromMessageId,
@@ -778,6 +778,7 @@ export default function AIAssistantPage() {
       
       if (!actualSessionId || actualSessionId === 'pending') {
         setIsLoading(false);
+        setError('Failed to create chat session');
         return;
       }
 
