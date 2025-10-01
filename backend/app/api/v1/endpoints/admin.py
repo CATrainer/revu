@@ -10,7 +10,7 @@ from typing import List
 
 from app.core.database import get_async_session
 from app.models.user import User
-from app.core.security import get_current_user
+from app.core.security import get_current_user, get_current_admin_user
 from pydantic import BaseModel
 from app.tasks.marketing import sync_all_contacts
 
@@ -39,16 +39,9 @@ class UserResponse(BaseModel):
 async def grant_user_access(
     request: GrantAccessRequest,
     db: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_admin_user)
 ):
     """Grant early or full access to a user. (Admin only)"""
-    
-    # TODO: Add admin role check
-    # if not current_user.is_admin:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,
-    #         detail="Admin access required"
-    #     )
     
     # Find the target user by email
     if not request.email:

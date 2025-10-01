@@ -8,13 +8,12 @@ from typing import List
 from uuid import UUID
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_async_session
-from app.core.security import get_current_active_user, get_password_hash
+from app.core.security import get_current_user, get_current_active_user, get_current_admin_user, get_password_hash
 from app.models.user import User
 from app.schemas.user import UserUpdate, User as UserSchema, UserAccessUpdate, WaitlistJoin, WaitlistAccountCreate, DemoRequest, AdminNotes
 from app.tasks.email import send_welcome_email
@@ -201,16 +200,13 @@ async def delete_current_user(
 async def get_waiting_list_users(
     *,
     db: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_admin_user),
     skip: int = 0,
     limit: int = 100,
 ):
     """
     Get users on waiting list (admin only).
-    
-    Note: In a real app, you'd want proper admin role checking here.
     """
-    # TODO: Add proper admin role checking
     
     result = await db.execute(
         select(User)
@@ -228,14 +224,11 @@ async def grant_early_access(
     *,
     db: AsyncSession = Depends(get_async_session),
     user_id: UUID,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_admin_user),
 ):
     """
     Grant early access to a user (admin only).
-    
-    Note: In a real app, you'd want proper admin role checking here.
     """
-    # TODO: Add proper admin role checking
     
     # Get user
     result = await db.execute(select(User).where(User.id == user_id))
@@ -263,16 +256,13 @@ async def grant_early_access(
 async def get_demo_requests(
     *,
     db: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_admin_user),
     skip: int = 0,
     limit: int = 100,
 ):
     """
     Get users who have requested demos (admin only).
-    
-    Note: In a real app, you'd want proper admin role checking here.
     """
-    # TODO: Add proper admin role checking
     
     result = await db.execute(
         select(User)
@@ -291,14 +281,11 @@ async def update_user_access_status(
     db: AsyncSession = Depends(get_async_session),
     user_id: UUID,
     access_update: UserAccessUpdate,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_admin_user),
 ):
     """
     Update user's access status (admin only).
-    
-    Note: In a real app, you'd want proper admin role checking here.
     """
-    # TODO: Add proper admin role checking
     
     # Get user
     result = await db.execute(select(User).where(User.id == user_id))
