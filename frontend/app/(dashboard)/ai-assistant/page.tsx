@@ -31,6 +31,7 @@ import { EnhancedMarkdown } from '@/components/ai/EnhancedMarkdown';
 import { MessageEditor } from '@/components/ai/MessageEditor';
 import { CommentThread } from '@/components/ai/CommentThread';
 import { CollaborationPanel } from '@/components/ai/CollaborationPanel';
+import { ThreadSwitcher } from '@/components/ai/ThreadSwitcher';
 
 interface Message {
   id: string;
