@@ -27,6 +27,7 @@ from app.api.v1.endpoints import (
     chat,
     chat_intelligence,
     chat_templates,
+    chat_enhancements,
     content_sync,
     rag,
     context,
@@ -136,6 +137,12 @@ api_router.include_router(
     chat_templates.router,
     prefix="/chat",
     tags=["chat", "templates"],
+)
+
+api_router.include_router(
+    chat_enhancements.router,
+    prefix="/chat",
+    tags=["chat", "enhancements"],
 )
 
 api_router.include_router(
