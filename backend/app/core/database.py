@@ -144,26 +144,32 @@ class Base(DeclarativeBase):
     def dict(self) -> dict:
         """Convert model to dictionary."""
         return {
-            column.name: getattr(self, column.name) for column in self.__table__.columns
         }
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     """
-    Dependency to get async database session.
+    Dependency for FastAPI routes to get an async database session.
 
     Yields:
-        AsyncSession: Database session for use in endpoints.
+        AsyncSession: An async database session.
     """
     async with async_session_maker() as session:
         try:
             yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
         finally:
             await session.close()
+
+
+def get_async_session_context():
+    """
+    Context manager for Celery tasks to get an async database session.
+    
+    Usage:
+        async with get_async_session_context() as db:
+            # Use db session
+    """
+    return async_session_maker()
 
 
 async def create_db_and_tables() -> None:
