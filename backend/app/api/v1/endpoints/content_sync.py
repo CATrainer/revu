@@ -192,7 +192,7 @@ Provide a concise analysis covering:
 Keep it practical and data-driven. Focus on things they can implement immediately."""
 
             response = client.messages.create(
-                model="claude-3-5-sonnet-latest",
+                model="claude-sonnet-4-20250514",
                 max_tokens=500,
                 temperature=0.7,
                 messages=[{"role": "user", "content": analysis_prompt}]

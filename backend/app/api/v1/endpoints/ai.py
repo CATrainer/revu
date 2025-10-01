@@ -82,7 +82,7 @@ async def _run_ai_safety_batch(db: AsyncSession) -> None:
         return
 
     try:
-        model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-3-5-sonnet-latest"
+        model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-sonnet-4-20250514"
         resp = claude.client.messages.create(
             model=model,
             max_tokens=getattr(settings, "CLAUDE_MAX_TOKENS", None) or int(os.getenv("CLAUDE_MAX_TOKENS", "300")),

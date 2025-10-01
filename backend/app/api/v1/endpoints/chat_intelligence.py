@@ -146,7 +146,7 @@ Each question should:
 Return ONLY the questions, one per line, without numbering or formatting."""
 
             response = client.messages.create(
-                model="claude-3-5-sonnet-20240620",
+                model="claude-sonnet-4-20250514",
                 max_tokens=200,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.8,
@@ -279,7 +279,7 @@ Return as JSON:
 }}"""
 
             response = client.messages.create(
-                model="claude-3-5-sonnet-20240620",
+                model="claude-sonnet-4-20250514",
                 max_tokens=500,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.5,
