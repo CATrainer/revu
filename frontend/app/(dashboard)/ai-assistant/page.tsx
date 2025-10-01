@@ -55,6 +55,9 @@ interface ChatSession {
   branch_name?: string | null;
   depth_level?: number;
   child_count?: number;
+  starred?: boolean;
+  archived?: boolean;
+  tags?: any[];
 }
 
 // Session state manager for tracking active streams and loading states
@@ -199,6 +202,7 @@ export default function AIAssistantPage() {
       if (!mounted) return;
       setInitializing(true);
       await loadSessions();
+      await loadUserTags();
       if (mounted) {
         setInitializing(false);
       }
@@ -605,6 +609,97 @@ export default function AIAssistantPage() {
   const copyMessage = (content: string) => {
     navigator.clipboard.writeText(content);
     // Could show a toast here
+  };
+
+  // Enhancement handlers
+  const handleToggleStar = async () => {
+    if (!sessionId) return;
+    try {
+      await api.post(`/chat/sessions/${sessionId}/star`, {
+        starred: !currentSession?.starred
+      });
+      loadSessions();
+    } catch (error) {
+      console.error('Failed to toggle star:', error);
+    }
+  };
+
+  const handleToggleArchive = async () => {
+    if (!sessionId) return;
+    try {
+      await api.post(`/chat/sessions/${sessionId}/archive`, {
+        archived: !currentSession?.archived
+      });
+      loadSessions();
+    } catch (error) {
+      console.error('Failed to toggle archive:', error);
+    }
+  };
+
+  const handleTagsChange = async (tags: any[]) => {
+    if (!sessionId) return;
+    try {
+      await api.post(`/chat/sessions/${sessionId}/tags`, {
+        tag_ids: tags.map(t => t.id)
+      });
+      loadSessions();
+    } catch (error) {
+      console.error('Failed to update tags:', error);
+    }
+  };
+
+  const handleShare = async (settings: any) => {
+    if (!sessionId) return;
+    try {
+      const response = await api.post(`/chat/sessions/${sessionId}/share`, settings);
+      return response.data.share_url;
+    } catch (error) {
+      console.error('Failed to create share link:', error);
+      throw error;
+    }
+  };
+
+  const handleEditMessage = async (messageId: string, content: string) => {
+    try {
+      await api.put(`/chat/messages/${messageId}`, { content });
+      setEditingMessageId(null);
+      if (sessionId) {
+        loadSession(sessionId);
+      }
+    } catch (error) {
+      console.error('Failed to edit message:', error);
+    }
+  };
+
+  const handleAddComment = async (messageId: string, content: string) => {
+    try {
+      await api.post(`/chat/messages/${messageId}/comments`, { content });
+      if (sessionId) {
+        loadSession(sessionId);
+      }
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+    }
+  };
+
+  const handleSearch = async (query: string, filters: any) => {
+    try {
+      const response = await api.get('/chat/search', {
+        params: { q: query, ...filters }
+      });
+      setSearchResults(response.data);
+    } catch (error) {
+      console.error('Failed to search:', error);
+    }
+  };
+
+  const loadUserTags = async () => {
+    try {
+      const response = await api.get('/chat/tags');
+      setUserTags(response.data);
+    } catch (error) {
+      console.error('Failed to load tags:', error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent, isForSplitPane: boolean = false) => {
