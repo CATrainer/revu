@@ -2,11 +2,11 @@
 Dashboard metrics endpoint - aggregates metrics from connected platforms
 """
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func, and_, select
 from datetime import datetime, timedelta
 
-from app.core.database import get_db
+from app.core.database import get_async_session
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.youtube import YouTubeConnection, YouTubeVideo, YouTubeComment
@@ -16,7 +16,7 @@ router = APIRouter()
 
 @router.get("/dashboard-metrics")
 async def get_dashboard_metrics(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """
@@ -29,9 +29,10 @@ async def get_dashboard_metrics(
     
     # Total Subscribers from YouTube
     total_subscribers = 0
-    youtube_connections = db.query(YouTubeConnection).filter(
-        YouTubeConnection.user_id == current_user.id
-    ).all()
+    result = await db.execute(
+        select(YouTubeConnection).filter(YouTubeConnection.user_id == current_user.id)
+    )
+    youtube_connections = result.scalars().all()
     
     for connection in youtube_connections:
         if connection.channel_statistics:
@@ -54,13 +55,16 @@ async def get_dashboard_metrics(
     total_engagements = 0
     
     # Get YouTube videos from last 30 days
-    youtube_videos = db.query(YouTubeVideo).join(
-        YouTubeConnection,
-        YouTubeVideo.connection_id == YouTubeConnection.id
-    ).filter(
-        YouTubeConnection.user_id == current_user.id,
-        YouTubeVideo.published_at >= thirty_days_ago
-    ).all()
+    result = await db.execute(
+        select(YouTubeVideo).join(
+            YouTubeConnection,
+            YouTubeVideo.connection_id == YouTubeConnection.id
+        ).filter(
+            YouTubeConnection.user_id == current_user.id,
+            YouTubeVideo.published_at >= thirty_days_ago
+        )
+    )
+    youtube_videos = result.scalars().all()
     
     for video in youtube_videos:
         if video.statistics:
@@ -82,25 +86,31 @@ async def get_dashboard_metrics(
     # Count YouTube comments in last 24 hours
     twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
     
-    interactions_today = db.query(func.count(YouTubeComment.id)).join(
-        YouTubeVideo,
-        YouTubeComment.video_id == YouTubeVideo.id
-    ).join(
-        YouTubeConnection,
-        YouTubeVideo.connection_id == YouTubeConnection.id
-    ).filter(
-        YouTubeConnection.user_id == current_user.id,
-        YouTubeComment.published_at >= twenty_four_hours_ago
-    ).scalar() or 0
+    result = await db.execute(
+        select(func.count(YouTubeComment.id)).join(
+            YouTubeVideo,
+            YouTubeComment.video_id == YouTubeVideo.id
+        ).join(
+            YouTubeConnection,
+            YouTubeVideo.connection_id == YouTubeConnection.id
+        ).filter(
+            YouTubeConnection.user_id == current_user.id,
+            YouTubeComment.published_at >= twenty_four_hours_ago
+        )
+    )
+    interactions_today = result.scalar() or 0
     
     # Add DMs and mentions when those are implemented
     # For now, just YouTube comments
     
     # Active Workflows
-    active_workflows = db.query(func.count(Workflow.id)).filter(
-        Workflow.user_id == current_user.id,
-        Workflow.is_active == True
-    ).scalar() or 0
+    result = await db.execute(
+        select(func.count(Workflow.id)).filter(
+            Workflow.user_id == current_user.id,
+            Workflow.is_active == True
+        )
+    )
+    active_workflows = result.scalar() or 0
     
     # Calculate changes (compare to previous period)
     # Previous month's subscriber count
@@ -111,14 +121,17 @@ async def get_dashboard_metrics(
     follower_change = 0  # Placeholder - would need historical data
     
     # Previous month's engagement rate
-    prev_month_videos = db.query(YouTubeVideo).join(
-        YouTubeConnection,
-        YouTubeVideo.connection_id == YouTubeConnection.id
-    ).filter(
-        YouTubeConnection.user_id == current_user.id,
-        YouTubeVideo.published_at >= sixty_days_ago,
-        YouTubeVideo.published_at < thirty_days_ago
-    ).all()
+    result = await db.execute(
+        select(YouTubeVideo).join(
+            YouTubeConnection,
+            YouTubeVideo.connection_id == YouTubeConnection.id
+        ).filter(
+            YouTubeConnection.user_id == current_user.id,
+            YouTubeVideo.published_at >= sixty_days_ago,
+            YouTubeVideo.published_at < thirty_days_ago
+        )
+    )
+    prev_month_videos = result.scalars().all()
     
     prev_views = 0
     prev_engagements = 0
@@ -143,17 +156,20 @@ async def get_dashboard_metrics(
     # Previous day's interactions
     forty_eight_hours_ago = datetime.utcnow() - timedelta(hours=48)
     
-    interactions_yesterday = db.query(func.count(YouTubeComment.id)).join(
-        YouTubeVideo,
-        YouTubeComment.video_id == YouTubeVideo.id
-    ).join(
-        YouTubeConnection,
-        YouTubeVideo.connection_id == YouTubeConnection.id
-    ).filter(
-        YouTubeConnection.user_id == current_user.id,
-        YouTubeComment.published_at >= forty_eight_hours_ago,
-        YouTubeComment.published_at < twenty_four_hours_ago
-    ).scalar() or 0
+    result = await db.execute(
+        select(func.count(YouTubeComment.id)).join(
+            YouTubeVideo,
+            YouTubeComment.video_id == YouTubeVideo.id
+        ).join(
+            YouTubeConnection,
+            YouTubeVideo.connection_id == YouTubeConnection.id
+        ).filter(
+            YouTubeConnection.user_id == current_user.id,
+            YouTubeComment.published_at >= forty_eight_hours_ago,
+            YouTubeComment.published_at < twenty_four_hours_ago
+        )
+    )
+    interactions_yesterday = result.scalar() or 0
     
     interactions_change = 0
     if interactions_yesterday > 0:

@@ -3,14 +3,14 @@ API endpoints for chat enhancements: tags, search, export, share, attachments, c
 """
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Query, status
 from fastapi.responses import StreamingResponse, FileResponse
-from sqlalchemy.orm import Session
-from sqlalchemy import or_, and_, func
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import or_, and_, func, select
 from typing import List, Optional
 from datetime import datetime, timedelta
 import secrets
 import io
 
-from app.core.database import get_db
+from app.core.database import get_async_session
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.chat import ChatSession, ChatMessage
@@ -98,7 +98,7 @@ class CommentResponse(BaseModel):
 
 @router.get("/tags", response_model=List[TagResponse])
 def get_user_tags(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Get all tags for the current user"""
@@ -108,7 +108,7 @@ def get_user_tags(
 @router.post("/tags", response_model=TagResponse, status_code=status.HTTP_201_CREATED)
 def create_tag(
     tag: TagCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Create a new tag"""
@@ -137,7 +137,7 @@ def create_tag(
 @router.delete("/tags/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_tag(
     tag_id: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Delete a tag"""
@@ -157,7 +157,7 @@ def delete_tag(
 def update_session_tags(
     session_id: str,
     tags_update: SessionTagsUpdate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Update tags for a session"""
@@ -191,7 +191,7 @@ def search_conversations(
     archived: Optional[bool] = Query(False),
     limit: int = Query(50, le=100),
     offset: int = Query(0),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Search conversations with full-text search and filters"""
@@ -253,7 +253,7 @@ def search_conversations(
 def toggle_star(
     session_id: str,
     star_update: StarUpdate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Star or unstar a session"""
@@ -274,7 +274,7 @@ def toggle_star(
 def toggle_archive(
     session_id: str,
     archive_update: ArchiveUpdate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Archive or unarchive a session"""
@@ -297,7 +297,7 @@ def toggle_archive(
 def create_share_link(
     session_id: str,
     share: ShareCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Create a shareable link for a session"""
@@ -341,7 +341,7 @@ def create_share_link(
 @router.get("/shared/{token}")
 def get_shared_session(
     token: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: Optional[User] = Depends(get_current_user)
 ):
     """Access a shared session via token"""
@@ -368,7 +368,7 @@ def get_shared_session(
 @router.post("/attachments")
 async def upload_attachment(
     file: UploadFile = File(...),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Upload a file attachment"""
@@ -402,7 +402,7 @@ async def upload_attachment(
 def export_session(
     session_id: str,
     format: str = Query("markdown", regex="^(markdown|text|json)$"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Export a session in various formats"""
@@ -477,7 +477,7 @@ def export_session(
 def add_comment(
     message_id: str,
     comment: CommentCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Add a comment to a message"""
@@ -519,7 +519,7 @@ def add_comment(
 @router.get("/messages/{message_id}/comments", response_model=List[CommentResponse])
 def get_comments(
     message_id: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Get all comments for a message"""
@@ -543,7 +543,7 @@ def get_comments(
 def update_comment(
     comment_id: str,
     comment_update: CommentCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Update a comment"""
@@ -564,7 +564,7 @@ def update_comment(
 @router.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_comment(
     comment_id: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Delete a comment"""
@@ -586,7 +586,7 @@ def delete_comment(
 def edit_message(
     message_id: str,
     content: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
     """Edit a message and trigger regeneration"""
