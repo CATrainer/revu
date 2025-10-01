@@ -96,16 +96,57 @@ export default function AIAssistantPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const splitPaneInputRef = useRef<HTMLTextAreaElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const splitPaneContainerRef = useRef<HTMLDivElement>(null);
+  const shouldAutoScrollRef = useRef(true);
+  const shouldAutoScrollSplitPaneRef = useRef(true);
 
-  // Auto-scroll to bottom when new messages arrive
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Check if user is near bottom of scroll container
+  const isNearBottom = (container: HTMLDivElement | null) => {
+    if (!container) return true;
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const threshold = 150; // pixels from bottom
+    return scrollHeight - scrollTop - clientHeight < threshold;
   };
 
-  const scrollSplitPaneToBottom = () => {
-    splitPaneMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Smart scroll - only scroll if user is already at bottom
+  const scrollToBottom = (force = false) => {
+    if (force || shouldAutoScrollRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
+  const scrollSplitPaneToBottom = (force = false) => {
+    if (force || shouldAutoScrollSplitPaneRef.current) {
+      splitPaneMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Update auto-scroll state when user scrolls
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      shouldAutoScrollRef.current = isNearBottom(container);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const container = splitPaneContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      shouldAutoScrollSplitPaneRef.current = isNearBottom(container);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Only scroll if user is near bottom
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -756,6 +797,17 @@ export default function AIAssistantPage() {
       setIsLoading(false);
       inputRef.current?.focus();
       
+      // Force scroll to bottom after sending a message
+      setTimeout(() => {
+        if (isForSplitPane) {
+          shouldAutoScrollSplitPaneRef.current = true;
+          scrollSplitPaneToBottom(true);
+        } else {
+          shouldAutoScrollRef.current = true;
+          scrollToBottom(true);
+        }
+      }, 100);
+      
       // Auto-generate title after first message (delayed slightly to ensure message is saved)
       if (isFirstMessage && sessionId) {
         setTimeout(() => {
@@ -1017,7 +1069,7 @@ export default function AIAssistantPage() {
           /* Chat View - Split Pane Support */
           <div className="flex-1 flex overflow-hidden">
             {/* Main Chat Pane */}
-            <div className={cn("flex flex-col overflow-hidden transition-all duration-300", splitPaneSession ? "flex-1" : "w-full")}>
+            <div className={cn("flex flex-col overflow-hidden transition-all duration-300 relative", splitPaneSession ? "flex-1" : "w-full")}>
               <ThreadSwitcher 
                 sessions={sessions}
                 activeSessionId={sessionId}
@@ -1025,7 +1077,7 @@ export default function AIAssistantPage() {
               />
         
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden">
           {loadingSessionId && messages.length === 0 ? (
             <div className="w-full py-6 px-4 space-y-6">
               {[1, 2, 3].map((i) => (
@@ -1381,6 +1433,20 @@ export default function AIAssistantPage() {
           )}
         </div>
 
+        {/* Scroll to Bottom Button */}
+        {showScrollButton && (
+          <button
+            onClick={() => {
+              shouldAutoScrollRef.current = true;
+              scrollToBottom(true);
+            }}
+            className="absolute bottom-24 right-8 z-10 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 active:scale-95"
+            title="Scroll to bottom"
+          >
+            <ChevronRight className="h-5 w-5 rotate-90 text-slate-700 dark:text-slate-300" />
+          </button>
+        )}
+
         {/* Input Area */}
         <div className="border-t border-slate-200 dark:border-slate-800 bg-gradient-to-b from-white/95 to-white dark:from-slate-900/95 dark:to-slate-900 backdrop-blur-xl">
           <div className="w-full px-4 py-5">
@@ -1455,7 +1521,7 @@ export default function AIAssistantPage() {
                 </div>
 
                 {/* Split Pane Messages */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                <div ref={splitPaneContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden">
                   <div className="w-full py-6 px-4 space-y-6">
                     {splitPaneMessages.map((message, idx) => (
                       <div key={message.id} className="group relative">
