@@ -18,7 +18,9 @@ class ChatSession(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     title = Column(String, nullable=True)
-    context = Column(JSONB, nullable=True)
+    context_tags = Column(JSONB, nullable=True)  # Array of context tags
+    system_prompt = Column(Text, nullable=True)  # Custom system prompt
+    mode = Column(String, default='general', nullable=False)
     status = Column(String, default='active', nullable=False, index=True)
     last_message_at = Column(DateTime, nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
