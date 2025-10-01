@@ -32,6 +32,8 @@ import { MessageEditor } from '@/components/ai/MessageEditor';
 import { CommentThread } from '@/components/ai/CommentThread';
 import { CollaborationPanel } from '@/components/ai/CollaborationPanel';
 import { ThreadSwitcher } from '@/components/ai/ThreadSwitcher';
+import { useChatStreaming, useBackgroundStreamMonitor } from '@/hooks/useChatStreaming';
+import { chatCache } from '@/lib/chatCache';
 
 interface Message {
   id: string;
@@ -118,6 +120,16 @@ export default function AIAssistantPage() {
   const splitPaneContainerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
   const shouldAutoScrollSplitPaneRef = useRef(true);
+
+  // Initialize async chat hooks
+  const { connectStream, disconnectStream, isStreamActive } = useChatStreaming();
+  const { startMonitoring, stopMonitoring, isMonitoring } = useBackgroundStreamMonitor(
+    (bgSessionId, messageId) => {
+      // Handle background stream updates
+      console.log('[Background] Stream active:', bgSessionId, messageId);
+      // Update UI to show activity indicator if needed
+    }
+  );
 
   // Check if user is near bottom of scroll container
   const isNearBottom = (container: HTMLDivElement | null) => {
@@ -782,29 +794,16 @@ export default function AIAssistantPage() {
         return;
       }
 
-      // Create abort controller for this request
-      const controller = new AbortController();
-      setAbortController(controller);
-
-      // Use fetch for streaming responses
-      const response = await fetch(`${api.defaults.baseURL}/chat/messages?stream=true`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: JSON.stringify({
-          session_id: actualSessionId,
-          content: userMessage.content,
-        }),
-        signal: controller.signal,
+      // Send message to backend (Celery async processing)
+      const response = await api.post('/chat/messages', {
+        session_id: actualSessionId,
+        content: userMessage.content,
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Backend error:', errorText);
-        throw new Error(`Failed to send message: ${response.status} - ${errorText}`);
-      }
+      // Backend returns immediately with task info
+      const { message_id: assistantMessageId, task_id } = response.data;
+      
+      console.log('[Async Chat] Task queued:', { task_id, message_id: assistantMessageId });
 
       // Mark session as streaming
       if (actualSessionId && actualSessionId !== 'pending') {
@@ -814,8 +813,7 @@ export default function AIAssistantPage() {
         }));
       }
 
-      // Create assistant message that will be updated with streaming content
-      const assistantMessageId = (Date.now() + 1).toString();
+      // Create assistant message placeholder
       const assistantMessage: Message = {
         id: assistantMessageId,
         role: 'assistant',
@@ -829,98 +827,114 @@ export default function AIAssistantPage() {
       } else {
         setMessages((prev) => {
           const newMessages = [...prev, assistantMessage];
-          // Update cache with streaming message
+          // Save to IndexedDB cache
           if (actualSessionId && actualSessionId !== 'pending') {
+            chatCache.saveMessages(newMessages.map(m => ({ ...m, session_id: actualSessionId })));
             setMessageCache(prevCache => new Map(prevCache).set(actualSessionId, newMessages));
           }
           return newMessages;
         });
       }
 
-      // Read the streaming response
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-
-      if (reader) {
-        let buffer = '';
-        
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                
-                if (data.delta) {
-                  // Append delta to assistant message in the correct pane
-                  if (isForSplitPane) {
-                    setSplitPaneMessages((prev) => 
-                      prev.map((msg) => 
-                        msg.id === assistantMessageId
-                          ? { ...msg, content: msg.content + data.delta, status: 'streaming' as const }
-                          : msg
-                      )
-                    );
-                  } else {
-                    setMessages((prev) => {
-                      const updatedMessages = prev.map((msg) => 
-                        msg.id === assistantMessageId
-                          ? { ...msg, content: msg.content + data.delta, status: 'streaming' as const }
-                          : msg
-                      );
-                      // Update cache during streaming
-                      if (actualSessionId && actualSessionId !== 'pending') {
-                        setMessageCache(prevCache => new Map(prevCache).set(actualSessionId, updatedMessages));
-                      }
-                      return updatedMessages;
-                    });
-                  }
-                } else if (data.event === 'done') {
-                  // Streaming complete - mark message as sent
-                  if (isForSplitPane) {
-                    setSplitPaneMessages((prev) => 
-                      prev.map((msg) => 
-                        msg.id === assistantMessageId
-                          ? { ...msg, status: 'sent' as const }
-                          : msg
-                      )
-                    );
-                  } else {
-                    setMessages((prev) => {
-                      const finalMessages = prev.map((msg) => 
-                        msg.id === assistantMessageId
-                          ? { ...msg, status: 'sent' as const }
-                          : msg
-                      );
-                      // Final cache update
-                      if (actualSessionId && actualSessionId !== 'pending') {
-                        setMessageCache(prevCache => new Map(prevCache).set(actualSessionId, finalMessages));
-                      }
-                      return finalMessages;
-                    });
-                  }
-                  // Mark streaming as complete
-                  if (actualSessionId && actualSessionId !== 'pending') {
-                    setSessionStates(prev => new Map(prev).set(actualSessionId, { 
-                      isStreaming: false, 
-                      isLoading: false 
-                    }));
-                  }
-                  console.log('Streaming complete, latency:', data.latency_ms);
-                }
-              } catch (err) {
-                console.error('Error parsing SSE data:', err);
+      // Connect to SSE stream for real-time updates
+      connectStream({
+        sessionId: actualSessionId,
+        messageId: assistantMessageId,
+        onChunk: (content: string, index: number) => {
+          // Update message content incrementally
+          if (isForSplitPane) {
+            setSplitPaneMessages((prev) => 
+              prev.map((msg) => 
+                msg.id === assistantMessageId
+                  ? { ...msg, content: msg.content + content, status: 'streaming' as const }
+                  : msg
+              )
+            );
+          } else {
+            setMessages((prev) => {
+              const updatedMessages = prev.map((msg) => 
+                msg.id === assistantMessageId
+                  ? { ...msg, content: msg.content + content, status: 'streaming' as const }
+                  : msg
+              );
+              // Update cache during streaming
+              if (actualSessionId && actualSessionId !== 'pending') {
+                chatCache.saveMessages(updatedMessages.map(m => ({ ...m, session_id: actualSessionId })));
+                setMessageCache(prevCache => new Map(prevCache).set(actualSessionId, updatedMessages));
               }
-            }
+              return updatedMessages;
+            });
+          }
+        },
+        onComplete: async (fullContent: string, meta: { tokens?: number; latency_ms?: number }) => {
+          console.log('[Async Chat] Stream complete:', { tokens: meta.tokens, latency: meta.latency_ms });
+          
+          // Mark as completed
+          if (isForSplitPane) {
+            setSplitPaneMessages((prev) => 
+              prev.map((msg) => 
+                msg.id === assistantMessageId
+                  ? { ...msg, content: fullContent, status: 'sent' as const }
+                  : msg
+              )
+            );
+          } else {
+            setMessages((prev) => {
+              const finalMessages = prev.map((msg) => 
+                msg.id === assistantMessageId
+                  ? { ...msg, content: fullContent, status: 'sent' as const }
+                  : msg
+              );
+              // Final cache save
+              if (actualSessionId && actualSessionId !== 'pending') {
+                chatCache.saveMessages(finalMessages.map(m => ({ ...m, session_id: actualSessionId })));
+                setMessageCache(prevCache => new Map(prevCache).set(actualSessionId, finalMessages));
+              }
+              return finalMessages;
+            });
+          }
+          
+          // Mark streaming as complete
+          if (actualSessionId && actualSessionId !== 'pending') {
+            setSessionStates(prev => new Map(prev).set(actualSessionId, { 
+              isStreaming: false, 
+              isLoading: false 
+            }));
+          }
+        },
+        onError: (error: string) => {
+          console.error('[Async Chat] Stream error:', error);
+          setError(error);
+          
+          // Mark as error
+          if (isForSplitPane) {
+            setSplitPaneMessages((prev) => 
+              prev.map((msg) => 
+                msg.id === assistantMessageId
+                  ? { ...msg, status: 'error' as const, error }
+                  : msg
+              )
+            );
+          } else {
+            setMessages((prev) => 
+              prev.map((msg) => 
+                msg.id === assistantMessageId
+                  ? { ...msg, status: 'error' as const, error }
+                  : msg
+              )
+            );
+          }
+          
+          // Stop streaming
+          if (actualSessionId && actualSessionId !== 'pending') {
+            setSessionStates(prev => new Map(prev).set(actualSessionId, { 
+              isStreaming: false, 
+              isLoading: false 
+            }));
           }
         }
-      }
+      });
+
     } catch (err: unknown) {
       // Ignore abort errors (user initiated)
       if ((err as Error).name === 'AbortError') {
