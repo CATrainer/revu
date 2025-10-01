@@ -38,10 +38,7 @@ celery_app.conf.update(
 
     # Task imports
     imports=[
-        "app.tasks.reviews",
-        "app.tasks.analytics",
         "app.tasks.email",
-        "app.tasks.automation",
         "app.tasks.marketing",
     ],
 
@@ -56,10 +53,7 @@ celery_app.conf.update(
 
     # Task routing
     task_routes={
-        "app.tasks.reviews.*": {"queue": "reviews"},
-        "app.tasks.analytics.*": {"queue": "analytics"},
         "app.tasks.email.*": {"queue": "email"},
-        "app.tasks.automation.*": {"queue": "automation"},
         "app.tasks.marketing.*": {"queue": "marketing"},
     },
 
@@ -69,9 +63,6 @@ celery_app.conf.update(
 
     # Rate limits
     task_annotations={
-        "app.tasks.reviews.sync_google_reviews": {
-            "rate_limit": "10/m",
-        },
         "app.tasks.email.send_email": {
             "rate_limit": "30/m",
         },
@@ -80,25 +71,9 @@ celery_app.conf.update(
 
 # Beat schedule for periodic tasks
 celery_app.conf.beat_schedule = {
-    "sync-all-reviews": {
-        "task": "app.tasks.reviews.sync_all_active_locations",
-        "schedule": crontab(minute=0),  # Every hour
-    },
-    "generate-analytics-snapshots": {
-        "task": "app.tasks.analytics.generate_daily_snapshots",
-        "schedule": crontab(hour=2, minute=0),  # 2 AM UTC
-    },
     "check-trial-expirations": {
         "task": "app.tasks.email.check_trial_expirations",
         "schedule": crontab(hour=9, minute=0),  # 9 AM UTC
-    },
-    "process-automation-rules": {
-        "task": "app.tasks.automation.process_all_rules",
-        "schedule": crontab(minute="*/5"),  # Every 5 minutes
-    },
-    "cleanup-old-data": {
-        "task": "app.tasks.analytics.cleanup_old_data",
-        "schedule": crontab(hour=3, minute=0, day_of_month=1),  # Monthly
     },
     "sync-sendgrid-contacts": {
         "task": "app.tasks.marketing.sync_all_contacts",

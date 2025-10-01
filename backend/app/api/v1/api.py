@@ -10,7 +10,6 @@ from fastapi import APIRouter
 from app.api.v1.endpoints import (
     admin,
     ai,
-    analytics,
     auth,
     early_warning,
     debug,
@@ -23,7 +22,6 @@ from app.api.v1.endpoints import (
     users,
     user_preferences,
     webhooks,
-    social_monitoring,
     chat,
     chat_intelligence,
     chat_templates,
@@ -104,16 +102,12 @@ api_router.include_router(
     tags=["debug"],
 )
 
-api_router.include_router(
-    analytics.router,
-    prefix="/analytics",
-    tags=["analytics"],
-)
+# Analytics endpoints removed - feature not in production
 
 api_router.include_router(
     dashboard_metrics.router,
-    prefix="/analytics",
-    tags=["analytics", "dashboard"],
+    prefix="/dashboard",
+    tags=["dashboard", "metrics"],
 )
 
 api_router.include_router(
@@ -122,11 +116,7 @@ api_router.include_router(
     tags=["early-warning"],
 )
 
-api_router.include_router(
-    social_monitoring.router,
-    prefix="/monitoring",
-    tags=["monitoring"],
-)
+# Social monitoring removed - feature not in production
 
 api_router.include_router(
     chat.router,
@@ -223,8 +213,6 @@ async def api_root():
             "users": "/users",
             "ai": "/ai",
             "automation": "/automation",
-            "analytics": "/analytics",
-            "social_monitoring": "/monitoring",
             "early_warning": "/early-warning",
             "polling": "/polling",
             "chat": "/chat",
