@@ -294,21 +294,32 @@ async def get_cross_user_insights(
     """
     Find insights from other successful creators in the same niche.
     
-    NOTE: This requires user consent and privacy controls.
-    Future feature - placeholder for now.
+    PRIVACY POLICY: This function is DISABLED by design.
+    Cross-user insights would require explicit user consent and
+    data sharing agreements. To maintain zero data bleed policy,
+    this feature is intentionally not implemented.
+    
+    All RAG queries are strictly filtered to user's own data only.
     
     Args:
-        user_id: User ID
-        niche: Content niche/category
-        db: Database session
-        min_subscribers: Minimum subscriber count
+        user_id: User ID (unused - kept for API consistency)
+        niche: Content niche/category (unused)
+        db: Database session (unused)
+        min_subscribers: Minimum subscriber count (unused)
     
     Returns:
-        Cross-user insights (privacy-respecting)
+        Always returns unavailable to enforce data isolation
     """
-    # TODO: Implement with proper privacy controls
-    # For now, return empty to avoid privacy issues
+    # INTENTIONALLY NOT IMPLEMENTED - Privacy Policy
+    # Users can ONLY access their own data via RAG
+    # Cross-user insights would require:
+    # 1. Explicit opt-in consent from all parties
+    # 2. Data sharing agreements
+    # 3. Anonymization pipelines
+    # 4. Compliance review
+    # 
+    # Until these are in place, this remains disabled.
     return {
         "available": False,
-        "message": "Cross-user insights coming soon (requires privacy controls)"
+        "message": "Cross-user insights not available (privacy policy: users can only access their own data)"
     }
