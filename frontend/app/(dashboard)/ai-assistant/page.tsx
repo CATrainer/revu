@@ -1066,6 +1066,17 @@ export default function AIAssistantPage() {
             </div>
           )}
 
+          {/* Search Bar */}
+          {!sidebarCollapsed && (
+            <div className="mb-4">
+              <SearchBar
+                onSearch={handleSearch}
+                onClear={() => setSearchResults(null)}
+                availableTags={userTags}
+              />
+            </div>
+          )}
+
           {/* Sessions Tree */}
           {!sidebarCollapsed && (
             <div className="flex-1 overflow-y-auto">
@@ -1222,6 +1233,53 @@ export default function AIAssistantPage() {
                 activeSessionId={sessionId}
                 onSelectSession={loadSession}
               />
+              
+              {/* Action Buttons */}
+              {sessionId && currentSession && (
+                <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex-1 flex items-center gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={handleToggleStar}
+                      title={currentSession.starred ? "Unstar" : "Star"}
+                    >
+                      <Star className={cn(
+                        "h-4 w-4", 
+                        currentSession.starred && "fill-yellow-400 text-yellow-400"
+                      )} />
+                    </Button>
+                    
+                    <TagManager
+                      sessionId={sessionId}
+                      currentTags={currentSession.tags || []}
+                      availableTags={userTags}
+                      onTagsChange={handleTagsChange}
+                    />
+                    
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={handleToggleArchive}
+                      title="Archive"
+                    >
+                      <Archive className="h-4 w-4" />
+                    </Button>
+                    
+                    <ExportDialog
+                      sessionId={sessionId}
+                      sessionTitle={currentSession.title || 'Chat'}
+                      messages={messages}
+                    />
+                    
+                    <ShareDialog
+                      sessionId={sessionId}
+                      sessionTitle={currentSession.title || 'Chat'}
+                      onShare={handleShare}
+                    />
+                  </div>
+                </div>
+              )}
         
         {/* Messages Area */}
         <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden">
@@ -1607,6 +1665,28 @@ export default function AIAssistantPage() {
                 </div>
               </div>
             )}
+
+            {/* File Upload */}
+            <div className="flex items-center gap-2 mb-3">
+              <FileUpload
+                onFilesSelected={setAttachments}
+                maxFiles={5}
+                maxSize={10}
+              />
+              {attachments.length > 0 && (
+                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                  <span>{attachments.length} file(s) attached</span>
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => setAttachments([])}
+                    className="h-6 w-6 p-0"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
 
             <form onSubmit={handleSubmit} className="relative">
               <div className="flex gap-3 items-end">
