@@ -31,6 +31,7 @@ from app.api.v1.endpoints import (
     content_sync,
     rag,
     context,
+    dashboard_metrics,
 )
 from app.api.v1.endpoints import workflows as workflows_endpoints
 from app.api.v1.endpoints import marketing_admin
@@ -107,6 +108,12 @@ api_router.include_router(
     analytics.router,
     prefix="/analytics",
     tags=["analytics"],
+)
+
+api_router.include_router(
+    dashboard_metrics.router,
+    prefix="/analytics",
+    tags=["analytics", "dashboard"],
 )
 
 api_router.include_router(

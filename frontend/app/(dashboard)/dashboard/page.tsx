@@ -1,5 +1,6 @@
 // frontend/app/(dashboard)/dashboard/page.tsx
 "use client";
+import { useState, useEffect } from 'react';
 import { ModernCard, CardContent, CardHeader, CardTitle } from '@/components/ui/modern-card';
 import { ModernStats, StatsGrid } from '@/components/ui/modern-stats';
 import { ModernButton } from '@/components/ui/modern-button';
@@ -9,7 +10,47 @@ import { features } from '@/lib/features';
 import ConnectButton from '@/components/youtube/ConnectButton';
 import { Youtube, Instagram, Music, TrendingUp, Users, MessageCircle, Zap } from 'lucide-react';
 
+interface DashboardMetrics {
+  total_followers: number;
+  total_subscribers: number;
+  engagement_rate: number;
+  interactions_today: number;
+  active_workflows: number;
+  follower_change: number;
+  engagement_change: number;
+  interactions_change: number;
+}
+
 export default function DashboardPage() {
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const response = await fetch('/api/v1/analytics/dashboard-metrics');
+        if (response.ok) {
+          const data = await response.json();
+          setMetrics(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard metrics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMetrics();
+  }, []);
+
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
+  };
+
+  const totalFollowers = (metrics?.total_followers || 0) + (metrics?.total_subscribers || 0);
+
   return (
     <div className="space-y-8 animate-fade-in px-4 md:px-0"> {/* Add horizontal padding on mobile */}
       {/* Header Section */}
@@ -22,31 +63,31 @@ export default function DashboardPage() {
       <StatsGrid columns={4}>
         <ModernStats
           title="Total Followers"
-          value="12.4K"
-          change={8.2}
+          value={loading ? '...' : formatNumber(totalFollowers)}
+          change={metrics?.follower_change || 0}
           changeLabel="vs last month"
           icon={<Users className="h-4 w-4" />}
-          trend="up"
+          trend={metrics?.follower_change && metrics.follower_change > 0 ? 'up' : metrics?.follower_change && metrics.follower_change < 0 ? 'down' : 'neutral'}
         />
         <ModernStats
           title="Engagement Rate"
-          value="4.7%"
-          change={-2.1}
+          value={loading ? '...' : `${metrics?.engagement_rate?.toFixed(1) || 0}%`}
+          change={metrics?.engagement_change || 0}
           changeLabel="vs last month"
           icon={<TrendingUp className="h-4 w-4" />}
-          trend="down"
+          trend={metrics?.engagement_change && metrics.engagement_change > 0 ? 'up' : metrics?.engagement_change && metrics.engagement_change < 0 ? 'down' : 'neutral'}
         />
         <ModernStats
-          title="Comments Today"
-          value="47"
-          change={12.5}
+          title="Interactions Today"
+          value={loading ? '...' : (metrics?.interactions_today || 0).toString()}
+          change={metrics?.interactions_change || 0}
           changeLabel="vs yesterday"
           icon={<MessageCircle className="h-4 w-4" />}
-          trend="up"
+          trend={metrics?.interactions_change && metrics.interactions_change > 0 ? 'up' : metrics?.interactions_change && metrics.interactions_change < 0 ? 'down' : 'neutral'}
         />
         <ModernStats
-          title="Automations Active"
-          value="3"
+          title="Workflows Active"
+          value={loading ? '...' : (metrics?.active_workflows || 0).toString()}
           changeLabel="running smoothly"
           icon={<Zap className="h-4 w-4" />}
           trend="neutral"

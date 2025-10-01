@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, Menu, Search, X, BarChart3, Brain, ChartPie, Settings as SettingsIcon, MessageSquare, Zap, Radio } from 'lucide-react';
+import { Menu, Search, X, BarChart3, Brain, ChartPie, Settings as SettingsIcon, MessageSquare, Zap, Radio } from 'lucide-react';
 import { PauseCircle, PlayCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,8 +24,6 @@ import { LocationSelector } from '@/components/dashboard/LocationSelector';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useStore } from '@/lib/store';
-import NotificationCenter from '@/components/shared/NotificationCenter';
-import Glossary from '@/components/help/Glossary';
 import { features } from '@/lib/features';
 
 interface HeaderProps {
@@ -43,7 +41,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const { notifications, markNotificationsRead, notificationPrefs, badgeRespectsMute, setBadgeRespectsMute, alertHistory } = useStore();
+  const { alertHistory } = useStore();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAlertBanner, setShowAlertBanner] = useState(false);
@@ -65,28 +63,6 @@ export function Header({ onMenuClick }: HeaderProps) {
       setSearchQuery('');
     }
   };
-
-  const unreadCount = (() => {
-    if (!badgeRespectsMute) return notifications.unread;
-    // compute unread excluding muted items by keyword/platform when possible
-    const platformIdMap: Record<string, string> = { google: 'Google', facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok', twitter: 'X/Twitter', tripadvisor: 'Google' };
-    return notifications.items.filter((it) => {
-      if (it.read) return false;
-      const hay = `${it.title} ${it.message}`.toLowerCase();
-      if (notificationPrefs.muteKeywords.some((k: string) => hay.includes(k.toLowerCase()))) return false;
-      // best-effort platform match from title
-      if (notificationPrefs.mutedPlatforms.length) {
-        const mutedNames = notificationPrefs.mutedPlatforms.map((k: string) => platformIdMap[k] || k);
-        if (mutedNames.some((name: string) => it.title.includes(name))) return false;
-      }
-      if (notificationPrefs.mode === 'Important only') {
-        // heuristic: only count if title hints negative or priority
-        const t = it.title.toLowerCase();
-        if (!(t.includes('negative') || t.includes('high'))) return false;
-      }
-      return true;
-    }).length;
-  })();
 
   // Simple auto-banner for the latest alert
   useEffect(() => {
@@ -333,35 +309,6 @@ export function Header({ onMenuClick }: HeaderProps) {
               </Button>
             )}
 
-            {/* Demo scenario selector and scenes removed */}
-
-            {/* Notifications */}
-            <DropdownMenu onOpenChange={(open) => { if (!open) markNotificationsRead(); }}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="relative hover-background">
-                  <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-96 card-background border-[var(--border)]"
-              >
-                <DropdownMenuLabel className="text-primary-dark">Notifications</DropdownMenuLabel>
-                <div className="px-3 py-2 text-xs text-secondary-dark flex items-center justify-between">
-                  <span>Badge respects mute</span>
-                  <input type="checkbox" checked={badgeRespectsMute} onChange={(e) => setBadgeRespectsMute(e.target.checked)} />
-                </div>
-                <DropdownMenuSeparator className="bg-[var(--border)]" />
-                <NotificationCenter />
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Help / Glossary */}
-            <div className="hidden md:block"><Glossary /></div>
-
             <ThemeToggle />
 
             {/* User Menu */}
@@ -399,9 +346,6 @@ export function Header({ onMenuClick }: HeaderProps) {
                 </DropdownMenuItem>
                 <DropdownMenuItem className="hover-background" onClick={() => router.push('/settings')}>
                   <span className="text-primary-dark">Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover-background md:hidden" onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); }}>
-                  <div className="w-full"><Glossary /></div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[var(--border)]" />
                 <DropdownMenuItem 
