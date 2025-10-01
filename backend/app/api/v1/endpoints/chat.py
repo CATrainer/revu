@@ -751,7 +751,7 @@ async def send_message(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
     request: SendMessageRequest,
-    use_celery: bool = Query(True, description="Use async Celery processing (recommended)"),
+    use_celery: bool = Query(False, description="Use async Celery processing (set to true when frontend is ready)"),
 ):
     """
     Send a chat message and get AI response.
