@@ -246,10 +246,10 @@ async def find_similar_content(
                     c.comments,
                     c.post_type,
                     c.posted_at,
-                    e.content_text,
+                    e.content,
                     (e.embedding <=> CAST(:query_vec AS vector)) as similarity
                 FROM content_embeddings e
-                JOIN user_content_performance c ON e.content_id = c.id
+                JOIN user_content_performance c ON e.source_id = c.id
                 WHERE e.user_id = :uid
                 AND c.engagement_rate >= :min_engagement
                 ORDER BY e.embedding <=> CAST(:query_vec AS vector)
@@ -331,9 +331,9 @@ async def find_best_performing_similar(
                     c.views,
                     (e.embedding <=> CAST(:ref_vec AS vector)) as similarity
                 FROM content_embeddings e
-                JOIN user_content_performance c ON e.content_id = c.id
+                JOIN user_content_performance c ON e.source_id = c.id
                 WHERE e.user_id = :uid
-                AND e.content_id != :cid
+                AND e.source_id != :cid
                 AND c.engagement_rate > 0
                 ORDER BY e.embedding <=> CAST(:ref_vec AS vector)
                 LIMIT :limit

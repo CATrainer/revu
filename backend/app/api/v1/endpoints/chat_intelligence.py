@@ -154,8 +154,8 @@ Return ONLY the questions, one per line, without numbering or formatting."""
             
             content_blocks = getattr(response, "content", [])
             if isinstance(content_blocks, list) and content_blocks:
-                text = getattr(content_blocks[0], "text", "")
-                suggestions = [s.strip() for s in text.strip().split('\n') if s.strip()]
+                response_text = getattr(content_blocks[0], "text", "")
+                suggestions = [s.strip() for s in response_text.strip().split('\n') if s.strip()]
                 suggestions = suggestions[:4]  # Max 4 suggestions
             else:
                 suggestions = [
