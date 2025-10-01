@@ -3,7 +3,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap, Copy, CheckCheck, Settings2, GitBranch, ChevronRight } from 'lucide-react';
+import { Brain, Sparkles, Send, Loader2, AlertCircle, Plus, Menu, Trash2, MessageSquare, X, Edit2, Check, TrendingUp, Users, Video, Zap, Copy, CheckCheck, Settings2, GitBranch, ChevronRight, Star, Archive, Search, Upload, Download, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { api } from '@/lib/api';
@@ -15,7 +15,6 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ContextEditor } from '@/components/ai/ContextEditor';
 import { SessionTree } from '@/components/ai/SessionTree';
 import { BranchCard } from '@/components/ai/BranchCard';
-import { ThreadSwitcher } from '@/components/ai/ThreadSwitcher';
 import { generateBranchSuggestions } from '@/lib/branchSuggestions';
 import { FollowUpSuggestions } from '@/components/ai/FollowUpSuggestions';
 import { ConversationSummary } from '@/components/ai/ConversationSummary';
@@ -23,6 +22,15 @@ import { MessageActions } from '@/components/ai/MessageActions';
 import { ResponseRating } from '@/components/ai/ResponseRating';
 import { TemplateLibrary } from '@/components/ai/TemplateLibrary';
 import { PreferencesDialog } from '@/components/ai/PreferencesDialog';
+import { FileUpload } from '@/components/ai/FileUpload';
+import { SearchBar } from '@/components/ai/SearchBar';
+import { ExportDialog } from '@/components/ai/ExportDialog';
+import { ShareDialog } from '@/components/ai/ShareDialog';
+import { TagManager } from '@/components/ai/TagManager';
+import { EnhancedMarkdown } from '@/components/ai/EnhancedMarkdown';
+import { MessageEditor } from '@/components/ai/MessageEditor';
+import { CommentThread } from '@/components/ai/CommentThread';
+import { CollaborationPanel } from '@/components/ai/CollaborationPanel';
 
 interface Message {
   id: string;
@@ -92,6 +100,11 @@ export default function AIAssistantPage() {
   const [editingContent, setEditingContent] = useState('');
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [initializing, setInitializing] = useState(true);
+  // Enhancement states
+  const [attachments, setAttachments] = useState<any[]>([]);
+  const [userTags, setUserTags] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any>(null);
   const isLoadingRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const splitPaneMessagesEndRef = useRef<HTMLDivElement>(null);
