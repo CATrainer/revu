@@ -91,6 +91,8 @@ export default function AIAssistantPage() {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [initializing, setInitializing] = useState(true);
+  const isLoadingRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const splitPaneMessagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -179,51 +181,28 @@ export default function AIAssistantPage() {
 
   // Load sessions on mount
   useEffect(() => {
-    loadSessions();
+    let mounted = true;
+    const initializeApp = async () => {
+      if (!mounted) return;
+      setInitializing(true);
+      await loadSessions();
+      if (mounted) {
+        setInitializing(false);
+      }
+    };
+    initializeApp();
+    return () => { mounted = false; };
   }, []);
 
-  // Poll for updates when session is streaming or on initial load
+  // Poll for updates when session is streaming - REMOVED BAD DEPENDENCY
   useEffect(() => {
     if (!sessionId) return;
     
     const sessionState = sessionStates.get(sessionId);
-    const shouldPoll = sessionState?.isStreaming;
+    if (!sessionState?.isStreaming) return;
     
-    // Initial check for any incomplete messages
-    const checkForIncompleteMessages = async () => {
-      try {
-        const response = await api.get(`/chat/messages/${sessionId}`);
-        const latestMessages: Message[] = (response.data.messages || []).map((msg: { id: string; role: string; content: string; created_at: string }) => ({
-          id: msg.id,
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content,
-          timestamp: new Date(msg.created_at),
-          status: 'sent',
-        }));
-        
-        // Check if last message looks incomplete (no proper ending)
-        if (latestMessages.length > 0) {
-          const lastMsg = latestMessages[latestMessages.length - 1];
-          if (lastMsg.role === 'assistant' && lastMsg.content.length < 50) {
-            // Likely incomplete - mark as streaming
-            setSessionStates(prev => new Map(prev).set(sessionId, { 
-              isStreaming: true, 
-              isLoading: false 
-            }));
-          }
-        }
-        
-        setMessages(latestMessages);
-        setMessageCache(prev => new Map(prev).set(sessionId, latestMessages));
-      } catch (err) {
-        console.error('Failed to check messages:', err);
-      }
-    };
-    
-    // Check immediately on session load
-    checkForIncompleteMessages();
-    
-    if (!shouldPoll) return;
+    let previousContent = '';
+    let unchangedCount = 0;
     
     // Poll every 2 seconds while streaming
     const pollInterval = setInterval(async () => {
@@ -237,25 +216,29 @@ export default function AIAssistantPage() {
           status: 'sent',
         }));
         
+        if (latestMessages.length === 0) return;
+        
+        const lastMsg = latestMessages[latestMessages.length - 1];
+        
+        // Check if content hasn't changed for 2 consecutive polls
+        if (lastMsg.content === previousContent) {
+          unchangedCount++;
+          if (unchangedCount >= 2) {
+            // Message stable - stop streaming
+            setSessionStates(prev => new Map(prev).set(sessionId, { 
+              isStreaming: false, 
+              isLoading: false 
+            }));
+          }
+        } else {
+          unchangedCount = 0;
+          previousContent = lastMsg.content;
+        }
+        
         setMessages(latestMessages);
         setMessageCache(prev => new Map(prev).set(sessionId, latestMessages));
-        
-        // Check if generation is complete (no more changes)
-        const currentLastMsg = messages[messages.length - 1];
-        const newLastMsg = latestMessages[latestMessages.length - 1];
-        
-        if (currentLastMsg && newLastMsg && 
-            currentLastMsg.content === newLastMsg.content &&
-            currentLastMsg.content.length > 100) {
-          // Message hasn't changed and has substantial content - likely complete
-          setSessionStates(prev => new Map(prev).set(sessionId, { 
-            isStreaming: false, 
-            isLoading: false 
-          }));
-        }
       } catch (err) {
         console.error('Failed to poll messages:', err);
-        // Stop polling on error
         setSessionStates(prev => new Map(prev).set(sessionId, { 
           isStreaming: false, 
           isLoading: false 
@@ -264,20 +247,21 @@ export default function AIAssistantPage() {
     }, 2000);
     
     return () => clearInterval(pollInterval);
-  }, [sessionId, sessionStates, messages]);
+  }, [sessionId, sessionStates]);
 
-  const loadSessions = async () => {
+  const loadSessions = async (skipAutoLoad = false) => {
     try {
       setSessionsLoading(true);
       const response = await api.get('/chat/sessions');
-      setSessions(response.data.items || []);
+      const fetchedSessions = response.data.items || [];
+      setSessions(fetchedSessions);
       
-      // If no active session and we have sessions, load the most recent one
-      if (!sessionId && !pendingSession && response.data.items?.length > 0) {
-        const mostRecent = response.data.items[0];
+      // Only auto-load on initial mount if no session is active and not skipping
+      if (!skipAutoLoad && initializing && !sessionId && !pendingSession && fetchedSessions.length > 0) {
+        const mostRecent = fetchedSessions[0];
         await loadSession(mostRecent.id);
-      } else if (!sessionId && !pendingSession) {
-        // No sessions exist, prepare for a new one (but don't create it yet)
+      } else if (!skipAutoLoad && initializing && !sessionId && !pendingSession && fetchedSessions.length === 0) {
+        // No sessions exist, show empty state
         setMessages([]);
         setSessionId(null);
         setPendingSession({});
@@ -318,7 +302,7 @@ export default function AIAssistantPage() {
           }]);
         }
         
-        await loadSessions(); // Refresh session list
+        await loadSessions(true); // Refresh session list but don't auto-switch
       } catch (err) {
         console.error('Failed to create thread:', err);
         setSplitPaneSession(null);
@@ -330,13 +314,17 @@ export default function AIAssistantPage() {
       setPendingSession({ parentId: parentSessionId, branchFromMessageId, branchName, openInSplitPane: true });
       setShowBranchSuggestions(false);
     } else {
-      // Prepare main session (don't create until first message)
+      // Prepare main session (don't create until first message) - IMMEDIATE STATE UPDATE
       setSessionId(null);
+      setCurrentSession(null);
       setMessages([]);
       setSplitPaneSession(null);
-      setCurrentSession(null);
+      setError(null);
       setPendingSession({ parentId: parentSessionId, branchFromMessageId, branchName, openInSplitPane: false });
       setShowBranchSuggestions(false);
+      setIsLoading(false);
+      // Clear any streaming states
+      setSessionStates(new Map());
     }
   };
 
@@ -398,19 +386,45 @@ export default function AIAssistantPage() {
   };
 
   const loadSession = useCallback(async (id: string) => {
+    // Prevent concurrent loads
+    if (isLoadingRef.current) return;
+    if (sessionId === id) return; // Already loaded
+    
+    isLoadingRef.current = true;
+    
+    // Abort any ongoing streaming
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+    }
+    setIsLoading(false);
+    setIsGenerating(false);
+    
     try {
       setLoadingSessionId(id);
+      
+      // Immediately update to show we're switching - BATCH state updates
       setSessionId(id);
       const session = sessions.find(s => s.id === id);
       setCurrentSession(session || null);
+      setSplitPaneSession(null);
+      setShowBranchSuggestions(false);
+      setPendingSession(null);
+      setError(null);
       
-      // Check cache first for instant loading
+      // Clear streaming states for old session
+      setSessionStates(new Map());
+      
+      // Check cache first for instant display
       const cachedMessages = messageCache.get(id);
-      if (cachedMessages) {
+      if (cachedMessages && cachedMessages.length > 0) {
         setMessages(cachedMessages);
+      } else {
+        // Show loading state if no cache
+        setMessages([]);
       }
       
-      // Always fetch fresh data from server
+      // Fetch fresh data in background
       const response = await api.get(`/chat/messages/${id}`);
       const loadedMessages: Message[] = (response.data.messages || []).map((msg: { id: string; role: string; content: string; created_at: string }) => ({
         id: msg.id,
@@ -420,21 +434,19 @@ export default function AIAssistantPage() {
         status: 'sent',
       }));
       
-      setMessages(loadedMessages);
-      // Update cache
-      setMessageCache(prev => new Map(prev).set(id, loadedMessages));
-      
-      setError(null);
-      setSplitPaneSession(null); // Close split pane when switching to a different main session
-      setShowBranchSuggestions(false); // Reset branch suggestions
-      setPendingSession(null); // Clear any pending session
+      // Only update if we're still on this session (prevent race condition)
+      if (sessionId === id) {
+        setMessages(loadedMessages);
+        setMessageCache(prev => new Map(prev).set(id, loadedMessages));
+      }
     } catch (err) {
       console.error('Failed to load session:', err);
       setError('Failed to load chat history');
     } finally {
       setLoadingSessionId(null);
+      isLoadingRef.current = false;
     }
-  }, [sessions, messageCache]);
+  }, [sessions, messageCache, sessionId, abortController]);
 
   const toggleSessionCollapse = (sessionId: string) => {
     setCollapsedSessions(prev => {
@@ -587,7 +599,10 @@ export default function AIAssistantPage() {
     
     // Get the correct input value based on which pane is submitting
     const currentInput = isForSplitPane ? splitPaneInput : input;
-    if (!currentInput.trim() || isLoading) return;
+    if (!currentInput.trim()) return;
+    
+    // Prevent multiple submissions
+    if (isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -652,9 +667,16 @@ export default function AIAssistantPage() {
         await loadSessions(); // Refresh the session list
       }
       
-      if (!actualSessionId || actualSessionId === 'pending') return;
+      if (!actualSessionId || actualSessionId === 'pending') {
+        setIsLoading(false);
+        return;
+      }
 
-      // Use EventSource for streaming responses
+      // Create abort controller for this request
+      const controller = new AbortController();
+      setAbortController(controller);
+
+      // Use fetch for streaming responses
       const response = await fetch(`${api.defaults.baseURL}/chat/messages?stream=true`, {
         method: 'POST',
         headers: {
@@ -665,6 +687,7 @@ export default function AIAssistantPage() {
           session_id: actualSessionId,
           content: userMessage.content,
         }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -788,14 +811,30 @@ export default function AIAssistantPage() {
           }
         }
       }
-    } catch (err) {
+    } catch (err: unknown) {
+      // Ignore abort errors (user initiated)
+      if ((err as Error).name === 'AbortError') {
+        console.log('Request aborted by user');
+        return;
+      }
+      
       console.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
+      
       // Remove the last user message on error
-      setMessages((prev) => prev.slice(0, -1));
+      if (isForSplitPane) {
+        setSplitPaneMessages((prev) => prev.slice(0, -1));
+      } else {
+        setMessages((prev) => prev.slice(0, -1));
+      }
     } finally {
+      setAbortController(null);
       setIsLoading(false);
-      inputRef.current?.focus();
+      if (!isForSplitPane) {
+        inputRef.current?.focus();
+      } else {
+        splitPaneInputRef.current?.focus();
+      }
       
       // Force scroll to bottom after sending a message
       setTimeout(() => {
@@ -1078,7 +1117,7 @@ export default function AIAssistantPage() {
         
         {/* Messages Area */}
         <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden">
-          {loadingSessionId && messages.length === 0 ? (
+          {initializing || (loadingSessionId && messages.length === 0) ? (
             <div className="w-full py-6 px-4 space-y-6">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex gap-4 items-start animate-pulse">
@@ -1090,7 +1129,7 @@ export default function AIAssistantPage() {
                 </div>
               ))}
             </div>
-          ) : messages.length === 0 ? (
+          ) : messages.length === 0 && !sessionId ? (
             <div className="h-full flex flex-col items-center justify-center px-4 py-12">
               <div className="relative mb-8">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur-2xl opacity-20 animate-pulse"></div>
