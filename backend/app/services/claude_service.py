@@ -116,7 +116,7 @@ class ClaudeService:
         status_code = 0
         tokens_in = 0
         tokens_out = 0
-        model_used = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-sonnet-4-20250514"
+        model_used = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-sonnet-4.5-20250929"
         def _call_sync():
             return self.client.messages.create(  # type: ignore[union-attr]
                 model=model_used,
@@ -305,7 +305,7 @@ class ClaudeService:
         key = self._recent_key(base_template, style, custom_instructions)
         prev_set.update([(p or "").strip().lower() for p in list(self._recent[key])])
 
-        model_used = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-sonnet-4-20250514"
+        model_used = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-sonnet-4.5-20250929"
         sys = (
             "You adapt a base reply template into a unique variant while preserving tone and intent. "
             "Keep it under 2 sentences, safe, and audience-appropriate. "

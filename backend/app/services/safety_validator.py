@@ -138,7 +138,7 @@ def ai_safety_check(response_text: str, original_comment: str) -> Tuple[bool, st
 
     try:
         resp = claude.client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4.5-20250929",
             max_tokens=200,
             system=system_prompt,
             messages=[{"role": "user", "content": user_prompt}],
@@ -267,7 +267,7 @@ async def _run_ai_safety_batch(db: AsyncSession, *, trigger_reason: str) -> None
         return
 
     try:
-        model = os.getenv("CLAUDE_MODEL") or "claude-sonnet-4-20250514"
+        model = os.getenv("CLAUDE_MODEL") or "claude-sonnet-4.5-20250929"
         max_tokens = int(os.getenv("CLAUDE_MAX_TOKENS", "300"))
         resp = claude.client.messages.create(
             model=model,
@@ -498,7 +498,7 @@ async def evaluate_delete_criteria(
                 "Comment (author: " + author_name + "):\n" + text + "\n"
             )
             resp = claude.client.messages.create(
-                model=os.getenv("CLAUDE_MODEL") or "claude-sonnet-4-20250514",
+                model=os.getenv("CLAUDE_MODEL") or "claude-sonnet-4.5-20250929",
                 max_tokens=int(os.getenv("CLAUDE_MAX_TOKENS", "200")),
                 system=system_prompt,
                 messages=[{"role": "user", "content": user_prompt}],

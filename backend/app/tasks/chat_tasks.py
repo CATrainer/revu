@@ -57,7 +57,7 @@ def generate_chat_response(
             raise ValueError("CLAUDE_API_KEY not configured")
             
         client = Anthropic(api_key=api_key)
-        model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-sonnet-4-20250514"
+        model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-sonnet-4.5-20250929"
         
         # Build messages for Claude
         messages = []
