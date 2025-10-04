@@ -113,25 +113,5 @@ class MessageComment(Base):
         return f"<MessageComment {self.id}>"
 
 
-# Update existing models to add relationships
-
-from app.models.user import User
-from app.models.chat import ChatSession, ChatMessage
-
-# Add to User model
-if not hasattr(User, 'tags'):
-    User.tags = relationship("Tag", back_populates="user", cascade="all, delete-orphan")
-
-# Add to ChatSession model
-if not hasattr(ChatSession, 'starred'):
-    ChatSession.starred = Column(Boolean, default=False, nullable=False)
-    ChatSession.archived = Column(Boolean, default=False, nullable=False)
-    ChatSession.last_message_at = Column(DateTime, nullable=True)
-    ChatSession.tags = relationship("Tag", secondary=session_tags, back_populates="sessions")
-    ChatSession.shares = relationship("SessionShare", back_populates="session", cascade="all, delete-orphan")
-    ChatSession.collaborators = relationship("SessionCollaborator", back_populates="session", cascade="all, delete-orphan")
-
-# Add to ChatMessage model
-if not hasattr(ChatMessage, 'attachments'):
-    ChatMessage.attachments = relationship("Attachment", back_populates="message", cascade="all, delete-orphan")
-    ChatMessage.comments = relationship("MessageComment", back_populates="message", cascade="all, delete-orphan")
+# Note: Relationships are defined directly in chat.py and user.py models
+# No dynamic assignment needed

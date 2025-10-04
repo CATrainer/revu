@@ -40,9 +40,9 @@ class ChatSession(Base):
     # Relationships
     user = relationship("User", back_populates="chat_sessions")
     messages = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan")
-    # tags = relationship("Tag", secondary="session_tags", back_populates="sessions")  # TODO: Create if needed
-    # shares = relationship("SessionShare", back_populates="session", cascade="all, delete-orphan")  # TODO: Create if needed
-    # collaborators = relationship("SessionCollaborator", back_populates="session", cascade="all, delete-orphan")  # TODO: Create if needed
+    tags = relationship("Tag", secondary="session_tags", back_populates="sessions")
+    shares = relationship("SessionShare", back_populates="session", cascade="all, delete-orphan")
+    collaborators = relationship("SessionCollaborator", back_populates="session", cascade="all, delete-orphan")
     
     __table_args__ = (
         Index('idx_ai_chat_sessions_user', 'user_id'),
@@ -79,8 +79,8 @@ class ChatMessage(Base):
     # Relationships
     session = relationship("ChatSession", back_populates="messages")
     user = relationship("User")
-    # comments = relationship("MessageComment", back_populates="message", cascade="all, delete-orphan")  # TODO: Create if needed
-    # attachments = relationship("Attachment", back_populates="message", cascade="all, delete-orphan")  # TODO: Create if needed
+    comments = relationship("MessageComment", back_populates="message", cascade="all, delete-orphan")
+    attachments = relationship("Attachment", back_populates="message", cascade="all, delete-orphan")
     
     __table_args__ = (
         Index('idx_ai_chat_messages_session', 'session_id'),

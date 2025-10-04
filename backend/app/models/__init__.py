@@ -17,6 +17,14 @@ from app.models.youtube import (
     SyncLog,
 )
 from app.models.chat import ChatSession, ChatMessage
+from app.models.chat_enhancements import (
+    Tag,
+    Attachment,
+    SessionShare,
+    SessionCollaborator,
+    MessageComment,
+    session_tags,
+)
 
 __all__ = [
     "Organization",
@@ -38,4 +46,10 @@ __all__ = [
     "SyncLog",
     "ChatSession",
     "ChatMessage",
+    "Tag",
+    "Attachment",
+    "SessionShare",
+    "SessionCollaborator",
+    "MessageComment",
+    "session_tags",
 ]
