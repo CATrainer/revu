@@ -16,6 +16,8 @@ from app.models.youtube import (
     OAuthStateToken,
     SyncLog,
 )
+from app.models.chat import ChatSession, ChatMessage
+from app.models.tag import Tag
 
 __all__ = [
     "Organization",
@@ -35,4 +37,7 @@ __all__ = [
     "YouTubeComment",
     "OAuthStateToken",
     "SyncLog",
+    "ChatSession",
+    "ChatMessage",
+    "Tag",
 ]

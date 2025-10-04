@@ -212,7 +212,7 @@ async def _update_message_in_db(
         params = {"mid": message_id, "content": content, "status": status}
         
         if tokens is not None:
-            update_fields.append("tokens_used = :tokens")
+            update_fields.append("tokens = :tokens")
             params["tokens"] = tokens
         
         if model:
