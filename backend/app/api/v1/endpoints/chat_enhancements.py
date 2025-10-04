@@ -13,8 +13,8 @@ import io
 from app.core.database import get_async_session
 from app.core.security import get_current_user
 from app.models.user import User
-from app.models.chat import ChatSession, ChatMessage
-from app.models.chat_enhancements import Tag, Attachment, SessionShare, SessionCollaborator, MessageComment, session_tags
+from app.models.chat import ChatSession, ChatMessage, session_tags
+from app.models.chat_enhancements import Tag, Attachment, SessionShare, SessionCollaborator, MessageComment
 from pydantic import BaseModel, EmailStr, validator
 
 router = APIRouter()
