@@ -307,7 +307,7 @@ async def _generate_thread_intro(db: AsyncSession, user_id: UUID, session_id: UU
         })
         
         response = client.messages.create(
-            model="claude-sonnet-4.5-20250929",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=200,
             system=system_prompt,
             messages=messages,
@@ -637,7 +637,7 @@ async def generate_session_title(
             )
             
             response = client.messages.create(
-                model="claude-sonnet-4.5-20250929",
+                model="claude-sonnet-4-5-20250929",
                 max_tokens=60,
                 system=system_prompt,
                 messages=[{
@@ -846,7 +846,7 @@ async def send_message(
     # Legacy synchronous processing (fallback)
     api_key = os.getenv("CLAUDE_API_KEY", getattr(settings, "CLAUDE_API_KEY", None))
     client = Anthropic(api_key=api_key) if Anthropic and api_key else None
-    model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-sonnet-4.5-20250929"
+    model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-sonnet-4-5-20250929"
 
     async def _finalize(assistant_text: str, tokens: int, latency_ms: int, message_id: UUID):
         """Finalize the assistant message."""
