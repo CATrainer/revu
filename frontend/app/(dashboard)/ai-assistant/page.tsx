@@ -122,7 +122,7 @@ export default function AIAssistantPage() {
   const shouldAutoScrollSplitPaneRef = useRef(true);
 
   // Initialize async chat hooks
-  const { connectStream, disconnectStream, isStreamActive } = useChatStreaming();
+  const { connectStream, disconnectStream, disconnectAll, isStreamActive } = useChatStreaming();
   const { startMonitoring, stopMonitoring, isMonitoring } = useBackgroundStreamMonitor(
     (bgSessionId, messageId) => {
       // Handle background stream updates
@@ -223,6 +223,17 @@ export default function AIAssistantPage() {
     initializeApp();
     return () => { mounted = false; };
   }, []);
+
+  // Cleanup streams on unmount or session change
+  useEffect(() => {
+    return () => {
+      // Disconnect all SSE streams when component unmounts or session changes
+      disconnectAll();
+      if (abortController) {
+        abortController.abort();
+      }
+    };
+  }, [sessionId, disconnectAll]);
 
   // Poll for updates when session is streaming - REMOVED BAD DEPENDENCY
   useEffect(() => {
@@ -422,13 +433,14 @@ export default function AIAssistantPage() {
     
     isLoadingRef.current = true;
     
-    // Abort any ongoing streaming
+    // Abort any ongoing streaming and disconnect all SSE streams
     if (abortController) {
       abortController.abort();
       setAbortController(null);
     }
-    setIsLoading(false);
-    setIsGenerating(false);
+    disconnectAll(); // Disconnect all active SSE connections
+    setIsLoading(false); // Reset loading state
+    setIsGenerating(false); // Reset generating state
     
     try {
       setLoadingSessionId(id);
@@ -774,13 +786,15 @@ export default function AIAssistantPage() {
         if (initialMessage) {
           setMessages((prev) => {
             const userMsg = prev[prev.length - 1];
-            return [{
+            const assistantMsg: Message = {
               id: (Date.now() - 1).toString(),
-              role: 'assistant',
+              role: 'assistant' as const,
               content: initialMessage,
               timestamp: new Date(),
               status: 'sent',
-            }, userMsg];
+            };
+            // Maintain correct order: user message first, then assistant response
+            return [...prev.slice(0, -1), userMsg, assistantMsg];
           });
         }
         
@@ -1464,9 +1478,15 @@ export default function AIAssistantPage() {
                             </p>
                           )
                         ) : (
-                          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="text-sm font-medium">Thinking...</span>
+                          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border border-blue-200/50 dark:border-blue-800/50">
+                            <div className="relative">
+                              <Loader2 className="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400" />
+                              <div className="absolute inset-0 rounded-full bg-blue-500/20 dark:bg-blue-400/20 animate-ping" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">AI is thinking</span>
+                              <span className="text-xs text-blue-600/70 dark:text-blue-400/70">Analyzing your request...</span>
+                            </div>
                           </div>
                         )}
                       </div>
