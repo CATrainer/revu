@@ -17,7 +17,6 @@ from app.models.youtube import (
     SyncLog,
 )
 from app.models.chat import ChatSession, ChatMessage
-from app.models.tag import Tag
 
 __all__ = [
     "Organization",
@@ -39,5 +38,4 @@ __all__ = [
     "SyncLog",
     "ChatSession",
     "ChatMessage",
-    "Tag",
 ]
