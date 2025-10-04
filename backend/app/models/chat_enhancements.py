@@ -1,20 +1,12 @@
 """
 Chat Enhancement Models - Tags, Attachments, Shares, Collaborators, Comments
 """
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text, Table
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 import uuid
 from datetime import datetime
-
-# Association table for many-to-many relationship between sessions and tags
-session_tags = Table(
-    'session_tags',
-    Base.metadata,
-    Column('session_id', UUID(as_uuid=True), ForeignKey('ai_chat_sessions.id', ondelete='CASCADE'), primary_key=True),
-    Column('tag_id', UUID(as_uuid=True), ForeignKey('tags.id', ondelete='CASCADE'), primary_key=True)
-)
 
 class Tag(Base):
     """User-created tags for organizing conversations"""
@@ -29,7 +21,9 @@ class Tag(Base):
     
     # Relationships
     user = relationship("User", back_populates="tags")
-    sessions = relationship("ChatSession", secondary=session_tags, back_populates="tags")
+    # Note: sessions relationship uses string reference to avoid circular import
+    # The actual session_tags table is defined in chat.py
+    sessions = relationship("ChatSession", secondary="session_tags", back_populates="tags")
     
     def __repr__(self):
         return f"<Tag {self.name}>"

@@ -3,12 +3,20 @@ AI Chat models for chat sessions and messages
 """
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Text, DateTime, Boolean, Integer, ForeignKey, Index
+from sqlalchemy import Column, String, Text, DateTime, Boolean, Integer, ForeignKey, Index, Table
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from pgvector.sqlalchemy import Vector
 
 from app.core.database import Base
+
+# Association table for many-to-many relationship between sessions and tags
+session_tags = Table(
+    'session_tags',
+    Base.metadata,
+    Column('session_id', UUID(as_uuid=True), ForeignKey('ai_chat_sessions.id', ondelete='CASCADE'), primary_key=True),
+    Column('tag_id', UUID(as_uuid=True), ForeignKey('tags.id', ondelete='CASCADE'), primary_key=True)
+)
 
 
 class ChatSession(Base):
@@ -40,7 +48,7 @@ class ChatSession(Base):
     # Relationships
     user = relationship("User", back_populates="chat_sessions")
     messages = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan")
-    tags = relationship("Tag", secondary="session_tags", back_populates="sessions")
+    tags = relationship("Tag", secondary=session_tags, back_populates="sessions")
     shares = relationship("SessionShare", back_populates="session", cascade="all, delete-orphan")
     collaborators = relationship("SessionCollaborator", back_populates="session", cascade="all, delete-orphan")
     

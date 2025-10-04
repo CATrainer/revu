@@ -16,14 +16,13 @@ from app.models.youtube import (
     OAuthStateToken,
     SyncLog,
 )
-from app.models.chat import ChatSession, ChatMessage
+from app.models.chat import ChatSession, ChatMessage, session_tags
 from app.models.chat_enhancements import (
     Tag,
     Attachment,
     SessionShare,
     SessionCollaborator,
     MessageComment,
-    session_tags,
 )
 
 __all__ = [
