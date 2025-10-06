@@ -149,8 +149,22 @@ export default function AIAssistantPage() {
     try {
       if (!silent) setIsLoadingSessions(true);
       const response = await api.get('/chat/sessions?page=1&page_size=50');
-      console.log('[AI Chat] Loaded sessions:', response.data.sessions?.length || 0, 'sessions');
-      setSessions(response.data.sessions || []);
+      const fetchedSessions = response.data.sessions || [];
+      console.log('[AI Chat] Loaded sessions:', fetchedSessions.length, 'sessions');
+      
+      if (silent) {
+        // Silent refresh: merge with existing, preserving any optimistically added sessions
+        setSessions(prev => {
+          const fetchedIds = new Set(fetchedSessions.map((s: ChatSession) => s.id));
+          // Keep optimistically added sessions that aren't in the fetched list yet
+          const optimisticSessions = prev.filter(s => !fetchedIds.has(s.id));
+          // Combine: optimistic first, then fetched
+          return [...optimisticSessions, ...fetchedSessions];
+        });
+      } else {
+        // Full refresh: replace completely
+        setSessions(fetchedSessions);
+      }
     } catch (err) {
       console.error('[AI Chat] Failed to load sessions:', err);
       if (!silent) setError('Failed to load conversations');
@@ -405,10 +419,18 @@ export default function AIAssistantPage() {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
-        setSessions(prev => [newSession, ...prev]);
+        setSessions(prev => {
+          // Don't add if already exists
+          if (prev.some(s => s.id === sessionId)) {
+            return prev;
+          }
+          return [newSession, ...prev];
+        });
         
-        // Refresh in background to get accurate data
-        loadSessions(true).catch(err => console.error('[AI Chat] Background session refresh failed:', err));
+        // Refresh in background after a short delay to ensure backend has saved
+        setTimeout(() => {
+          loadSessions(true).catch(err => console.error('[AI Chat] Background session refresh failed:', err));
+        }, 1000);
       }
 
       // Increment message count
