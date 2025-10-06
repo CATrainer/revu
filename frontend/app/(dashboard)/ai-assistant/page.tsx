@@ -236,7 +236,7 @@ export default function AIAssistantPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="-mx-4 sm:-mx-6 md:-mx-8 -my-6 h-[calc(100vh-4rem)] flex bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Sidebar */}
       <div className="w-80 border-r border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm flex flex-col">
         <div className="p-4 border-b border-slate-200 dark:border-slate-800">
