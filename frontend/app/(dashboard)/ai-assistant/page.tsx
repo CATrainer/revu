@@ -233,10 +233,12 @@ export default function AIAssistantPage() {
     }
   };
 
-  const reconnectToStream = (sessionId: string, messageId: string) => {
+  const reconnectToStream = (sessionId: string, messageId: string, retryCount = 0) => {
     const token = localStorage.getItem('access_token');
     if (!token) return;
 
+    console.log(`[AI Chat] Connecting to stream (attempt ${retryCount + 1})...`);
+    
     const eventSource = new EventSource(
       `${api.defaults.baseURL}/chat/stream/${sessionId}?message_id=${messageId}&token=${encodeURIComponent(token)}`
     );
@@ -278,6 +280,7 @@ export default function AIAssistantPage() {
             flushChunks(messageId);
           }
           
+          console.log('[AI Chat] Stream completed successfully');
           setMessages(prev =>
             prev.map(msg =>
               msg.id === messageId
@@ -292,15 +295,41 @@ export default function AIAssistantPage() {
           
           // Refresh sessions to get updated timestamp
           loadSessions(true);
+        } else if (data.type === 'error') {
+          console.error('[AI Chat] Stream error:', data.error);
+          setError(data.error || 'Stream error occurred');
+          eventSource.close();
+          activeStreamRef.current = null;
+          setIsStreaming(false);
         }
       } catch (err) {
-        console.error('Stream parsing error:', err);
+        console.error('[AI Chat] Stream parsing error:', err);
       }
     };
 
-    eventSource.onerror = () => {
+    eventSource.onerror = (event) => {
+      console.error('[AI Chat] SSE connection error, retry count:', retryCount);
       eventSource.close();
       activeStreamRef.current = null;
+      
+      // Retry with exponential backoff (max 5 attempts)
+      if (retryCount < 5) {
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Max 10s
+        console.log(`[AI Chat] Retrying in ${delay}ms...`);
+        
+        setTimeout(() => {
+          // Check if message still needs streaming
+          reconnectToStream(sessionId, messageId, retryCount + 1);
+        }, delay);
+      } else {
+        console.error('[AI Chat] Max retry attempts reached');
+        setError('Connection lost. Please refresh the page.');
+        setIsStreaming(false);
+      }
+    };
+
+    eventSource.onopen = () => {
+      console.log('[AI Chat] SSE connection established');
     };
   };
 
@@ -402,89 +431,10 @@ export default function AIAssistantPage() {
       };
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Connect to SSE stream
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        throw new Error('Not authenticated');
+      // Connect to SSE stream with retry logic (sessionId is guaranteed to be string here)
+      if (sessionId) {
+        reconnectToStream(sessionId, assistantMessageId);
       }
-
-      const eventSource = new EventSource(
-        `${api.defaults.baseURL}/chat/stream/${sessionId}?message_id=${assistantMessageId}&token=${encodeURIComponent(token)}`
-      );
-
-      activeStreamRef.current = eventSource;
-
-      // Batch chunks using requestAnimationFrame for smoother rendering
-      const flushChunks = (messageId: string) => {
-        if (chunkBufferRef.current) {
-          const bufferedContent = chunkBufferRef.current;
-          chunkBufferRef.current = '';
-          
-          setMessages(prev =>
-            prev.map(msg =>
-              msg.id === messageId
-                ? { ...msg, content: msg.content + bufferedContent }
-                : msg
-            )
-          );
-        }
-        rafIdRef.current = null;
-      };
-
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-
-          if (data.type === 'chunk' && data.content) {
-            // Buffer chunks and update via RAF for 60fps smooth streaming
-            chunkBufferRef.current += data.content;
-            
-            if (!rafIdRef.current) {
-              rafIdRef.current = requestAnimationFrame(() => flushChunks(assistantMessageId));
-            }
-          } else if (data.type === 'complete') {
-            // Cancel any pending RAF and flush remaining chunks
-            if (rafIdRef.current) {
-              cancelAnimationFrame(rafIdRef.current);
-              rafIdRef.current = null;
-            }
-            if (chunkBufferRef.current) {
-              flushChunks(assistantMessageId);
-            }
-            
-            setMessages(prev =>
-              prev.map(msg =>
-                msg.id === assistantMessageId
-                  ? { ...msg, streaming: false, content: data.content || msg.content }
-                  : msg
-              )
-            );
-            eventSource.close();
-            activeStreamRef.current = null;
-            setIsStreaming(false);
-            chunkBufferRef.current = '';
-            
-            // Refresh sessions to update timestamp and title
-            loadSessions(true);
-          } else if (data.type === 'error') {
-            throw new Error(data.error || 'Streaming error');
-          }
-        } catch (err) {
-          console.error('Stream parsing error:', err);
-          setError('Failed to parse response');
-          eventSource.close();
-          activeStreamRef.current = null;
-          setIsStreaming(false);
-        }
-      };
-
-      eventSource.onerror = () => {
-        console.error('SSE connection error');
-        setError('Connection lost');
-        eventSource.close();
-        activeStreamRef.current = null;
-        setIsStreaming(false);
-      };
     } catch (err: any) {
       console.error('Error sending message:', err);
       setError(err.message || 'Failed to send message');

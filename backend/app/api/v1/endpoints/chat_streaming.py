@@ -84,7 +84,7 @@ async def stream_chat_session(
     channel = f"chat:updates:{session_id}"
     
     async def event_generator():
-        """Generate SSE events from Redis pub/sub."""
+        """Generate SSE events from Redis pub/sub with keep-alive."""
         try:
             # Subscribe to updates
             pubsub.subscribe(channel)
