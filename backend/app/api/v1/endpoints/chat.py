@@ -467,11 +467,11 @@ async def list_sessions(
         ),
         {"uid": str(current_user.id), "limit": page_size, "offset": offset},
     )
-    items = [
+    sessions = [
         {k: _serialize_value(v) for k, v in dict(r._mapping).items()}
         for r in res.fetchall()
     ]
-    return {"items": items, "page": page, "page_size": page_size}
+    return {"sessions": sessions, "page": page, "page_size": page_size}
 
 
 @router.get("/messages/{session_id}")
