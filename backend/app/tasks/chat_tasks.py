@@ -57,12 +57,11 @@ def generate_chat_response(
             raise ValueError("CLAUDE_API_KEY not configured")
             
         client = Anthropic(api_key=api_key)
-        # Use Claude 3.5 Haiku for 3x faster responses (upgrade to Sonnet with CLAUDE_MODEL env var)
-        model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-3-5-haiku-20241022"
+        model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-sonnet-4-5-20250929"
         
         # Build messages for Claude
         messages = []
-        for msg in history[-10:]:  # Last 10 messages for context (reduced from 20 for speed)
+        for msg in history[-20:]:  # Last 20 messages for context
             if msg.get("role") in ["user", "assistant"]:
                 messages.append({
                     "role": msg["role"],
@@ -81,7 +80,7 @@ def generate_chat_response(
         
         with client.messages.stream(
             model=model,
-            max_tokens=int(os.getenv("CLAUDE_MAX_TOKENS", "600")),
+            max_tokens=int(os.getenv("CLAUDE_MAX_TOKENS", "2048")),
             temperature=0.7,
             system=system_prompt,
             messages=messages,
