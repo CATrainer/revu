@@ -1,16 +1,16 @@
-"""Interaction Management System - Foundation
+"""Add Interaction Management System - Views, Interactions, Fans, Threads
 
-Revision ID: 001_interactions
-Revises: 
-Create Date: 2025-01-07 00:28:00
+Revision ID: 20251007_0050
+Revises: 20251001_2127
+Create Date: 2025-10-07 00:50:00
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 
 # revision identifiers
-revision = '001_interactions'
-down_revision = None
+revision = '20251007_0050'
+down_revision = '20251001_2127'
 branch_labels = None
 depends_on = None
 
@@ -20,9 +20,9 @@ def upgrade():
     op.create_table(
         'interactions',
         sa.Column('id', UUID(as_uuid=True), primary_key=True, server_default=sa.text('gen_random_uuid()')),
-        sa.Column('platform', sa.String(32), nullable=False),  # instagram, youtube, tiktok, twitter
-        sa.Column('type', sa.String(16), nullable=False),  # comment, dm, mention
-        sa.Column('platform_id', sa.String(255), nullable=False, unique=True),  # External platform ID
+        sa.Column('platform', sa.String(32), nullable=False),
+        sa.Column('type', sa.String(16), nullable=False),
+        sa.Column('platform_id', sa.String(255), nullable=False, unique=True),
         
         # Content
         sa.Column('content', sa.Text, nullable=False),
@@ -37,16 +37,16 @@ def upgrade():
         sa.Column('author_is_verified', sa.Boolean, default=False),
         
         # Context
-        sa.Column('parent_content_id', sa.String(255)),  # Video/Post ID
+        sa.Column('parent_content_id', sa.String(255)),
         sa.Column('parent_content_title', sa.Text),
         sa.Column('parent_content_url', sa.Text),
         sa.Column('is_reply', sa.Boolean, default=False),
         sa.Column('reply_to_id', UUID(as_uuid=True)),
         
         # Enriched data (AI-powered)
-        sa.Column('sentiment', sa.String(16)),  # positive, negative, neutral
-        sa.Column('priority_score', sa.Integer, default=50),  # 1-100
-        sa.Column('categories', ARRAY(sa.String(50))),  # question, collab, sales, spam
+        sa.Column('sentiment', sa.String(16)),
+        sa.Column('priority_score', sa.Integer, default=50),
+        sa.Column('categories', ARRAY(sa.String(50))),
         sa.Column('detected_keywords', ARRAY(sa.String(100))),
         sa.Column('language', sa.String(10)),
         
@@ -60,7 +60,7 @@ def upgrade():
         
         # Metadata
         sa.Column('tags', ARRAY(sa.String(50))),
-        sa.Column('status', sa.String(20), default='unread'),  # unread, read, replied, archived, spam
+        sa.Column('status', sa.String(20), default='unread'),
         sa.Column('assigned_to_user_id', UUID(as_uuid=True)),
         sa.Column('internal_notes', sa.Text),
         
@@ -125,7 +125,7 @@ def upgrade():
         sa.Column('description', sa.Text),
         sa.Column('icon', sa.String(50), default='📋'),
         sa.Column('color', sa.String(20), default='#3b82f6'),
-        sa.Column('type', sa.String(20), default='custom'),  # smart, custom, workflow
+        sa.Column('type', sa.String(20), default='custom'),
         
         # Filter configuration
         sa.Column('filters', JSONB, nullable=False, server_default='{}'),
@@ -137,7 +137,7 @@ def upgrade():
         sa.Column('is_pinned', sa.Boolean, default=False),
         sa.Column('is_shared', sa.Boolean, default=False),
         sa.Column('is_template', sa.Boolean, default=False),
-        sa.Column('is_system', sa.Boolean, default=False),  # Built-in views
+        sa.Column('is_system', sa.Boolean, default=False),
         sa.Column('order_index', sa.Integer, default=0),
         
         # Connected workflows
@@ -169,14 +169,14 @@ def upgrade():
         sa.Column('avatar_url', sa.Text),
         sa.Column('profile_url', sa.Text),
         sa.Column('bio', sa.Text),
-        sa.Column('platforms', JSONB),  # {instagram: @user, youtube: @user}
+        sa.Column('platforms', JSONB),
         
         # Engagement metrics
         sa.Column('total_interactions', sa.Integer, default=0),
         sa.Column('first_interaction_at', sa.DateTime),
         sa.Column('last_interaction_at', sa.DateTime),
         sa.Column('avg_sentiment', sa.String(16)),
-        sa.Column('engagement_score', sa.Integer, default=0),  # 1-100
+        sa.Column('engagement_score', sa.Integer, default=0),
         
         # Classification
         sa.Column('is_superfan', sa.Boolean, default=False),
@@ -208,47 +208,12 @@ def upgrade():
     op.create_index('idx_fans_superfan', 'fans', ['user_id', 'is_superfan'])
     op.create_index('idx_fans_engagement', 'fans', ['user_id', 'engagement_score'])
     
-    # ==================== RESPONSE TEMPLATES ====================
-    op.create_table(
-        'response_templates',
-        sa.Column('id', UUID(as_uuid=True), primary_key=True, server_default=sa.text('gen_random_uuid()')),
-        sa.Column('name', sa.String(255), nullable=False),
-        sa.Column('shortcut', sa.String(50)),  # /thanks, /merch
-        sa.Column('content', sa.Text, nullable=False),
-        sa.Column('category', sa.String(50)),  # greeting, faq, sales, collab
-        
-        # Variables
-        sa.Column('variables', ARRAY(sa.String(50))),  # [name, product, link]
-        sa.Column('has_conditionals', sa.Boolean, default=False),
-        
-        # Usage tracking
-        sa.Column('use_count', sa.Integer, default=0),
-        sa.Column('last_used_at', sa.DateTime),
-        sa.Column('conversion_count', sa.Integer, default=0),  # If leads to sale
-        
-        # Metadata
-        sa.Column('is_shared', sa.Boolean, default=False),
-        sa.Column('tags', ARRAY(sa.String(50))),
-        
-        # Foreign keys
-        sa.Column('user_id', UUID(as_uuid=True), sa.ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
-        sa.Column('organization_id', UUID(as_uuid=True), sa.ForeignKey('organizations.id', ondelete='CASCADE')),
-        
-        # Timestamps
-        sa.Column('created_at', sa.DateTime, server_default=sa.func.now()),
-        sa.Column('updated_at', sa.DateTime, server_default=sa.func.now(), onupdate=sa.func.now()),
-    )
-    
-    op.create_index('idx_templates_user', 'response_templates', ['user_id'])
-    op.create_index('idx_templates_shortcut', 'response_templates', ['user_id', 'shortcut'])
-    op.create_index('idx_templates_category', 'response_templates', ['category'])
-    
     # ==================== INTERACTION ANALYTICS ====================
     op.create_table(
         'interaction_analytics',
         sa.Column('id', UUID(as_uuid=True), primary_key=True, server_default=sa.text('gen_random_uuid()')),
         sa.Column('date', sa.Date, nullable=False),
-        sa.Column('hour', sa.Integer),  # 0-23 for hourly metrics
+        sa.Column('hour', sa.Integer),
         
         # Counts
         sa.Column('total_interactions', sa.Integer, default=0),
@@ -272,7 +237,7 @@ def upgrade():
         
         # Performance
         sa.Column('avg_response_time_minutes', sa.Integer),
-        sa.Column('response_rate', sa.Numeric(5, 2)),  # Percentage
+        sa.Column('response_rate', sa.Numeric(5, 2)),
         
         # Revenue
         sa.Column('sales_count', sa.Integer, default=0),
@@ -294,12 +259,14 @@ def upgrade():
     op.create_foreign_key('fk_interactions_thread', 'interactions', 'interaction_threads', ['thread_id'], ['id'], ondelete='SET NULL')
     op.create_foreign_key('fk_interactions_fan', 'interactions', 'fans', ['fan_id'], ['id'], ondelete='SET NULL')
     op.create_foreign_key('fk_threads_fan', 'interaction_threads', 'fans', ['fan_id'], ['id'], ondelete='SET NULL')
+    
+    print("✅ Interaction Management System tables created successfully!")
 
 
 def downgrade():
     op.drop_table('interaction_analytics')
-    op.drop_table('response_templates')
     op.drop_table('fans')
     op.drop_table('interaction_views')
     op.drop_table('interaction_threads')
     op.drop_table('interactions')
+    print("✅ Interaction Management System tables dropped")
