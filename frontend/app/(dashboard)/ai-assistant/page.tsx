@@ -78,12 +78,14 @@ export default function AIAssistantPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [messageCount, setMessageCount] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const activeStreamRef = useRef<EventSource | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const chunkBufferRef = useRef<string>('');
   const rafIdRef = useRef<number | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-scroll to bottom with smooth behavior
   useEffect(() => {
@@ -103,6 +105,7 @@ export default function AIAssistantPage() {
   useEffect(() => {
     return () => {
       cleanupStreams();
+      stopPolling();
     };
   }, []);
 
@@ -117,16 +120,16 @@ export default function AIAssistantPage() {
     }
   };
 
-  const loadSessions = async () => {
+  const loadSessions = async (silent = false) => {
     try {
-      setIsLoadingSessions(true);
+      if (!silent) setIsLoadingSessions(true);
       const response = await api.get('/chat/sessions?page=1&page_size=50');
       setSessions(response.data.sessions || []);
     } catch (err) {
       console.error('Failed to load sessions:', err);
-      setError('Failed to load conversations');
+      if (!silent) setError('Failed to load conversations');
     } finally {
-      setIsLoadingSessions(false);
+      if (!silent) setIsLoadingSessions(false);
     }
   };
 
@@ -134,6 +137,7 @@ export default function AIAssistantPage() {
     if (currentSessionId === sessionId) return; // Already loaded
     
     cleanupStreams();
+    stopPolling();
     setIsLoadingMessages(true);
     setCurrentSessionId(sessionId);
     setMessages([]);
@@ -146,8 +150,19 @@ export default function AIAssistantPage() {
         role: msg.role,
         content: msg.content,
         timestamp: new Date(msg.created_at),
+        streaming: msg.status === 'generating',
       }));
       setMessages(loadedMessages);
+      setMessageCount(loadedMessages.filter(m => m.role === 'user').length);
+      
+      // Check if there's an active generation for this session
+      const hasGenerating = loadedMessages.some(m => m.streaming);
+      if (hasGenerating) {
+        const generatingMsg = loadedMessages.find(m => m.streaming);
+        if (generatingMsg) {
+          reconnectToStream(sessionId, generatingMsg.id);
+        }
+      }
     } catch (err) {
       console.error('Failed to load messages:', err);
       setError('Failed to load chat history');
@@ -158,9 +173,108 @@ export default function AIAssistantPage() {
 
   const createNewSession = async () => {
     cleanupStreams();
+    stopPolling();
     setCurrentSessionId(null);
     setMessages([]);
+    setMessageCount(0);
     setError(null);
+  };
+
+  const autoGenerateTitle = async (sessionId: string, userMessage: string) => {
+    try {
+      const response = await api.post(`/chat/sessions/${sessionId}/generate-title`);
+      const newTitle = response.data.title;
+      
+      // Update sessions list
+      setSessions(prev => prev.map(s => 
+        s.id === sessionId ? { ...s, title: newTitle } : s
+      ));
+    } catch (err) {
+      console.error('Failed to auto-generate title:', err);
+      // Fallback: use first 40 chars of user message
+      const fallbackTitle = userMessage.slice(0, 40).trim() + (userMessage.length > 40 ? '...' : '');
+      setSessions(prev => prev.map(s => 
+        s.id === sessionId ? { ...s, title: fallbackTitle } : s
+      ));
+    }
+  };
+
+  const reconnectToStream = (sessionId: string, messageId: string) => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+
+    const eventSource = new EventSource(
+      `${api.defaults.baseURL}/chat/stream/${sessionId}?message_id=${messageId}&token=${encodeURIComponent(token)}`
+    );
+
+    activeStreamRef.current = eventSource;
+
+    const flushChunks = (msgId: string) => {
+      if (chunkBufferRef.current) {
+        const bufferedContent = chunkBufferRef.current;
+        chunkBufferRef.current = '';
+        
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === msgId
+              ? { ...msg, content: msg.content + bufferedContent }
+              : msg
+          )
+        );
+      }
+      rafIdRef.current = null;
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'chunk' && data.content) {
+          chunkBufferRef.current += data.content;
+          
+          if (!rafIdRef.current) {
+            rafIdRef.current = requestAnimationFrame(() => flushChunks(messageId));
+          }
+        } else if (data.type === 'complete') {
+          if (rafIdRef.current) {
+            cancelAnimationFrame(rafIdRef.current);
+            rafIdRef.current = null;
+          }
+          if (chunkBufferRef.current) {
+            flushChunks(messageId);
+          }
+          
+          setMessages(prev =>
+            prev.map(msg =>
+              msg.id === messageId
+                ? { ...msg, streaming: false, content: data.content || msg.content }
+                : msg
+            )
+          );
+          eventSource.close();
+          activeStreamRef.current = null;
+          setIsStreaming(false);
+          chunkBufferRef.current = '';
+          
+          // Refresh sessions to get updated timestamp
+          loadSessions(true);
+        }
+      } catch (err) {
+        console.error('Stream parsing error:', err);
+      }
+    };
+
+    eventSource.onerror = () => {
+      eventSource.close();
+      activeStreamRef.current = null;
+    };
+  };
+
+  const stopPolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
   };
 
   const deleteSession = async (sessionId: string) => {
@@ -195,6 +309,8 @@ export default function AIAssistantPage() {
     try {
       // Create session if needed
       let sessionId = currentSessionId;
+      const isNewSession = !sessionId;
+      
       if (!sessionId) {
         const createResponse = await api.post('/chat/sessions', {
           title: 'New Chat',
@@ -202,8 +318,12 @@ export default function AIAssistantPage() {
         });
         sessionId = createResponse.data.session_id;
         setCurrentSessionId(sessionId);
-        await loadSessions(); // Refresh sidebar
+        await loadSessions(true); // Refresh sidebar silently
       }
+
+      // Increment message count
+      const newMessageCount = messageCount + 1;
+      setMessageCount(newMessageCount);
 
       // Send message
       const response = await api.post('/chat/messages', {
@@ -212,6 +332,14 @@ export default function AIAssistantPage() {
       });
 
       const { message_id: assistantMessageId } = response.data;
+
+      // Auto-generate title after first message OR update for first 5 messages
+      if ((newMessageCount === 1 || newMessageCount <= 5) && sessionId) {
+        // Run in background, don't wait
+        autoGenerateTitle(sessionId, userMessage.content).catch(err => 
+          console.error('Title generation failed:', err)
+        );
+      }
 
       // Create placeholder for assistant message
       const assistantMessage: Message = {
@@ -284,6 +412,9 @@ export default function AIAssistantPage() {
             activeStreamRef.current = null;
             setIsStreaming(false);
             chunkBufferRef.current = '';
+            
+            // Refresh sessions to update timestamp and title
+            loadSessions(true);
           } else if (data.type === 'error') {
             throw new Error(data.error || 'Streaming error');
           }
