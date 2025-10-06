@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { Brain, Send, Loader2, AlertCircle, Plus, MessageSquare, Trash2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -25,6 +25,49 @@ interface ChatSession {
   updated_at: string;
 }
 
+// Memoized markdown component for better performance
+const MarkdownContent = memo(({ content }: { content: string }) => (
+  <div className="prose prose-sm dark:prose-invert max-w-none">
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        code({ node, inline, className, children, ...props }: any) {
+          const match = /language-(\w+)/.exec(className || '');
+          return !inline && match ? (
+            <SyntaxHighlighter
+              style={vscDarkPlus}
+              language={match[1]}
+              PreTag="div"
+              {...props}
+            >
+              {String(children).replace(/\n$/, '')}
+            </SyntaxHighlighter>
+          ) : (
+            <code className={className} {...props}>
+              {children}
+            </code>
+          );
+        },
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  </div>
+));
+MarkdownContent.displayName = 'MarkdownContent';
+
+// Animated typing indicator
+const TypingIndicator = () => (
+  <div className="flex items-center gap-2 py-2">
+    <div className="flex gap-1">
+      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+    </div>
+    <span className="text-xs text-blue-600 dark:text-blue-400 font-medium animate-pulse">AI is typing...</span>
+  </div>
+);
+
 export default function AIAssistantPage() {
   // Core state - simplified
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -39,11 +82,17 @@ export default function AIAssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const activeStreamRef = useRef<EventSource | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const chunkBufferRef = useRef<string>('');
+  const rafIdRef = useRef<number | null>(null);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom with smooth behavior
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    // Use a slight delay to ensure DOM has updated
+    const timeoutId = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 50);
+    return () => clearTimeout(timeoutId);
+  }, [messages.length]); // Only scroll when message count changes, not on every update
 
   // Load sessions on mount
   useEffect(() => {
@@ -186,19 +235,44 @@ export default function AIAssistantPage() {
 
       activeStreamRef.current = eventSource;
 
+      // Batch chunks using requestAnimationFrame for smoother rendering
+      const flushChunks = (messageId: string) => {
+        if (chunkBufferRef.current) {
+          const bufferedContent = chunkBufferRef.current;
+          chunkBufferRef.current = '';
+          
+          setMessages(prev =>
+            prev.map(msg =>
+              msg.id === messageId
+                ? { ...msg, content: msg.content + bufferedContent }
+                : msg
+            )
+          );
+        }
+        rafIdRef.current = null;
+      };
+
       eventSource.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
 
           if (data.type === 'chunk' && data.content) {
-            setMessages(prev =>
-              prev.map(msg =>
-                msg.id === assistantMessageId
-                  ? { ...msg, content: msg.content + data.content }
-                  : msg
-              )
-            );
+            // Buffer chunks and update via RAF for 60fps smooth streaming
+            chunkBufferRef.current += data.content;
+            
+            if (!rafIdRef.current) {
+              rafIdRef.current = requestAnimationFrame(() => flushChunks(assistantMessageId));
+            }
           } else if (data.type === 'complete') {
+            // Cancel any pending RAF and flush remaining chunks
+            if (rafIdRef.current) {
+              cancelAnimationFrame(rafIdRef.current);
+              rafIdRef.current = null;
+            }
+            if (chunkBufferRef.current) {
+              flushChunks(assistantMessageId);
+            }
+            
             setMessages(prev =>
               prev.map(msg =>
                 msg.id === assistantMessageId
@@ -209,6 +283,7 @@ export default function AIAssistantPage() {
             eventSource.close();
             activeStreamRef.current = null;
             setIsStreaming(false);
+            chunkBufferRef.current = '';
           } else if (data.type === 'error') {
             throw new Error(data.error || 'Streaming error');
           }
@@ -357,61 +432,39 @@ export default function AIAssistantPage() {
                 <div
                   key={message.id}
                   className={cn(
-                    'flex gap-4',
+                    'flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300',
                     message.role === 'user' ? 'justify-end' : 'justify-start'
                   )}
                 >
                   {message.role === 'assistant' && (
-                    <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
                       <Brain className="h-5 w-5 text-white" />
                     </div>
                   )}
                   <div
                     className={cn(
-                      'max-w-[80%] rounded-2xl px-5 py-3',
+                      'max-w-[80%] rounded-2xl px-5 py-3 shadow-sm transition-all duration-200',
                       message.role === 'user'
-                        ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white'
+                        ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-blue-500/20'
                         : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white'
                     )}
                   >
                     {message.content ? (
                       message.role === 'assistant' ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
-                            components={{
-                              code({ node, inline, className, children, ...props }: any) {
-                                const match = /language-(\w+)/.exec(className || '');
-                                return !inline && match ? (
-                                  <SyntaxHighlighter
-                                    style={vscDarkPlus}
-                                    language={match[1]}
-                                    PreTag="div"
-                                    {...props}
-                                  >
-                                    {String(children).replace(/\n$/, '')}
-                                  </SyntaxHighlighter>
-                                ) : (
-                                  <code className={className} {...props}>
-                                    {children}
-                                  </code>
-                                );
-                              },
-                            }}
-                          >
-                            {message.content}
-                          </ReactMarkdown>
-                        </div>
+                        <>
+                          <MarkdownContent content={message.content} />
+                          {message.streaming && (
+                            <div className="mt-2 flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+                              <div className="w-1 h-4 bg-blue-500 animate-pulse rounded" />
+                              <span className="animate-pulse">streaming...</span>
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
                       )
                     ) : (
-                      <div className="flex items-center gap-3">
-                        <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-                        <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                          AI is thinking...
-                        </span>
-                      </div>
+                      <TypingIndicator />
                     )}
                   </div>
                 </div>
@@ -457,12 +510,15 @@ export default function AIAssistantPage() {
               <Button
                 type="submit"
                 disabled={!input.trim() || isStreaming}
-                className="h-[60px] px-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
+                className={cn(
+                  "h-[60px] px-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 transition-all duration-200 transform active:scale-95",
+                  isStreaming && "animate-pulse"
+                )}
               >
                 {isStreaming ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <Send className="h-5 w-5" />
+                  <Send className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
                 )}
               </Button>
             </div>
