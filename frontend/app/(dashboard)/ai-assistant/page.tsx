@@ -124,9 +124,10 @@ export default function AIAssistantPage() {
     try {
       if (!silent) setIsLoadingSessions(true);
       const response = await api.get('/chat/sessions?page=1&page_size=50');
+      console.log('[AI Chat] Loaded sessions:', response.data.sessions?.length || 0, 'sessions');
       setSessions(response.data.sessions || []);
     } catch (err) {
-      console.error('Failed to load sessions:', err);
+      console.error('[AI Chat] Failed to load sessions:', err);
       if (!silent) setError('Failed to load conversations');
     } finally {
       if (!silent) setIsLoadingSessions(false);
@@ -136,6 +137,7 @@ export default function AIAssistantPage() {
   const loadSession = async (sessionId: string) => {
     if (currentSessionId === sessionId) return; // Already loaded
     
+    console.log('[AI Chat] Loading session:', sessionId);
     cleanupStreams();
     stopPolling();
     setIsLoadingMessages(true);
@@ -145,26 +147,30 @@ export default function AIAssistantPage() {
 
     try {
       const response = await api.get(`/chat/messages/${sessionId}`);
+      console.log('[AI Chat] Session loaded, message count:', response.data.messages?.length || 0);
       const loadedMessages: Message[] = (response.data.messages || []).map((msg: any) => ({
         id: msg.id,
         role: msg.role,
         content: msg.content,
         timestamp: new Date(msg.created_at),
-        streaming: msg.status === 'generating',
+        streaming: msg.status === 'generating' || msg.status === 'queued',
       }));
       setMessages(loadedMessages);
       setMessageCount(loadedMessages.filter(m => m.role === 'user').length);
+      console.log('[AI Chat] Messages set, user message count:', loadedMessages.filter(m => m.role === 'user').length);
       
       // Check if there's an active generation for this session
       const hasGenerating = loadedMessages.some(m => m.streaming);
       if (hasGenerating) {
         const generatingMsg = loadedMessages.find(m => m.streaming);
         if (generatingMsg) {
+          console.log('[AI Chat] Reconnecting to active stream for message:', generatingMsg.id);
+          setIsStreaming(true);
           reconnectToStream(sessionId, generatingMsg.id);
         }
       }
     } catch (err) {
-      console.error('Failed to load messages:', err);
+      console.error('[AI Chat] Failed to load messages:', err);
       setError('Failed to load chat history');
     } finally {
       setIsLoadingMessages(false);
@@ -312,11 +318,13 @@ export default function AIAssistantPage() {
       const isNewSession = !sessionId;
       
       if (!sessionId) {
+        console.log('[AI Chat] Creating new session...');
         const createResponse = await api.post('/chat/sessions', {
           title: 'New Chat',
           mode: 'general',
         });
         sessionId = createResponse.data.session_id;
+        console.log('[AI Chat] New session created:', sessionId);
         setCurrentSessionId(sessionId);
         await loadSessions(true); // Refresh sidebar silently
       }
@@ -326,12 +334,14 @@ export default function AIAssistantPage() {
       setMessageCount(newMessageCount);
 
       // Send message
+      console.log('[AI Chat] Sending message to session:', sessionId);
       const response = await api.post('/chat/messages', {
         session_id: sessionId,
         content: userMessage.content,
       });
 
       const { message_id: assistantMessageId } = response.data;
+      console.log('[AI Chat] Message sent, assistant message ID:', assistantMessageId);
 
       // Auto-generate title after first message OR update for first 5 messages
       if ((newMessageCount === 1 || newMessageCount <= 5) && sessionId) {

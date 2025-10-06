@@ -498,7 +498,7 @@ async def get_messages(
     offset = (page - 1) * page_size
     res = await db.execute(
         text(
-            """SELECT id, role, content, tokens, latency_ms, created_at FROM ai_chat_messages
+            """SELECT id, role, content, tokens, latency_ms, status, created_at FROM ai_chat_messages
             WHERE session_id=:sid ORDER BY created_at ASC LIMIT :limit OFFSET :offset"""
         ),
         {"sid": str(session_id), "limit": page_size, "offset": offset},
