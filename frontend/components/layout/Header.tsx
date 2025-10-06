@@ -72,18 +72,24 @@ export function Header({ onMenuClick }: HeaderProps) {
   }, [alertHistory.length]);
 
   useEffect(() => {
-  const fetchStatus = async () => {
+    // System status polling disabled - endpoint not implemented yet
+    // TODO: Re-enable when /api/v1/system/status endpoint is created
+    /*
+    const fetchStatus = async () => {
       try {
-    const res = await fetch('/api/v1/system/status');
+        const res = await fetch('/api/v1/system/status');
         if (res.ok) {
           const data = await res.json();
           setSystemStatus({ status: data.status, paused_until: data.paused_until, test_mode: !!data.test_mode, auto_pause_on_spike: !!data.auto_pause_on_spike });
         }
-      } catch {}
+      } catch (err) {
+        console.debug('[Header] System status check failed');
+      }
     };
     fetchStatus();
-  const id = setInterval(fetchStatus, 15000);
-  return () => { clearInterval(id); };
+    const id = setInterval(fetchStatus, 15000);
+    return () => { clearInterval(id); };
+    */
   }, []);
 
   const pauseAll = async (minutes = 60) => {

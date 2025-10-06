@@ -96,10 +96,35 @@ export default function AIAssistantPage() {
     return () => clearTimeout(timeoutId);
   }, [messages.length]); // Only scroll when message count changes, not on every update
 
-  // Load sessions on mount
+  // Load sessions on mount and restore last active session
   useEffect(() => {
-    loadSessions();
+    const initializePage = async () => {
+      await loadSessions();
+      
+      // Try to restore last active session from localStorage
+      const lastSessionId = localStorage.getItem('ai_chat_last_session_id');
+      if (lastSessionId) {
+        console.log('[AI Chat] Restoring last session:', lastSessionId);
+        // Small delay to ensure sessions are loaded
+        setTimeout(() => {
+          loadSession(lastSessionId).catch(err => {
+            console.error('[AI Chat] Failed to restore session:', err);
+            localStorage.removeItem('ai_chat_last_session_id');
+          });
+        }, 100);
+      }
+    };
+    
+    initializePage();
   }, []);
+
+  // Save current session ID to localStorage whenever it changes
+  useEffect(() => {
+    if (currentSessionId) {
+      localStorage.setItem('ai_chat_last_session_id', currentSessionId);
+      console.log('[AI Chat] Saved session to localStorage:', currentSessionId);
+    }
+  }, [currentSessionId]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -178,12 +203,15 @@ export default function AIAssistantPage() {
   };
 
   const createNewSession = async () => {
+    console.log('[AI Chat] Creating new blank session');
     cleanupStreams();
     stopPolling();
     setCurrentSessionId(null);
     setMessages([]);
     setMessageCount(0);
     setError(null);
+    // Clear localStorage so we don't try to restore this
+    localStorage.removeItem('ai_chat_last_session_id');
   };
 
   const autoGenerateTitle = async (sessionId: string, userMessage: string) => {
@@ -285,9 +313,11 @@ export default function AIAssistantPage() {
 
   const deleteSession = async (sessionId: string) => {
     try {
+      console.log('[AI Chat] Deleting session:', sessionId);
       await api.delete(`/chat/sessions/${sessionId}`);
       setSessions(sessions.filter(s => s.id !== sessionId));
       if (currentSessionId === sessionId) {
+        localStorage.removeItem('ai_chat_last_session_id');
         createNewSession();
       }
     } catch (err) {
@@ -326,7 +356,18 @@ export default function AIAssistantPage() {
         sessionId = createResponse.data.session_id;
         console.log('[AI Chat] New session created:', sessionId);
         setCurrentSessionId(sessionId);
-        await loadSessions(true); // Refresh sidebar silently
+        
+        // Add new session to the list immediately for better UX
+        const newSession: ChatSession = {
+          id: sessionId as string,
+          title: 'New Chat',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        setSessions(prev => [newSession, ...prev]);
+        
+        // Refresh in background to get accurate data
+        loadSessions(true).catch(err => console.error('[AI Chat] Background session refresh failed:', err));
       }
 
       // Increment message count
