@@ -800,9 +800,9 @@ async def send_message(
     if rag_context:
         system_prompt += rag_context
 
-    # Build conversation history
+    # Build conversation history (reduced from 20 to 10 for faster responses)
     history_res = await db.execute(
-        text("SELECT role, content FROM ai_chat_messages WHERE session_id=:sid ORDER BY created_at DESC LIMIT 20"),
+        text("SELECT role, content FROM ai_chat_messages WHERE session_id=:sid ORDER BY created_at DESC LIMIT 10"),
         {"sid": str(session_id)},
     )
     history = [dict(r._mapping) for r in history_res.fetchall()][::-1]
@@ -846,7 +846,8 @@ async def send_message(
     # Legacy synchronous processing (fallback)
     api_key = os.getenv("CLAUDE_API_KEY", getattr(settings, "CLAUDE_API_KEY", None))
     client = Anthropic(api_key=api_key) if Anthropic and api_key else None
-    model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-sonnet-4-5-20250929"
+    # Use Claude 3.5 Haiku for 3x faster responses (upgrade to Sonnet with CLAUDE_MODEL env var)
+    model = getattr(settings, "CLAUDE_MODEL", None) or os.getenv("CLAUDE_MODEL") or "claude-3-5-haiku-20241022"
 
     async def _finalize(assistant_text: str, tokens: int, latency_ms: int, message_id: UUID):
         """Finalize the assistant message."""
@@ -882,14 +883,14 @@ async def send_message(
                 if performance_context:
                     system_prompt += performance_context
                 
-                # Add RAG context (semantic search for relevant examples)
-                rag_context = await get_rag_context_for_chat(current_user.id, content, db, max_examples=3)
+                # Add RAG context (semantic search for relevant examples) - reduced to 2 for speed
+                rag_context = await get_rag_context_for_chat(current_user.id, content, db, max_examples=2)
                 if rag_context:
                     system_prompt += rag_context
                 
                 response = client.messages.create(
                     model=model,
-                    max_tokens=int(os.getenv("CLAUDE_MAX_TOKENS", "1024")),
+                    max_tokens=int(os.getenv("CLAUDE_MAX_TOKENS", "600")),
                     system=system_prompt,
                     messages=messages,
                     temperature=0.7,
@@ -944,14 +945,14 @@ async def send_message(
                 if performance_context:
                     system_prompt += performance_context
                 
-                # Add RAG context (semantic search for relevant examples)
-                rag_context = await get_rag_context_for_chat(current_user.id, content, db, max_examples=3)
+                # Add RAG context (semantic search for relevant examples) - reduced to 2 for speed
+                rag_context = await get_rag_context_for_chat(current_user.id, content, db, max_examples=2)
                 if rag_context:
                     system_prompt += rag_context
                 
                 with client.messages.stream(
                     model=model,
-                    max_tokens=int(os.getenv("CLAUDE_MAX_TOKENS", "1024")),
+                    max_tokens=int(os.getenv("CLAUDE_MAX_TOKENS", "600")),
                     system=system_prompt,
                     messages=messages,
                     temperature=0.7,
