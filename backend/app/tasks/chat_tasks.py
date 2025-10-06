@@ -48,8 +48,20 @@ def generate_chat_response(
     status_key = f"chat:status:{session_id}:{message_id}"
     
     try:
-        # Mark as generating
+        # Mark as generating and publish start event immediately
         redis_client.setex(status_key, 3600, "generating")
+        
+        # Publish immediate start event so SSE knows we're processing
+        redis_client.publish(
+            f"chat:updates:{session_id}",
+            json.dumps({
+                "type": "start",
+                "message_id": message_id,
+                "timestamp": time.time()
+            })
+        )
+        
+        logger.info(f"Starting chat response generation: session={session_id} message={message_id}")
         
         # Initialize Claude client
         api_key = os.getenv("CLAUDE_API_KEY", getattr(settings, "CLAUDE_API_KEY", None))

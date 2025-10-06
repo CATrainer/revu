@@ -84,7 +84,7 @@ async def stream_chat_session(
     channel = f"chat:updates:{session_id}"
     
     async def event_generator():
-        """Generate SSE events from Redis pub/sub with keep-alive."""
+        """Generate SSE events from Redis pub/sub with keep-alive and timeout handling."""
         try:
             # Subscribe to updates
             pubsub.subscribe(channel)
@@ -94,23 +94,52 @@ async def stream_chat_session(
                 stream_key = f"chat:stream:{session_id}:{message_id}"
                 existing_chunks = redis_client.lrange(stream_key, 0, -1)
                 
-                for chunk_data in existing_chunks:
-                    chunk = json.loads(chunk_data)
-                    yield f"data: {json.dumps(chunk)}\n\n"
-                    await asyncio.sleep(0.01)  # Simulate streaming
+                if existing_chunks:
+                    logger.info(f"Resuming stream with {len(existing_chunks)} existing chunks")
+                    for chunk_data in existing_chunks:
+                        chunk = json.loads(chunk_data)
+                        yield f"data: {json.dumps({'type': 'chunk', 'content': chunk.get('chunk', ''), 'index': chunk.get('index', 0)})}\n\n"
+                        await asyncio.sleep(0.01)  # Simulate streaming
             
-            # Stream new updates
-            for message in pubsub.listen():
-                if message["type"] == "message":
-                    data = json.loads(message["data"])
-                    yield f"data: {json.dumps(data)}\n\n"
+            # Stream new updates with timeout protection
+            last_activity = asyncio.get_event_loop().time()
+            timeout_seconds = 120  # 2 minute timeout
+            
+            while True:
+                try:
+                    # Non-blocking listen with timeout
+                    message = pubsub.get_message(timeout=0.1)
+                    current_time = asyncio.get_event_loop().time()
                     
-                    # Close stream on completion or error
-                    if data.get("type") in ["complete", "error"]:
-                        break
+                    if message and message["type"] == "message":
+                        data = json.loads(message["data"])
+                        yield f"data: {json.dumps(data)}\n\n"
+                        last_activity = current_time
+                        
+                        # Close stream on completion or error
+                        if data.get("type") in ["complete", "error"]:
+                            logger.info(f"Stream ended: type={data.get('type')}")
+                            break
+                    else:
+                        # Send keep-alive every 15 seconds
+                        if current_time - last_activity > 15:
+                            yield ": keep-alive\n\n"
+                            last_activity = current_time
+                        
+                        # Check for timeout
+                        if current_time - last_activity > timeout_seconds:
+                            logger.error(f"Stream timeout after {timeout_seconds}s")
+                            yield f"data: {json.dumps({'type': 'error', 'error': 'Timeout reading from socket'})}\n\n"
+                            break
+                    
+                    await asyncio.sleep(0.1)
+                    
+                except Exception as parse_error:
+                    logger.error(f"Error parsing message: {parse_error}")
+                    continue
                         
         except Exception as e:
-            logger.error(f"Error in SSE stream: {e}")
+            logger.error(f"Error in SSE stream: {e}", exc_info=True)
             yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
         finally:
             pubsub.unsubscribe(channel)

@@ -818,6 +818,9 @@ async def send_message(
         # Queue Celery task for async processing
         from app.tasks.chat_tasks import generate_chat_response
         from app.core.redis_client import get_redis
+        from loguru import logger
+        
+        logger.info(f"Queueing chat task: session={session_id} message={assistant_msg_id}")
         
         task = generate_chat_response.delay(
             session_id=str(session_id),
@@ -832,6 +835,8 @@ async def send_message(
         redis_client = get_redis()
         redis_client.setex(f"chat:status:{session_id}:{assistant_msg_id}", 3600, "queued")
         redis_client.setex(f"chat:task:{session_id}:{assistant_msg_id}", 3600, task.id)
+        
+        logger.info(f"Task queued successfully: task_id={task.id}")
         
         return {
             "success": True,

@@ -265,7 +265,10 @@ export default function AIAssistantPage() {
       try {
         const data = JSON.parse(event.data);
 
-        if (data.type === 'chunk' && data.content) {
+        if (data.type === 'start') {
+          console.log('[AI Chat] Generation started by worker');
+          // Worker has picked up the task, reset any timeout concerns
+        } else if (data.type === 'chunk' && data.content) {
           chunkBufferRef.current += data.content;
           
           if (!rafIdRef.current) {
@@ -297,10 +300,19 @@ export default function AIAssistantPage() {
           loadSessions(true);
         } else if (data.type === 'error') {
           console.error('[AI Chat] Stream error:', data.error);
-          setError(data.error || 'Stream error occurred');
-          eventSource.close();
-          activeStreamRef.current = null;
-          setIsStreaming(false);
+          
+          // If it's a timeout, try to reconnect once
+          if (data.error.includes('Timeout') && retryCount === 0) {
+            console.log('[AI Chat] Timeout detected, attempting one reconnect...');
+            eventSource.close();
+            activeStreamRef.current = null;
+            setTimeout(() => reconnectToStream(sessionId, messageId, 1), 1000);
+          } else {
+            setError(data.error || 'Stream error occurred');
+            eventSource.close();
+            activeStreamRef.current = null;
+            setIsStreaming(false);
+          }
         }
       } catch (err) {
         console.error('[AI Chat] Stream parsing error:', err);
