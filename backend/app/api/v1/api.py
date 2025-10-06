@@ -34,6 +34,8 @@ from app.api.v1.endpoints import (
 )
 from app.api.v1.endpoints import workflows as workflows_endpoints
 from app.api.v1.endpoints import marketing_admin
+# New interaction management endpoints
+from app.api.v1.endpoints import interactions, views, fans
 
 # Create the main API router
 api_router = APIRouter()
@@ -174,6 +176,22 @@ api_router.include_router(
     tags=["workflows"],
 )
 
+# New Interaction Management System
+api_router.include_router(
+    interactions.router,
+    tags=["interactions"],
+)
+
+api_router.include_router(
+    views.router,
+    tags=["views"],
+)
+
+api_router.include_router(
+    fans.router,
+    tags=["fans", "crm"],
+)
+
 api_router.include_router(
     webhooks.router,
     prefix="/webhooks",
@@ -225,5 +243,9 @@ async def api_root():
             "chat": "/chat",
             "webhooks": "/webhooks",
             "youtube": "/youtube",
+            "interactions": "/interactions",  # NEW
+            "views": "/views",  # NEW
+            "fans": "/fans",  # NEW
+            "workflows": "/workflows",
         },
     }

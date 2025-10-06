@@ -6,39 +6,80 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-# Shared config blobs (unstructured for fast iteration)
+# Enhanced workflow configs with more trigger types and actions
 class WorkflowTrigger(BaseModel):
-    type: Optional[Literal['sentiment', 'keyword', 'platform', 'mention_type', 'volume_spike']] = None
+    """Workflow trigger configuration."""
+    type: Literal[
+        'appears_in_view',  # NEW: Trigger when interaction appears in a specific view
+        'sentiment', 
+        'keyword', 
+        'platform', 
+        'mention_type', 
+        'volume_spike',
+        'priority_threshold',  # NEW: Trigger when priority score meets threshold
+        'time_based',  # NEW: Trigger at specific times or intervals
+        'author_property'  # NEW: Trigger based on author attributes
+    ]
     value: Optional[str] = None
+    view_id: Optional[UUID] = None  # For appears_in_view trigger
+    threshold: Optional[int] = None  # For priority_threshold trigger
+    schedule: Optional[dict] = None  # For time_based trigger
 
 
 class WorkflowCondition(BaseModel):
-    field: str
-    op: Literal['is', 'is_not', 'contains', 'not_contains']
-    value: str
+    """Workflow condition for filtering."""
+    field: str  # platform, sentiment, priority_score, author_follower_count, etc.
+    op: Literal['is', 'is_not', 'contains', 'not_contains', 'gt', 'lt', 'gte', 'lte']
+    value: Any
 
 
 class WorkflowAction_Tag(BaseModel):
     type: Literal['tag'] = 'tag'
-    config: dict = Field(default_factory=dict)
+    config: dict = Field(default_factory=dict)  # {tag: "urgent"}
 
 
 class WorkflowAction_Assign(BaseModel):
     type: Literal['assign'] = 'assign'
-    config: dict = Field(default_factory=dict)
+    config: dict = Field(default_factory=dict)  # {user_id: "..."}
 
 
 class WorkflowAction_Notify(BaseModel):
     type: Literal['notify'] = 'notify'
-    config: dict = Field(default_factory=dict)
+    config: dict = Field(default_factory=dict)  # {channel: "email", user_id: "..."}
 
 
 class WorkflowAction_TemplateReply(BaseModel):
     type: Literal['template_reply'] = 'template_reply'
-    config: dict = Field(default_factory=dict)
+    config: dict = Field(default_factory=dict)  # {template_id: "...", require_approval: true}
 
 
-WorkflowAction = WorkflowAction_Tag | WorkflowAction_Assign | WorkflowAction_Notify | WorkflowAction_TemplateReply
+class WorkflowAction_AIReply(BaseModel):
+    """NEW: AI-generated response action."""
+    type: Literal['ai_reply'] = 'ai_reply'
+    config: dict = Field(default_factory=dict)  # {tone: "friendly", require_approval: true, max_tokens: 150}
+
+
+class WorkflowAction_RouteToView(BaseModel):
+    """NEW: Route interaction to specific view."""
+    type: Literal['route_to_view'] = 'route_to_view'
+    config: dict = Field(default_factory=dict)  # {view_id: "..."}
+
+
+class WorkflowAction_UpdateStatus(BaseModel):
+    """NEW: Update interaction status."""
+    type: Literal['update_status'] = 'update_status'
+    config: dict = Field(default_factory=dict)  # {status: "archived"}
+
+
+WorkflowAction = (
+    WorkflowAction_Tag | 
+    WorkflowAction_Assign | 
+    WorkflowAction_Notify | 
+    WorkflowAction_TemplateReply |
+    WorkflowAction_AIReply |
+    WorkflowAction_RouteToView |
+    WorkflowAction_UpdateStatus
+)
 
 
 # Workflow

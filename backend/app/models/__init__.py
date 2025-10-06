@@ -24,6 +24,11 @@ from app.models.chat_enhancements import (
     SessionCollaborator,
     MessageComment,
 )
+from app.models.interaction import Interaction
+from app.models.thread import InteractionThread
+from app.models.view import InteractionView
+from app.models.fan import Fan
+from app.models.analytics import InteractionAnalytics
 
 __all__ = [
     "Organization",
@@ -51,4 +56,9 @@ __all__ = [
     "SessionCollaborator",
     "MessageComment",
     "session_tags",
+    "Interaction",
+    "InteractionThread",
+    "InteractionView",
+    "Fan",
+    "InteractionAnalytics",
 ]
