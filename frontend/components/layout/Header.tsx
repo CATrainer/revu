@@ -32,7 +32,7 @@ interface HeaderProps {
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
-  { name: 'Interactions', href: '/comments', icon: MessageSquare },
+  { name: 'Interactions', href: '/interactions', icon: MessageSquare },
   { name: 'AI Assistant', href: '/ai-assistant', icon: Brain },
   { name: 'Settings', href: '/settings', icon: SettingsIcon },
 ];

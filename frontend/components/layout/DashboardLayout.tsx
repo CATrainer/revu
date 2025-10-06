@@ -81,7 +81,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <>
                 <button className="ml-3 text-xs px-2 py-1 rounded border border-[var(--border)] hover-background" onClick={() => {
                   // Navigate, but let step progression happen when user completes the action on the page
-                  if (tour.step === 1) router.push('/comments');
+                  if (tour.step === 1) router.push('/interactions');
                   if (tour.step === 2) router.push('/analytics');
                 }}>Go</button>
                 <button className="ml-2 text-xs px-2 py-1 rounded border border-[var(--border)] hover-background" onClick={() => setTour({ completed: true })}>Done</button>
@@ -127,7 +127,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <div className="absolute top-24 left-1/2 -translate-x-1/2 w-full max-w-xl card-background border border-[var(--border)] rounded-md shadow">
               <div className="p-3 border-b border-[var(--border)] text-sm text-secondary-dark">Command Palette</div>
               <ul className="p-3 space-y-2 text-sm">
-                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/comments'); setPaletteOpen(false); }}>Go to Interactions</li>
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/interactions'); setPaletteOpen(false); }}>Go to Interactions</li>
                 <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/analytics'); setPaletteOpen(false); }}>Go to Analytics</li>
                 <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { setTheme('light'); setPaletteOpen(false); }}>Theme: Light</li>
                 <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { setTheme('dark'); setPaletteOpen(false); }}>Theme: Dark</li>
