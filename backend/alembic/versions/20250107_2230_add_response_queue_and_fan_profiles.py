@@ -16,6 +16,9 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # Import for checking existing columns
+    from alembic import context
+    
     # Response Queue table
     op.create_table('response_queue',
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
@@ -72,11 +75,22 @@ def upgrade() -> None:
     op.create_index('ix_platform_rate_limits_platform', 'platform_rate_limits', ['platform'])
     op.create_index('ix_platform_rate_limits_user_id', 'platform_rate_limits', ['user_id'])
 
-    # Add superfan fields to fans table
-    op.add_column('fans', sa.Column('is_superfan', sa.Boolean(), server_default='false', nullable=False))
-    op.add_column('fans', sa.Column('superfan_since', sa.DateTime(), nullable=True))
-    op.add_column('fans', sa.Column('lifetime_value_score', sa.Integer(), server_default='0', nullable=False))
-    op.add_column('fans', sa.Column('sentiment_score', sa.Numeric(3, 2), nullable=True))
+    # Add superfan fields to fans table (conditionally if they don't exist)
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    existing_columns = [col['name'] for col in inspector.get_columns('fans')]
+    
+    if 'is_superfan' not in existing_columns:
+        op.add_column('fans', sa.Column('is_superfan', sa.Boolean(), server_default='false', nullable=False))
+    
+    if 'superfan_since' not in existing_columns:
+        op.add_column('fans', sa.Column('superfan_since', sa.DateTime(), nullable=True))
+    
+    if 'lifetime_value_score' not in existing_columns:
+        op.add_column('fans', sa.Column('lifetime_value_score', sa.Integer(), server_default='0', nullable=False))
+    
+    if 'sentiment_score' not in existing_columns:
+        op.add_column('fans', sa.Column('sentiment_score', sa.Numeric(3, 2), nullable=True))
 
 
 def downgrade() -> None:
