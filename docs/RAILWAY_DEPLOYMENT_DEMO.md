@@ -49,8 +49,10 @@ Dockerfile Path: demo-simulator/Dockerfile
 ### **1.4 Set Start Command**
 ```
 Settings → Deploy → Custom Start Command
-uvicorn app.main:app --host 0.0.0.0 --port 8001
+python run.py
 ```
+
+This script automatically runs migrations then starts the server.
 
 ### **1.5 Environment Variables**
 Add these in Settings → Variables:
@@ -177,48 +179,14 @@ This adds the `demo_mode` column to users table.
 
 ---
 
-## 📋 **Step 5: Create Database Tables for Demo Service**
+## 📋 **Step 5: Database Tables Auto-Created**
 
-### **5.1 SSH into Demo Simulator Web Service**
-```bash
-railway shell -s demo-simulator-web
-```
+The `run.py` script automatically handles database table creation:
+1. First tries to run Alembic migrations (if configured)
+2. If migrations fail, creates tables directly using SQLAlchemy
+3. Then starts the server
 
-### **5.2 Initialize Alembic (if not already)**
-```bash
-alembic init alembic
-```
-
-### **5.3 Create Migration**
-Create `demo-simulator/alembic/versions/001_initial_schema.py`:
-
-```python
-"""initial schema
-
-Revision ID: 001
-Create Date: 2025-01-07
-"""
-from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
-
-def upgrade() -> None:
-    op.create_table('demo_profiles', ...)
-    op.create_table('demo_content', ...)
-    op.create_table('demo_interactions', ...)
-    op.create_table('generation_cache', ...)
-
-def downgrade() -> None:
-    op.drop_table('generation_cache')
-    op.drop_table('demo_interactions')
-    op.drop_table('demo_content')
-    op.drop_table('demo_profiles')
-```
-
-Or simpler - let SQLAlchemy create them:
-```bash
-python -c "import asyncio; from app.core.database import init_db; asyncio.run(init_db())"
-```
+**No manual intervention needed!** Tables are created on first deployment.
 
 ---
 
