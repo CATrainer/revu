@@ -9,7 +9,13 @@ import Link from 'next/link';
 import ViewSidebar from './components/ViewSidebar';
 import InteractionList from './components/InteractionList';
 import ViewBuilder from './components/ViewBuilder';
+import { ViewTabs, type TabType } from './components/ViewTabs';
+import { ViewControls } from './components/ViewControls';
+import { InteractionDetailPanel } from './components/InteractionDetailPanel';
 import { api } from '@/lib/api';
+
+type SortOption = 'newest' | 'oldest' | 'priority' | 'engagement';
+type Platform = 'youtube' | 'instagram' | 'tiktok' | 'twitter';
 
 interface View {
   id: string;
@@ -32,6 +38,18 @@ export default function InteractionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showViewBuilder, setShowViewBuilder] = useState(false);
   const [editingView, setEditingView] = useState<View | null>(null);
+  
+  // V2: Tab and filter state
+  const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
+  const [selectedInteractionId, setSelectedInteractionId] = useState<string | null>(null);
+  const [tabCounts, setTabCounts] = useState<{
+    all?: number;
+    unanswered?: number;
+    awaiting_approval?: number;
+    answered?: number;
+  }>({});
 
   // Load views on mount
   useEffect(() => {
@@ -96,6 +114,25 @@ export default function InteractionsPage() {
     }
   };
 
+  // V2: Handlers for new features
+  const handleResetFilters = () => {
+    setSelectedPlatforms([]);
+    setSortBy('newest');
+  };
+
+  const handleInteractionClick = (interactionId: string) => {
+    setSelectedInteractionId(interactionId);
+  };
+
+  const handleCloseDetailPanel = () => {
+    setSelectedInteractionId(null);
+  };
+
+  const handleInteractionUpdate = () => {
+    // Reload the list when an interaction is updated
+    loadViews();
+  };
+
   return (
     <div className="flex h-[calc(100vh-4rem)] -mx-4 sm:-mx-6 md:-mx-8 -my-6">
       {/* Sidebar */}
@@ -130,8 +167,8 @@ export default function InteractionsPage() {
                 size="sm"
                 onClick={() => setShowViewBuilder(true)}
               >
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
+                <Settings className="h-4 w-4 mr-2" />
+                View Settings
               </Button>
               
               <Button
@@ -145,13 +182,36 @@ export default function InteractionsPage() {
           </div>
         </div>
 
+        {/* V2: View Tabs */}
+        {activeViewId && (
+          <ViewTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            counts={tabCounts}
+          />
+        )}
+
+        {/* V2: View Controls (Sort & Filter) */}
+        {activeViewId && (
+          <ViewControls
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            selectedPlatforms={selectedPlatforms}
+            onPlatformsChange={setSelectedPlatforms}
+            onReset={handleResetFilters}
+          />
+        )}
+
         {/* Interaction List */}
         <div className="flex-1 overflow-hidden">
           {activeViewId ? (
             <InteractionList
               viewId={activeViewId}
               filters={activeView?.filters}
-              sortBy={activeView?.display?.sortBy || 'newest'}
+              sortBy={sortBy}
+              tab={activeTab}
+              platforms={selectedPlatforms}
+              onInteractionClick={handleInteractionClick}
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -178,6 +238,15 @@ export default function InteractionsPage() {
             setEditingView(null);
           }}
           onSave={handleViewSaved}
+        />
+      )}
+
+      {/* V2: Interaction Detail Panel */}
+      {selectedInteractionId && (
+        <InteractionDetailPanel
+          interactionId={selectedInteractionId}
+          onClose={handleCloseDetailPanel}
+          onUpdate={handleInteractionUpdate}
         />
       )}
     </div>

@@ -63,9 +63,19 @@ interface InteractionListProps {
   viewId: string;
   filters?: any;
   sortBy?: string;
+  tab?: string;
+  platforms?: string[];
+  onInteractionClick?: (id: string) => void;
 }
 
-export default function InteractionList({ viewId, filters, sortBy = 'newest' }: InteractionListProps) {
+export default function InteractionList({ 
+  viewId, 
+  filters, 
+  sortBy = 'newest',
+  tab,
+  platforms = [],
+  onInteractionClick,
+}: InteractionListProps) {
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
@@ -75,13 +85,26 @@ export default function InteractionList({ viewId, filters, sortBy = 'newest' }: 
 
   useEffect(() => {
     loadInteractions();
-  }, [viewId, page]);
+  }, [viewId, page, sortBy, tab, platforms]);
 
   const loadInteractions = async () => {
     try {
       setIsLoading(true);
+      
+      // Build query params
+      const params = new URLSearchParams({
+        page: page.toString(),
+        page_size: '20',
+        sort_by: sortBy,
+      });
+      
+      if (tab) params.append('tab', tab);
+      if (platforms.length > 0) {
+        platforms.forEach(p => params.append('platforms', p));
+      }
+      
       const response = await api.get(
-        `/interactions/by-view/${viewId}?page=${page}&page_size=20`
+        `/interactions/by-view/${viewId}?${params.toString()}`
       );
       
       setInteractions(response.data.interactions || []);
@@ -273,8 +296,11 @@ export default function InteractionList({ viewId, filters, sortBy = 'newest' }: 
                   </div>
                 )}
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
+                {/* Content - Clickable */}
+                <div 
+                  className="flex-1 min-w-0 cursor-pointer"
+                  onClick={() => onInteractionClick?.(interaction.id)}
+                >
                   {/* Header */}
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium text-sm">
