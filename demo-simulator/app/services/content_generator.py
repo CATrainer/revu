@@ -62,7 +62,7 @@ Requirements:
 Return ONLY the title, nothing else."""
         
         response = self.client.messages.create(
-            model="claude-3-5-sonnet-latest",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=100,
             temperature=0.9,  # High creativity for variety
             messages=[{"role": "user", "content": prompt}]
@@ -167,7 +167,7 @@ Return as JSON array with this exact format:
 IMPORTANT: Return ONLY the JSON array, no explanation."""
         
         response = self.client.messages.create(
-            model="claude-3-5-sonnet-latest",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=2000,
             temperature=1.0,  # Maximum variety
             messages=[{"role": "user", "content": prompt}]
@@ -247,7 +247,7 @@ Return as JSON with this exact format:
 Return ONLY the JSON, no explanation."""
         
         response = self.client.messages.create(
-            model="claude-3-5-sonnet-latest",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=300,
             temperature=0.9,
             messages=[{"role": "user", "content": prompt}]
