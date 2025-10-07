@@ -53,9 +53,12 @@ class Interaction(Base):
     
     # Management
     tags = Column(ARRAY(String(50)))
-    status = Column(String(20), default='unread', index=True)  # unread, read, replied, archived, spam
+    status = Column(String(20), default='unread', index=True)  # unread, read, awaiting_approval, answered, ignored
     assigned_to_user_id = Column(PGUUID(as_uuid=True), ForeignKey('users.id'))
     internal_notes = Column(Text)
+    
+    # Response management (V2)
+    pending_response = Column(JSONB)  # {text: str, generated_at: str, model: str, confidence: float}
     
     # Engagement metrics
     like_count = Column(Integer, default=0)
@@ -64,7 +67,8 @@ class Interaction(Base):
     # Timestamps
     platform_created_at = Column(DateTime)
     read_at = Column(DateTime)
-    replied_at = Column(DateTime)
+    replied_at = Column(DateTime)  # When we created a reply on the platform
+    responded_at = Column(DateTime)  # When we sent our response (for tracking)
     
     # Foreign keys
     user_id = Column(PGUUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)

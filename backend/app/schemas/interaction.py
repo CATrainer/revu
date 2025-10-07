@@ -45,10 +45,11 @@ class InteractionCreate(InteractionBase):
 
 class InteractionUpdate(BaseModel):
     """Schema for updating an interaction."""
-    status: Optional[str] = Field(None, description="unread, read, replied, archived, spam")
+    status: Optional[str] = Field(None, description="unread, read, awaiting_approval, answered, ignored")
     tags: Optional[List[str]] = None
     assigned_to_user_id: Optional[UUID] = None
     internal_notes: Optional[str] = None
+    pending_response: Optional[Dict[str, Any]] = None
     
     # Enrichments
     sentiment: Optional[str] = None
@@ -80,6 +81,9 @@ class InteractionOut(InteractionBase):
     triggered_workflows: Optional[List[UUID]] = None
     applied_actions: Optional[Dict[str, Any]] = None
     
+    # Response management (V2)
+    pending_response: Optional[Dict[str, Any]] = None
+    
     # Engagement
     like_count: int = 0
     reply_count: int = 0
@@ -90,6 +94,7 @@ class InteractionOut(InteractionBase):
     updated_at: datetime
     read_at: Optional[datetime] = None
     replied_at: Optional[datetime] = None
+    responded_at: Optional[datetime] = None
     
     # Ownership
     user_id: UUID
@@ -145,3 +150,45 @@ class BulkActionResponse(BaseModel):
     updated_count: int
     failed_ids: List[UUID] = []
     message: str
+
+
+# ==================== RESPONSE MANAGEMENT (V2) ====================
+
+class PendingResponse(BaseModel):
+    """Structure for pending AI-generated responses."""
+    text: str
+    generated_at: datetime
+    model: str = "gpt-4"
+    confidence: Optional[float] = None
+    workflow_id: Optional[UUID] = None
+
+
+class GenerateResponseRequest(BaseModel):
+    """Request to generate AI response for interaction."""
+    interaction_id: UUID
+    context: Optional[str] = None
+    tone: Optional[str] = Field(None, description="casual, professional, friendly, formal")
+    
+
+class SendResponseRequest(BaseModel):
+    """Request to send response to interaction."""
+    text: str
+    send_immediately: bool = True
+    add_to_approval_queue: bool = False
+
+
+class InteractionContext(BaseModel):
+    """Rich context for an interaction."""
+    interaction: InteractionOut
+    thread_messages: List[InteractionOut] = []
+    parent_content: Optional[Dict[str, Any]] = None
+    fan_profile: Optional[Dict[str, Any]] = None
+    related_interactions: List[InteractionOut] = []
+
+
+class InteractionThread(BaseModel):
+    """Thread view of interaction conversation."""
+    id: UUID
+    messages: List[InteractionOut]
+    participant_count: int
+    total_messages: int
