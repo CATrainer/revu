@@ -54,5 +54,9 @@ celery_app.conf.beat_schedule = {
     },
 }
 
+# Import tasks to register them with Celery
+# These imports must happen AFTER celery_app is created
+from app.tasks import content_tasks, interaction_tasks, cleanup_tasks  # noqa: F401, E402
+
 # Export celery instance for CLI
 celery = celery_app
