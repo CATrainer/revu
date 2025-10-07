@@ -2,13 +2,13 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
 
-const tabs = ['Account','Integrations','Billing'] as const;
+const tabs = ['Account','Integrations','Demo Mode','Billing'] as const;
 
 export default function SettingsPage() {
   const [tab, setTab] = useState<typeof tabs[number]>('Account');
@@ -37,6 +37,7 @@ export default function SettingsPage() {
         <CardContent>
           {tab === 'Account' && <AccountSection />}
           {tab === 'Integrations' && <IntegrationsSection />}
+          {tab === 'Demo Mode' && <DemoModeSection />}
           {tab === 'Billing' && <BillingSection />}
         </CardContent>
       </Card>
@@ -121,6 +122,34 @@ function IntegrationsSection() {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function DemoModeSection() {
+  const router = useRouter();
+  
+  return (
+    <div className="space-y-4">
+      <div className="p-4 rounded-md border border-[var(--border)]">
+        <div className="text-sm font-medium text-primary-dark mb-2">Demo Mode</div>
+        <div className="text-sm text-secondary-dark mt-2">
+          Test Repruv with AI-generated realistic interactions across YouTube, Instagram, and TikTok without connecting real accounts.
+        </div>
+        <ul className="mt-3 space-y-1 text-sm text-secondary-dark">
+          <li>• Realistic AI-generated content and interactions</li>
+          <li>• Test all workflows and automations</li>
+          <li>• Configure follower counts and engagement levels</li>
+          <li>• Switch between demo and real mode anytime</li>
+        </ul>
+      </div>
+      
+      <Button 
+        className="button-primary"
+        onClick={() => router.push('/settings/demo-mode')}
+      >
+        Configure Demo Mode →
+      </Button>
     </div>
   );
 }
