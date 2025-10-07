@@ -41,6 +41,7 @@ export function WorkflowPanel({
 }: WorkflowPanelProps) {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   useEffect(() => {
     loadWorkflows();
@@ -89,6 +90,15 @@ export function WorkflowPanel({
     }
   };
 
+  const handleCreateWorkflow = () => {
+    // TODO: Open workflow builder with current view pre-selected
+    // For now, show a simple alert with instructions
+    alert(`Create Workflow for ${viewName}\n\nThis will open the workflow builder with:\n- View: ${viewName}\n- View ID: ${viewId}\n\nWorkflow builder integration coming soon!`);
+    
+    // Future: Navigate to workflow builder or open modal
+    // router.push(`/interactions/workflows/create?viewId=${viewId}`);
+  };
+
   const globalWorkflows = workflows.filter(w => w.is_global);
   const viewWorkflows = workflows.filter(w => !w.is_global && w.view_id === viewId);
 
@@ -124,7 +134,7 @@ export function WorkflowPanel({
                 <h3 className="text-sm font-medium text-primary-dark">
                   Workflows for {viewName}
                 </h3>
-                <Button size="sm" className="h-8">
+                <Button size="sm" className="h-8" onClick={handleCreateWorkflow}>
                   <Plus className="h-4 w-4 mr-2" />
                   New Workflow
                 </Button>
