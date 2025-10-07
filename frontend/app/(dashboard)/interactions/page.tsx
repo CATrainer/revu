@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Settings, Filter, Inbox, Star, Archive } from 'lucide-react';
+import { Plus, Settings, Filter, Inbox, Star, Archive, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 import ViewSidebar from './components/ViewSidebar';
@@ -12,6 +12,7 @@ import ViewBuilder from './components/ViewBuilder';
 import { ViewTabs, type TabType } from './components/ViewTabs';
 import { ViewControls } from './components/ViewControls';
 import { InteractionDetailPanel } from './components/InteractionDetailPanel';
+import { WorkflowPanel } from './components/WorkflowPanel';
 import { api } from '@/lib/api';
 
 type SortOption = 'newest' | 'oldest' | 'priority' | 'engagement';
@@ -44,6 +45,7 @@ export default function InteractionsPage() {
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
   const [selectedInteractionId, setSelectedInteractionId] = useState<string | null>(null);
+  const [showWorkflowPanel, setShowWorkflowPanel] = useState(false);
   const [tabCounts, setTabCounts] = useState<{
     all?: number;
     unanswered?: number;
@@ -165,6 +167,15 @@ export default function InteractionsPage() {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => setShowWorkflowPanel(true)}
+              >
+                <Zap className="h-4 w-4 mr-2" />
+                Workflows
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setShowViewBuilder(true)}
               >
                 <Settings className="h-4 w-4 mr-2" />
@@ -247,6 +258,16 @@ export default function InteractionsPage() {
           interactionId={selectedInteractionId}
           onClose={handleCloseDetailPanel}
           onUpdate={handleInteractionUpdate}
+        />
+      )}
+
+      {/* V2: Workflow Panel */}
+      {showWorkflowPanel && (
+        <WorkflowPanel
+          viewId={activeViewId}
+          viewName={activeView?.name}
+          onClose={() => setShowWorkflowPanel(false)}
+          onUpdate={loadViews}
         />
       )}
     </div>
