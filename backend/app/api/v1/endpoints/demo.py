@@ -5,7 +5,8 @@ from pydantic import BaseModel
 from typing import Optional
 import httpx
 
-from app.core.deps import get_async_session, get_current_active_user
+from app.core.database import get_async_session
+from app.core.security import get_current_active_user
 from app.models.user import User
 from app.core.config import settings
 

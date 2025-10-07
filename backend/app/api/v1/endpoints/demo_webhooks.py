@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from typing import Optional, Dict
 
-from app.core.deps import get_async_session
+from app.core.database import get_async_session
 from app.core.config import settings
 from app.models.user import User
 from app.models.interaction import Interaction
