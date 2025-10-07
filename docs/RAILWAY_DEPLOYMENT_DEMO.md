@@ -181,12 +181,13 @@ This adds the `demo_mode` column to users table.
 
 ## 📋 **Step 5: Database Tables Auto-Created**
 
-The `run.py` script automatically handles database table creation:
-1. First tries to run Alembic migrations (if configured)
-2. If migrations fail, creates tables directly using SQLAlchemy
-3. Then starts the server
+The `run.py` script automatically creates database tables using SQLAlchemy:
+1. Runs `Base.metadata.create_all()` on startup
+2. Tables are created if they don't exist
+3. Safe to run multiple times (idempotent)
+4. Then starts the server
 
-**No manual intervention needed!** Tables are created on first deployment.
+**No Alembic migrations needed!** The demo service models are simple and don't require migration history. Tables are created automatically on first deployment.
 
 ---
 

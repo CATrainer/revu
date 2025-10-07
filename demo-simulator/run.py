@@ -2,43 +2,25 @@
 Run script for demo-simulator service.
 
 This script:
-1. Runs database migrations
+1. Creates database tables (if not exist)
 2. Starts the FastAPI application
 """
 import os
 import sys
-import subprocess
 import asyncio
-from pathlib import Path
 
-def run_migrations():
-    """Run Alembic migrations."""
-    print("🔄 Running database migrations...")
+
+def init_database():
+    """Create database tables using SQLAlchemy."""
+    print("🔄 Initializing database tables...")
     
     try:
-        # Run alembic upgrade
-        result = subprocess.run(
-            ["alembic", "upgrade", "head"],
-            check=True,
-            capture_output=True,
-            text=True
-        )
-        print("✅ Migrations completed successfully")
-        if result.stdout:
-            print(result.stdout)
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Migration failed: {e}")
-        if e.stderr:
-            print(e.stderr)
-        # Try to create tables directly if migrations fail
-        print("⚠️  Attempting to create tables directly...")
-        try:
-            from app.core.database import init_db
-            asyncio.run(init_db())
-            print("✅ Tables created successfully")
-        except Exception as init_error:
-            print(f"❌ Direct table creation failed: {init_error}")
-            print("⚠️  Continuing anyway - tables may already exist")
+        from app.core.database import init_db
+        asyncio.run(init_db())
+        print("✅ Database tables ready (created or already exist)")
+    except Exception as e:
+        print(f"⚠️  Database initialization had issues: {e}")
+        print("⚠️  Continuing anyway - tables may already exist or will be created on first use")
 
 
 def start_server():
@@ -65,8 +47,8 @@ if __name__ == "__main__":
     print("🎬 Demo Simulator Service Starting...")
     print("=" * 60)
     
-    # Run migrations first
-    run_migrations()
+    # Initialize database tables
+    init_database()
     
     print("=" * 60)
     
