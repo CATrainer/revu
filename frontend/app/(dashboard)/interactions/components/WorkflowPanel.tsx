@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { WorkflowBuilder } from './WorkflowBuilder';
 
 interface Workflow {
   id: string;
@@ -41,7 +42,8 @@ export function WorkflowPanel({
 }: WorkflowPanelProps) {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showBuilder, setShowBuilder] = useState(false);
+  const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
 
   useEffect(() => {
     loadWorkflows();
@@ -91,12 +93,23 @@ export function WorkflowPanel({
   };
 
   const handleCreateWorkflow = () => {
-    // TODO: Open workflow builder with current view pre-selected
-    // For now, show a simple alert with instructions
-    alert(`Create Workflow for ${viewName}\n\nThis will open the workflow builder with:\n- View: ${viewName}\n- View ID: ${viewId}\n\nWorkflow builder integration coming soon!`);
-    
-    // Future: Navigate to workflow builder or open modal
-    // router.push(`/interactions/workflows/create?viewId=${viewId}`);
+    setEditingWorkflow(null);
+    setShowBuilder(true);
+  };
+
+  const handleEditWorkflow = (workflow: Workflow) => {
+    setEditingWorkflow(workflow);
+    setShowBuilder(true);
+  };
+
+  const handleBuilderClose = () => {
+    setShowBuilder(false);
+    setEditingWorkflow(null);
+  };
+
+  const handleBuilderSave = () => {
+    loadWorkflows();
+    onUpdate?.();
   };
 
   const globalWorkflows = workflows.filter(w => w.is_global);
@@ -153,6 +166,7 @@ export function WorkflowPanel({
                       key={workflow.id}
                       workflow={workflow}
                       onToggleStatus={handleToggleStatus}
+                      onEdit={handleEditWorkflow}
                       onDelete={handleDeleteWorkflow}
                     />
                   ))}
@@ -177,6 +191,7 @@ export function WorkflowPanel({
                       key={workflow.id}
                       workflow={workflow}
                       onToggleStatus={handleToggleStatus}
+                      onEdit={handleEditWorkflow}
                       onDelete={handleDeleteWorkflow}
                       isGlobal
                     />
@@ -195,6 +210,17 @@ export function WorkflowPanel({
           <span>{workflows.length} total workflows</span>
         </div>
       </div>
+
+      {/* Workflow Builder Modal */}
+      {showBuilder && (
+        <WorkflowBuilder
+          viewId={viewId}
+          viewName={viewName}
+          existingWorkflow={editingWorkflow}
+          onClose={handleBuilderClose}
+          onSave={handleBuilderSave}
+        />
+      )}
     </div>
   );
 }
@@ -203,11 +229,12 @@ export function WorkflowPanel({
 interface WorkflowCardProps {
   workflow: Workflow;
   onToggleStatus: (id: string, status: string) => void;
+  onEdit: (workflow: Workflow) => void;
   onDelete: (id: string) => void;
   isGlobal?: boolean;
 }
 
-function WorkflowCard({ workflow, onToggleStatus, onDelete, isGlobal }: WorkflowCardProps) {
+function WorkflowCard({ workflow, onToggleStatus, onEdit, onDelete, isGlobal }: WorkflowCardProps) {
   const isActive = workflow.status === 'active';
 
   return (
@@ -279,7 +306,7 @@ function WorkflowCard({ workflow, onToggleStatus, onDelete, isGlobal }: Workflow
                 </>
               )}
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEdit(workflow)}>
               <Edit2 className="h-4 w-4 mr-2" />
               Edit
             </DropdownMenuItem>
