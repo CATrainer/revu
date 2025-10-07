@@ -1,20 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import ConnectButton from '@/components/youtube/ConnectButton';
-import SyncStatus from '@/components/youtube/SyncStatus';
-import CommentList from '@/components/youtube/CommentList';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { useVideos, useVideoSearch, useChannelComments } from '@/hooks/useYouTube';
-import { listConnections } from '@/lib/api/youtube';
-import type { YouTubeVideo } from '@/types/youtube';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import Image from 'next/image';
-import Link from 'next/link';
 
-export default function CommentsPage() {
+export default function CommentsRedirectPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect to new interactions page
+    router.replace('/interactions');
+  }, [router]);
+
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="text-center">
+        <LoadingSpinner size="large" />
+        <p className="mt-4 text-secondary-dark">Redirecting to Interactions...</p>
+      </div>
+    </div>
+  );
+}
+
+// Old implementation below - kept for reference, remove after migration
+function OldCommentsPage() {
   const [connectionId, setConnectionId] = useState<string | null>(null);
   const [loadingConn, setLoadingConn] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null);

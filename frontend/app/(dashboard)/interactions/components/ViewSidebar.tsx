@@ -255,7 +255,7 @@ export default function ViewSidebar({
           className="w-full justify-start"
           asChild
         >
-          <a href="/comments/workflows">
+          <a href="/interactions/workflows">
             <Star className="h-4 w-4 mr-2" />
             Workflows
           </a>
