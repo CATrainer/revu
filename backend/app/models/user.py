@@ -71,6 +71,9 @@ class User(Base):
     trial_notified_3d = Column(Boolean, default=False, nullable=False, comment="3-day expiration notice sent")
     trial_notified_1d = Column(Boolean, default=False, nullable=False, comment="1-day expiration notice sent")
     subscription_status = Column(String(20), default="trial", nullable=False, comment="trial, active, cancelled, expired")
+    
+    # Demo mode for simulated platform connections
+    demo_mode = Column(Boolean, default=False, nullable=False, comment="Using demo simulator instead of real platforms")
 
     # Demo-specific information
     company_size = Column(String(50))

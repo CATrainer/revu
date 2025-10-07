@@ -193,6 +193,10 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: Optional[str] = None
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
     STRIPE_PUBLISHABLE_KEY: Optional[str] = None
+    
+    # Demo Simulator Service
+    DEMO_SERVICE_URL: Optional[str] = None
+    DEMO_WEBHOOK_SECRET: Optional[str] = None
 
     # Monitoring
     SENTRY_DSN: Optional[str] = None

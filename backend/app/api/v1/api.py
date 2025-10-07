@@ -36,6 +36,8 @@ from app.api.v1.endpoints import workflows as workflows_endpoints
 from app.api.v1.endpoints import marketing_admin
 # New interaction management endpoints
 from app.api.v1.endpoints import interactions, views, fans
+# Demo mode endpoints
+from app.api.v1.endpoints import demo, demo_webhooks, analytics
 
 # Create the main API router
 api_router = APIRouter()
@@ -223,6 +225,22 @@ api_router.include_router(
     polling_endpoints.router,
     prefix="/polling",
     tags=["polling"],
+)
+
+# Demo mode endpoints
+api_router.include_router(
+    demo.router,
+    tags=["demo"],
+)
+
+api_router.include_router(
+    demo_webhooks.router,
+    tags=["demo-webhooks"],
+)
+
+api_router.include_router(
+    analytics.router,
+    tags=["analytics"],
 )
 
 
