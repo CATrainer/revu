@@ -50,6 +50,8 @@ class Interaction(Base):
     # Workflow tracking
     triggered_workflows = Column(ARRAY(PGUUID(as_uuid=True)))
     applied_actions = Column(JSONB)  # [{action: 'tag', value: 'urgent'}, ...]
+    workflow_id = Column(PGUUID(as_uuid=True), ForeignKey('workflows.id', ondelete='SET NULL'), index=True)  # Which workflow acted on this
+    workflow_action = Column(String(50))  # 'auto_responded', 'flagged_for_approval', etc.
     
     # Management
     tags = Column(ARRAY(String(50)))
@@ -79,6 +81,7 @@ class Interaction(Base):
     fan = relationship("Fan", back_populates="interactions")
     replies = relationship("Interaction", backref="parent", remote_side='Interaction.id')
     assigned_to = relationship("User", foreign_keys=[assigned_to_user_id])
+    workflow = relationship("Workflow", foreign_keys=[workflow_id])
     
     def __repr__(self):
         return f"<Interaction {self.id} - {self.type} on {self.platform} by {self.author_username}>"

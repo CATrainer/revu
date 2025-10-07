@@ -24,6 +24,10 @@ class Workflow(Base):
     conditions = Column(JSONB, nullable=True)
     actions = Column(JSONB, nullable=True)
 
+    # View association (workflows can be scoped to a specific view or global)
+    view_id = Column(PGUUID(as_uuid=True), ForeignKey("interaction_views.id", ondelete="SET NULL"), nullable=True)
+    is_global = Column(Boolean, default=False)  # If true, applies to all views
+
     # Ownership / scoping (optional for now)
     organization_id = Column(PGUUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
     created_by_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)

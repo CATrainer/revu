@@ -57,19 +57,37 @@ async def list_views(
     current_user: User = Depends(get_current_active_user),
 ):
     """List all views accessible to the user."""
-    # Build query for user's views
-    conditions = [InteractionView.user_id == current_user.id]
-    
-    # Optionally include shared views from organization
-    if include_shared and hasattr(current_user, 'organization_id') and current_user.organization_id:
-        conditions.append(
-            and_(
-                InteractionView.organization_id == current_user.organization_id,
-                InteractionView.is_shared == True
-            )
+    # Check if "All" system view exists, create if not
+    all_view_stmt = select(InteractionView).where(
+        and_(
+            InteractionView.user_id == current_user.id,
+            InteractionView.is_system == True,
+            InteractionView.name == "All"
         )
+    )
+    all_view_result = await session.execute(all_view_stmt)
+    all_view_exists = all_view_result.scalar_one_or_none()
     
-    # Build final query
+    if not all_view_exists:
+        # Auto-create "All" system view
+        all_view = InteractionView(
+            name="All",
+            description="All interactions across all platforms",
+            icon="📬",
+            color="#6B7280",
+            type="system",
+            filters={},
+            display={"sortBy": "newest", "groupBy": None, "columns": ["author", "content", "platform", "status", "priority", "created_at"]},
+            is_pinned=True,
+            is_system=True,
+            order_index=0,
+            user_id=current_user.id,
+            organization_id=getattr(current_user, 'organization_id', None),
+        )
+        session.add(all_view)
+        await session.commit()
+    
+    # Build query for user's views
     stmt = select(InteractionView).where(
         InteractionView.user_id == current_user.id
     )
@@ -77,8 +95,9 @@ async def list_views(
     if only_pinned:
         stmt = stmt.where(InteractionView.is_pinned == True)
     
-    # Order by pinned first, then by order_index
+    # Order by system first, then pinned, then by order_index
     stmt = stmt.order_by(
+        InteractionView.is_system.desc(),
         InteractionView.is_pinned.desc(),
         InteractionView.order_index.asc(),
         InteractionView.created_at.desc()
@@ -276,3 +295,50 @@ async def duplicate_view(
     await session.refresh(duplicate)
     
     return duplicate
+
+
+@router.post("/views/initialize-system-views", status_code=status.HTTP_201_CREATED)
+async def initialize_system_views(
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Initialize default system views for a user (All view)."""
+    # Check if "All" system view already exists
+    stmt = select(InteractionView).where(
+        and_(
+            InteractionView.user_id == current_user.id,
+            InteractionView.is_system == True,
+            InteractionView.name == "All"
+        )
+    )
+    result = await session.execute(stmt)
+    existing = result.scalar_one_or_none()
+    
+    if existing:
+        return {"message": "System views already exist", "views": [existing]}
+    
+    # Create "All" system view
+    all_view = InteractionView(
+        name="All",
+        description="All interactions across all platforms",
+        icon="📬",
+        color="#6B7280",  # gray
+        type="system",
+        filters={},  # No filters - show everything
+        display={
+            "sortBy": "newest",
+            "groupBy": None,
+            "columns": ["author", "content", "platform", "status", "priority", "created_at"]
+        },
+        is_pinned=True,
+        is_system=True,
+        order_index=0,  # First in the list
+        user_id=current_user.id,
+        organization_id=getattr(current_user, 'organization_id', None),
+    )
+    
+    session.add(all_view)
+    await session.commit()
+    await session.refresh(all_view)
+    
+    return {"message": "System views created successfully", "views": [all_view]}

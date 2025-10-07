@@ -50,6 +50,8 @@ class InteractionUpdate(BaseModel):
     assigned_to_user_id: Optional[UUID] = None
     internal_notes: Optional[str] = None
     pending_response: Optional[Dict[str, Any]] = None
+    workflow_id: Optional[UUID] = None
+    workflow_action: Optional[str] = None
     
     # Enrichments
     sentiment: Optional[str] = None
@@ -80,6 +82,8 @@ class InteractionOut(InteractionBase):
     internal_notes: Optional[str] = None
     triggered_workflows: Optional[List[UUID]] = None
     applied_actions: Optional[Dict[str, Any]] = None
+    workflow_id: Optional[UUID] = None  # Which workflow acted on this
+    workflow_action: Optional[str] = None  # 'auto_responded', 'flagged_for_approval', etc.
     
     # Response management (V2)
     pending_response: Optional[Dict[str, Any]] = None
