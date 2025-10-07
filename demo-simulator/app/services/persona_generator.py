@@ -1,7 +1,7 @@
 """Generate realistic author personas for comments/DMs."""
 import random
 import string
-from typing import Dict
+from typing import Dict, Optional
 
 
 class PersonaGenerator:
