@@ -41,8 +41,14 @@ async def _generate_comments_async():
         engine = SimulationEngine()
         
         for content in content_items:
+            # Eager load attributes to avoid lazy loading issues with asyncpg
+            content_id = content.id
+            target_comments = content.target_comments
+            comments_count = content.comments_count
+            published_at = content.published_at
+            
             try:
-                remaining = content.get_remaining_comments()
+                remaining = max(0, target_comments - comments_count)
                 
                 if remaining <= 0:
                     content.engagement_complete = True
@@ -50,7 +56,7 @@ async def _generate_comments_async():
                     continue
                 
                 # Generate comments based on engagement wave
-                hours_since_publish = (datetime.utcnow() - content.published_at).total_seconds() / 3600
+                hours_since_publish = (datetime.utcnow() - published_at).total_seconds() / 3600
                 wave_multiplier = content.calculate_engagement_wave(int(hours_since_publish))
                 
                 # Generate 10-30 comments per batch, adjusted by wave
@@ -64,7 +70,7 @@ async def _generate_comments_async():
                     )
                 
             except Exception as e:
-                logger.error(f"Error generating comments for content {content.id}: {str(e)}")
+                logger.error(f"Error generating comments for content {content_id}: {str(e)}")
                 await session.rollback()
 
 
@@ -89,9 +95,19 @@ async def _generate_dms_async():
         engine = SimulationEngine()
         
         for profile in profiles:
+            # Eager load attributes to avoid lazy loading issues with asyncpg
+            profile_id = profile.id
+            dm_frequency = profile.dm_frequency
+            
             try:
                 # Generate 1-5 DMs per batch based on frequency
-                target = profile.get_dm_target()
+                # Inline get_dm_target logic
+                if dm_frequency == 'low':
+                    target = 5
+                elif dm_frequency == 'high':
+                    target = 50
+                else:
+                    target = 20
                 
                 # This runs every 30 minutes, so daily target / 48 runs
                 batch_size = max(1, target // 48)
@@ -100,7 +116,7 @@ async def _generate_dms_async():
                     await engine.generate_dm(session, profile)
                 
             except Exception as e:
-                logger.error(f"Error generating DMs for profile {profile.id}: {str(e)}")
+                logger.error(f"Error generating DMs for profile {profile_id}: {str(e)}")
                 await session.rollback()
 
 
@@ -113,11 +129,17 @@ def send_queued_interactions():
 
 async def _send_interactions_async():
     """Async implementation of interaction sending."""
+    from sqlalchemy.orm import selectinload
+    
     async with AsyncSessionLocal() as session:
         # Get pending interactions scheduled for now or earlier
         now = datetime.utcnow()
         
-        stmt = select(DemoInteraction).where(
+        # Eager load profile and content relationships to avoid lazy loading
+        stmt = select(DemoInteraction).options(
+            selectinload(DemoInteraction.profile),
+            selectinload(DemoInteraction.content)
+        ).where(
             and_(
                 DemoInteraction.status == 'pending',
                 DemoInteraction.scheduled_for <= now
@@ -135,6 +157,8 @@ async def _send_interactions_async():
         failed_count = 0
         
         for interaction in interactions:
+            interaction_id = interaction.id  # Load before try block
+            
             try:
                 # Convert to webhook payload
                 payload = interaction.to_webhook_payload()
@@ -154,7 +178,7 @@ async def _send_interactions_async():
                 await session.commit()
                 
             except Exception as e:
-                logger.error(f"Error sending interaction {interaction.id}: {str(e)}")
+                logger.error(f"Error sending interaction {interaction_id}: {str(e)}")
                 interaction.status = 'failed'
                 interaction.error_message = str(e)
                 await session.commit()
