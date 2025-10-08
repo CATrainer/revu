@@ -49,5 +49,8 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db():
     """Initialize database (create tables)."""
+    # Import models to register them with Base.metadata
+    from app.models import DemoProfile, DemoContent, DemoInteraction, GenerationCache  # noqa: F401
+    
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
