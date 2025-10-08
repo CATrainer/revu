@@ -48,9 +48,16 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db():
-    """Initialize database (create tables)."""
+    """Initialize database (create tables).
+    
+    For demo service, we drop and recreate all tables on startup
+    to ensure schema is always up-to-date.
+    """
     # Import models to register them with Base.metadata
     from app.models import DemoProfile, DemoContent, DemoInteraction, GenerationCache  # noqa: F401
     
     async with engine.begin() as conn:
+        # Drop all tables first (demo service - no persistent data)
+        await conn.run_sync(Base.metadata.drop_all)
+        # Create all tables with current schema
         await conn.run_sync(Base.metadata.create_all)
