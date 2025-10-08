@@ -8,6 +8,7 @@ Create Date: 2025-10-08 17:08:00
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.dialects.postgresql import UUID
 
 # revision identifiers, used by Alembic.
 revision = '20251008_1708'
@@ -57,8 +58,8 @@ def upgrade() -> None:
         # Create user_feedback table
         op.create_table(
             'user_feedback',
-            sa.Column('id', sa.Integer(), nullable=False),
-            sa.Column('user_id', sa.Integer(), nullable=False),
+            sa.Column('id', UUID(as_uuid=True), primary_key=True, nullable=False),
+            sa.Column('user_id', UUID(as_uuid=True), nullable=False),
             sa.Column('feedback_type', feedback_type_enum, nullable=False),
             sa.Column('title', sa.String(length=255), nullable=False),
             sa.Column('description', sa.Text(), nullable=False),

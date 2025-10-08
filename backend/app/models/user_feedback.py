@@ -3,7 +3,9 @@ User Feedback Model for bug reports and feature requests.
 """
 
 from datetime import datetime
+from uuid import UUID
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 import enum
 
@@ -32,8 +34,8 @@ class UserFeedback(Base):
     
     __tablename__ = "user_feedback"
     
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    # Note: id, created_at, updated_at inherited from Base (UUID primary key)
+    user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     
     # Feedback content
     feedback_type = Column(SQLEnum(FeedbackType), nullable=False, default=FeedbackType.GENERAL)
@@ -47,11 +49,9 @@ class UserFeedback(Base):
     # Status tracking
     status = Column(SQLEnum(FeedbackStatus), nullable=False, default=FeedbackStatus.NEW)
     admin_notes = Column(Text, nullable=True)
-    
-    # Timestamps
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     resolved_at = Column(DateTime, nullable=True)
+    
+    # Note: created_at and updated_at are inherited from Base
     
     # Relationships
     user = relationship("User", back_populates="feedback")
