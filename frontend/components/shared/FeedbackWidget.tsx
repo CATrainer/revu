@@ -84,7 +84,7 @@ export function FeedbackWidget() {
         <Button
           variant="outline"
           size="sm"
-          className="fixed bottom-6 right-6 z-50 shadow-lg hover:shadow-xl transition-all bg-white dark:bg-gray-800 border-2 border-green-500 hover:border-green-600"
+          className="fixed bottom-6 left-6 z-50 shadow-lg hover:shadow-xl transition-all bg-white dark:bg-gray-800 border-2 border-green-500 hover:border-green-600"
         >
           <MessageCircle className="h-4 w-4 mr-2" />
           Feedback
