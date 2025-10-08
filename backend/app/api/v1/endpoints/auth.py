@@ -45,28 +45,66 @@ async def signup(
 ) -> Any:
     """
     Create new user account.
+    
+    If user previously joined waiting list with this email, their account
+    will be upgraded to full access. Otherwise, a new account with full
+    access is created immediately.
 
     Args:
         db: Database session
         user_in: User signup data
 
     Returns:
-        User: Created user object
+        User: Created or upgraded user object
 
     Raises:
-        HTTPException: If email already exists
+        HTTPException: If email already has full account
     """
+    from datetime import datetime
     user_service = UserService(db)
 
     # Check if user exists
     existing_user = await user_service.get_by_email(email=user_in.email)
+    
     if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
-        )
+        # If user was on waiting list, upgrade them to full access
+        if existing_user.access_status in ["waiting", "waiting_list"]:
+            logger.info(f"Upgrading waiting list user to full access: {existing_user.email}")
+            
+            # Set password and full name if provided
+            if user_in.password:
+                from app.core.security import get_password_hash
+                existing_user.hashed_password = get_password_hash(user_in.password)
+            if user_in.full_name:
+                existing_user.full_name = user_in.full_name
+            
+            # Upgrade to full access
+            existing_user.access_status = "full"
+            existing_user.has_account = True
+            existing_user.early_access_granted_at = datetime.utcnow()
+            if not existing_user.user_kind:
+                existing_user.user_kind = "content"
+            
+            await db.commit()
+            await db.refresh(existing_user)
+            
+            logger.info(f"Waiting list user upgraded: {existing_user.email}")
+            
+            # Send welcome email
+            try:
+                send_welcome_email.delay(existing_user.email, existing_user.full_name)
+            except Exception as e:
+                logger.error(f"Failed to enqueue welcome email for {existing_user.email}: {e}")
+            
+            return existing_user
+        else:
+            # User already has full account
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered",
+            )
 
-    # Create user
+    # Create new user with full access immediately
     user = await user_service.create(
         user_create=UserCreate(
             email=user_in.email,
@@ -75,20 +113,22 @@ async def signup(
         )
     )
     
-    # Set user to waiting and mark join time, default kind to content
-    from datetime import datetime
-    user.access_status = "waiting"
+    # Grant full access immediately (post-launch behavior)
+    user.access_status = "full"
     user.user_kind = "content"
-    user.joined_waiting_list_at = datetime.utcnow()
+    user.has_account = True
+    user.early_access_granted_at = datetime.utcnow()
     await db.commit()
     await db.refresh(user)
 
-    logger.info(f"New user joined waiting list: {user.email}")
-    # Fire-and-forget welcome email (uses SendGrid template if configured)
+    logger.info(f"New user created with full access: {user.email}")
+    
+    # Fire-and-forget welcome email
     try:
         send_welcome_email.delay(user.email, user.full_name)
     except Exception as e:
         logger.error(f"Failed to enqueue welcome email for {user.email}: {e}")
+    
     return user
 
 

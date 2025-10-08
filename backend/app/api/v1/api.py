@@ -31,6 +31,7 @@ from app.api.v1.endpoints import (
     rag,
     context,
     dashboard_metrics,
+    feedback,
 )
 from app.api.v1.endpoints import workflows as workflows_endpoints
 from app.api.v1.endpoints import marketing_admin
@@ -241,6 +242,12 @@ api_router.include_router(
 api_router.include_router(
     analytics.router,
     tags=["analytics"],
+)
+
+api_router.include_router(
+    feedback.router,
+    prefix="/feedback",
+    tags=["feedback"],
 )
 
 

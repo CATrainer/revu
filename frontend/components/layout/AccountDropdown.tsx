@@ -68,25 +68,6 @@ export function AccountDropdown({ variant = 'landing' }: AccountDropdownProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         
-        {/* Navigation to app - only show for landing variant */}
-        {!isWaitingVariant && (
-          <>
-            <DropdownMenuItem onClick={handleNavigateToApp}>
-              <User className="mr-2 h-4 w-4" />
-              {getNavigationLabel()}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        )}
-        
-        {/* Account Settings - simplified for waiting variant */}
-        {!isWaitingVariant && (
-          <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            Account Settings
-          </DropdownMenuItem>
-        )}
-        
         <DropdownMenuItem onClick={logout}>
           <LogOut className="mr-2 h-4 w-4" />
           Logout

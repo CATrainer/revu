@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button';
 import { useStore } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
 
-const tabs = ['Account','Integrations','Demo Mode','Billing'] as const;
+const tabs = ['Integrations','Demo Mode'] as const;
 
 export default function SettingsPage() {
-  const [tab, setTab] = useState<typeof tabs[number]>('Account');
+  const [tab, setTab] = useState<typeof tabs[number]>('Integrations');
   const sp = useSearchParams();
   useEffect(() => {
     const t = sp.get('tab');
@@ -35,10 +35,8 @@ export default function SettingsPage() {
           <CardTitle className="text-primary-dark">{tab}</CardTitle>
         </CardHeader>
         <CardContent>
-          {tab === 'Account' && <AccountSection />}
           {tab === 'Integrations' && <IntegrationsSection />}
           {tab === 'Demo Mode' && <DemoModeSection />}
-          {tab === 'Billing' && <BillingSection />}
         </CardContent>
       </Card>
     </div>

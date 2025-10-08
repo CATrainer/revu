@@ -14,7 +14,7 @@ const plans = [
 		description: 'Perfect for getting started',
 		priceDetail: 'Free forever',
 		popular: false,
-		buttonText: 'Get Early Access',
+		buttonText: 'Get Started',
 		features: [
 			'Up to 3 Platform connections',
 			'Up to 1,000 AI Generated Responses/month',
@@ -31,7 +31,7 @@ const plans = [
 		popular: true,
 		savePercentage: '20%',
 		annualPrice: '$28',
-		buttonText: 'Get Early Access',
+		buttonText: 'Get Started',
 		features: [
 			'Up to 5 Platform connections',
 			'Up to 10,000 AI Generated Responses/month',
@@ -46,7 +46,7 @@ const plans = [
 		description: 'For large creators and agencies',
 		priceDetail: 'Custom pricing for your needs',
 		popular: false,
-		buttonText: 'Get Early Access',
+		buttonText: 'Get Started',
 		features: [
 			'Heavy usage requirements supported',
 			'Manage many channels',
@@ -233,11 +233,12 @@ export function Pricing() {
 											transition={{ delay: index * 0.15 + 0.6, duration: 0.6 }}
 											className="w-full"
 										>
-											<Button
-												className="w-full bg-green-600 hover:bg-green-700 text-white border-0 py-4 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+											<Button 
+												className={plan.popular ? 'w-full bg-green-600 hover:bg-green-700 text-white' : 'w-full border border-green-500 text-green-600 hover:bg-green-50'}
+												variant={plan.popular ? 'default' : 'outline'}
 												asChild
 											>
-												<Link href={'/join-waitlist'}>
+												<Link href={'/signup'}>
 													{plan.buttonText}
 												</Link>
 											</Button>

@@ -113,16 +113,16 @@ export function Hero() {
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 via-blue-400 to-green-400 opacity-60"></div>
               
               <div className="relative z-10">
-                <div className="text-center mb-2">
+                <div className="text-center mb-6">
                   <h3 className="text-3xl lg:text-4xl font-bold text-green-600 mb-4">
-                    Get Early Access
+                    Get Started Today
                   </h3>
-                      <p className="text-base text-primary-dark/80 dark:text-gray-300 font-['Poppins',sans-serif] font-medium mb-3">
-                        We’re in prelaunch. Share your email and we’ll notify you early when access opens.
-                      </p>
+                  <p className="text-base text-primary-dark/80 dark:text-gray-300 font-['Poppins',sans-serif] font-medium mb-3">
+                    Join Repruv and start automating your social media engagement with AI-powered tools.
+                  </p>
                   <div className="flex flex-wrap gap-3 justify-center mb-4">
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700">
-                      🚀 Early Access
+                      🚀 Now Live
                     </span>
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
                       🔒 Secure &amp; Private
@@ -134,56 +134,24 @@ export function Hero() {
                 </div>
                 
                 <motion.div 
-                  className="w-full"
+                  className="w-full flex flex-col sm:flex-row gap-4 justify-center items-center"
                   initial={{ opacity: 0, y: 20 }}
                   animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                   transition={{ duration: 0.6, delay: 0.8 }}
                 >
-                  <form onSubmit={handleEmailSubmit} className="space-y-2">
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                      <div className="relative group flex-1">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                          <svg className="h-5 w-5 text-slate-400 dark:text-gray-500 group-hover:text-green-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                          </svg>
-                        </div>
-                        <Input
-                          type="email"
-                          placeholder="Enter your email address"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          required
-                          className="w-full pl-12 pr-4 py-3 text-base border-2 border-slate-300 dark:border-gray-600 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition-all duration-300 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-gray-400 shadow-sm hover:shadow-md group-hover:border-green-400"
-                          disabled={loading}
-                        />
-                      </div>
-                      
-                      <Button 
-                        type="submit" 
-                        disabled={loading || !email.trim()} 
-                        className="sm:w-auto px-6 py-3 text-base font-bold bg-green-600 hover:bg-green-700 disabled:bg-slate-400 dark:disabled:bg-gray-600 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 whitespace-nowrap"
-                      >
-                        {loading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Joining...
-                          </>
-                        ) : (
-                          'Get Early Access'
-                        )}
-                      </Button>
-                    </div>
-                    
-
-                      
-                      {error && (
-                        <div className="flex items-center space-x-2 text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-200 dark:border-red-800">
-                          <AlertCircle className="h-4 w-4" />
-                          <span>{error}</span>
-                        </div>
-                      )}
-                      
-                  </form>
+                  <Button 
+                    onClick={() => router.push('/signup')}
+                    className="px-8 py-4 text-lg font-bold bg-green-600 hover:bg-green-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                  >
+                    Get Started Free
+                  </Button>
+                  <Button 
+                    onClick={() => router.push('/features')}
+                    variant="outline"
+                    className="px-8 py-4 text-lg font-bold border-2 border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    Learn More
+                  </Button>
                 </motion.div>
               </div>
             </div>

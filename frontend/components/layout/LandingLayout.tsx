@@ -170,8 +170,8 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                         </li>
                         <li className="flex flex-col p-3">
                           <Button asChild variant="outline" className="text-sm h-12 border-green-600 text-green-600 hover:bg-green-50 font-medium">
-                            <Link href="/#hero">
-                              Get Early Access
+                            <Link href="/signup">
+                              Get Started
                             </Link>
                           </Button>
                         </li>
@@ -197,8 +197,8 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                   
                   <NavigationMenuItem>
                     <Button asChild className="bg-green-600 hover:bg-green-700 text-white">
-                      <Link href="/#hero">
-                        Get Early Access
+                      <Link href="/signup">
+                        Get Started
                       </Link>
                     </Button>
                   </NavigationMenuItem>
@@ -206,11 +206,22 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
               </NavigationMenu>
             </div>
             
-            {/* Desktop Auth Buttons (Login/Signup hidden during prelaunch) */}
+            {/* Desktop Auth Buttons */}
             <div className="hidden md:flex md:items-center md:space-x-4">
               <ThemeToggle />
-              {!isLoading && isAuthenticated && (
-                <AccountDropdown variant="landing" />
+              {!isLoading && (
+                isAuthenticated ? (
+                  <AccountDropdown variant="landing" />
+                ) : (
+                  <>
+                    <Button variant="ghost" asChild>
+                      <Link href="/login">Login</Link>
+                    </Button>
+                    <Button asChild className="bg-green-600 hover:bg-green-700 text-white">
+                      <Link href="/signup">Sign Up</Link>
+                    </Button>
+                  </>
+                )
               )}
             </div>
             
@@ -263,25 +274,35 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
               >
                 Pricing
               </Link>
-              <div className="px-3 py-2">
-                <Button asChild className="w-full min-h-11 bg-green-600 hover:bg-green-700 text-white">
-                  <Link href="/#hero">
-                    Get Early Access
-                  </Link>
-                </Button>
+              <div className="px-3 py-2 space-y-2">
+                {!isLoading && !isAuthenticated && (
+                  <>
+                    <Button asChild variant="outline" className="w-full min-h-11">
+                      <Link href="/login">Login</Link>
+                    </Button>
+                    <Button asChild className="w-full min-h-11 bg-green-600 hover:bg-green-700 text-white">
+                      <Link href="/signup">Sign Up</Link>
+                    </Button>
+                  </>
+                )}
+                {!isLoading && isAuthenticated && (
+                  <Button asChild className="w-full min-h-11 bg-green-600 hover:bg-green-700 text-white">
+                    <Link href="/dashboard">Go to Dashboard</Link>
+                  </Button>
+                )}
               </div>
             </div>
             <div className="pt-4 pb-3 border-t border-[var(--border)]">
               <div className="flex items-center justify-center px-4 mb-3">
                 <ThemeToggle />
               </div>
-              <div className="flex items-center px-4 space-x-3">
-                {!isLoading && isAuthenticated && (
+              {!isLoading && isAuthenticated && (
+                <div className="flex items-center px-4">
                   <div className="w-full flex justify-center">
                     <AccountDropdown variant="landing" />
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         )}

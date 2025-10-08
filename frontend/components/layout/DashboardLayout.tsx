@@ -11,6 +11,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useStore } from '@/lib/store';
 import { pushToast } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
+import { FeedbackWidget } from '@/components/shared/FeedbackWidget';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -290,6 +291,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         )}
+
+        {/* Feedback Widget */}
+        <FeedbackWidget />
       </div>
     </div>
   );
