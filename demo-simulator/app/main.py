@@ -109,6 +109,15 @@ async def create_profile(
             # Reactivate existing profile
             existing.is_active = True
             await session.commit()
+            
+            logger.info(f"Reactivated demo profile for user {payload.user_id}")
+            
+            # Create fresh content for reactivated profile
+            engine = SimulationEngine()
+            await engine.create_content(session, existing, 'youtube')
+            await engine.create_content(session, existing, 'instagram')
+            await engine.create_content(session, existing, 'tiktok')
+            
             return ProfileResponse(
                 id=str(existing.id),
                 user_id=str(existing.user_id),
