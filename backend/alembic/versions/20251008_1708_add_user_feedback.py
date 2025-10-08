@@ -1,7 +1,7 @@
 """add_user_feedback
 
 Revision ID: 20251008_1708
-Revises: 20250107_2010
+Revises: 20250107_2350
 Create Date: 2025-10-08 17:08:00
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '20251008_1708'
-down_revision = '20250107_2010'
+down_revision = '20250107_2350'
 branch_labels = None
 depends_on = None
 
