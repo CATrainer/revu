@@ -245,20 +245,37 @@ export default function DemoModePage() {
                   {Object.entries(PRESETS).map(([key, preset]) => (
                     <button
                       key={key}
-                      onClick={() => setSelectedPreset(key)}
-                      className={`p-4 border rounded-lg text-left transition-colors ${
+                      type="button"
+                      onClick={() => {
+                        console.log('Preset selected:', key);
+                        setSelectedPreset(key);
+                      }}
+                      className={`relative p-4 border-2 rounded-lg text-left transition-all ${
                         selectedPreset === key
-                          ? 'border-brand-primary bg-brand-primary/5'
-                          : 'border-border hover:border-brand-primary/50'
+                          ? 'border-green-500 bg-green-50 dark:bg-green-950 ring-2 ring-green-500 ring-offset-2'
+                          : 'border-gray-300 dark:border-gray-700 hover:border-green-400 dark:hover:border-green-600 hover:bg-gray-50 dark:hover:bg-gray-900'
                       }`}
                     >
-                      <p className="font-medium">{preset.label}</p>
-                      <p className="text-xs text-secondary-dark mt-1">
+                      {selectedPreset === key && (
+                        <div className="absolute top-2 right-2 h-5 w-5 bg-green-500 rounded-full flex items-center justify-center">
+                          <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                      <p className="font-semibold text-base">{preset.label}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
                         {preset.yt_subscribers.toLocaleString()} YT subs
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                        {preset.yt_avg_views.toLocaleString()} avg views
                       </p>
                     </button>
                   ))}
                 </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  Selected: <span className="font-semibold">{PRESETS[selectedPreset as keyof typeof PRESETS].label}</span>
+                </p>
               </TabsContent>
 
               <TabsContent value="manual" className="space-y-4">
