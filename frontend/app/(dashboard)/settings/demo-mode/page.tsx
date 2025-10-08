@@ -342,21 +342,6 @@ export default function DemoModePage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Info Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>How Demo Mode Works</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-secondary-dark">
-          <p>• AI generates realistic videos, posts, comments, and DMs based on your niche</p>
-          <p>• Interactions arrive in real-time with natural timing patterns</p>
-          <p>• All workflows and automations work exactly like with real platforms</p>
-          <p>• Analytics track demo performance separately</p>
-          <p>• Cost: ~$10-15/month per active demo profile</p>
-          <p>• You can switch between demo and real mode anytime</p>
-        </CardContent>
-      </Card>
     </div>
   );
 }
