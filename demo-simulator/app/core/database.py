@@ -3,6 +3,7 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.pool import NullPool
+from sqlalchemy import text
 
 from app.core.config import settings
 
@@ -57,7 +58,13 @@ async def init_db():
     from app.models import DemoProfile, DemoContent, DemoInteraction, GenerationCache  # noqa: F401
     
     async with engine.begin() as conn:
-        # Drop all tables first (demo service - no persistent data)
-        await conn.run_sync(Base.metadata.drop_all)
+        # Drop all tables with CASCADE (demo service - no persistent data)
+        # Using raw SQL because SQLAlchemy's drop_all() doesn't use CASCADE
+        await conn.execute(text("DROP TABLE IF EXISTS generation_cache CASCADE"))
+        await conn.execute(text("DROP TABLE IF EXISTS demo_interactions CASCADE"))
+        await conn.execute(text("DROP TABLE IF EXISTS demo_comments CASCADE"))
+        await conn.execute(text("DROP TABLE IF EXISTS demo_content CASCADE"))
+        await conn.execute(text("DROP TABLE IF EXISTS demo_profiles CASCADE"))
+        
         # Create all tables with current schema
         await conn.run_sync(Base.metadata.create_all)
