@@ -29,6 +29,7 @@ from app.models.thread import InteractionThread
 from app.models.view import InteractionView
 from app.models.fan import Fan
 from app.models.analytics import InteractionAnalytics
+from app.models.user_feedback import UserFeedback
 
 __all__ = [
     "Organization",
@@ -61,4 +62,5 @@ __all__ = [
     "InteractionView",
     "Fan",
     "InteractionAnalytics",
+    "UserFeedback",
 ]
