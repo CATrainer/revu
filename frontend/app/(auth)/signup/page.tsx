@@ -39,7 +39,6 @@ export default function SignupPage() {
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
   });
-
   const password = watch('password');
 
   const onSubmit = async (data: SignupFormData) => {
@@ -48,8 +47,8 @@ export default function SignupPage() {
     try {
       await signup(data.email, data.password, data.fullName);
       
-      // During prelaunch, send users to the same thank-you screen as waitlist
-      router.push(`/waitlist-success?has_account=true&email=${encodeURIComponent(data.email)}`);
+      // Redirect to dashboard with full access
+      router.push('/dashboard');
     } catch (err) {
       console.error('Signup error:', err);
       const axiosError = err as AxiosError<ErrorResponse>;
@@ -350,21 +349,6 @@ export default function SignupPage() {
                 <FaInstagram className="w-5 h-5 text-pink-600" />
                 <span className="text-gray-700 dark:text-gray-300">Instagram</span>
               </Button>
-            </div>
-
-            {/* Prelaunch CTA */}
-            <div className="mt-3 p-2 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/10 rounded-lg border border-green-200/50 dark:border-green-800/20 shadow-sm">
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-800 dark:text-gray-200">
-                  <strong>We’re in prelaunch.</strong>
-                </p>
-                <Link
-                  href="/join-waitlist"
-                  className="text-xs text-green-600 dark:text-green-400 hover:underline font-medium"
-                >
-                  Join the waitlist →
-                </Link>
-              </div>
             </div>
 
           </CardContent>
