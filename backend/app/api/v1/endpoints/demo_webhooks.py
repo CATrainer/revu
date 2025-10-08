@@ -83,8 +83,8 @@ async def handle_interaction_created(session: AsyncSession, data: Dict):
     interaction = Interaction(
         id=uuid.uuid4(),
         platform=data.get('platform'),
-        interaction_type=interaction_data.get('type', 'comment'),
-        external_id=interaction_data.get('id'),
+        type=interaction_data.get('type', 'comment'),
+        platform_id=interaction_data.get('id'),
         content=interaction_data.get('content'),
         author_username=author_data.get('username'),
         author_display_name=author_data.get('display_name'),
