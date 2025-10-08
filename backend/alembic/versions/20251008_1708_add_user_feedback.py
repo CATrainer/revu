@@ -42,17 +42,29 @@ def upgrade() -> None:
     table_exists = 'user_feedback' in inspector.get_table_names()
     
     if not table_exists:
+        # Create enum type objects that reference existing types (don't try to create them)
+        feedback_type_enum = postgresql.ENUM(
+            'bug', 'feature_request', 'general', 'improvement',
+            name='feedbacktype',
+            create_type=False  # Don't try to create, it already exists
+        )
+        feedback_status_enum = postgresql.ENUM(
+            'new', 'reviewing', 'in_progress', 'completed', 'wont_fix',
+            name='feedbackstatus',
+            create_type=False  # Don't try to create, it already exists
+        )
+        
         # Create user_feedback table
         op.create_table(
             'user_feedback',
             sa.Column('id', sa.Integer(), nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
-            sa.Column('feedback_type', postgresql.ENUM('bug', 'feature_request', 'general', 'improvement', name='feedbacktype'), nullable=False),
+            sa.Column('feedback_type', feedback_type_enum, nullable=False),
             sa.Column('title', sa.String(length=255), nullable=False),
             sa.Column('description', sa.Text(), nullable=False),
             sa.Column('page_url', sa.String(length=500), nullable=True),
             sa.Column('user_agent', sa.String(length=500), nullable=True),
-            sa.Column('status', postgresql.ENUM('new', 'reviewing', 'in_progress', 'completed', 'wont_fix', name='feedbackstatus'), nullable=False),
+            sa.Column('status', feedback_status_enum, nullable=False),
             sa.Column('admin_notes', sa.Text(), nullable=True),
             sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
             sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
