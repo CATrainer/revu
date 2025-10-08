@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlayCircle, StopCircle, Settings2, Sparkles } from 'lucide-react';
+import { PlayCircle, StopCircle, Settings2, Sparkles, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -56,6 +56,7 @@ const PRESETS = {
 export default function DemoModePage() {
   const [demoStatus, setDemoStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
   const [configTab, setConfigTab] = useState<'auto' | 'manual'>('auto');
   const [selectedPreset, setSelectedPreset] = useState('medium');
   const [niche, setNiche] = useState('tech_reviews');
@@ -86,7 +87,7 @@ export default function DemoModePage() {
 
   const handleEnableDemo = async () => {
     try {
-      setLoading(true);
+      setActionLoading(true);
       
       const config = configTab === 'auto' 
         ? {
@@ -113,13 +114,17 @@ export default function DemoModePage() {
     } catch (error: any) {
       alert('Failed to Enable Demo: ' + (error.response?.data?.detail || 'An error occurred'));
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
   const handleDisableDemo = async () => {
+    if (!confirm('Are you sure you want to disable demo mode? This will remove all simulated data.')) {
+      return;
+    }
+    
     try {
-      setLoading(true);
+      setActionLoading(true);
       await api.post('/demo/disable');
       
       alert('Demo Mode Disabled. Switched back to real platform connections.');
@@ -128,7 +133,7 @@ export default function DemoModePage() {
     } catch (error: any) {
       alert('Failed to Disable Demo: ' + (error.response?.data?.detail || 'An error occurred'));
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
@@ -152,30 +157,46 @@ export default function DemoModePage() {
       {/* Current Status */}
       <Card>
         <CardHeader>
-          <CardTitle>Current Status</CardTitle>
-          <CardDescription>
-            {demoStatus?.demo_mode 
-              ? 'Demo mode is active - using simulated platform data'
-              : 'Demo mode is inactive - using real platform connections'
-            }
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Current Status</CardTitle>
+              <CardDescription>
+                {demoStatus?.demo_mode 
+                  ? 'Demo mode is active - using simulated platform data'
+                  : 'Demo mode is inactive - using real platform connections'
+                }
+              </CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={loadDemoStatus}
+              disabled={loading}
+              title="Refresh status"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
-            <div className={`h-3 w-3 rounded-full ${demoStatus?.demo_mode ? 'bg-green-500' : 'bg-gray-300'}`} />
-            <span className="font-medium">
-              {demoStatus?.demo_mode ? 'Demo Mode Active' : 'Real Mode Active'}
-            </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={`h-3 w-3 rounded-full ${demoStatus?.demo_mode ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <span className="font-medium">
+                {demoStatus?.demo_mode ? 'Demo Mode Active' : 'Real Mode Active'}
+              </span>
+            </div>
             
             {demoStatus?.demo_mode && (
               <Button
-                variant="outline"
+                variant="destructive"
                 size="sm"
                 onClick={handleDisableDemo}
-                disabled={loading}
+                disabled={actionLoading}
+                className="ml-auto"
               >
                 <StopCircle className="h-4 w-4 mr-2" />
-                Disable Demo
+                {actionLoading ? 'Disabling...' : 'Disable Demo'}
               </Button>
             )}
           </div>
@@ -349,12 +370,12 @@ export default function DemoModePage() {
 
             <Button
               onClick={handleEnableDemo}
-              disabled={loading}
+              disabled={actionLoading}
               className="w-full"
               size="lg"
             >
               <PlayCircle className="h-5 w-5 mr-2" />
-              Enable Demo Mode
+              {actionLoading ? 'Enabling...' : 'Enable Demo Mode'}
             </Button>
           </CardContent>
         </Card>
