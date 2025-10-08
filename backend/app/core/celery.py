@@ -73,18 +73,21 @@ celery_app.conf.update(
 
 # Beat schedule for periodic tasks
 celery_app.conf.beat_schedule = {
-    "check-trial-expirations": {
-        "task": "app.tasks.email.check_trial_expirations",
-        "schedule": crontab(hour=9, minute=0),  # 9 AM UTC
-    },
-    "sync-sendgrid-contacts": {
-        "task": "app.tasks.marketing.sync_all_contacts",
-        "schedule": crontab(hour=4, minute=15),  # Daily at 04:15 UTC
-    },
-    "waitlist-campaign-hourly": {
-        "task": "app.tasks.email.send_waitlist_campaign_hourly",
-        "schedule": crontab(minute=0),  # Hourly on the hour UTC
-    },
+    # DISABLED: Post-launch, no automated trial/waitlist emails
+    # "check-trial-expirations": {
+    #     "task": "app.tasks.email.check_trial_expirations",
+    #     "schedule": crontab(hour=9, minute=0),  # 9 AM UTC
+    # },
+    # "sync-sendgrid-contacts": {
+    #     "task": "app.tasks.marketing.sync_all_contacts",
+    #     "schedule": crontab(hour=4, minute=15),  # Daily at 04:15 UTC
+    # },
+    # "waitlist-campaign-hourly": {
+    #     "task": "app.tasks.email.send_waitlist_campaign_hourly",
+    #     "schedule": crontab(minute=0),  # Hourly on the hour UTC
+    # },
+    
+    # Keep active: Chat cleanup
     "cleanup-chat-streams": {
         "task": "chat.cleanup_old_streams",
         "schedule": crontab(minute=0),  # Every hour

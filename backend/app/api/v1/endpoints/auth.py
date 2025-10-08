@@ -32,7 +32,7 @@ from app.models.user import User as UserModel
 from app.services.auth import AuthService
 from app.services.user import UserService
 from app.services.demo_data import DemoDataService
-from app.tasks.email import send_welcome_email
+# from app.tasks.email import send_welcome_email  # DISABLED: Post-launch, no automated emails
 
 router = APIRouter()
 
@@ -90,11 +90,11 @@ async def signup(
             
             logger.info(f"Waiting list user upgraded: {existing_user.email}")
             
-            # Send welcome email
-            try:
-                send_welcome_email.delay(existing_user.email, existing_user.full_name)
-            except Exception as e:
-                logger.error(f"Failed to enqueue welcome email for {existing_user.email}: {e}")
+            # DISABLED: Post-launch, no automated welcome emails
+            # try:
+            #     send_welcome_email.delay(existing_user.email, existing_user.full_name)
+            # except Exception as e:
+            #     logger.error(f"Failed to enqueue welcome email for {existing_user.email}: {e}")
             
             return existing_user
         else:
@@ -123,11 +123,11 @@ async def signup(
 
     logger.info(f"New user created with full access: {user.email}")
     
-    # Fire-and-forget welcome email
-    try:
-        send_welcome_email.delay(user.email, user.full_name)
-    except Exception as e:
-        logger.error(f"Failed to enqueue welcome email for {user.email}: {e}")
+    # DISABLED: Post-launch, no automated welcome emails
+    # try:
+    #     send_welcome_email.delay(user.email, user.full_name)
+    # except Exception as e:
+    #     logger.error(f"Failed to enqueue welcome email for {user.email}: {e}")
     
     return user
 
