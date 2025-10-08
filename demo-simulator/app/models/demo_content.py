@@ -1,7 +1,7 @@
 """Demo content model - generated videos/posts."""
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey
+from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 
@@ -40,7 +40,7 @@ class DemoContent(Base):
     
     # Lifecycle
     published_at = Column(DateTime, nullable=False)
-    engagement_complete = Column(String, default=False)  # All comments generated
+    engagement_complete = Column(Boolean, default=False)  # All comments generated
     
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
