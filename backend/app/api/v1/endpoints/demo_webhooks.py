@@ -58,12 +58,25 @@ async def handle_interaction_created(session: AsyncSession, data: Dict):
     interaction_data = data.get('interaction', {})
     author_data = interaction_data.get('author', {})
     
+    # Get user_id from demo profile
+    user_id_str = data.get('user_id')
+    if not user_id_str:
+        logger.error("Demo webhook missing user_id - interaction will not be visible")
+        return
+    
+    try:
+        user_id = uuid.UUID(user_id_str)
+    except (ValueError, TypeError):
+        logger.error(f"Invalid user_id in demo webhook: {user_id_str}")
+        return
+    
     # Get or create fan
     fan = await get_or_create_fan(
         session,
         author_data.get('username'),
         author_data.get('display_name'),
         data.get('platform'),
+        user_id,
     )
     
     # Create interaction
@@ -84,14 +97,13 @@ async def handle_interaction_created(session: AsyncSession, data: Dict):
         status='unread',
         priority_score=calculate_priority(interaction_data),
         fan_id=fan.id if fan else None,
-        # Will be set by middleware/dependency
-        user_id=None,  # TODO: Get from demo profile mapping
+        user_id=user_id,
     )
     
     session.add(interaction)
     await session.commit()
     
-    logger.info(f"Created demo interaction: {interaction.id}")
+    logger.info(f"Created demo interaction {interaction.id} for user {user_id}")
 
 
 async def handle_content_published(session: AsyncSession, data: Dict):
@@ -105,13 +117,15 @@ async def get_or_create_fan(
     username: str,
     display_name: str,
     platform: str,
+    user_id: uuid.UUID,
 ) -> Optional[Fan]:
     """Get existing fan or create new one."""
     
-    # Try to find existing fan
+    # Try to find existing fan for this user
     stmt = select(Fan).where(
         Fan.username == username,
-        Fan.platform == platform
+        Fan.platform == platform,
+        Fan.user_id == user_id
     )
     result = await session.execute(stmt)
     fan = result.scalar_one_or_none()
@@ -124,8 +138,7 @@ async def get_or_create_fan(
         username=username,
         display_name=display_name,
         platform=platform,
-        # TODO: Get user_id from demo profile mapping
-        user_id=None,
+        user_id=user_id,
     )
     
     session.add(fan)

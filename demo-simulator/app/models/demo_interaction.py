@@ -64,6 +64,7 @@ class DemoInteraction(Base):
         payload = {
             'event_type': f'{self.interaction_type}.created',
             'platform': self.platform,
+            'user_id': str(self.profile.user_id),  # Include user_id from profile
             'interaction': {
                 'id': self.external_id,
                 'type': self.interaction_type,
