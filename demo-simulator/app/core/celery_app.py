@@ -27,10 +27,10 @@ celery_app.conf.update(
 
 # Beat schedule for periodic tasks
 celery_app.conf.beat_schedule = {
-    # Upload new content every 4-6 hours
+    # Upload new content - run every 30 minutes to ensure profiles get content quickly
     "upload-demo-content": {
         "task": "app.tasks.content_tasks.upload_content_for_active_profiles",
-        "schedule": 60.0 * 60 * 4,  # 4 hours
+        "schedule": 60.0 * 30,  # 30 minutes (reduced from 4 hours for faster initial content)
     },
     # Generate comments every 5 minutes
     "generate-comments": {
