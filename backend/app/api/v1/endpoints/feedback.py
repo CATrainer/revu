@@ -61,12 +61,12 @@ async def submit_feedback(
         # Create feedback entry
         feedback = UserFeedback(
             user_id=current_user.id,
-            feedback_type=feedback_in.feedback_type,
+            feedback_type=feedback_in.feedback_type.value,  # Use .value to get lowercase string
             title=feedback_in.title,
             description=feedback_in.description,
             page_url=feedback_in.page_url,
             user_agent=request.headers.get("user-agent"),
-            status=FeedbackStatus.NEW
+            status=FeedbackStatus.NEW.value  # Use .value for consistency
         )
         
         db.add(feedback)

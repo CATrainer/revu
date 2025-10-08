@@ -4,7 +4,7 @@ User Feedback Model for bug reports and feature requests.
 
 from datetime import datetime
 from uuid import UUID
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, Enum as SQLEnum
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 import enum
@@ -38,7 +38,8 @@ class UserFeedback(Base):
     user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     
     # Feedback content
-    feedback_type = Column(SQLEnum(FeedbackType), nullable=False, default=FeedbackType.GENERAL)
+    # Use String type that references the PostgreSQL enum directly
+    feedback_type = Column(String, nullable=False, default="general")
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
     
@@ -47,7 +48,8 @@ class UserFeedback(Base):
     user_agent = Column(String(500), nullable=True)
     
     # Status tracking
-    status = Column(SQLEnum(FeedbackStatus), nullable=False, default=FeedbackStatus.NEW)
+    # Use String type that references the PostgreSQL enum directly
+    status = Column(String, nullable=False, default="new")
     admin_notes = Column(Text, nullable=True)
     resolved_at = Column(DateTime, nullable=True)
     
@@ -57,4 +59,4 @@ class UserFeedback(Base):
     user = relationship("User", back_populates="feedback")
     
     def __repr__(self):
-        return f"<UserFeedback {self.id}: {self.feedback_type.value} - {self.title[:50]}>"
+        return f"<UserFeedback {self.id}: {self.feedback_type} - {self.title[:50]}>"
