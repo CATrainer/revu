@@ -19,37 +19,51 @@ depends_on = None
 def upgrade() -> None:
     """Add user_feedback table for bug reports and feature requests."""
     
-    # Create enum types
+    # Create enum types (only if they don't exist)
     op.execute("""
-        CREATE TYPE feedbacktype AS ENUM ('bug', 'feature_request', 'general', 'improvement')
+        DO $$ BEGIN
+            CREATE TYPE feedbacktype AS ENUM ('bug', 'feature_request', 'general', 'improvement');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
     """)
     
     op.execute("""
-        CREATE TYPE feedbackstatus AS ENUM ('new', 'reviewing', 'in_progress', 'completed', 'wont_fix')
+        DO $$ BEGIN
+            CREATE TYPE feedbackstatus AS ENUM ('new', 'reviewing', 'in_progress', 'completed', 'wont_fix');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
     """)
     
-    # Create user_feedback table
-    op.create_table(
-        'user_feedback',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('user_id', sa.Integer(), nullable=False),
-        sa.Column('feedback_type', postgresql.ENUM('bug', 'feature_request', 'general', 'improvement', name='feedbacktype'), nullable=False),
-        sa.Column('title', sa.String(length=255), nullable=False),
-        sa.Column('description', sa.Text(), nullable=False),
-        sa.Column('page_url', sa.String(length=500), nullable=True),
-        sa.Column('user_agent', sa.String(length=500), nullable=True),
-        sa.Column('status', postgresql.ENUM('new', 'reviewing', 'in_progress', 'completed', 'wont_fix', name='feedbackstatus'), nullable=False),
-        sa.Column('admin_notes', sa.Text(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
-        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
-        sa.Column('resolved_at', sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id')
-    )
+    # Check if table exists before creating
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    table_exists = 'user_feedback' in inspector.get_table_names()
     
-    # Create indexes
-    op.create_index(op.f('ix_user_feedback_user_id'), 'user_feedback', ['user_id'], unique=False)
-    op.create_index(op.f('ix_user_feedback_id'), 'user_feedback', ['id'], unique=False)
+    if not table_exists:
+        # Create user_feedback table
+        op.create_table(
+            'user_feedback',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('user_id', sa.Integer(), nullable=False),
+            sa.Column('feedback_type', postgresql.ENUM('bug', 'feature_request', 'general', 'improvement', name='feedbacktype'), nullable=False),
+            sa.Column('title', sa.String(length=255), nullable=False),
+            sa.Column('description', sa.Text(), nullable=False),
+            sa.Column('page_url', sa.String(length=500), nullable=True),
+            sa.Column('user_agent', sa.String(length=500), nullable=True),
+            sa.Column('status', postgresql.ENUM('new', 'reviewing', 'in_progress', 'completed', 'wont_fix', name='feedbackstatus'), nullable=False),
+            sa.Column('admin_notes', sa.Text(), nullable=True),
+            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
+            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
+            sa.Column('resolved_at', sa.DateTime(), nullable=True),
+            sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+            sa.PrimaryKeyConstraint('id')
+        )
+        
+        # Create indexes
+        op.create_index(op.f('ix_user_feedback_user_id'), 'user_feedback', ['user_id'], unique=False)
+        op.create_index(op.f('ix_user_feedback_id'), 'user_feedback', ['id'], unique=False)
 
 
 def downgrade() -> None:
