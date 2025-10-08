@@ -3,6 +3,7 @@ Feedback endpoints for user bug reports and feature requests.
 """
 
 from typing import Any
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
@@ -26,7 +27,7 @@ class FeedbackCreate(BaseModel):
 
 class FeedbackResponse(BaseModel):
     """Schema for feedback response."""
-    id: int
+    id: UUID
     feedback_type: FeedbackType
     title: str
     description: str
