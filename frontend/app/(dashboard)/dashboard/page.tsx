@@ -8,7 +8,8 @@ import Link from 'next/link';
 import AutomationImpactWidget from '@/components/intelligence/AutomationImpactWidget';
 import { features } from '@/lib/features';
 import ConnectButton from '@/components/youtube/ConnectButton';
-import { Youtube, Instagram, Music, TrendingUp, Users, MessageCircle, Zap } from 'lucide-react';
+import { Youtube, Instagram, Music, TrendingUp, Users, MessageCircle, Zap, Sparkles, Settings2 } from 'lucide-react';
+import { api } from '@/lib/api';
 
 interface DashboardMetrics {
   total_followers: number;
@@ -24,6 +25,8 @@ interface DashboardMetrics {
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [demoMode, setDemoMode] = useState<boolean>(false);
+  const [demoProfile, setDemoProfile] = useState<any>(null);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -40,7 +43,18 @@ export default function DashboardPage() {
       }
     };
 
+    const fetchDemoStatus = async () => {
+      try {
+        const response = await api.get('/demo/status');
+        setDemoMode(response.data.demo_mode || false);
+        setDemoProfile(response.data.profile || null);
+      } catch (error) {
+        console.error('Failed to fetch demo status:', error);
+      }
+    };
+
     fetchMetrics();
+    fetchDemoStatus();
   }, []);
 
   const formatNumber = (num: number): string => {
@@ -53,6 +67,55 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-fade-in px-4 md:px-0"> {/* Add horizontal padding on mobile */}
+      {/* Demo Mode Banner */}
+      {demoMode && (
+        <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-purple-600" />
+                  <span className="font-semibold text-purple-900 dark:text-purple-100">Demo Mode Active</span>
+                </div>
+                <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                  Using simulated data from {demoProfile?.niche?.replace('_', ' ') || 'your demo profile'}. Interactions will arrive shortly.
+                </p>
+              </div>
+            </div>
+            <Link href="/settings/demo-mode">
+              <ModernButton variant="outline" size="sm">
+                <Settings2 className="h-4 w-4 mr-2" />
+                Manage Demo
+              </ModernButton>
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding: Enable Demo Mode */}
+      {!demoMode && !loading && (metrics?.interactions_today || 0) === 0 && (
+        <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Sparkles className="h-5 w-5 text-blue-600" />
+              <div>
+                <div className="font-semibold text-blue-900 dark:text-blue-100">No interactions yet?</div>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                  Try Demo Mode to see how Repruv works with AI-generated interactions
+                </p>
+              </div>
+            </div>
+            <Link href="/settings/demo-mode">
+              <ModernButton className="bg-blue-600 hover:bg-blue-700" size="sm">
+                <Sparkles className="h-4 w-4 mr-2" />
+                Enable Demo Mode
+              </ModernButton>
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Header Section */}
       <div className="space-y-2">
         <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-primary-dark">Welcome back!</h1> {/* Responsive heading sizes */}
