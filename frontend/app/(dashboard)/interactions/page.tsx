@@ -13,6 +13,7 @@ import { ViewTabs, type TabType } from './components/ViewTabs';
 import { ViewControls } from './components/ViewControls';
 import { InteractionDetailPanel } from './components/InteractionDetailPanel';
 import { WorkflowPanel } from './components/WorkflowPanel';
+import { AnalyticsPanel } from './components/AnalyticsPanel';
 import { api } from '@/lib/api';
 
 type SortOption = 'newest' | 'oldest' | 'priority' | 'engagement';
@@ -46,6 +47,7 @@ export default function InteractionsPage() {
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
   const [selectedInteractionId, setSelectedInteractionId] = useState<string | null>(null);
   const [showWorkflowPanel, setShowWorkflowPanel] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [tabCounts, setTabCounts] = useState<{
     all?: number;
     unanswered?: number;
@@ -146,6 +148,7 @@ export default function InteractionsPage() {
         onEditView={handleEditView}
         onDeleteView={handleDeleteView}
         isLoading={isLoading}
+        onShowAnalytics={() => setShowAnalytics(true)}
       />
 
       {/* Main Content */}
@@ -164,23 +167,17 @@ export default function InteractionsPage() {
             </div>
             
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowWorkflowPanel(true)}
-              >
-                <Zap className="h-4 w-4 mr-2" />
-                Workflows
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowViewBuilder(true)}
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                View Settings
-              </Button>
+              {/* Only show View Settings for non-system views */}
+              {activeView && !activeView.is_system && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEditView(activeView)}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  View Settings
+                </Button>
+              )}
               
               <Button
                 size="sm"
@@ -268,6 +265,13 @@ export default function InteractionsPage() {
           viewName={activeView?.name}
           onClose={() => setShowWorkflowPanel(false)}
           onUpdate={loadViews}
+        />
+      )}
+
+      {/* Analytics Panel */}
+      {showAnalytics && (
+        <AnalyticsPanel
+          onClose={() => setShowAnalytics(false)}
         />
       )}
     </div>

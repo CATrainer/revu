@@ -5,10 +5,9 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, Search, X, BarChart3, Brain, ChartPie, Settings as SettingsIcon, MessageSquare, Zap, Radio } from 'lucide-react';
+import { Menu, BarChart3, Brain, ChartPie, Settings as SettingsIcon, MessageSquare, Zap, Radio } from 'lucide-react';
 import { PauseCircle, PlayCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -42,8 +41,6 @@ export function Header({ onMenuClick }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { alertHistory } = useStore();
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showAlertBanner, setShowAlertBanner] = useState(false);
   const [systemStatus, setSystemStatus] = useState<{status: 'active'|'paused'; paused_until?: string|null; test_mode?: boolean; auto_pause_on_spike?: boolean}>({status: 'active'});
   const [pauseLoading, setPauseLoading] = useState(false);
@@ -52,17 +49,6 @@ export function Header({ onMenuClick }: HeaderProps) {
   const personaColor = user?.user_kind === 'business'
     ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
     : 'bg-purple-100 text-purple-700 border-purple-200';
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // TODO: Implement actual search functionality
-      console.log('Searching for:', searchQuery);
-      // For now, just close the search
-      setSearchOpen(false);
-      setSearchQuery('');
-    }
-  };
 
   // Simple auto-banner for the latest alert
   useEffect(() => {
@@ -278,41 +264,6 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <span className={`inline-block h-1.5 w-1.5 rounded-full ${personaColor.split(' ').find(c=>c.startsWith('bg-')) || 'bg-blue-500'}`}></span>
                 {personaLabel}
               </span>
-            )}
-            {/* Search */}
-            {searchOpen ? (
-              <form onSubmit={handleSearch} className="flex items-center space-x-2">
-                <Input
-                  type="search"
-                  placeholder="Search reviews, customers..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-48 md:w-64 card-background border-[var(--border)]" // Narrower on mobile to fit header
-                  autoFocus
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSearchOpen(false);
-                    setSearchQuery('');
-                  }}
-                  className="hover-background h-10 w-10" // Ensure touch target
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </form>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSearchOpen(true)}
-                aria-label="Open search"
-                className="hover-background h-10 w-10" // Ensure touch target
-              >
-                <Search className="h-5 w-5" />
-              </Button>
             )}
 
             <ThemeToggle />

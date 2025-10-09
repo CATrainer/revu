@@ -46,6 +46,7 @@ interface ViewSidebarProps {
   onEditView: (view: View) => void;
   onDeleteView: (id: string) => void;
   isLoading: boolean;
+  onShowAnalytics?: () => void;
 }
 
 export default function ViewSidebar({
@@ -56,6 +57,7 @@ export default function ViewSidebar({
   onEditView,
   onDeleteView,
   isLoading,
+  onShowAnalytics,
 }: ViewSidebarProps) {
   const [pinningId, setPinningId] = useState<string | null>(null);
 
@@ -253,24 +255,10 @@ export default function ViewSidebar({
           variant="ghost"
           size="sm"
           className="w-full justify-start"
-          asChild
+          onClick={onShowAnalytics}
         >
-          <a href="/interactions/workflows">
-            <Star className="h-4 w-4 mr-2" />
-            Workflows
-          </a>
-        </Button>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start"
-          asChild
-        >
-          <a href="/interactions/analytics">
-            <Archive className="h-4 w-4 mr-2" />
-            Analytics
-          </a>
+          <Archive className="h-4 w-4 mr-2" />
+          Analytics
         </Button>
       </div>
     </div>
