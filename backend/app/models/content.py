@@ -118,6 +118,8 @@ class ContentPerformance(Base):
     # Timestamps
     calculated_at = Column(DateTime, default=datetime.utcnow)
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Relationships
     content = relationship("ContentPiece", back_populates="performance")

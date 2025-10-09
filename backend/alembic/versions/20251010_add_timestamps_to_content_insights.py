@@ -1,4 +1,4 @@
-"""add timestamps to content_insights
+"""add timestamps to content_insights and content_performance
 
 Revision ID: 20251010_timestamps
 Revises: 20251010_insights
@@ -20,9 +20,17 @@ def upgrade() -> None:
     # Add created_at and updated_at columns to content_insights table
     op.add_column('content_insights', sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')))
     op.add_column('content_insights', sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')))
+    
+    # Add created_at and updated_at columns to content_performance table
+    op.add_column('content_performance', sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')))
+    op.add_column('content_performance', sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')))
 
 
 def downgrade() -> None:
+    # Remove created_at and updated_at columns from content_performance table
+    op.drop_column('content_performance', 'updated_at')
+    op.drop_column('content_performance', 'created_at')
+    
     # Remove created_at and updated_at columns from content_insights table
     op.drop_column('content_insights', 'updated_at')
     op.drop_column('content_insights', 'created_at')
