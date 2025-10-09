@@ -9,6 +9,7 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
     admin,
+    admin_credits,
     ai,
     auth,
     early_warning,
@@ -32,6 +33,7 @@ from app.api.v1.endpoints import (
     context,
     dashboard_metrics,
     feedback,
+    credits,
 )
 from app.api.v1.endpoints import workflows as workflows_endpoints
 from app.api.v1.endpoints import marketing_admin
@@ -48,6 +50,11 @@ api_router.include_router(
     admin.router,
     prefix="/admin",
     tags=["admin"],
+)
+
+api_router.include_router(
+    admin_credits.router,
+    tags=["admin", "credits"],
 )
 
 api_router.include_router(
@@ -248,6 +255,11 @@ api_router.include_router(
     feedback.router,
     prefix="/feedback",
     tags=["feedback"],
+)
+
+api_router.include_router(
+    credits.router,
+    tags=["credits"],
 )
 
 

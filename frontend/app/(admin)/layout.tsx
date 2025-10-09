@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
-import { LogOut, Settings, Users, Calendar } from 'lucide-react';
+import { LogOut, Settings, Users, Calendar, DollarSign } from 'lucide-react';
 
 // Simple loading spinner component
 const LoadingSpinner = ({ className = "" }: { className?: string }) => (
@@ -77,6 +77,12 @@ export default function AdminLayout({
       href: '/admin/demos',
       icon: Calendar,
       current: pathname === '/admin/demos'
+    },
+    {
+      name: 'Credit Monitoring',
+      href: '/admin/credits',
+      icon: DollarSign,
+      current: pathname === '/admin/credits'
     }
   ];
   return (

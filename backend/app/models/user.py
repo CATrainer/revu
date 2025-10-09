@@ -95,6 +95,8 @@ class User(Base):
     chat_sessions = relationship("ChatSession", back_populates="user", cascade="all, delete-orphan")
     tags = relationship("Tag", back_populates="user", cascade="all, delete-orphan")
     feedback = relationship("UserFeedback", back_populates="user", cascade="all, delete-orphan")
+    credit_usage_events = relationship("CreditUsageEvent", back_populates="user", cascade="all, delete-orphan")
+    credit_balance = relationship("UserCreditBalance", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<User(email='{self.email}')>"
