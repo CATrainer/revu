@@ -75,19 +75,29 @@ class ProfileResponse(BaseModel):
 async def generate_initial_content(user_id: str, profile_id: str):
     """Generate initial content in the background."""
     try:
+        from app.services.insights_generator import InsightsContentGenerator
+        
+        # Get profile to retrieve niche
         from app.core.database import AsyncSessionLocal
         async with AsyncSessionLocal() as session:
-            # Get profile
             stmt = select(DemoProfile).where(DemoProfile.id == uuid.UUID(profile_id))
             result = await session.execute(stmt)
             profile = result.scalar_one_or_none()
             
-            if profile:
-                engine = SimulationEngine()
-                await engine.create_content(session, profile, 'youtube')
-                await engine.create_content(session, profile, 'instagram')
-                await engine.create_content(session, profile, 'tiktok')
-                logger.info(f"Background content generation completed for user {user_id}")
+            if not profile:
+                logger.error(f"Profile {profile_id} not found for content generation")
+                return
+            
+            # Generate full batch of content with insights
+            generator = InsightsContentGenerator()
+            result = await generator.generate_content_batch(
+                user_id=user_id,
+                niche=profile.niche,
+                total_count=35,  # Generate 30-50 pieces
+                backend_url=settings.MAIN_APP_URL + '/api/v1',
+            )
+            
+            logger.info(f"Background content generation completed for user {user_id}: {result}")
     except Exception as e:
         logger.error(f"Error generating background content for user {user_id}: {e}")
 
