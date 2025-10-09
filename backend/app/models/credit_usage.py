@@ -62,7 +62,7 @@ class CreditUsageEvent(Base):
     # Additional context
     resource_id = Column(String(255), nullable=True)  # ID of related resource (workflow_id, video_id, etc.)
     resource_type = Column(String(100), nullable=True)  # Type of resource
-    metadata = Column(JSON, nullable=True)  # Additional flexible metadata
+    event_metadata = Column(JSON, nullable=True)  # Additional flexible metadata
     
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
