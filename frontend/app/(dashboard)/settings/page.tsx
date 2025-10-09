@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
+import { PlatformConnectionButton } from '@/components/integrations/PlatformConnectionButton';
 
 const tabs = ['Integrations','Demo Mode'] as const;
 
@@ -72,12 +73,12 @@ function AccountSection() {
 }
 
 function IntegrationsSection() {
-  const { integrations, setIntegrationStatus } = useStore();
+  const { integrations } = useStore();
   
   const socialPlatforms = [
-    { id: 'youtube' as const, name: 'YouTube', canConnect: true },
-    { id: 'instagram' as const, name: 'Instagram', canConnect: false },
-    { id: 'tiktok' as const, name: 'TikTok', canConnect: false }
+    { id: 'youtube' as const, name: 'YouTube' },
+    { id: 'instagram' as const, name: 'Instagram' },
+    { id: 'tiktok' as const, name: 'TikTok' }
   ];
 
   return (
@@ -92,31 +93,7 @@ function IntegrationsSection() {
                 Status: {integration?.connected ? 'Connected' : 'Not connected'}
               </div>
             </div>
-            <div className="flex gap-2">
-              {platform.canConnect ? (
-                <>
-                  <Button 
-                    variant="outline" 
-                    className="border-[var(--border)]" 
-                    onClick={() => setIntegrationStatus(platform.id, { connected: true, status: 'ok' })}
-                    disabled={integration?.connected}
-                  >
-                    {integration?.connected ? 'Connected' : 'Connect'}
-                  </Button>
-                  {integration?.connected && (
-                    <Button 
-                      variant="outline" 
-                      className="border-[var(--border)]" 
-                      onClick={() => setIntegrationStatus(platform.id, { connected: false, status: 'pending' })}
-                    >
-                      Disconnect
-                    </Button>
-                  )}
-                </>
-              ) : (
-                <div className="text-sm text-secondary-dark px-3 py-2">Coming Soon</div>
-              )}
-            </div>
+            <PlatformConnectionButton platform={platform.id} />
           </div>
         );
       })}

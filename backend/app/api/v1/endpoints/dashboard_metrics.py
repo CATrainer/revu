@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, and_, select
 from datetime import datetime, timedelta
+import random
 
 from app.core.database import get_async_session
 from app.core.security import get_current_user
@@ -25,7 +26,22 @@ async def get_dashboard_metrics(
     - Engagement Rate (calculated from connected accounts)
     - Interactions Today (comments + DMs + mentions in last 24 hours)
     - Workflows Active (number of active workflows)
+    
+    Returns demo data if user is in demo mode.
     """
+    
+    # Return demo data if user is in demo mode
+    if current_user.demo_mode:
+        return {
+            "total_followers": random.randint(45000, 55000),
+            "total_subscribers": random.randint(95000, 105000),
+            "engagement_rate": round(random.uniform(3.5, 5.5), 1),
+            "interactions_today": random.randint(120, 180),
+            "active_workflows": random.randint(3, 5),
+            "follower_change": round(random.uniform(2.0, 8.0), 1),
+            "engagement_change": round(random.uniform(0.5, 3.0), 1),
+            "interactions_change": round(random.uniform(5.0, 15.0), 1),
+        }
     
     # Total Subscribers from YouTube
     total_subscribers = 0

@@ -7,7 +7,7 @@ import { ModernButton } from '@/components/ui/modern-button';
 import Link from 'next/link';
 import AutomationImpactWidget from '@/components/intelligence/AutomationImpactWidget';
 import { features } from '@/lib/features';
-import ConnectButton from '@/components/youtube/ConnectButton';
+import { PlatformConnectionButton } from '@/components/integrations/PlatformConnectionButton';
 import { Youtube, Instagram, Music, TrendingUp, Users, MessageCircle, Zap, Sparkles, Settings2 } from 'lucide-react';
 import { api } from '@/lib/api';
 
@@ -178,7 +178,7 @@ export default function DashboardPage() {
                 Connect your YouTube channel to manage comments and engage with your audience.
               </p>
               <div className="flex items-center gap-3 flex-wrap">
-                <ConnectButton />
+                <PlatformConnectionButton platform="youtube" />
                 <Link href="/comments" className="text-sm text-brand-primary hover:underline">
                   View interactions →
                 </Link>
@@ -199,11 +199,7 @@ export default function DashboardPage() {
               <p className="text-sm text-secondary-dark mb-4">
                 Connect Instagram to monitor posts, stories, and direct messages.
               </p>
-              <ModernButton variant="outline" size="sm" asChild>
-                <Link href="/settings?tab=Integrations">
-                  Connect Instagram
-                </Link>
-              </ModernButton>
+              <PlatformConnectionButton platform="instagram" />
             </CardContent>
           </ModernCard>
 
@@ -220,11 +216,7 @@ export default function DashboardPage() {
               <p className="text-sm text-secondary-dark mb-4">
                 Connect TikTok to track viral content and engage with trending topics.
               </p>
-              <ModernButton variant="outline" size="sm" asChild>
-                <Link href="/settings?tab=Integrations">
-                  Connect TikTok
-                </Link>
-              </ModernButton>
+              <PlatformConnectionButton platform="tiktok" />
             </CardContent>
           </ModernCard>
         </div>

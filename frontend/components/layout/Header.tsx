@@ -344,14 +344,11 @@ export function Header({ onMenuClick }: HeaderProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-[var(--border)]" />
-                <DropdownMenuItem className="hover-background" onClick={() => router.push('/profile')}>
-                  <span className="text-primary-dark">Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover-background" onClick={() => router.push('/billing')}>
-                  <span className="text-primary-dark">Billing</span>
-                </DropdownMenuItem>
                 <DropdownMenuItem className="hover-background" onClick={() => router.push('/settings')}>
                   <span className="text-primary-dark">Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="hover-background" onClick={() => router.push('/')}>
+                  <span className="text-primary-dark">Exit App</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[var(--border)]" />
                 <DropdownMenuItem 

@@ -10,9 +10,11 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import SocialPlatformCarousel from '@/components/shared/SocialPlatformCarousel';
 import { CountdownBanner } from '@/components/shared/CountdownBanner';
+import { useAuth } from '@/lib/auth';
 
 export function Hero() {
   const router = useRouter();
+  const { user } = useAuth();
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { margin: "-100px" });
   
@@ -139,19 +141,30 @@ export function Hero() {
                   animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                   transition={{ duration: 0.6, delay: 0.8 }}
                 >
-                  <Button 
-                    onClick={() => router.push('/signup')}
-                    className="px-8 py-4 text-lg font-bold bg-green-600 hover:bg-green-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
-                  >
-                    Get Started Free
-                  </Button>
-                  <Button 
-                    onClick={() => router.push('/features')}
-                    variant="outline"
-                    className="px-8 py-4 text-lg font-bold border-2 border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    Learn More
-                  </Button>
+                  {user ? (
+                    <Button 
+                      onClick={() => router.push('/dashboard')}
+                      className="px-8 py-4 text-lg font-bold bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                    >
+                      Go to Dashboard
+                    </Button>
+                  ) : (
+                    <>
+                      <Button 
+                        onClick={() => router.push('/signup')}
+                        className="px-8 py-4 text-lg font-bold bg-green-600 hover:bg-green-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                      >
+                        Get Started Free
+                      </Button>
+                      <Button 
+                        onClick={() => router.push('/features')}
+                        variant="outline"
+                        className="px-8 py-4 text-lg font-bold border-2 border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                      >
+                        Learn More
+                      </Button>
+                    </>
+                  )}
                 </motion.div>
               </div>
             </div>
