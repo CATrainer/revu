@@ -203,7 +203,7 @@ export default function InsightsDashboardPage() {
             Enable demo mode or connect your social accounts to see insights.
           </p>
           <Button asChild>
-            <Link href="/dashboard/settings">Get Started</Link>
+            <Link href="/settings">Get Started</Link>
           </Button>
         </Card>
       </div>

@@ -129,6 +129,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <div className="p-3 border-b border-[var(--border)] text-sm text-secondary-dark">Command Palette</div>
               <ul className="p-3 space-y-2 text-sm">
                 <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/interactions'); setPaletteOpen(false); }}>Go to Interactions</li>
+                <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/insights'); setPaletteOpen(false); }}>Go to Insights</li>
                 <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/analytics'); setPaletteOpen(false); }}>Go to Analytics</li>
                 <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { setTheme('light'); setPaletteOpen(false); }}>Theme: Light</li>
                 <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { setTheme('dark'); setPaletteOpen(false); }}>Theme: Dark</li>

@@ -224,7 +224,7 @@ export default function ActionPlansPage() {
               </p>
               <div className="flex gap-2 justify-center">
                 <Button asChild>
-                  <Link href="/dashboard/insights">
+                  <Link href="/insights">
                     <Sparkles className="h-4 w-4 mr-2" />
                     Explore Insights
                   </Link>

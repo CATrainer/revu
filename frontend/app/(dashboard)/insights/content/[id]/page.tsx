@@ -155,7 +155,7 @@ export default function ContentDetailPage() {
           <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
           <h3 className="text-lg font-semibold mb-2">Content Not Found</h3>
           <Button asChild>
-            <Link href="/dashboard/insights">Back to Insights</Link>
+            <Link href="/insights">Back to Insights</Link>
           </Button>
         </Card>
       </div>
