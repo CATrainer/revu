@@ -151,6 +151,8 @@ class ContentInsight(Base):
     
     # Timestamps
     generated_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Relationships
     content = relationship("ContentPiece", back_populates="insights")
