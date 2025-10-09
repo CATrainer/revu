@@ -12,7 +12,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 
 # revision identifiers, used by Alembic.
 revision = '20251010_insights'
-down_revision = None  # Update this to the latest migration
+down_revision = '20251010_merge'  # Points to merge migration
 branch_labels = None
 depends_on = None
 
