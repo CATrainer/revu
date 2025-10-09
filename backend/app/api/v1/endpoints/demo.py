@@ -1,13 +1,17 @@
 """Demo mode endpoints."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+from uuid import UUID
 import httpx
 
 from app.core.database import get_async_session
 from app.core.security import get_current_active_user
 from app.models.user import User
+from app.models.content import ContentPiece, ContentPerformance, ContentInsight, ContentTheme
 from app.core.config import settings
 
 router = APIRouter()
@@ -160,3 +164,155 @@ async def get_demo_status(
                     status_data["profile"] = None
     
     return status_data
+
+
+class BulkContentRequest(BaseModel):
+    user_id: str
+    content_pieces: List[Dict[str, Any]]
+
+
+@router.post("/demo/content/bulk-create")
+async def bulk_create_content(
+    request: BulkContentRequest,
+    session: AsyncSession = Depends(get_async_session),
+):
+    """Bulk create content pieces from demo simulator."""
+    
+    # Get user
+    user_stmt = select(User).where(User.id == UUID(request.user_id))
+    user_result = await session.execute(user_stmt)
+    user = user_result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(404, "User not found")
+    
+    created_count = 0
+    themes_set = set()
+    
+    for content_data in request.content_pieces:
+        # Create content piece
+        content = ContentPiece(
+            user_id=user.id,
+            organization_id=user.organization_id,
+            platform=content_data['platform'],
+            platform_id=content_data['platform_id'],
+            content_type=content_data['content_type'],
+            title=content_data['title'],
+            description=content_data.get('description'),
+            url=content_data['url'],
+            thumbnail_url=content_data.get('thumbnail_url'),
+            duration_seconds=content_data.get('duration_seconds'),
+            hashtags=content_data.get('hashtags', []),
+            published_at=datetime.fromisoformat(content_data['published_at'].replace('Z', '+00:00')),
+            timezone=content_data.get('timezone', 'UTC'),
+            day_of_week=content_data.get('day_of_week'),
+            hour_of_day=content_data.get('hour_of_day'),
+            follower_count_at_post=content_data.get('follower_count_at_post'),
+            theme=content_data.get('theme'),
+        )
+        session.add(content)
+        await session.flush()  # Get content ID
+        
+        if content.theme:
+            themes_set.add(content.theme)
+        
+        # Create performance metrics
+        perf_data = content_data.get('performance', {})
+        performance = ContentPerformance(
+            content_id=content.id,
+            views=perf_data.get('views', 0),
+            impressions=perf_data.get('impressions', 0),
+            likes=perf_data.get('likes', 0),
+            comments_count=perf_data.get('comments_count', 0),
+            shares=perf_data.get('shares', 0),
+            saves=perf_data.get('saves', 0),
+            watch_time_minutes=perf_data.get('watch_time_minutes'),
+            average_view_duration_seconds=perf_data.get('average_view_duration_seconds'),
+            retention_rate=perf_data.get('retention_rate'),
+            engagement_rate=perf_data.get('engagement_rate'),
+            click_through_rate=perf_data.get('click_through_rate'),
+            followers_gained=perf_data.get('followers_gained', 0),
+            profile_visits=perf_data.get('profile_visits', 0),
+            performance_score=perf_data.get('performance_score'),
+            percentile_rank=perf_data.get('percentile_rank'),
+            performance_category=perf_data.get('performance_category', 'normal'),
+            views_last_24h=perf_data.get('views_last_24h', 0),
+            engagement_last_24h=perf_data.get('engagement_last_24h', 0),
+        )
+        session.add(performance)
+        
+        # Create insights
+        for insight_data in content_data.get('insights', []):
+            insight = ContentInsight(
+                content_id=content.id,
+                insight_type=insight_data.get('insight_type', 'success_factor'),
+                category=insight_data.get('category'),
+                title=insight_data.get('title', ''),
+                description=insight_data.get('description', ''),
+                impact_level=insight_data.get('impact_level', 'medium'),
+                supporting_data=insight_data.get('supporting_data'),
+                confidence_score=insight_data.get('confidence_score', 0.8),
+                is_positive=insight_data.get('is_positive', True),
+                is_actionable=insight_data.get('is_actionable', False),
+            )
+            session.add(insight)
+        
+        created_count += 1
+    
+    # Create/update theme aggregates
+    for theme_name in themes_set:
+        # Check if theme exists
+        theme_stmt = select(ContentTheme).where(
+            ContentTheme.user_id == user.id,
+            ContentTheme.name == theme_name,
+        )
+        theme_result = await session.execute(theme_stmt)
+        theme = theme_result.scalar_one_or_none()
+        
+        # Calculate theme metrics
+        theme_content_stmt = (
+            select(
+                ContentPiece.id,
+                ContentPerformance.views,
+                ContentPerformance.engagement_rate,
+                ContentPerformance.performance_score,
+            )
+            .join(ContentPerformance, ContentPiece.id == ContentPerformance.content_id)
+            .where(
+                ContentPiece.user_id == user.id,
+                ContentPiece.theme == theme_name,
+            )
+        )
+        theme_content_result = await session.execute(theme_content_stmt)
+        theme_content_data = theme_content_result.all()
+        
+        if theme_content_data:
+            total_views = sum(row.views or 0 for row in theme_content_data)
+            avg_engagement = sum(float(row.engagement_rate or 0) for row in theme_content_data) / len(theme_content_data)
+            avg_performance = sum(float(row.performance_score or 0) for row in theme_content_data) / len(theme_content_data)
+            
+            if theme:
+                theme.content_count = len(theme_content_data)
+                theme.total_views = total_views
+                theme.avg_engagement_rate = avg_engagement
+                theme.avg_performance_score = avg_performance
+                theme.last_calculated_at = datetime.utcnow()
+            else:
+                theme = ContentTheme(
+                    user_id=user.id,
+                    name=theme_name,
+                    content_count=len(theme_content_data),
+                    total_views=total_views,
+                    avg_engagement_rate=avg_engagement,
+                    avg_performance_score=avg_performance,
+                    last_calculated_at=datetime.utcnow(),
+                )
+                session.add(theme)
+    
+    await session.commit()
+    
+    return {
+        "status": "success",
+        "created_count": created_count,
+        "themes_created": len(themes_set),
+    }

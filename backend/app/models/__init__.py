@@ -30,6 +30,14 @@ from app.models.view import InteractionView
 from app.models.fan import Fan
 from app.models.analytics import InteractionAnalytics
 from app.models.user_feedback import UserFeedback
+from app.models.content import (
+    ContentPiece,
+    ContentPerformance,
+    ContentInsight,
+    ContentTheme,
+    ActionPlan,
+    ActionItem,
+)
 
 __all__ = [
     "Organization",
@@ -63,4 +71,10 @@ __all__ = [
     "Fan",
     "InteractionAnalytics",
     "UserFeedback",
+    "ContentPiece",
+    "ContentPerformance",
+    "ContentInsight",
+    "ContentTheme",
+    "ActionPlan",
+    "ActionItem",
 ]

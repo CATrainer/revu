@@ -34,6 +34,8 @@ from app.api.v1.endpoints import (
     dashboard_metrics,
     feedback,
     credits,
+    insights,
+    action_plans,
 )
 from app.api.v1.endpoints import workflows as workflows_endpoints
 from app.api.v1.endpoints import marketing_admin
@@ -260,6 +262,18 @@ api_router.include_router(
 api_router.include_router(
     credits.router,
     tags=["credits"],
+)
+
+api_router.include_router(
+    insights.router,
+    prefix="/insights",
+    tags=["insights", "analytics"],
+)
+
+api_router.include_router(
+    action_plans.router,
+    prefix="/action-plans",
+    tags=["action-plans", "goals"],
 )
 
 
