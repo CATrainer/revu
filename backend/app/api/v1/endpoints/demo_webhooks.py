@@ -121,23 +121,28 @@ async def get_or_create_fan(
 ) -> Optional[Fan]:
     """Get existing fan or create new one."""
     
-    # Try to find existing fan for this user
+    # Try to find existing fan for this user by username
     stmt = select(Fan).where(
         Fan.username == username,
-        Fan.platform == platform,
         Fan.user_id == user_id
     )
     result = await session.execute(stmt)
     fan = result.scalar_one_or_none()
     
     if fan:
+        # Update platforms JSONB if needed
+        if fan.platforms is None:
+            fan.platforms = {}
+        if platform not in fan.platforms:
+            fan.platforms[platform] = f"@{username}"
+            await session.commit()
         return fan
     
     # Create new fan
     fan = Fan(
         username=username,
-        display_name=display_name,
-        platform=platform,
+        name=display_name,
+        platforms={platform: f"@{username}"},
         user_id=user_id,
     )
     
