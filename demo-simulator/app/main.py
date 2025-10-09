@@ -1,6 +1,6 @@
 """Main FastAPI application for demo simulator."""
 import logging
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -71,6 +71,27 @@ class ProfileResponse(BaseModel):
     created_at: str
 
 
+# Background task for content generation
+async def generate_initial_content(user_id: str, profile_id: str):
+    """Generate initial content in the background."""
+    try:
+        from app.core.database import AsyncSessionLocal
+        async with AsyncSessionLocal() as session:
+            # Get profile
+            stmt = select(DemoProfile).where(DemoProfile.id == uuid.UUID(profile_id))
+            result = await session.execute(stmt)
+            profile = result.scalar_one_or_none()
+            
+            if profile:
+                engine = SimulationEngine()
+                await engine.create_content(session, profile, 'youtube')
+                await engine.create_content(session, profile, 'instagram')
+                await engine.create_content(session, profile, 'tiktok')
+                logger.info(f"Background content generation completed for user {user_id}")
+    except Exception as e:
+        logger.error(f"Error generating background content for user {user_id}: {e}")
+
+
 # Routes
 @app.on_event("startup")
 async def startup_event():
@@ -93,6 +114,7 @@ async def root():
 @app.post("/profiles", response_model=ProfileResponse)
 async def create_profile(
     payload: ProfileCreate,
+    background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_async_session)
 ):
     """Create a new demo profile."""
@@ -112,11 +134,8 @@ async def create_profile(
             
             logger.info(f"Reactivated demo profile for user {payload.user_id}")
             
-            # Create fresh content for reactivated profile
-            engine = SimulationEngine()
-            await engine.create_content(session, existing, 'youtube')
-            await engine.create_content(session, existing, 'instagram')
-            await engine.create_content(session, existing, 'tiktok')
+            # Schedule content creation in background
+            background_tasks.add_task(generate_initial_content, payload.user_id, str(existing.id))
             
             return ProfileResponse(
                 id=str(existing.id),
@@ -150,11 +169,8 @@ async def create_profile(
     
     logger.info(f"Created demo profile for user {payload.user_id}")
     
-    # Trigger initial content creation
-    engine = SimulationEngine()
-    await engine.create_content(session, profile, 'youtube')
-    await engine.create_content(session, profile, 'instagram')
-    await engine.create_content(session, profile, 'tiktok')
+    # Schedule content creation in background
+    background_tasks.add_task(generate_initial_content, payload.user_id, str(profile.id))
     
     return ProfileResponse(
         id=str(profile.id),
