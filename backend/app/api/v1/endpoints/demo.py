@@ -65,6 +65,17 @@ async def enable_demo_mode(
                 json=payload,
             )
             
+            # If profile already exists and is active, deactivate it first then retry
+            if response.status_code == 400 and "already has an active" in response.text:
+                # Deactivate existing profile
+                await client.delete(f"{demo_service_url}/profiles/{current_user.id}")
+                
+                # Retry creation
+                response = await client.post(
+                    f"{demo_service_url}/profiles",
+                    json=payload,
+                )
+            
             if response.status_code != 200:
                 raise HTTPException(500, f"Failed to create demo profile: {response.text}")
             
