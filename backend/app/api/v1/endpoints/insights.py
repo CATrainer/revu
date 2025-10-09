@@ -109,8 +109,8 @@ class InsightsDashboardResponse(BaseModel):
 
 @router.get("/insights/dashboard", response_model=InsightsDashboardResponse)
 async def get_insights_dashboard(
-    time_period: str = Query("30d", regex="^(7d|30d|90d|custom)$"),
-    platform_filter: Optional[str] = Query(None, regex="^(youtube|instagram|tiktok|all)$"),
+    time_period: str = Query("30d", pattern="^(7d|30d|90d|custom)$"),
+    platform_filter: Optional[str] = Query(None, pattern="^(youtube|instagram|tiktok|all)$"),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     session: AsyncSession = Depends(get_async_session),
@@ -384,9 +384,9 @@ async def get_content_details(
 
 @router.get("/insights/content", response_model=List[ContentPieceResponse])
 async def list_content(
-    platform: Optional[str] = Query(None, regex="^(youtube|instagram|tiktok)$"),
+    platform: Optional[str] = Query(None, pattern="^(youtube|instagram|tiktok)$"),
     theme: Optional[str] = None,
-    performance_category: Optional[str] = Query(None, regex="^(overperforming|normal|underperforming)$"),
+    performance_category: Optional[str] = Query(None, pattern="^(overperforming|normal|underperforming)$"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     session: AsyncSession = Depends(get_async_session),

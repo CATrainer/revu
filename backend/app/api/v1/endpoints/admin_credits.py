@@ -84,7 +84,7 @@ async def get_credit_overview(
 async def get_all_user_balances(
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
-    sort_by: str = Query("consumed", regex="^(consumed|balance|email)$"),
+    sort_by: str = Query("consumed", pattern="^(consumed|balance|email)$"),
     current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_async_session)
 ):

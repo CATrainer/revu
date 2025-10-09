@@ -47,7 +47,7 @@ class CreateActionPlanRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     goal: str = Field(..., min_length=1)
-    source_type: Optional[str] = Field("manual", regex="^(content_insight|ai_chat|manual)$")
+    source_type: Optional[str] = Field("manual", pattern="^(content_insight|ai_chat|manual)$")
     source_content_id: Optional[UUID] = None
     source_chat_session_id: Optional[UUID] = None
     start_date: Optional[datetime] = None
@@ -61,7 +61,7 @@ class UpdateActionPlanRequest(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     goal: Optional[str] = None
-    status: Optional[str] = Field(None, regex="^(active|completed|paused|cancelled)$")
+    status: Optional[str] = Field(None, pattern="^(active|completed|paused|cancelled)$")
     end_date: Optional[datetime] = None
     actual_outcomes: Optional[dict] = None
     completion_notes: Optional[str] = None
@@ -196,7 +196,7 @@ async def create_action_plan(
 
 @router.get("/action-plans", response_model=List[ActionPlanSummaryResponse])
 async def list_action_plans(
-    status: Optional[str] = Query(None, regex="^(active|completed|paused|cancelled)$"),
+    status: Optional[str] = Query(None, pattern="^(active|completed|paused|cancelled)$"),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     session: AsyncSession = Depends(get_async_session),

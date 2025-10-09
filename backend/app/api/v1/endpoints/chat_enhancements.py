@@ -397,7 +397,7 @@ async def upload_attachment(
 @router.get("/sessions/{session_id}/export")
 async def export_session(
     session_id: str,
-    format: str = Query("markdown", regex="^(markdown|text|json)$"),
+    format: str = Query("markdown", pattern="^(markdown|text|json)$"),
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
