@@ -2,7 +2,7 @@ If Alembic reports multiple heads:
 
 - Inspect heads:
   alembic heads
-
+- 
 - Create a merge migration (if needed):
   alembic merge -m "merge heads" <head1> <head2>
 
