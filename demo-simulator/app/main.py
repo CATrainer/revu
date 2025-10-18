@@ -95,6 +95,7 @@ async def generate_initial_content(user_id: str, profile_id: str):
                 niche=profile.niche,
                 total_count=35,  # Generate 30-50 pieces
                 backend_url=settings.MAIN_APP_URL + '/api/v1',
+                session=session,  # CRITICAL: Pass session to save content locally
             )
             
             logger.info(f"Background content generation completed for user {user_id}: {result}")

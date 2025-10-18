@@ -341,6 +341,7 @@ Return ONLY the JSON array."""
         niche: str,
         total_count: int = 30,
         backend_url: str = None,
+        session = None,  # Database session to save content locally
     ) -> Dict:
         """Generate a batch of content pieces and send to backend."""
         
@@ -412,6 +413,51 @@ Return ONLY the JSON array."""
             )
             
             content_pieces.append(content)
+        
+        # Save content to demo service database if session provided
+        # This is CRITICAL - interaction tasks need content in DemoContent table
+        if session:
+            from app.models.demo_content import DemoContent
+            from app.models.demo_profile import DemoProfile
+            import uuid
+            from sqlalchemy import select
+            
+            # Get profile
+            stmt = select(DemoProfile).where(DemoProfile.user_id == uuid.UUID(user_id))
+            result = await session.execute(stmt)
+            profile = result.scalar_one_or_none()
+            
+            if profile:
+                logger.info(f"Saving {len(content_pieces)} content pieces to demo service database")
+                for content_data in content_pieces:
+                    # Parse published_at if it's a string
+                    published_at = content_data['published_at']
+                    if isinstance(published_at, str):
+                        published_at = datetime.fromisoformat(published_at.replace('Z', '+00:00'))
+                    
+                    demo_content = DemoContent(
+                        profile_id=profile.id,
+                        platform=content_data['platform'],
+                        external_id=content_data['platform_id'],  # Use external_id, not platform_id
+                        content_type=content_data['content_type'],
+                        title=content_data['title'],
+                        description=content_data.get('description', ''),
+                        published_at=published_at,
+                        views=content_data['performance']['views'],
+                        likes=content_data['performance']['likes'],
+                        comments_count=0,  # Start at 0, will be incremented by interaction generation
+                        shares=content_data['performance'].get('shares', 0),
+                        # Set targets - worker will generate interactions up to these numbers
+                        target_views=content_data['performance']['views'],
+                        target_comments=content_data['performance']['comments_count'],
+                        engagement_complete=False,  # Allow interaction generation
+                    )
+                    session.add(demo_content)
+                
+                await session.commit()
+                logger.info(f"✅ Saved {len(content_pieces)} content pieces to demo service database")
+            else:
+                logger.warning(f"Profile not found for user {user_id}, skipping local save")
         
         # Send to backend
         async with httpx.AsyncClient(timeout=30.0) as client:
