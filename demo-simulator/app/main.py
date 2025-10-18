@@ -1,5 +1,6 @@
 """Main FastAPI application for demo simulator."""
 import logging
+from datetime import datetime
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -73,9 +74,11 @@ class ProfileResponse(BaseModel):
 
 # Background task for content generation
 async def generate_initial_content(user_id: str, profile_id: str):
-    """Generate initial content in the background."""
+    """Generate initial content with immediate interactions in the background."""
     try:
         from app.services.insights_generator import InsightsContentGenerator
+        from app.services.simulation_engine import SimulationEngine
+        from app.services.webhook_sender import WebhookSender
         
         # Get profile to retrieve niche
         from app.core.database import AsyncSessionLocal
@@ -88,9 +91,9 @@ async def generate_initial_content(user_id: str, profile_id: str):
                 logger.error(f"Profile {profile_id} not found for content generation")
                 return
             
-            # Generate full batch of content with insights
+            # Step 1: Generate full batch of content with insights
             generator = InsightsContentGenerator()
-            result = await generator.generate_content_batch(
+            content_result = await generator.generate_content_batch(
                 user_id=user_id,
                 niche=profile.niche,
                 total_count=35,  # Generate 30-50 pieces
@@ -98,9 +101,95 @@ async def generate_initial_content(user_id: str, profile_id: str):
                 session=session,  # CRITICAL: Pass session to save content locally
             )
             
-            logger.info(f"Background content generation completed for user {user_id}: {result}")
+            logger.info(f"✅ Content generation completed: {content_result}")
+            
+            # Step 2: IMMEDIATELY generate interactions for all content
+            logger.info(f"🔄 Generating initial interactions for {user_id}...")
+            
+            # Get all demo content just created
+            from app.models.demo_content import DemoContent
+            stmt = select(DemoContent).where(DemoContent.profile_id == profile.id)
+            result = await session.execute(stmt)
+            content_items = list(result.scalars().all())
+            
+            engine = SimulationEngine()
+            webhook = WebhookSender()
+            
+            # Generate comments for all content immediately
+            total_interactions = 0
+            for content in content_items:
+                # Generate target number of comments for this content
+                comments_to_generate = content.target_comments
+                if comments_to_generate > 0:
+                    await engine.generate_comments_for_content(
+                        session,
+                        content,
+                        comments_to_generate
+                    )
+                    total_interactions += comments_to_generate
+            
+            logger.info(f"✅ Generated {total_interactions} comment interactions")
+            
+            # Step 3: Generate initial 100 DMs
+            logger.info(f"🔄 Generating 100 initial DMs for {user_id}...")
+            for i in range(100):
+                await engine.generate_dm(session, profile)
+            
+            logger.info(f"✅ Generated 100 DM interactions")
+            
+            # Step 4: Update all interactions to be sent immediately (not delayed)
+            from app.models.demo_interaction import DemoInteraction
+            from sqlalchemy.orm import selectinload
+            
+            # Set all pending interactions to send immediately
+            stmt = select(DemoInteraction).where(
+                DemoInteraction.profile_id == profile.id,
+                DemoInteraction.status == 'pending'
+            )
+            result = await session.execute(stmt)
+            interactions = list(result.scalars().all())
+            
+            now = datetime.utcnow()
+            for interaction in interactions:
+                interaction.scheduled_for = now  # Send immediately, not with delay
+            await session.commit()
+            
+            logger.info(f"🔄 Sending {len(interactions)} interactions to main app...")
+            
+            # Reload with relationships for webhook sending
+            stmt = select(DemoInteraction).options(
+                selectinload(DemoInteraction.profile),
+                selectinload(DemoInteraction.content)
+            ).where(
+                DemoInteraction.profile_id == profile.id,
+                DemoInteraction.status == 'pending'
+            )
+            result = await session.execute(stmt)
+            interactions = list(result.scalars().all())
+            
+            sent_count = 0
+            failed_count = 0
+            for interaction in interactions:
+                try:
+                    payload = interaction.to_webhook_payload()
+                    success = await webhook.send_interaction_created(payload)
+                    if success:
+                        interaction.status = 'sent'
+                        interaction.sent_at = datetime.utcnow()
+                        sent_count += 1
+                    else:
+                        interaction.status = 'failed'
+                        failed_count += 1
+                    await session.commit()
+                except Exception as e:
+                    logger.error(f"Error sending interaction: {e}")
+                    failed_count += 1
+            
+            logger.info(f"✅ Sent {sent_count} interactions to main app ({failed_count} failed)")
+            logger.info(f"🎉 Demo mode fully initialized for user {user_id} - {sent_count} interactions visible immediately")
+            
     except Exception as e:
-        logger.error(f"Error generating background content for user {user_id}: {e}")
+        logger.error(f"Error generating background content for user {user_id}: {e}", exc_info=True)
 
 
 # Routes
