@@ -52,6 +52,9 @@ class ContentPiece(Base):
     is_deleted = Column(Boolean, default=False)
     last_synced_at = Column(DateTime)
     
+    # Demo mode flag - CRITICAL for data separation
+    is_demo = Column(Boolean, default=False, nullable=False, index=True)
+    
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

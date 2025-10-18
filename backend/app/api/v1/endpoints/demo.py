@@ -2,7 +2,7 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -125,11 +125,57 @@ async def disable_demo_mode(
                 # Continue even if deactivation fails
                 pass
     
+    # CRITICAL: Clean up all demo data before disabling
+    from app.models.interaction import Interaction
+    from sqlalchemy import delete
+    
+    logger.info(f"Starting demo data cleanup for user {current_user.id}")
+    
+    # Count demo data before deletion
+    count_interactions_stmt = select(func.count(Interaction.id)).where(
+        Interaction.user_id == current_user.id,
+        Interaction.is_demo == True
+    )
+    interactions_count_result = await session.execute(count_interactions_stmt)
+    interactions_count = interactions_count_result.scalar() or 0
+    
+    count_content_stmt = select(func.count(ContentPiece.id)).where(
+        ContentPiece.user_id == current_user.id,
+        ContentPiece.is_demo == True
+    )
+    content_count_result = await session.execute(count_content_stmt)
+    content_count = content_count_result.scalar() or 0
+    
+    logger.info(f"Found {interactions_count} demo interactions and {content_count} demo content pieces to delete")
+    
+    # Bulk delete demo interactions (much more efficient than individual deletes)
+    delete_interactions_stmt = delete(Interaction).where(
+        Interaction.user_id == current_user.id,
+        Interaction.is_demo == True
+    )
+    await session.execute(delete_interactions_stmt)
+    
+    # Bulk delete demo content (cascade will handle related records)
+    delete_content_stmt = delete(ContentPiece).where(
+        ContentPiece.user_id == current_user.id,
+        ContentPiece.is_demo == True
+    )
+    await session.execute(delete_content_stmt)
+    
+    logger.info(f"✅ Cleaned up {interactions_count} demo interactions and {content_count} demo content pieces for user {current_user.id}")
+    
     # Disable demo mode
     current_user.demo_mode = False
     await session.commit()
     
-    return {"status": "demo_disabled"}
+    return {
+        "status": "demo_disabled",
+        "cleanup": {
+            "interactions_deleted": interactions_count,
+            "content_deleted": content_count
+        },
+        "message": f"Demo mode disabled. Removed {interactions_count} demo interactions and {content_count} demo content pieces."
+    }
 
 
 @router.get("/demo/status")
@@ -212,6 +258,7 @@ async def bulk_create_content(
                 hour_of_day=content_data.get('hour_of_day'),
                 follower_count_at_post=content_data.get('follower_count_at_post'),
                 theme=content_data.get('theme'),
+                is_demo=True,  # CRITICAL: Mark as demo data
             )
             session.add(content)
             await session.flush()  # Get content ID

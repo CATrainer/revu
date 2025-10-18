@@ -31,7 +31,8 @@ async def get_analytics_overview(
     total_stmt = select(func.count(Interaction.id)).where(
         and_(
             Interaction.user_id == current_user.id,
-            Interaction.created_at >= cutoff
+            Interaction.created_at >= cutoff,
+            Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
         )
     )
     total_result = await session.execute(total_stmt)
@@ -44,7 +45,8 @@ async def get_analytics_overview(
     ).where(
         and_(
             Interaction.user_id == current_user.id,
-            Interaction.created_at >= cutoff
+            Interaction.created_at >= cutoff,
+            Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
         )
     ).group_by(Interaction.status)
     
@@ -58,7 +60,8 @@ async def get_analytics_overview(
     ).where(
         and_(
             Interaction.user_id == current_user.id,
-            Interaction.created_at >= cutoff
+            Interaction.created_at >= cutoff,
+            Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
         )
     ).group_by(Interaction.platform)
     
@@ -72,7 +75,8 @@ async def get_analytics_overview(
     ).where(
         and_(
             Interaction.user_id == current_user.id,
-            Interaction.created_at >= cutoff
+            Interaction.created_at >= cutoff,
+            Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
         )
     ).group_by(Interaction.sentiment)
     
@@ -117,7 +121,8 @@ async def get_workflow_analytics(
         triggered_stmt = select(func.count(Interaction.id)).where(
             and_(
                 Interaction.workflow_id == workflow.id,
-                Interaction.created_at >= cutoff
+                Interaction.created_at >= cutoff,
+                Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
             )
         )
         triggered_result = await session.execute(triggered_stmt)
@@ -128,7 +133,8 @@ async def get_workflow_analytics(
             and_(
                 Interaction.workflow_id == workflow.id,
                 Interaction.workflow_action == 'auto_responded',
-                Interaction.created_at >= cutoff
+                Interaction.created_at >= cutoff,
+                Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
             )
         )
         auto_responded_result = await session.execute(auto_responded_stmt)
@@ -139,7 +145,8 @@ async def get_workflow_analytics(
             and_(
                 Interaction.workflow_id == workflow.id,
                 Interaction.workflow_action == 'flagged_for_approval',
-                Interaction.created_at >= cutoff
+                Interaction.created_at >= cutoff,
+                Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
             )
         )
         flagged_result = await session.execute(flagged_stmt)
@@ -208,7 +215,8 @@ async def get_interactions_timeline(
     ).where(
         and_(
             Interaction.user_id == current_user.id,
-            Interaction.created_at >= cutoff
+            Interaction.created_at >= cutoff,
+            Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
         )
     ).group_by(func.date(Interaction.created_at)).order_by('date')
     

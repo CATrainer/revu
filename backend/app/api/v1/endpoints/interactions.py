@@ -32,10 +32,14 @@ router = APIRouter()
 def build_filter_query(
     base_query,
     filters: InteractionFilters,
-    user_id: UUID
+    user_id: UUID,
+    user_demo_mode: bool = False
 ):
     """Build SQLAlchemy query from filter parameters."""
     conditions = [Interaction.user_id == user_id]
+    
+    # CRITICAL: Filter by demo mode - users should only see data matching their mode
+    conditions.append(Interaction.is_demo == user_demo_mode)
     
     if filters.platforms:
         conditions.append(Interaction.platform.in_(filters.platforms))
@@ -178,7 +182,7 @@ async def list_interactions(
     
     # Build query
     query = select(Interaction)
-    query = build_filter_query(query, filters, current_user.id)
+    query = build_filter_query(query, filters, current_user.id, current_user.demo_mode)
     
     # Apply sorting
     if sort_by == "newest":
@@ -239,7 +243,7 @@ async def list_interactions_by_view(
     
     # Build query
     query = select(Interaction)
-    query = build_filter_query(query, filters, current_user.id)
+    query = build_filter_query(query, filters, current_user.id, current_user.demo_mode)
     
     # Apply view's sort preferences
     sort_by = view.display.get('sortBy', 'newest')

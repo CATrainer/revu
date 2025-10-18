@@ -59,6 +59,9 @@ class Interaction(Base):
     assigned_to_user_id = Column(PGUUID(as_uuid=True), ForeignKey('users.id'))
     internal_notes = Column(Text)
     
+    # Demo mode flag - CRITICAL for data separation
+    is_demo = Column(Boolean, default=False, nullable=False, index=True)
+    
     # Response management (V2)
     pending_response = Column(JSONB)  # {text: str, generated_at: str, model: str, confidence: float}
     
