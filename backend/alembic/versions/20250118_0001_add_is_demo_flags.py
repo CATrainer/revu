@@ -1,7 +1,7 @@
 """Add is_demo flags to interactions and content_pieces
 
 Revision ID: 20250118_0001
-Revises: 
+Revises: 20250901_1220
 Create Date: 2025-01-18 00:01:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '20250118_0001'
-down_revision = None  # Set this to the actual latest revision
+down_revision = '20250901_1220'  # Points to latest migration
 branch_labels = None
 depends_on = None
 
