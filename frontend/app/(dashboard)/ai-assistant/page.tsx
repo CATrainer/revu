@@ -56,15 +56,15 @@ const MarkdownContent = memo(({ content }: { content: string }) => (
 ));
 MarkdownContent.displayName = 'MarkdownContent';
 
-// Animated typing indicator
+// Animated typing indicator - Retro styled
 const TypingIndicator = () => (
   <div className="flex items-center gap-2 py-2">
     <div className="flex gap-1">
-      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+      <div className="w-2 h-2 bg-holo-purple rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+      <div className="w-2 h-2 bg-holo-purple rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+      <div className="w-2 h-2 bg-holo-purple rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
     </div>
-    <span className="text-xs text-blue-600 dark:text-blue-400 font-medium animate-pulse">AI is typing...</span>
+    <span className="text-xs text-holo-purple font-semibold animate-pulse">AI is typing...</span>
   </div>
 );
 
@@ -527,10 +527,16 @@ export default function AIAssistantPage() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm text-slate-900 dark:text-white truncate">
+                      <h3 className={cn(
+                        "font-medium text-sm truncate",
+                        currentSessionId === session.id ? "text-white" : "text-foreground"
+                      )}>
                         {session.title || 'New Chat'}
                       </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className={cn(
+                        "text-xs",
+                        currentSessionId === session.id ? "text-white/70" : "text-muted-foreground"
+                      )}>
                         {new Date(session.updated_at).toLocaleDateString()}
                       </p>
                     </div>
@@ -557,7 +563,7 @@ export default function AIAssistantPage() {
         <div className="flex-1 overflow-y-auto p-6">
           {isLoadingMessages ? (
             <div className="flex items-center justify-center h-full">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              <Loader2 className="h-8 w-8 animate-spin text-holo-purple" />
             </div>
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-4">
@@ -604,16 +610,16 @@ export default function AIAssistantPage() {
                   )}
                 >
                   {message.role === 'assistant' && (
-                    <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
-                      <Brain className="h-5 w-5 text-white" />
+                    <div className="flex-shrink-0 w-10 h-10 rounded-2xl gradient-purple shadow-glow-purple flex items-center justify-center">
+                      <Brain className="h-6 w-6 text-white" />
                     </div>
                   )}
                   <div
                     className={cn(
-                      'max-w-[80%] rounded-2xl px-5 py-3 shadow-sm transition-all duration-200',
+                      'max-w-[80%] rounded-2xl px-6 py-4 transition-all duration-200',
                       message.role === 'user'
-                        ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-blue-500/20'
-                        : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white'
+                        ? 'gradient-purple text-white shadow-glow-purple'
+                        : 'glass-panel backdrop-blur-md border border-card-border shadow-glass'
                     )}
                   >
                     {message.content ? (
@@ -621,9 +627,9 @@ export default function AIAssistantPage() {
                         <>
                           <MarkdownContent content={message.content} />
                           {message.streaming && (
-                            <div className="mt-2 flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
-                              <div className="w-1 h-4 bg-blue-500 animate-pulse rounded" />
-                              <span className="animate-pulse">streaming...</span>
+                            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                              <div className="w-1 h-4 bg-holo-purple animate-pulse rounded" />
+                              <span className="animate-pulse font-medium">streaming...</span>
                             </div>
                           )}
                         </>
@@ -657,10 +663,10 @@ export default function AIAssistantPage() {
           </div>
         )}
 
-        {/* Input Area */}
-        <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+        {/* Input Area - Retro Styled */}
+        <div className="p-6 border-t border-border glass-panel backdrop-blur-xl">
           <form onSubmit={sendMessage} className="max-w-4xl mx-auto">
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -672,20 +678,21 @@ export default function AIAssistantPage() {
                 }}
                 placeholder="Ask me anything..."
                 disabled={isStreaming}
-                className="flex-1 min-h-[60px] max-h-40 px-5 py-4 text-[15px] bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none transition-all disabled:opacity-50"
+                className="flex-1 min-h-[60px] max-h-40 px-5 py-4 text-sm font-medium glass-panel backdrop-blur-sm border-2 border-border rounded-xl focus:outline-none focus:border-holo-purple focus:shadow-glow-purple resize-none transition-all disabled:opacity-50"
               />
               <Button
                 type="submit"
                 disabled={!input.trim() || isStreaming}
+                size="lg"
                 className={cn(
-                  "h-[60px] px-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 transition-all duration-200 transform active:scale-95",
+                  "h-[60px] px-8",
                   isStreaming && "animate-pulse"
                 )}
               >
                 {isStreaming ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <Send className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+                  <Send className="h-5 w-5" />
                 )}
               </Button>
             </div>

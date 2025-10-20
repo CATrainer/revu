@@ -157,12 +157,14 @@ export default function InteractionsPage() {
         <div className="glass-panel border-b border-border backdrop-blur-md px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-holo-purple via-holo-teal to-holo-pink bg-clip-text text-transparent flex items-center gap-3">
-                {activeView?.icon && <span className="text-4xl filter-none" style={{backgroundClip: 'unset', WebkitBackgroundClip: 'unset', WebkitTextFillColor: 'unset'}}>{activeView.icon}</span>}
-                {activeView?.name || 'All Interactions'}
-              </h1>
+              <div className="flex items-center gap-3 mb-2">
+                {activeView?.icon && <span className="text-4xl">{activeView.icon}</span>}
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-holo-purple via-holo-teal to-holo-pink bg-clip-text text-transparent">
+                  {activeView?.name || 'All Interactions'}
+                </h1>
+              </div>
               {activeView?.description && (
-                <p className="text-sm text-muted-foreground mt-2 font-medium">{activeView.description}</p>
+                <p className="text-sm text-muted-foreground font-medium">{activeView.description}</p>
               )}
             </div>
             

@@ -118,7 +118,7 @@ export default function DashboardPage() {
 
       {/* Header Section - Gradient Text */}
       <div className="space-y-3">
-        <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-holo-purple via-holo-teal to-holo-pink bg-clip-text text-transparent animate-gradient-shift text-glow-purple">Welcome back!</h1> {/* Responsive heading sizes */}
+        <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-holo-purple via-holo-teal to-holo-pink bg-clip-text text-transparent animate-gradient-shift">Welcome back!</h1> {/* Responsive heading sizes */}
         <p className="text-base md:text-xl text-muted-foreground font-medium">Here&apos;s what&apos;s happening with your social media presence.</p>
       </div>
 
