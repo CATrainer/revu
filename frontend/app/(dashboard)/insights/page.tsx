@@ -200,7 +200,7 @@ export default function InsightsDashboardPage() {
           <div className="p-6 rounded-2xl bg-gradient-to-br from-holo-teal/20 to-holo-blue/20 inline-block mb-6">
             <AlertCircle className="h-16 w-16 text-holo-teal" />
           </div>
-          <h3 className="text-2xl font-bold mb-3 bg-gradient-to-r from-holo-teal to-holo-blue bg-clip-text text-transparent">No Data Available</h3>
+          <h3 className="text-2xl font-bold mb-3 text-holo-teal">No Data Available</h3>
           <p className="text-muted-foreground mb-6 text-base">
             Enable demo mode or connect your social accounts to see insights.
           </p>
@@ -217,7 +217,7 @@ export default function InsightsDashboardPage() {
       {/* Header - Gradient */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-holo-purple via-holo-teal to-holo-pink bg-clip-text text-transparent">What's Working</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-holo-purple">What's Working</h1>
           <p className="text-muted-foreground text-lg font-medium mt-2">
             Understand your content performance and discover what resonates with your audience
           </p>

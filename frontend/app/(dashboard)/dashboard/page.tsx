@@ -76,7 +76,7 @@ export default function DashboardPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-holo-purple" />
-                  <span className="font-bold text-lg bg-gradient-to-r from-holo-purple to-holo-pink bg-clip-text text-transparent">Demo Mode Active</span>
+                  <span className="font-bold text-lg text-holo-purple">Demo Mode Active</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1.5">
                   Using simulated data from <span className="font-semibold text-foreground">{demoProfile?.niche?.replace('_', ' ') || 'your demo profile'}</span>. Interactions will arrive shortly.
@@ -118,7 +118,7 @@ export default function DashboardPage() {
 
       {/* Header Section - Gradient Text */}
       <div className="space-y-3">
-        <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-holo-purple via-holo-teal to-holo-pink bg-clip-text text-transparent animate-gradient-shift">Welcome back!</h1> {/* Responsive heading sizes */}
+        <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-holo-purple">Welcome back!</h1> {/* Responsive heading sizes */}
         <p className="text-base md:text-xl text-muted-foreground font-medium">Here&apos;s what&apos;s happening with your social media presence.</p>
       </div>
 
@@ -189,7 +189,7 @@ export default function DashboardPage() {
 
       {/* Platform Connections */}
       <div className="space-y-6">
-        <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">Connect Your Platforms</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-foreground">Connect Your Platforms</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6"> {/* Tighter gaps on mobile */}
           <div className="glass-panel rounded-2xl border border-card-border shadow-glass backdrop-blur-md retro-hover group overflow-hidden">
             <div className="p-6 space-y-4">

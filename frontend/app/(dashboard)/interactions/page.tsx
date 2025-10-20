@@ -166,7 +166,7 @@ export default function InteractionsPage() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 {activeView?.icon && <span className="text-4xl">{activeView.icon}</span>}
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-holo-purple via-holo-teal to-holo-pink bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold text-holo-purple">
                   {activeView?.name || 'All Interactions'}
                 </h1>
               </div>
@@ -236,7 +236,7 @@ export default function InteractionsPage() {
                 <div className="p-6 rounded-2xl bg-gradient-to-br from-holo-purple/20 to-holo-teal/20 inline-block mb-6">
                   <Inbox className="h-16 w-16 text-holo-purple" />
                 </div>
-                <h3 className="text-2xl font-bold mb-3 bg-gradient-to-r from-holo-purple to-holo-teal bg-clip-text text-transparent">No View Selected</h3>
+                <h3 className="text-2xl font-bold mb-3 text-holo-purple">No View Selected</h3>
                 <p className="text-muted-foreground mb-6 text-base">
                   Create a view to organize your interactions and streamline your workflow
                 </p>

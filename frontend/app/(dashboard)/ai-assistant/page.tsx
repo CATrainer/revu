@@ -486,7 +486,7 @@ export default function AIAssistantPage() {
               <Brain className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-holo-purple to-holo-teal bg-clip-text text-transparent">AI Assistant</h1>
+              <h1 className="text-2xl font-bold text-holo-purple">AI Assistant</h1>
             </div>
           </div>
           <Button
@@ -571,7 +571,7 @@ export default function AIAssistantPage() {
                 <div className="inline-flex p-8 glass-panel rounded-3xl mb-6 border border-holo-purple/30 shadow-glow-purple">
                   <Sparkles className="h-20 w-20 text-holo-purple" />
                 </div>
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-holo-purple via-holo-teal to-holo-pink bg-clip-text text-transparent mb-3">
+                <h2 className="text-4xl font-bold text-holo-purple mb-3">
                   What can I help you with?
                 </h2>
                 <p className="text-muted-foreground text-lg max-w-md mx-auto font-medium">
