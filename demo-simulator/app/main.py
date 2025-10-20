@@ -37,6 +37,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include action endpoints router
+from app.api.actions import router as actions_router
+app.include_router(actions_router, tags=["actions"])
+
 
 # Schemas
 class ProfileCreate(BaseModel):
