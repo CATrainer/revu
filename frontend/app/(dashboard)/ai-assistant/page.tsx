@@ -27,7 +27,7 @@ interface ChatSession {
 
 // Memoized markdown component for better performance
 const MarkdownContent = memo(({ content }: { content: string }) => (
-  <div className="prose prose-sm dark:prose-invert max-w-none">
+  <div className="prose prose-sm dark:prose-invert max-w-none text-foreground">
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       components={{
@@ -619,7 +619,7 @@ export default function AIAssistantPage() {
                       'max-w-[80%] rounded-2xl px-6 py-4 transition-all duration-200',
                       message.role === 'user'
                         ? 'gradient-purple text-white shadow-glow-purple'
-                        : 'glass-panel backdrop-blur-md border border-card-border shadow-glass'
+                        : 'glass-panel backdrop-blur-md border border-card-border shadow-glass bg-card/80 text-card-foreground'
                     )}
                   >
                     {message.content ? (
@@ -634,7 +634,7 @@ export default function AIAssistantPage() {
                           )}
                         </>
                       ) : (
-                        <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                        <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-white">{message.content}</p>
                       )
                     ) : (
                       <TypingIndicator />

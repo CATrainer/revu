@@ -106,7 +106,7 @@
   --foreground: #e8edf5;
   
   /* Glassmorphic Surfaces - Darker with more glow */
-  --card: rgba(255, 255, 255, 0.06);
+  --card: rgba(255, 255, 255, 0.10);
   --card-foreground: #e8edf5;
   --card-border: rgba(167, 139, 250, 0.25);
   --card-glow: rgba(167, 139, 250, 0.3);
@@ -417,6 +417,7 @@
   /* Glassmorphism Effects */
   .glass-panel {
     background: var(--card);
+    color: var(--card-foreground);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--card-border);
