@@ -5,6 +5,7 @@ When users in the main app act on demo interactions (reply, delete, etc.),
 those actions are sent here to simulate platform behavior.
 """
 
+import asyncio
 import logging
 import random
 import uuid
@@ -297,6 +298,3 @@ async def _schedule_follow_up_reply(
         f"✨ Follow-up scheduled for {delay_minutes} min from now: "
         f"{follow_up_text[:40]}..."
     )
-
-
-import asyncio  # Import at top of file in actual implementation

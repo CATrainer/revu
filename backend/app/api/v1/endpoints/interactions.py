@@ -331,7 +331,7 @@ async def delete_interaction(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Delete an interaction."""
+    """Delete an interaction from platform and local database."""
     interaction = await session.get(Interaction, interaction_id)
     
     if not interaction:
@@ -340,6 +340,19 @@ async def delete_interaction(
     if interaction.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
     
+    # Delete from platform first (works for demo and real platforms)
+    from app.services.platform_actions import get_platform_action_service
+    
+    platform_service = get_platform_action_service()
+    result = await platform_service.delete_interaction(interaction, session)
+    
+    if not result["success"]:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete from platform: {result.get('error', 'Unknown error')}"
+        )
+    
+    # Platform delete successful, now delete from local database
     await session.delete(interaction)
     await session.commit()
     
@@ -639,20 +652,31 @@ async def send_response(
         }
     
     if payload.send_immediately:
-        # TODO: Integrate with platform APIs to actually send the response
-        # For now, just update status
-        interaction.status = "answered"
-        interaction.responded_at = datetime.utcnow()
+        # Send reply via platform (works for demo and real platforms)
+        from app.services.platform_actions import get_platform_action_service
+        
+        platform_service = get_platform_action_service()
+        result = await platform_service.send_reply(
+            interaction,
+            payload.text,
+            session
+        )
+        
+        if not result["success"]:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to send response: {result.get('error', 'Unknown error')}"
+            )
+        
+        # Status and timestamps already updated by platform_service
         interaction.pending_response = None
-        
-        # TODO: Create actual reply on platform and set replied_at
-        
         await session.commit()
         
         return {
             "success": True,
             "message": "Response sent successfully",
             "status": "answered",
+            "reply_id": result.get("reply_id"),
         }
     
     return {
