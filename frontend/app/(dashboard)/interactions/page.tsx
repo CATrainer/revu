@@ -126,6 +126,8 @@ export default function InteractionsPage() {
 
   const handleInteractionClick = (interactionId: string) => {
     setSelectedInteractionId(interactionId);
+    setShowWorkflowPanel(false);
+    setShowAnalytics(false);
   };
 
   const handleCloseDetailPanel = () => {
@@ -150,10 +152,12 @@ export default function InteractionsPage() {
         isLoading={isLoading}
         onShowWorkflows={() => {
           setShowAnalytics(false);
+          setSelectedInteractionId(null);
           setShowWorkflowPanel(true);
         }}
         onShowAnalytics={() => {
           setShowWorkflowPanel(false);
+          setSelectedInteractionId(null);
           setShowAnalytics(true);
         }}
       />

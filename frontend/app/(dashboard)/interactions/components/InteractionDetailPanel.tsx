@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Send, Loader2, Sparkles, MessageSquare, ExternalLink, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 
@@ -148,8 +149,8 @@ export function InteractionDetailPanel({
 
   if (loading || !context) {
     return (
-      <div className="fixed right-0 top-0 h-full w-full md:w-[600px] bg-card border-l border-border shadow-lg flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+      <div className="fixed right-0 top-0 h-full w-full md:w-[700px] bg-background border-l border-border shadow-lg flex items-center justify-center z-50 overflow-hidden">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -160,26 +161,27 @@ export function InteractionDetailPanel({
   );
 
   return (
-    <div className="fixed right-0 top-0 h-full w-full md:w-[600px] bg-card border-l border-border shadow-lg flex flex-col z-50">
+    <div className="fixed right-0 top-0 h-full w-full md:w-[700px] bg-background border-l border-border shadow-lg flex flex-col z-50 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+      <div className="flex items-center justify-between p-6 border-b">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">{platformIcons[interaction.platform] || '💬'}</span>
+          <MessageSquare className="h-6 w-6 text-brand-primary" />
           <div>
             <h2 className="text-lg font-semibold text-primary-dark">Interaction Details</h2>
             <p className="text-sm text-secondary-dark capitalize">{interaction.platform} • {interaction.type}</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
-          <X className="h-4 w-4" />
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          <X className="h-5 w-5" />
         </Button>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* Context Section */}
-        <div className="px-6 py-4 border-b border-border bg-muted/30">
-          <h3 className="text-sm font-medium text-primary-dark mb-3">Context</h3>
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="text-base font-semibold text-primary-dark mb-4">Context</h3>
           
           {parent_content && (
             <div className="flex items-start gap-2 mb-3">
@@ -214,14 +216,16 @@ export function InteractionDetailPanel({
               </div>
             </div>
           )}
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Thread/Conversation */}
-        <div className="px-6 py-4">
-          <h3 className="text-sm font-medium text-primary-dark mb-3 flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" />
-            Conversation {allMessages.length > 1 && `(${allMessages.length} messages)`}
-          </h3>
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="text-base font-semibold text-primary-dark mb-4 flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Conversation {allMessages.length > 1 && `(${allMessages.length} messages)`}
+            </h3>
 
           <div className="space-y-4">
             {allMessages.map((msg) => {
@@ -266,16 +270,18 @@ export function InteractionDetailPanel({
               );
             })}
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Workflow Attribution */}
         {interaction.workflow_id && (
-          <div className={cn(
-            "px-6 py-4 border-t border-l-4",
+          <Card className={cn(
+            "border-l-4",
             interaction.workflow_action === 'auto_responded'
               ? "bg-green-50 dark:bg-green-950/20 border-green-500"
               : "bg-purple-50 dark:bg-purple-950/20 border-purple-500"
           )}>
+            <CardContent className="pt-6">
             <div className="flex items-start gap-3">
               <Zap className={cn(
                 "h-5 w-5 mt-0.5",
@@ -315,26 +321,29 @@ export function InteractionDetailPanel({
                 )}
               </div>
             </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Pending Response Preview */}
         {interaction.pending_response && interaction.status === 'awaiting_approval' && (
-          <div className="px-6 py-4 border-t border-border bg-amber-50 dark:bg-amber-950/20">
-            <h3 className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              AI-Generated Response (Awaiting Approval)
-            </h3>
-            <p className="text-sm text-amber-800 dark:text-amber-200 italic">
-              {interaction.pending_response.text}
-            </p>
-          </div>
+          <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+            <CardContent className="pt-6">
+              <h3 className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                AI-Generated Response (Awaiting Approval)
+              </h3>
+              <p className="text-sm text-amber-800 dark:text-amber-200 italic">
+                {interaction.pending_response.text}
+              </p>
+            </CardContent>
+          </Card>
         )}
       </div>
 
       {/* Response Section */}
-      <div className="border-t border-border px-6 py-4 bg-card">
-        <h3 className="text-sm font-medium text-primary-dark mb-3">Your Response</h3>
+      <div className="border-t px-6 py-4 bg-muted/10">
+        <h3 className="text-base font-semibold text-primary-dark mb-3">Your Response</h3>
         
         <Textarea
           value={responseText}
