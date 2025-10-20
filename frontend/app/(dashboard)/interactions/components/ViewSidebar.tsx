@@ -14,7 +14,8 @@ import {
   Star,
   Archive,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Zap
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -47,6 +48,7 @@ interface ViewSidebarProps {
   onDeleteView: (id: string) => void;
   isLoading: boolean;
   onShowAnalytics?: () => void;
+  onShowWorkflows?: () => void;
 }
 
 export default function ViewSidebar({
@@ -58,6 +60,7 @@ export default function ViewSidebar({
   onDeleteView,
   isLoading,
   onShowAnalytics,
+  onShowWorkflows,
 }: ViewSidebarProps) {
   const [pinningId, setPinningId] = useState<string | null>(null);
 
@@ -251,6 +254,17 @@ export default function ViewSidebar({
 
       {/* Footer Links */}
       <div className="p-3 border-t space-y-1">
+        {onShowWorkflows && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start"
+            onClick={onShowWorkflows}
+          >
+            <Zap className="h-4 w-4 mr-2" />
+            Workflows
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"

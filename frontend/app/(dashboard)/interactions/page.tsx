@@ -148,6 +148,7 @@ export default function InteractionsPage() {
         onEditView={handleEditView}
         onDeleteView={handleDeleteView}
         isLoading={isLoading}
+        onShowWorkflows={() => setShowWorkflowPanel(true)}
         onShowAnalytics={() => setShowAnalytics(true)}
       />
 
