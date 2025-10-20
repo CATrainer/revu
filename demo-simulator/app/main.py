@@ -116,26 +116,46 @@ async def generate_initial_content(user_id: str, profile_id: str):
             webhook = WebhookSender()
             
             # Generate comments for all content immediately
+            # Add small delays to avoid overwhelming Anthropic API
+            import asyncio
             total_interactions = 0
-            for content in content_items:
+            for idx, content in enumerate(content_items):
                 # Generate target number of comments for this content
                 comments_to_generate = content.target_comments
                 if comments_to_generate > 0:
-                    await engine.generate_comments_for_content(
-                        session,
-                        content,
-                        comments_to_generate
-                    )
-                    total_interactions += comments_to_generate
+                    try:
+                        await engine.generate_comments_for_content(
+                            session,
+                            content,
+                            comments_to_generate
+                        )
+                        total_interactions += comments_to_generate
+                        
+                        # Small delay every 5 pieces to avoid API rate limits
+                        if (idx + 1) % 5 == 0:
+                            await asyncio.sleep(1)
+                    except Exception as e:
+                        logger.warning(f"Failed to generate comments for content {content.id}: {e}")
+                        # Continue with other content pieces
             
             logger.info(f"✅ Generated {total_interactions} comment interactions")
             
             # Step 3: Generate initial 100 DMs
             logger.info(f"🔄 Generating 100 initial DMs for {user_id}...")
+            dm_count = 0
             for i in range(100):
-                await engine.generate_dm(session, profile)
+                try:
+                    await engine.generate_dm(session, profile)
+                    dm_count += 1
+                    
+                    # Small delay every 10 DMs to avoid API rate limits
+                    if (i + 1) % 10 == 0:
+                        await asyncio.sleep(0.5)
+                except Exception as e:
+                    logger.warning(f"Failed to generate DM {i+1}: {e}")
+                    # Continue with other DMs
             
-            logger.info(f"✅ Generated 100 DM interactions")
+            logger.info(f"✅ Generated {dm_count} DM interactions")
             
             # Step 4: Update all interactions to be sent immediately (not delayed)
             from app.models.demo_interaction import DemoInteraction

@@ -166,12 +166,31 @@ Return as JSON array with this exact format:
 
 IMPORTANT: Return ONLY the JSON array, no explanation."""
         
-        response = self.client.messages.create(
-            model="claude-sonnet-4-5-20250929",
-            max_tokens=2000,
-            temperature=1.0,  # Maximum variety
-            messages=[{"role": "user", "content": prompt}]
-        )
+        # Retry logic for API overload errors
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = self.client.messages.create(
+                    model="claude-sonnet-4-5-20250929",
+                    max_tokens=2000,
+                    temperature=1.0,  # Maximum variety
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                break  # Success!
+            except Exception as e:
+                if attempt < max_retries - 1 and ('overloaded' in str(e).lower() or '500' in str(e)):
+                    logger.warning(f"Anthropic API overloaded, retry {attempt + 1}/{max_retries} in 2s...")
+                    import asyncio
+                    await asyncio.sleep(2)  # Wait 2 seconds before retry
+                    continue
+                else:
+                    logger.error(f"Anthropic API failed after {attempt + 1} attempts: {e}")
+                    # Return fallback comments
+                    return [
+                        {"text": f"Great content! Really enjoyed this.", "sentiment": "positive"},
+                        {"text": f"Thanks for sharing!", "sentiment": "positive"},
+                        {"text": f"Interesting perspective", "sentiment": "neutral"},
+                    ][:count]
         
         import json
         content_text = response.content[0].text.strip()
@@ -246,12 +265,30 @@ Return as JSON with this exact format:
 
 Return ONLY the JSON, no explanation."""
         
-        response = self.client.messages.create(
-            model="claude-sonnet-4-5-20250929",
-            max_tokens=300,
-            temperature=0.9,
-            messages=[{"role": "user", "content": prompt}]
-        )
+        # Retry logic for API overload errors
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = self.client.messages.create(
+                    model="claude-sonnet-4-5-20250929",
+                    max_tokens=300,
+                    temperature=0.9,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                break  # Success!
+            except Exception as e:
+                if attempt < max_retries - 1 and ('overloaded' in str(e).lower() or '500' in str(e)):
+                    logger.warning(f"Anthropic API overloaded (DM gen), retry {attempt + 1}/{max_retries} in 2s...")
+                    import asyncio
+                    await asyncio.sleep(2)
+                    continue
+                else:
+                    logger.error(f"Anthropic API failed for DM after {attempt + 1} attempts: {e}")
+                    # Return fallback DM
+                    return {
+                        "message": "Hey! Love your content. Keep up the great work!",
+                        "sender_name": f"user_{random.randint(1000, 9999)}"
+                    }
         
         import json
         content_text = response.content[0].text.strip()
