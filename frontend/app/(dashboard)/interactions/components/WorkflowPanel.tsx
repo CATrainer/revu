@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Plus, Zap, Play, Pause, Edit2, Trash2, MoreVertical, Globe } from 'lucide-react';
+import { X, Plus, Zap, Play, Pause, Edit2, Trash2, MoreVertical, Globe, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import {
@@ -116,98 +117,106 @@ export function WorkflowPanel({
   const viewWorkflows = workflows.filter(w => !w.is_global && w.view_id === viewId);
 
   return (
-    <div className="fixed right-0 top-0 h-full w-full md:w-[600px] bg-card border-l border-border shadow-lg flex flex-col z-50">
+    <div className="fixed right-0 top-0 h-full w-full md:w-[700px] bg-background border-l border-border shadow-lg flex flex-col z-50 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+      <div className="flex items-center justify-between p-6 border-b">
         <div className="flex items-center gap-3">
           <Zap className="h-6 w-6 text-brand-primary" />
           <div>
             <h2 className="text-lg font-semibold text-primary-dark">Workflows</h2>
             <p className="text-sm text-secondary-dark">
-              {viewName}
+              Automate interactions for {viewName}
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
-          <X className="h-4 w-4" />
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          <X className="h-5 w-5" />
         </Button>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin h-8 w-8 border-4 border-brand-primary border-t-transparent rounded-full" />
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <>
             {/* View-Specific Workflows */}
-            <div className="px-6 py-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-primary-dark">
-                  Workflows for {viewName}
-                </h3>
-                <Button size="sm" className="h-8" onClick={handleCreateWorkflow}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Workflow
-                </Button>
-              </div>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-primary-dark">
+                    Workflows for {viewName}
+                  </h3>
+                  <Button size="sm" onClick={handleCreateWorkflow}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Workflow
+                  </Button>
+                </div>
 
-              {viewWorkflows.length === 0 ? (
-                <div className="text-center py-8 text-secondary-dark">
-                  <Zap className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                  <p className="text-sm">No workflows for this view yet</p>
-                  <p className="text-xs mt-1">Create a workflow to automate interactions</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {viewWorkflows.map((workflow) => (
-                    <WorkflowCard
-                      key={workflow.id}
-                      workflow={workflow}
-                      onToggleStatus={handleToggleStatus}
-                      onEdit={handleEditWorkflow}
-                      onDelete={handleDeleteWorkflow}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+                {viewWorkflows.length === 0 ? (
+                  <div className="text-center py-12 text-secondary-dark">
+                    <Zap className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                    <p className="text-sm">No workflows for this view yet</p>
+                    <p className="text-xs mt-1">Create a workflow to automate interactions</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {viewWorkflows.map((workflow) => (
+                      <WorkflowCard
+                        key={workflow.id}
+                        workflow={workflow}
+                        onToggleStatus={handleToggleStatus}
+                        onEdit={handleEditWorkflow}
+                        onDelete={handleDeleteWorkflow}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Global Workflows */}
             {globalWorkflows.length > 0 && (
-              <div className="px-6 py-4 border-t border-border bg-muted/30">
-                <div className="flex items-center gap-2 mb-3">
-                  <Globe className="h-4 w-4 text-secondary-dark" />
-                  <h3 className="text-sm font-medium text-primary-dark">
-                    Global Workflows
-                  </h3>
-                  <span className="text-xs text-secondary-dark">(Apply to all views)</span>
-                </div>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Globe className="h-4 w-4 text-brand-primary" />
+                    <h3 className="text-base font-semibold text-primary-dark">
+                      Global Workflows
+                    </h3>
+                    <span className="text-xs text-secondary-dark">(Apply to all views)</span>
+                  </div>
 
-                <div className="space-y-2">
-                  {globalWorkflows.map((workflow) => (
-                    <WorkflowCard
-                      key={workflow.id}
-                      workflow={workflow}
-                      onToggleStatus={handleToggleStatus}
-                      onEdit={handleEditWorkflow}
-                      onDelete={handleDeleteWorkflow}
-                      isGlobal
-                    />
-                  ))}
-                </div>
-              </div>
+                  <div className="space-y-3">
+                    {globalWorkflows.map((workflow) => (
+                      <WorkflowCard
+                        key={workflow.id}
+                        workflow={workflow}
+                        onToggleStatus={handleToggleStatus}
+                        onEdit={handleEditWorkflow}
+                        onDelete={handleDeleteWorkflow}
+                        isGlobal
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </>
         )}
       </div>
 
       {/* Footer Stats */}
-      <div className="border-t border-border px-6 py-3 bg-muted/30">
-        <div className="flex items-center justify-between text-xs text-secondary-dark">
-          <span>{workflows.filter(w => w.status === 'active').length} active workflows</span>
-          <span>{workflows.length} total workflows</span>
+      <div className="border-t px-6 py-4 bg-muted/10">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-secondary-dark">
+            <span className="font-semibold text-brand-primary">{workflows.filter(w => w.status === 'active').length}</span> active
+          </span>
+          <span className="text-secondary-dark">
+            <span className="font-semibold text-primary-dark">{workflows.length}</span> total
+          </span>
         </div>
       </div>
 
