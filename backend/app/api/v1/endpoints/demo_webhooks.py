@@ -127,9 +127,9 @@ async def handle_interaction_created(session: AsyncSession, data: Dict) -> Dict:
         platform_id=platform_id,
         content=interaction_data.get('content'),
         author_username=author_data.get('username'),
-        author_display_name=author_data.get('display_name'),
+        author_name=author_data.get('display_name'),  # Fixed: author_name not author_display_name
         author_avatar_url=author_data.get('avatar_url'),
-        author_verified=author_data.get('verified', False),
+        author_is_verified=author_data.get('verified', False),  # Fixed: author_is_verified not author_verified
         author_follower_count=author_data.get('subscriber_count', 0),
         like_count=interaction_data.get('engagement', {}).get('likes', 0),
         reply_count=interaction_data.get('engagement', {}).get('replies', 0),
