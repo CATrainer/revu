@@ -124,6 +124,18 @@ async def generate_initial_content(user_id: str, profile_id: str):
                 comments_to_generate = content.target_comments
                 if comments_to_generate > 0:
                     try:
+                        # Refresh session every 5 content pieces to avoid connection timeout
+                        if (idx + 1) % 5 == 0:
+                            await session.commit()  # Commit batch
+                            await session.close()
+                            # Get fresh session
+                            from app.core.database import AsyncSessionLocal
+                            session = AsyncSessionLocal()
+                            # Re-fetch profile with new session
+                            stmt = select(DemoProfile).where(DemoProfile.id == profile.id)
+                            result = await session.execute(stmt)
+                            profile = result.scalar_one()
+                            
                         await engine.generate_comments_for_content(
                             session,
                             content,
@@ -135,16 +147,33 @@ async def generate_initial_content(user_id: str, profile_id: str):
                         if (idx + 1) % 5 == 0:
                             await asyncio.sleep(1)
                     except Exception as e:
-                        logger.warning(f"Failed to generate comments for content {content.id}: {e}")
+                        logger.warning(f"Failed to generate comments for content piece: {e}")
+                        # Rollback the failed transaction
+                        await session.rollback()
                         # Continue with other content pieces
             
             logger.info(f"✅ Generated {total_interactions} comment interactions")
+            
+            # Ensure we have the final commit before moving to DMs
+            await session.commit()
             
             # Step 3: Generate initial 100 DMs
             logger.info(f"🔄 Generating 100 initial DMs for {user_id}...")
             dm_count = 0
             for i in range(100):
                 try:
+                    # Refresh session every 20 DMs to avoid connection timeout
+                    if (i + 1) % 20 == 0:
+                        await session.commit()  # Commit batch
+                        await session.close()
+                        # Get fresh session
+                        from app.core.database import AsyncSessionLocal
+                        session = AsyncSessionLocal()
+                        # Re-fetch profile with new session
+                        stmt = select(DemoProfile).where(DemoProfile.id == profile.id)
+                        result = await session.execute(stmt)
+                        profile = result.scalar_one()
+                    
                     await engine.generate_dm(session, profile)
                     dm_count += 1
                     
@@ -153,8 +182,11 @@ async def generate_initial_content(user_id: str, profile_id: str):
                         await asyncio.sleep(0.5)
                 except Exception as e:
                     logger.warning(f"Failed to generate DM {i+1}: {e}")
+                    await session.rollback()
                     # Continue with other DMs
             
+            # Final commit for DMs
+            await session.commit()
             logger.info(f"✅ Generated {dm_count} DM interactions")
             
             # Step 4: Update all interactions to be sent immediately (not delayed)
@@ -187,29 +219,63 @@ async def generate_initial_content(user_id: str, profile_id: str):
             result = await session.execute(stmt)
             interactions = list(result.scalars().all())
             
-            sent_count = 0
-            failed_count = 0
-            for interaction in interactions:
+            # Send webhooks and track results (don't update DB yet to avoid session timeout)
+            sent_ids = []
+            failed_ids = []
+            
+            for idx, interaction in enumerate(interactions):
                 try:
                     payload = interaction.to_webhook_payload()
                     success = await webhook.send_interaction_created(payload)
                     if success:
-                        interaction.status = 'sent'
-                        interaction.sent_at = datetime.utcnow()
-                        sent_count += 1
+                        sent_ids.append(str(interaction.id))
                     else:
-                        interaction.status = 'failed'
-                        failed_count += 1
-                    await session.commit()
+                        failed_ids.append(str(interaction.id))
                 except Exception as e:
                     logger.error(f"Error sending interaction: {e}")
-                    failed_count += 1
+                    failed_ids.append(str(interaction.id))
             
-            logger.info(f"✅ Sent {sent_count} interactions to main app ({failed_count} failed)")
-            logger.info(f"🎉 Demo mode fully initialized for user {user_id} - {sent_count} interactions visible immediately")
+            # Now update statuses in database in batches
+            logger.info(f"Updating interaction statuses in database...")
+            from sqlalchemy import update as sql_update
+            
+            if sent_ids:
+                # Update sent interactions in batches
+                for i in range(0, len(sent_ids), 100):
+                    batch = sent_ids[i:i+100]
+                    stmt = sql_update(DemoInteraction).where(
+                        DemoInteraction.id.in_([uuid.UUID(id) for id in batch])
+                    ).values(
+                        status='sent',
+                        sent_at=datetime.utcnow()
+                    )
+                    await session.execute(stmt)
+                    await session.commit()
+            
+            if failed_ids:
+                # Update failed interactions
+                for i in range(0, len(failed_ids), 100):
+                    batch = failed_ids[i:i+100]
+                    stmt = sql_update(DemoInteraction).where(
+                        DemoInteraction.id.in_([uuid.UUID(id) for id in batch])
+                    ).values(status='failed')
+                    await session.execute(stmt)
+                    await session.commit()
+            
+            logger.info(f"✅ Sent {len(sent_ids)} interactions to main app ({len(failed_ids)} failed)")
+            logger.info(f"🎉 Demo mode fully initialized for user {user_id} - {len(sent_ids)} interactions visible immediately")
             
     except Exception as e:
         logger.error(f"Error generating background content for user {user_id}: {e}", exc_info=True)
+        try:
+            await session.rollback()
+        except:
+            pass
+    finally:
+        try:
+            await session.close()
+        except:
+            pass
 
 
 # Routes
