@@ -158,7 +158,7 @@ export default function InsightsDashboardPage() {
   const getPerformanceBadge = (category: string) => {
     switch (category) {
       case 'overperforming':
-        return <Badge className="bg-green-500">Overperforming</Badge>
+        return <Badge variant="success">Overperforming</Badge>
       case 'underperforming':
         return <Badge variant="destructive">Needs Attention</Badge>
       default:
@@ -196,27 +196,29 @@ export default function InsightsDashboardPage() {
   if (!data) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Card className="p-6 text-center">
-          <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-          <h3 className="text-lg font-semibold mb-2">No Data Available</h3>
-          <p className="text-sm text-muted-foreground mb-4">
+        <div className="glass-panel rounded-3xl p-12 border border-holo-teal/30 shadow-glow-teal backdrop-blur-md max-w-md text-center">
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-holo-teal/20 to-holo-blue/20 inline-block mb-6">
+            <AlertCircle className="h-16 w-16 text-holo-teal" />
+          </div>
+          <h3 className="text-2xl font-bold mb-3 bg-gradient-to-r from-holo-teal to-holo-blue bg-clip-text text-transparent">No Data Available</h3>
+          <p className="text-muted-foreground mb-6 text-base">
             Enable demo mode or connect your social accounts to see insights.
           </p>
-          <Button asChild>
+          <Button asChild size="lg">
             <Link href="/settings">Get Started</Link>
           </Button>
-        </Card>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="space-y-8 p-6">
+      {/* Header - Gradient */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">What's Working</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-holo-purple via-holo-teal to-holo-pink bg-clip-text text-transparent">What's Working</h1>
+          <p className="text-muted-foreground text-lg font-medium mt-2">
             Understand your content performance and discover what resonates with your audience
           </p>
         </div>

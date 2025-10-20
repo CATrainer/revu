@@ -477,39 +477,40 @@ export default function AIAssistantPage() {
   };
 
   return (
-    <div className="-mx-4 sm:-mx-6 md:-mx-8 -my-6 h-[calc(100vh-4rem)] flex bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      {/* Sidebar */}
-      <div className="w-80 border-r border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm flex flex-col">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+    <div className="-mx-4 sm:-mx-6 md:-mx-8 -my-6 h-[calc(100vh-4rem)] flex relative noise-texture">
+      {/* Sidebar - Glassmorphic */}
+      <div className="w-80 glass-panel border-r border-card-border backdrop-blur-xl flex flex-col">
+        <div className="p-6 border-b border-border">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl">
-              <Brain className="h-6 w-6 text-white" />
+            <div className="p-3 rounded-2xl gradient-purple shadow-glow-purple">
+              <Brain className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white">AI Assistant</h1>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-holo-purple to-holo-teal bg-clip-text text-transparent">AI Assistant</h1>
             </div>
           </div>
           <Button
             onClick={createNewSession}
             disabled={isStreaming}
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+            className="w-full"
+            size="lg"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-5 w-5 mr-2" />
             New Chat
           </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 retro-scroll">
           {isLoadingSessions ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-16 bg-slate-100 dark:bg-slate-800/50 rounded-lg animate-pulse" />
+                <div key={i} className="h-16 glass-panel rounded-xl animate-pulse" />
               ))}
             </div>
           ) : sessions.length === 0 ? (
-            <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-              <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No conversations yet</p>
+            <div className="text-center py-12 text-muted-foreground">
+              <MessageSquare className="h-14 w-14 mx-auto mb-3 opacity-50 text-holo-purple" />
+              <p className="text-sm font-medium">No conversations yet</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -518,10 +519,10 @@ export default function AIAssistantPage() {
                   key={session.id}
                   onClick={() => loadSession(session.id)}
                   className={cn(
-                    'w-full text-left p-3 rounded-lg transition-all group',
+                    'w-full text-left p-4 rounded-xl transition-all group retro-hover',
                     currentSessionId === session.id
-                      ? 'bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-500'
-                      : 'bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border-2 border-transparent'
+                      ? 'glass-panel gradient-purple text-white shadow-glow-purple border-2 border-holo-purple'
+                      : 'glass-panel border-2 border-border hover:border-holo-purple/50'
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -560,19 +561,19 @@ export default function AIAssistantPage() {
             </div>
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-4">
-              <div className="mb-8">
-                <div className="inline-flex p-6 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-3xl mb-4">
-                  <Sparkles className="h-16 w-16 text-blue-600 dark:text-blue-400" />
+              <div className="mb-10">
+                <div className="inline-flex p-8 glass-panel rounded-3xl mb-6 border border-holo-purple/30 shadow-glow-purple">
+                  <Sparkles className="h-20 w-20 text-holo-purple" />
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-holo-purple via-holo-teal to-holo-pink bg-clip-text text-transparent mb-3">
                   What can I help you with?
                 </h2>
-                <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+                <p className="text-muted-foreground text-lg max-w-md mx-auto font-medium">
                   Ask me about content strategy, viral ideas, audience growth, or anything else!
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-3xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl">
                 {[
                   'How do I increase engagement on my posts?',
                   'Give me 5 viral content ideas for TikTok',
@@ -585,9 +586,9 @@ export default function AIAssistantPage() {
                       setInput(prompt);
                       setTimeout(() => document.querySelector<HTMLTextAreaElement>('textarea')?.focus(), 0);
                     }}
-                    className="p-4 text-left bg-white dark:bg-slate-800 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all hover:shadow-lg"
+                    className="p-5 text-left glass-panel rounded-2xl border-2 border-border hover:border-holo-purple transition-all retro-hover shadow-glass backdrop-blur-md"
                   >
-                    <p className="text-sm text-slate-700 dark:text-slate-300">{prompt}</p>
+                    <p className="text-sm font-medium">{prompt}</p>
                   </button>
                 ))}
               </div>

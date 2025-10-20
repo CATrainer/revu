@@ -153,20 +153,20 @@ export default function InteractionsPage() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <div className="border-b bg-background px-6 py-4">
+        {/* Header - Glassmorphic */}
+        <div className="glass-panel border-b border-border backdrop-blur-md px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-primary-dark flex items-center gap-3">
-                {activeView?.icon && <span className="text-3xl">{activeView.icon}</span>}
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-holo-purple via-holo-teal to-holo-pink bg-clip-text text-transparent flex items-center gap-3">
+                {activeView?.icon && <span className="text-4xl filter-none" style={{backgroundClip: 'unset', WebkitBackgroundClip: 'unset', WebkitTextFillColor: 'unset'}}>{activeView.icon}</span>}
                 {activeView?.name || 'All Interactions'}
               </h1>
               {activeView?.description && (
-                <p className="text-sm text-secondary-dark mt-1">{activeView.description}</p>
+                <p className="text-sm text-muted-foreground mt-2 font-medium">{activeView.description}</p>
               )}
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {/* Only show View Settings for non-system views */}
               {activeView && !activeView.is_system && (
                 <Button
@@ -222,16 +222,20 @@ export default function InteractionsPage() {
               onInteractionClick={handleInteractionClick}
             />
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center p-8">
-              <Inbox className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No View Selected</h3>
-              <p className="text-secondary-dark mb-4">
-                Create a view to organize your interactions
-              </p>
-              <Button onClick={handleCreateView}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Your First View
-              </Button>
+            <div className="flex flex-col items-center justify-center h-full text-center p-12">
+              <div className="glass-panel rounded-3xl p-12 border border-holo-purple/30 shadow-glow-purple backdrop-blur-md max-w-md">
+                <div className="p-6 rounded-2xl bg-gradient-to-br from-holo-purple/20 to-holo-teal/20 inline-block mb-6">
+                  <Inbox className="h-16 w-16 text-holo-purple" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 bg-gradient-to-r from-holo-purple to-holo-teal bg-clip-text text-transparent">No View Selected</h3>
+                <p className="text-muted-foreground mb-6 text-base">
+                  Create a view to organize your interactions and streamline your workflow
+                </p>
+                <Button onClick={handleCreateView} size="lg">
+                  <Plus className="h-5 w-5 mr-2" />
+                  Create Your First View
+                </Button>
+              </div>
             </div>
           )}
         </div>
