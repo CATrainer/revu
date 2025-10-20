@@ -37,6 +37,9 @@ class Fan(Base):
     is_blocked = Column(Boolean, default=False)
     tags = Column(ARRAY(String(50)))
     
+    # Demo mode separation - CRITICAL for data integrity
+    is_demo = Column(Boolean, default=False, nullable=False, index=True)
+    
     # Revenue tracking
     lifetime_value = Column(Numeric(10, 2), default=0)
     purchase_count = Column(Integer, default=0)

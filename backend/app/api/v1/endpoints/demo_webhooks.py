@@ -207,18 +207,20 @@ async def get_or_create_fan(
             await session.commit()
         return fan
     
-    # Create new fan
+    # Create new fan - CRITICAL: Mark as demo data
     fan = Fan(
         username=username,
         name=display_name,
         platforms={platform: f"@{username}"},
         user_id=user_id,
+        is_demo=True,  # CRITICAL: Prevent demo/real data mixing
     )
     
     session.add(fan)
     await session.commit()
     await session.refresh(fan)
     
+    logger.debug(f"Created demo fan: {username} (is_demo=True)")
     return fan
 
 
