@@ -131,25 +131,31 @@ export function Header({ onMenuClick }: HeaderProps) {
   };
 
   return (
-  <header className="nav-background soft-shadow elevated">
+  <header className="glass-nav fixed top-0 left-0 right-0 z-50">
       {(systemStatus.status === 'paused') && (
-        <div className="px-4 sm:px-6 lg:px-8 py-2 bg-rose-50 border-b border-[var(--border)] flex items-center justify-between">
-          <div className="text-sm text-primary-dark">⛔ Automation paused {systemStatus.paused_until ? `until ${new Date(systemStatus.paused_until).toLocaleString()}` : '(manual)'}.</div>
+        <div className="px-4 sm:px-6 lg:px-8 py-2 glass-panel border-b border-[var(--border)] flex items-center justify-between">
+          <div className="text-sm font-medium flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-rose-500 animate-pulse-glow"></span>
+            Automation paused {systemStatus.paused_until ? `until ${new Date(systemStatus.paused_until).toLocaleString()}` : '(manual)'}
+          </div>
           <div className="flex items-center gap-2">
-            <button className="text-xs underline" disabled={pauseLoading} onClick={resumeAll}>Resume now</button>
+            <button className="text-xs px-3 py-1 rounded-pill bg-gradient-to-r from-holo-purple to-holo-purple-light text-white hover:shadow-glow-purple transition-all" disabled={pauseLoading} onClick={resumeAll}>Resume now</button>
           </div>
         </div>
       )}
       {showAlertBanner && alertHistory[0] && (
-        <div className="px-4 sm:px-6 lg:px-8 py-2 bg-amber-50 border-b border-[var(--border)] flex items-center justify-between">
-          <div className="text-sm text-primary-dark">⚠️ {alertHistory[0].title}: <span className="text-secondary-dark">{alertHistory[0].message}</span></div>
+        <div className="px-4 sm:px-6 lg:px-8 py-2 glass-panel border-b border-[var(--border)] flex items-center justify-between">
+          <div className="text-sm font-medium flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-amber-500 animate-pulse-glow"></span>
+            {alertHistory[0].title}: <span className="opacity-80">{alertHistory[0].message}</span>
+          </div>
           <div className="flex items-center gap-2">
-            <button className="text-xs underline" onClick={() => setShowAlertBanner(false)}>Dismiss</button>
+            <button className="text-xs px-3 py-1 rounded-pill border border-border hover:bg-muted transition-all" onClick={() => setShowAlertBanner(false)}>Dismiss</button>
           </div>
         </div>
       )}
   <div className="px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-20">
           <div className="flex items-center gap-6">
             {/* Mobile Menu */}
             <Sheet>
@@ -190,14 +196,17 @@ export function Header({ onMenuClick }: HeaderProps) {
               </SheetContent>
             </Sheet>
             
-            {/* Logo */}
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <Image src="/logo/mark.png" alt="Repruv" width={32} height={32} className="h-8 w-8" priority />
-              <span className="hidden md:block text-lg font-semibold text-slate-900 dark:text-slate-100">Repruv</span>
+            {/* Logo with Glow */}
+            <Link href="/dashboard" className="flex items-center gap-3 retro-hover group">
+              <div className="relative">
+                <Image src="/logo/mark.png" alt="Repruv" width={36} height={36} className="h-9 w-9 relative z-10" priority />
+                <div className="absolute inset-0 bg-gradient-to-br from-holo-purple to-holo-teal rounded-xl blur-md opacity-0 group-hover:opacity-40 transition-opacity"></div>
+              </div>
+              <span className="hidden md:block text-xl font-bold tracking-tight bg-gradient-to-br from-holo-purple to-holo-teal bg-clip-text text-transparent">Repruv</span>
             </Link>
             
-            {/* Navigation Links - Desktop */}
-            <nav className="hidden lg:flex items-center gap-1">
+            {/* Navigation Links - Desktop with Sliding Indicator */}
+            <nav className="hidden lg:flex items-center gap-2 relative">
               {navigation.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
@@ -205,14 +214,24 @@ export function Header({ onMenuClick }: HeaderProps) {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 group ${
                       isActive
-                        ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        ? 'text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
-                    {item.name}
+                    <Icon className={`h-4 w-4 transition-transform group-hover:scale-110 ${
+                      isActive ? 'text-holo-purple' : ''
+                    }`} />
+                    <span className="tracking-tight">{item.name}</span>
+                    
+                    {/* Gradient underline indicator for active tab */}
+                    {isActive && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 rounded-full bg-gradient-to-r from-holo-purple via-holo-teal to-holo-pink animate-gradient-shift"></span>
+                    )}
+                    
+                    {/* Hover glow */}
+                    <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-holo-purple/10 to-holo-teal/10 opacity-0 group-hover:opacity-100 transition-opacity -z-10"></span>
                   </Link>
                 );
               })}
@@ -222,15 +241,15 @@ export function Header({ onMenuClick }: HeaderProps) {
           <div className="flex items-center space-x-4">
             {/* Emergency controls & global toggles (conditional) */}
             {features.showEmergencyControls && (
-              <div className="hidden md:flex items-center gap-2 mr-2">
+              <div className="hidden md:flex items-center gap-3 mr-3">
                 {systemStatus.status === 'active' ? (
-                  <Button size="sm" variant="destructive" className="bg-rose-600 hover:bg-rose-700" disabled={pauseLoading} onClick={() => pauseAll(60)} title="Pause all automation for 1 hour">
-                    <PauseCircle className="h-4 w-4 mr-1" /> Pause all
-                  </Button>
+                  <button className="btn-pill px-4 py-2 bg-gradient-to-r from-rose-500 to-rose-600 text-white text-sm font-semibold shadow-lg hover:shadow-xl transition-all" disabled={pauseLoading} onClick={() => pauseAll(60)} title="Pause all automation for 1 hour">
+                    <PauseCircle className="h-4 w-4 mr-1.5 inline" /> Pause all
+                  </button>
                 ) : (
-                  <Button size="sm" variant="default" disabled={pauseLoading} onClick={resumeAll} title="Resume all automation">
-                    <PlayCircle className="h-4 w-4 mr-1" /> Resume
-                  </Button>
+                  <button className="btn-pill px-4 py-2 gradient-purple text-white text-sm font-semibold shadow-glow-purple hover:shadow-glow-purple transition-all" disabled={pauseLoading} onClick={resumeAll} title="Resume all automation">
+                    <PlayCircle className="h-4 w-4 mr-1.5 inline" /> Resume
+                  </button>
                 )}
                 {features.showTestModeToggle && (
                   <label className="flex items-center gap-2 text-xs text-secondary-dark ml-2" title="Run actions in simulation mode only">
@@ -260,9 +279,11 @@ export function Header({ onMenuClick }: HeaderProps) {
             {features.showPersonaBadge && (
               <span
                 title={`Persona: ${personaLabel}`}
-                className={`hidden md:inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${personaColor}`}
+                className="hidden md:inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-pill glass-panel border border-border backdrop-blur-md"
               >
-                <span className={`inline-block h-1.5 w-1.5 rounded-full ${personaColor.split(' ').find(c=>c.startsWith('bg-')) || 'bg-blue-500'}`}></span>
+                <span className={`inline-block h-2 w-2 rounded-full animate-pulse-glow ${
+                  user?.user_kind === 'business' ? 'bg-emerald-400' : 'bg-purple-400'
+                }`}></span>
                 {personaLabel}
               </span>
             )}
@@ -272,13 +293,15 @@ export function Header({ onMenuClick }: HeaderProps) {
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full hover-background">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-[var(--brand-primary-solid)] text-[var(--brand-primary-solid-foreground)]">
+                <button className="relative h-10 w-10 rounded-full retro-hover group">
+                  <Avatar className="h-10 w-10 border-2 border-transparent group-hover:border-holo-purple transition-all">
+                    <AvatarFallback className="gradient-purple text-white font-bold text-sm">
                       {user?.full_name?.charAt(0) || 'U'}
                     </AvatarFallback>
                   </Avatar>
-                </Button>
+                  {/* Glow ring on hover */}
+                  <span className="absolute inset-0 rounded-full bg-gradient-to-br from-holo-purple to-holo-teal blur opacity-0 group-hover:opacity-50 -z-10 transition-opacity"></span>
+                </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 className="w-56 card-background border-[var(--border)]" 

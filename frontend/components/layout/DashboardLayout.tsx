@@ -50,14 +50,17 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-  <div className="h-screen flex overflow-hidden section-background">
+  <div className="viewport-container relative noise-texture">
       {/* Sidebar removed - navigation now in header */}
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header onMenuClick={() => setMobileSidebarOpen(true)} />
         
-        <main className="flex-1 relative overflow-y-auto focus:outline-none scrollbar-nice">
+        {/* Fixed spacing for header - 80px height */}
+        <div className="h-20"></div>
+        
+        <main className="viewport-content retro-scroll focus:outline-none">
           <div className="section-pad">
             <div className="content-container">
               {/* Demo persona banner removed */}
@@ -66,51 +69,51 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </div>
         </main>
 
-        {/* Guided tour hint bar (conditional via feature flag) */}
+        {/* Guided tour hint bar (conditional via feature flag) - Retro styled */}
         {features.showLoginTour && !tour.completed && (
-          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-md border border-[var(--border)] card-background shadow">
-            <span className="text-sm text-primary-dark">
-              {tour.step === 0 && 'Take a 60s tour of Revu.'}
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 glass-panel rounded-2xl shadow-glow-purple backdrop-blur-md px-6 py-3 border border-holo-purple/30">
+            <span className="text-sm font-medium">
+              {tour.step === 0 && 'Take a 60s tour of Repruv.'}
               {tour.step === 1 && 'Step 1: Use Quick Actions to jump into Comments.'}
               {tour.step === 2 && 'Export a branded PDF report for stakeholders.'}
               {tour.step === 3 && 'Save a view here to revisit filters fast.'}
               {tour.step === 4 && 'Adjust notification rules and mute noisy platforms.'}
             </span>
             {tour.step === 0 ? (
-              <button className="ml-3 text-xs px-2 py-1 rounded border border-[var(--border)] hover-background" onClick={() => setTour({ step: 1 })}>Start</button>
+              <button className="ml-4 text-xs px-4 py-1.5 rounded-pill gradient-purple text-white font-semibold hover:shadow-glow-purple transition-all" onClick={() => setTour({ step: 1 })}>Start</button>
             ) : (
               <>
-                <button className="ml-3 text-xs px-2 py-1 rounded border border-[var(--border)] hover-background" onClick={() => {
+                <button className="ml-4 text-xs px-4 py-1.5 rounded-pill gradient-teal text-white font-semibold hover:shadow-glow-teal transition-all" onClick={() => {
                   // Navigate, but let step progression happen when user completes the action on the page
                   if (tour.step === 1) router.push('/interactions');
                   if (tour.step === 2) router.push('/analytics');
                 }}>Go</button>
-                <button className="ml-2 text-xs px-2 py-1 rounded border border-[var(--border)] hover-background" onClick={() => setTour({ completed: true })}>Done</button>
+                <button className="ml-2 text-xs px-4 py-1.5 rounded-pill border border-border hover:bg-muted transition-all font-semibold" onClick={() => setTour({ completed: true })}>Done</button>
               </>
             )}
           </div>
         )}
 
-        {/* Anchored tour tooltip (conditional via feature flag) */}
+        {/* Anchored tour tooltip (conditional via feature flag) - Retro styled */}
         {features.showLoginTour && !tour.completed && anchorRect && (
           <div
-            className="fixed z-50 px-3 py-2 rounded-md border border-[var(--border)] card-background shadow"
-            style={{ top: anchorRect.bottom + 8, left: Math.min(anchorRect.left, window.innerWidth - 280) }}
+            className="fixed z-50 glass-panel rounded-2xl shadow-glow-purple backdrop-blur-md px-4 py-3 border border-holo-purple/30 max-w-xs"
+            style={{ top: anchorRect.bottom + 12, left: Math.min(anchorRect.left, window.innerWidth - 280) }}
           >
-            <div className="text-xs text-secondary-dark">Tour</div>
-            <div className="text-sm text-primary-dark">
+            <div className="text-xs uppercase tracking-wider font-bold text-holo-purple mb-1">Tour</div>
+            <div className="text-sm font-medium">
               {tour.step === 1 && 'Quick Actions jump you into common workflows.'}
               {tour.step === 2 && 'Export a branded PDF report for stakeholders.'}
               {tour.step === 3 && 'Save a view here to revisit filters fast.'}
               {tour.step === 4 && 'Adjust notification rules and mute noisy platforms.'}
             </div>
-            <div className="mt-2 flex gap-2">
+            <div className="mt-3 flex gap-2">
               <button
-                className="text-xs px-2 py-1 rounded border border-[var(--border)] hover-background"
+                className="text-xs px-3 py-1.5 rounded-pill border border-border hover:bg-muted transition-all font-semibold"
                 onClick={() => setTour({ step: Math.max(1, tour.step - 1) })}
               >Back</button>
               <button
-                className="text-xs px-2 py-1 rounded border border-[var(--border)] hover-background"
+                className="text-xs px-3 py-1.5 rounded-pill gradient-purple text-white font-semibold hover:shadow-glow-purple transition-all"
                 onClick={() => {
                   if (tour.step >= 4) setTour({ completed: true });
                   else setTour({ step: tour.step + 1 });
@@ -118,16 +121,19 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         >{tour.step >= 4 ? 'Finish' : 'Next'}</button>
             </div>
             {/* Arrow */}
-            <div className="absolute -top-1 left-4 w-2 h-2 rotate-45 bg-[var(--card-bg,white)] border-l border-t border-[var(--border)]"></div>
+            <div className="absolute -top-1 left-4 w-3 h-3 rotate-45 glass-panel border-l border-t border-holo-purple/30"></div>
           </div>
         )}
 
-        {/* Command palette mock */}
+        {/* Command palette mock - Retro styled */}
         {paletteOpen && (
-          <div className="fixed inset-0 z-50 bg-black/30" onClick={() => setPaletteOpen(false)}>
-            <div className="absolute top-24 left-1/2 -translate-x-1/2 w-full max-w-xl card-background border border-[var(--border)] rounded-md shadow">
-              <div className="p-3 border-b border-[var(--border)] text-sm text-secondary-dark">Command Palette</div>
-              <ul className="p-3 space-y-2 text-sm">
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={() => setPaletteOpen(false)}>
+            <div className="absolute top-32 left-1/2 -translate-x-1/2 w-full max-w-2xl glass-panel border border-holo-purple/30 rounded-3xl shadow-glow-purple backdrop-blur-xl animate-slide-up">
+              <div className="p-4 border-b border-border flex items-center gap-3">
+                <span className="text-lg font-bold bg-gradient-to-r from-holo-purple to-holo-teal bg-clip-text text-transparent">Command Palette</span>
+                <kbd className="ml-auto px-2 py-1 rounded-lg text-xs font-mono bg-muted">Esc</kbd>
+              </div>
+              <ul className="p-3 space-y-1 text-sm max-h-96 overflow-y-auto retro-scroll">
                 <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/interactions'); setPaletteOpen(false); }}>Go to Interactions</li>
                 <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/insights'); setPaletteOpen(false); }}>Go to Insights</li>
                 <li className="hover-background px-2 py-1 rounded cursor-pointer" onClick={() => { router.push('/analytics'); setPaletteOpen(false); }}>Go to Analytics</li>

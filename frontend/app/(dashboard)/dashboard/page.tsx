@@ -66,20 +66,20 @@ export default function DashboardPage() {
   const totalFollowers = (metrics?.total_followers || 0) + (metrics?.total_subscribers || 0);
 
   return (
-    <div className="space-y-8 animate-fade-in px-4 md:px-0"> {/* Add horizontal padding on mobile */}
-      {/* Demo Mode Banner */}
+    <div className="space-y-10 animate-slide-up px-4 md:px-0"> {/* Add horizontal padding on mobile */}
+      {/* Demo Mode Banner - Retro Styled */}
       {demoMode && (
-        <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg p-4">
+        <div className="glass-panel rounded-2xl border border-holo-purple/30 p-6 shadow-glow-purple backdrop-blur-md">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+            <div className="flex items-center gap-4">
+              <div className="h-3 w-3 rounded-full bg-gradient-to-r from-emerald-400 to-teal-400 animate-pulse-glow shadow-glow-teal" />
               <div>
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-purple-600" />
-                  <span className="font-semibold text-purple-900 dark:text-purple-100">Demo Mode Active</span>
+                  <Sparkles className="h-5 w-5 text-holo-purple" />
+                  <span className="font-bold text-lg bg-gradient-to-r from-holo-purple to-holo-pink bg-clip-text text-transparent">Demo Mode Active</span>
                 </div>
-                <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
-                  Using simulated data from {demoProfile?.niche?.replace('_', ' ') || 'your demo profile'}. Interactions will arrive shortly.
+                <p className="text-sm text-muted-foreground mt-1.5">
+                  Using simulated data from <span className="font-semibold text-foreground">{demoProfile?.niche?.replace('_', ' ') || 'your demo profile'}</span>. Interactions will arrive shortly.
                 </p>
               </div>
             </div>
@@ -93,21 +93,21 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Onboarding: Enable Demo Mode */}
+      {/* Onboarding: Enable Demo Mode - Retro Styled */}
       {!demoMode && !loading && (metrics?.interactions_today || 0) === 0 && (
-        <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-lg p-4">
+        <div className="glass-panel rounded-2xl border border-holo-teal/30 p-6 shadow-glow-teal backdrop-blur-md">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Sparkles className="h-5 w-5 text-blue-600" />
+            <div className="flex items-center gap-4">
+              <Sparkles className="h-6 w-6 text-holo-teal" />
               <div>
-                <div className="font-semibold text-blue-900 dark:text-blue-100">No interactions yet?</div>
-                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                <div className="font-bold text-lg">No interactions yet?</div>
+                <p className="text-sm text-muted-foreground mt-1.5">
                   Try Demo Mode to see how Repruv works with AI-generated interactions
                 </p>
               </div>
             </div>
             <Link href="/settings/demo-mode">
-              <ModernButton className="bg-blue-600 hover:bg-blue-700" size="sm">
+              <ModernButton size="sm" className="gradient-teal shadow-glow-teal">
                 <Sparkles className="h-4 w-4 mr-2" />
                 Enable Demo Mode
               </ModernButton>
@@ -116,109 +116,134 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Header Section */}
-      <div className="space-y-2">
-        <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-primary-dark">Welcome back!</h1> {/* Responsive heading sizes */}
-        <p className="text-base md:text-lg text-secondary-dark">Here&apos;s what&apos;s happening with your social media presence.</p>
+      {/* Header Section - Gradient Text */}
+      <div className="space-y-3">
+        <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-holo-purple via-holo-teal to-holo-pink bg-clip-text text-transparent animate-gradient-shift text-glow-purple">Welcome back!</h1> {/* Responsive heading sizes */}
+        <p className="text-base md:text-xl text-muted-foreground font-medium">Here&apos;s what&apos;s happening with your social media presence.</p>
       </div>
 
-      {/* Stats Overview */}
-      <StatsGrid columns={4}>
-        <ModernStats
-          title="Total Followers"
-          value={loading ? '...' : formatNumber(totalFollowers)}
-          change={metrics?.follower_change || 0}
-          changeLabel="vs last month"
-          icon={<Users className="h-4 w-4" />}
-          trend={metrics?.follower_change && metrics.follower_change > 0 ? 'up' : metrics?.follower_change && metrics.follower_change < 0 ? 'down' : 'neutral'}
-        />
-        <ModernStats
-          title="Engagement Rate"
-          value={loading ? '...' : `${metrics?.engagement_rate?.toFixed(1) || 0}%`}
-          change={metrics?.engagement_change || 0}
-          changeLabel="vs last month"
-          icon={<TrendingUp className="h-4 w-4" />}
-          trend={metrics?.engagement_change && metrics.engagement_change > 0 ? 'up' : metrics?.engagement_change && metrics.engagement_change < 0 ? 'down' : 'neutral'}
-        />
-        <ModernStats
-          title="Interactions Today"
-          value={loading ? '...' : (metrics?.interactions_today || 0).toString()}
-          change={metrics?.interactions_change || 0}
-          changeLabel="vs yesterday"
-          icon={<MessageCircle className="h-4 w-4" />}
-          trend={metrics?.interactions_change && metrics.interactions_change > 0 ? 'up' : metrics?.interactions_change && metrics.interactions_change < 0 ? 'down' : 'neutral'}
-        />
-        <ModernStats
-          title="Workflows Active"
-          value={loading ? '...' : (metrics?.active_workflows || 0).toString()}
-          changeLabel="running smoothly"
-          icon={<Zap className="h-4 w-4" />}
-          trend="neutral"
-        />
-      </StatsGrid>
+      {/* Stats Overview - Glassmorphic Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="glass-panel rounded-2xl border border-holo-purple/20 p-6 shadow-glass backdrop-blur-md retro-hover">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-holo-purple/20 to-holo-purple-light/20 border border-holo-purple/30">
+              <Users className="h-5 w-5 text-holo-purple" />
+            </div>
+            {metrics?.follower_change !== undefined && metrics.follower_change !== 0 && (
+              <span className={`text-xs font-semibold px-2 py-1 rounded-pill ${metrics.follower_change > 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                {metrics.follower_change > 0 ? '+' : ''}{metrics.follower_change}%
+              </span>
+            )}
+          </div>
+          <div className="text-3xl font-bold mb-1">{loading ? '...' : formatNumber(totalFollowers)}</div>
+          <div className="text-sm text-muted-foreground font-medium">Total Followers</div>
+          <div className="text-xs text-muted-foreground mt-1">vs last month</div>
+        </div>
+
+        <div className="glass-panel rounded-2xl border border-holo-teal/20 p-6 shadow-glass backdrop-blur-md retro-hover">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-holo-teal/20 to-holo-teal-dark/20 border border-holo-teal/30">
+              <TrendingUp className="h-5 w-5 text-holo-teal" />
+            </div>
+            {metrics?.engagement_change !== undefined && metrics.engagement_change !== 0 && (
+              <span className={`text-xs font-semibold px-2 py-1 rounded-pill ${metrics.engagement_change > 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                {metrics.engagement_change > 0 ? '+' : ''}{metrics.engagement_change}%
+              </span>
+            )}
+          </div>
+          <div className="text-3xl font-bold mb-1">{loading ? '...' : `${metrics?.engagement_rate?.toFixed(1) || 0}%`}</div>
+          <div className="text-sm text-muted-foreground font-medium">Engagement Rate</div>
+          <div className="text-xs text-muted-foreground mt-1">vs last month</div>
+        </div>
+
+        <div className="glass-panel rounded-2xl border border-holo-pink/20 p-6 shadow-glass backdrop-blur-md retro-hover">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-holo-pink/20 to-holo-pink-dark/20 border border-holo-pink/30">
+              <MessageCircle className="h-5 w-5 text-holo-pink" />
+            </div>
+            {metrics?.interactions_change !== undefined && metrics.interactions_change !== 0 && (
+              <span className={`text-xs font-semibold px-2 py-1 rounded-pill ${metrics.interactions_change > 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                {metrics.interactions_change > 0 ? '+' : ''}{metrics.interactions_change}%
+              </span>
+            )}
+          </div>
+          <div className="text-3xl font-bold mb-1">{loading ? '...' : (metrics?.interactions_today || 0).toString()}</div>
+          <div className="text-sm text-muted-foreground font-medium">Interactions Today</div>
+          <div className="text-xs text-muted-foreground mt-1">vs yesterday</div>
+        </div>
+
+        <div className="glass-panel rounded-2xl border border-holo-blue/20 p-6 shadow-glass backdrop-blur-md retro-hover">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-holo-blue/20 to-holo-blue-dark/20 border border-holo-blue/30">
+              <Zap className="h-5 w-5 text-holo-blue" />
+            </div>
+          </div>
+          <div className="text-3xl font-bold mb-1">{loading ? '...' : (metrics?.active_workflows || 0).toString()}</div>
+          <div className="text-sm text-muted-foreground font-medium">Workflows Active</div>
+          <div className="text-xs text-muted-foreground mt-1">running smoothly</div>
+        </div>
+      </div>
 
       {/* Impact Summary (conditional) */}
       {features.showAutomationImpact && <AutomationImpactWidget />}
 
       {/* Platform Connections */}
-      <div className="space-y-4">
-        <h2 className="text-lg md:text-xl font-semibold text-primary-dark">Connect Your Platforms</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6"> {/* Tighter gaps on mobile */}
-          <ModernCard hover interactive className="group">
-            <CardHeader>
+      <div className="space-y-6">
+        <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">Connect Your Platforms</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6"> {/* Tighter gaps on mobile */}
+          <div className="glass-panel rounded-2xl border border-card-border shadow-glass backdrop-blur-md retro-hover group overflow-hidden">
+            <div className="p-6 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20">
-                  <Youtube className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <div className="p-3 rounded-xl gradient-pink shadow-glow-pink">
+                  <Youtube className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle>YouTube</CardTitle>
+                <h3 className="text-xl font-bold">YouTube</h3>
               </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-secondary-dark mb-4">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Connect your YouTube channel to manage comments and engage with your audience.
               </p>
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-3 flex-wrap pt-2">
                 <PlatformConnectionButton platform="youtube" />
-                <Link href="/comments" className="text-sm text-brand-primary hover:underline">
+                <Link href="/comments" className="text-sm text-holo-purple hover:text-holo-purple-light font-semibold hover:underline transition-colors">
                   View interactions →
                 </Link>
               </div>
-            </CardContent>
-          </ModernCard>
+            </div>
+          </div>
 
-          <ModernCard hover interactive className="group">
-            <CardHeader>
+          <div className="glass-panel rounded-2xl border border-card-border shadow-glass backdrop-blur-md retro-hover group overflow-hidden">
+            <div className="p-6 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
-                  <Instagram className="h-5 w-5 text-white" />
+                <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-glow-pink">
+                  <Instagram className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle>Instagram</CardTitle>
+                <h3 className="text-xl font-bold">Instagram</h3>
               </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-secondary-dark mb-4">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Connect Instagram to monitor posts, stories, and direct messages.
               </p>
-              <PlatformConnectionButton platform="instagram" />
-            </CardContent>
-          </ModernCard>
-
-          <ModernCard hover interactive className="group">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-black dark:bg-white">
-                  <Music className="h-5 w-5 text-white dark:text-black" />
-                </div>
-                <CardTitle>TikTok</CardTitle>
+              <div className="pt-2">
+                <PlatformConnectionButton platform="instagram" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-secondary-dark mb-4">
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-2xl border border-card-border shadow-glass backdrop-blur-md retro-hover group overflow-hidden">
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-black dark:bg-white shadow-lg">
+                  <Music className="h-6 w-6 text-white dark:text-black" />
+                </div>
+                <h3 className="text-xl font-bold">TikTok</h3>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Connect TikTok to track viral content and engage with trending topics.
               </p>
-              <PlatformConnectionButton platform="tiktok" />
-            </CardContent>
-          </ModernCard>
+              <div className="pt-2">
+                <PlatformConnectionButton platform="tiktok" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
