@@ -19,18 +19,27 @@ export function DemoOnboarding() {
   async function startDemo() {
     setLoading(true);
     try {
-      // Kick off backend demo-login to create temp user and seed data
-      const res = await api.post('/auth/demo-login', null, { params: { persona_type: persona } });
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('access_token', res.data.access_token);
-        localStorage.setItem('refresh_token', res.data.refresh_token);
-      }
+      // Call the demo/enable endpoint to activate demo mode
+      // User must already be authenticated
+      const res = await api.post('/demo/enable', {
+        profile_type: 'auto',
+        niche: persona === 'creator' ? 'tech_reviews' : 
+               persona === 'agency_creators' ? 'lifestyle' : 'business',
+        personality: 'friendly_professional',
+        comment_volume: 'medium',
+        dm_frequency: 'medium',
+      });
+      
       setDemoState(true, persona);
-      pushToast('Demo ready. Loading dashboard...', 'success');
+      pushToast('Demo mode enabled! Generating sample data...', 'success');
+      
+      // Refresh the page to load demo data
+      router.refresh();
       router.push('/dashboard');
-    } catch (e) {
-      console.error(e);
-      pushToast('Could not start demo. Try again.', 'error');
+    } catch (e: any) {
+      console.error('Demo enable error:', e);
+      const errorMsg = e?.response?.data?.detail || 'Could not enable demo mode. Please try again.';
+      pushToast(errorMsg, 'error');
     } finally {
       setLoading(false);
     }

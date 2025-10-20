@@ -48,11 +48,13 @@ export function DemoModeProvider({ children }: { children: React.ReactNode }) {
 
   const resetDemo = useCallback(async () => {
     try {
-      // We don't have user id handy here; a server route could infer from token, but we can store it later.
-      // For now, just clear local flags.
+      // Call backend to disable demo mode and clean up data
+      await api.post("/demo/disable");
       setDemoState(false, null);
     } catch (e) {
       console.warn("resetDemo failed", e);
+      // Still clear local state even if backend call fails
+      setDemoState(false, null);
     }
   }, [setDemoState]);
 
