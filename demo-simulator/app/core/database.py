@@ -49,22 +49,14 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db():
-    """Initialize database (create tables).
+    """
+    Initialize database tables.
     
-    For demo service, we drop and recreate all tables on startup
-    to ensure schema is always up-to-date.
+    Creates tables if they don't exist. Does not drop existing tables.
     """
     # Import models to register them with Base.metadata
     from app.models import DemoProfile, DemoContent, DemoInteraction, GenerationCache  # noqa: F401
     
     async with engine.begin() as conn:
-        # Drop all tables with CASCADE (demo service - no persistent data)
-        # Using raw SQL because SQLAlchemy's drop_all() doesn't use CASCADE
-        await conn.execute(text("DROP TABLE IF EXISTS generation_cache CASCADE"))
-        await conn.execute(text("DROP TABLE IF EXISTS demo_interactions CASCADE"))
-        await conn.execute(text("DROP TABLE IF EXISTS demo_comments CASCADE"))
-        await conn.execute(text("DROP TABLE IF EXISTS demo_content CASCADE"))
-        await conn.execute(text("DROP TABLE IF EXISTS demo_profiles CASCADE"))
-        
-        # Create all tables with current schema
+        # Create all tables if they don't exist (idempotent)
         await conn.run_sync(Base.metadata.create_all)
