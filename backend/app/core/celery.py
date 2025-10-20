@@ -41,6 +41,7 @@ celery_app.conf.update(
         "app.tasks.email",
         "app.tasks.marketing",
         "app.tasks.chat_tasks",
+        "app.tasks.demo_tasks",
     ],
 
     # Worker settings
@@ -57,6 +58,7 @@ celery_app.conf.update(
         "app.tasks.email.*": {"queue": "email"},
         "app.tasks.marketing.*": {"queue": "marketing"},
         "app.tasks.chat_tasks.*": {"queue": "chat"},
+        "app.tasks.demo_tasks.*": {"queue": "default"},
     },
 
     # Queue settings
@@ -91,6 +93,20 @@ celery_app.conf.beat_schedule = {
     "cleanup-chat-streams": {
         "task": "chat.cleanup_old_streams",
         "schedule": crontab(minute=0),  # Every hour
+    },
+    
+    # Demo mode simulation tasks
+    "demo-daily-content": {
+        "task": "demo.generate_daily_content",
+        "schedule": crontab(hour=10, minute=0),  # Daily at 10 AM UTC
+    },
+    "demo-ongoing-interactions": {
+        "task": "demo.generate_ongoing_interactions",
+        "schedule": crontab(minute=0, hour="*/6"),  # Every 6 hours
+    },
+    "demo-cleanup-old-data": {
+        "task": "demo.cleanup_old_data",
+        "schedule": crontab(hour=3, minute=0, day_of_week=1),  # Weekly on Monday at 3 AM UTC
     },
 }
 

@@ -142,24 +142,35 @@ async def handle_interaction_created(session: AsyncSession, data: Dict) -> Dict:
         is_demo=True,  # CRITICAL: Mark as demo data
     )
     
+    # Check if interaction with this platform_id already exists (idempotent handling)
+    existing_stmt = select(Interaction).where(Interaction.platform_id == platform_id)
+    existing_result = await session.execute(existing_stmt)
+    existing_interaction = existing_result.scalar_one_or_none()
+    
+    if existing_interaction:
+        logger.info(f"Demo interaction with platform_id {platform_id} already exists (id: {existing_interaction.id}) - skipping duplicate")
+        return {"interaction_id": str(existing_interaction.id), "user_id": str(user_id), "duplicate": True}
+    
     session.add(interaction)
     
     try:
         await session.commit()
         logger.info(f"✅ Successfully created demo interaction {interaction.id} for user {user_id} (platform: {data.get('platform')}, is_demo: True)")
         
-        # Verify it was created
-        verify_stmt = select(Interaction).where(Interaction.id == interaction_id)
-        verify_result = await session.execute(verify_stmt)
-        verified = verify_result.scalar_one_or_none()
-        if verified:
-            logger.info(f"✅ Verified interaction {interaction_id} exists in database (is_demo={verified.is_demo})")
-        else:
-            logger.error(f"❌ Interaction {interaction_id} not found after commit!")
-        
-        return {"interaction_id": str(interaction.id), "user_id": str(user_id)}
+        return {"interaction_id": str(interaction.id), "user_id": str(user_id), "duplicate": False}
     except Exception as e:
         await session.rollback()
+        
+        # Check if this was a duplicate key error (race condition)
+        if "duplicate key" in str(e).lower() and "platform_id" in str(e).lower():
+            logger.warning(f"Race condition: interaction with platform_id {platform_id} was created by another request")
+            # Try to fetch the existing one
+            existing_stmt = select(Interaction).where(Interaction.platform_id == platform_id)
+            existing_result = await session.execute(existing_stmt)
+            existing_interaction = existing_result.scalar_one_or_none()
+            if existing_interaction:
+                return {"interaction_id": str(existing_interaction.id), "user_id": str(user_id), "duplicate": True}
+        
         logger.error(f"Failed to commit demo interaction: {str(e)}", exc_info=True)
         raise
 

@@ -94,6 +94,10 @@ async def enable_demo_mode(
     
     # Enable demo mode for user
     current_user.demo_mode = True
+    # Set timestamp only if this is the first time enabling demo mode
+    if not current_user.demo_mode_enabled_at:
+        from datetime import datetime
+        current_user.demo_mode_enabled_at = datetime.utcnow()
     await session.commit()
     
     return {

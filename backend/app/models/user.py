@@ -74,6 +74,7 @@ class User(Base):
     
     # Demo mode for simulated platform connections
     demo_mode = Column(Boolean, default=False, nullable=False, comment="Using demo simulator instead of real platforms")
+    demo_mode_enabled_at = Column(DateTime(timezone=True), nullable=True, comment="When demo mode was first enabled")
 
     # Demo-specific information
     company_size = Column(String(50))

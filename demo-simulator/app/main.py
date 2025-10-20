@@ -109,9 +109,22 @@ async def generate_initial_content(user_id: str, profile_id: str):
         
         # Get all demo content just created
         from app.models.demo_content import DemoContent
-        stmt = select(DemoContent).where(DemoContent.profile_id == profile.id)
+        from sqlalchemy.orm import selectinload
+        stmt = select(DemoContent).options(
+            selectinload(DemoContent.profile)
+        ).where(DemoContent.profile_id == profile.id)
         result = await session.execute(stmt)
         content_items = list(result.scalars().all())
+        
+        # Store content IDs and targets to avoid detached object issues
+        content_tasks = [
+            {
+                'id': content.id,
+                'target_comments': content.target_comments,
+                'title': content.title[:30]
+            }
+            for content in content_items
+        ]
         
         engine = SimulationEngine()
         webhook = WebhookSender()
@@ -120,9 +133,9 @@ async def generate_initial_content(user_id: str, profile_id: str):
         # Add small delays to avoid overwhelming Anthropic API
         import asyncio
         total_interactions = 0
-        for idx, content in enumerate(content_items):
+        for idx, task in enumerate(content_tasks):
             # Generate target number of comments for this content
-            comments_to_generate = content.target_comments
+            comments_to_generate = task['target_comments']
             if comments_to_generate > 0:
                 try:
                     # Refresh session every 5 content pieces to avoid connection timeout
@@ -135,6 +148,13 @@ async def generate_initial_content(user_id: str, profile_id: str):
                         stmt = select(DemoProfile).where(DemoProfile.id == profile.id)
                         result = await session.execute(stmt)
                         profile = result.scalar_one()
+                    
+                    # Re-fetch content with relationships for this iteration
+                    stmt = select(DemoContent).options(
+                        selectinload(DemoContent.profile)
+                    ).where(DemoContent.id == task['id'])
+                    result = await session.execute(stmt)
+                    content = result.scalar_one()
                         
                     await engine.generate_comments_for_content(
                         session,
@@ -147,9 +167,12 @@ async def generate_initial_content(user_id: str, profile_id: str):
                     if (idx + 1) % 5 == 0:
                         await asyncio.sleep(1)
                 except Exception as e:
-                    logger.warning(f"Failed to generate comments for content piece: {e}")
+                    logger.warning(f"Failed to generate comments for content {task['title']}: {e}")
                     # Rollback the failed transaction
-                    await session.rollback()
+                    try:
+                        await session.rollback()
+                    except:
+                        pass
                     # Continue with other content pieces
         
         logger.info(f"✅ Generated {total_interactions} comment interactions")
@@ -159,11 +182,17 @@ async def generate_initial_content(user_id: str, profile_id: str):
         
         # Step 3: Generate initial 100 DMs
         logger.info(f"🔄 Generating 100 initial DMs for {user_id}...")
+        
+        # Re-fetch profile after commit to ensure it's attached to session
+        stmt = select(DemoProfile).where(DemoProfile.id == profile.id)
+        result = await session.execute(stmt)
+        profile = result.scalar_one()
+        
         dm_count = 0
         for i in range(100):
             try:
-                # Refresh session every 20 DMs to avoid connection timeout
-                if (i + 1) % 20 == 0:
+                # Refresh session and profile every 20 DMs to avoid connection timeout
+                if i > 0 and i % 20 == 0:
                     await session.commit()  # Commit batch
                     await session.close()
                     # Get fresh session
@@ -181,7 +210,10 @@ async def generate_initial_content(user_id: str, profile_id: str):
                     await asyncio.sleep(0.5)
             except Exception as e:
                 logger.warning(f"Failed to generate DM {i+1}: {e}")
-                await session.rollback()
+                try:
+                    await session.rollback()
+                except:
+                    pass
                 # Continue with other DMs
         
         # Final commit for DMs
@@ -410,6 +442,165 @@ async def delete_profile(
     await session.commit()
     
     return {"status": "deactivated"}
+
+
+@app.post("/generate/daily-content")
+async def generate_daily_content_endpoint(
+    payload: dict,
+    session: AsyncSession = Depends(get_async_session)
+):
+    """
+    Generate daily content for an active demo profile.
+    Called by Celery beat tasks for ongoing simulation.
+    """
+    user_id = payload.get("user_id")
+    count = payload.get("count", 2)
+    
+    if not user_id:
+        raise HTTPException(400, "user_id is required")
+    
+    # Get active profile
+    stmt = select(DemoProfile).where(
+        DemoProfile.user_id == uuid.UUID(user_id),
+        DemoProfile.is_active == True
+    )
+    result = await session.execute(stmt)
+    profile = result.scalar_one_or_none()
+    
+    if not profile:
+        raise HTTPException(404, "Active demo profile not found")
+    
+    # Generate new content
+    from app.services.insights_generator import InsightsContentGenerator
+    
+    generator = InsightsContentGenerator()
+    content_result = await generator.generate_content_batch(
+        user_id=user_id,
+        niche=profile.niche,
+        total_count=count,
+        backend_url=settings.MAIN_APP_URL + '/api/v1',
+        session=session,
+    )
+    
+    await session.commit()
+    
+    logger.info(f"Generated {count} new content pieces for user {user_id}")
+    
+    return {
+        "status": "success",
+        "user_id": user_id,
+        "content_generated": count,
+        "result": content_result
+    }
+
+
+@app.post("/generate/interactions")
+async def generate_ongoing_interactions_endpoint(
+    payload: dict,
+    session: AsyncSession = Depends(get_async_session)
+):
+    """
+    Generate ongoing interactions for existing content.
+    Called by Celery beat tasks for realistic engagement over time.
+    """
+    user_id = payload.get("user_id")
+    comments_count = payload.get("comments", 10)
+    dms_count = payload.get("dms", 5)
+    
+    if not user_id:
+        raise HTTPException(400, "user_id is required")
+    
+    # Get active profile
+    stmt = select(DemoProfile).where(
+        DemoProfile.user_id == uuid.UUID(user_id),
+        DemoProfile.is_active == True
+    )
+    result = await session.execute(stmt)
+    profile = result.scalar_one_or_none()
+    
+    if not profile:
+        raise HTTPException(404, "Active demo profile not found")
+    
+    # Get recent content to add interactions to
+    from app.models.demo_content import DemoContent
+    from sqlalchemy.orm import selectinload
+    
+    stmt = select(DemoContent).options(
+        selectinload(DemoContent.profile)
+    ).where(
+        DemoContent.profile_id == profile.id
+    ).order_by(DemoContent.published_at.desc()).limit(10)
+    
+    result = await session.execute(stmt)
+    recent_content = list(result.scalars().all())
+    
+    if not recent_content:
+        return {
+            "status": "no_content",
+            "message": "No content found to add interactions to"
+        }
+    
+    # Generate comments for recent content
+    engine = SimulationEngine()
+    webhook = WebhookSender()
+    
+    comments_generated = 0
+    for content in recent_content[:5]:  # Add to 5 most recent pieces
+        comments_per_content = comments_count // 5
+        if comments_per_content > 0:
+            await engine.generate_comments_for_content(
+                session,
+                content,
+                comments_per_content
+            )
+            comments_generated += comments_per_content
+    
+    # Generate DMs
+    for _ in range(dms_count):
+        await engine.generate_dm(session, profile)
+    
+    await session.commit()
+    
+    # Send new interactions via webhook
+    from app.models.demo_interaction import DemoInteraction
+    from sqlalchemy.orm import selectinload
+    
+    stmt = select(DemoInteraction).options(
+        selectinload(DemoInteraction.profile),
+        selectinload(DemoInteraction.content)
+    ).where(
+        DemoInteraction.profile_id == profile.id,
+        DemoInteraction.status == 'pending'
+    ).limit(comments_generated + dms_count)
+    
+    result = await session.execute(stmt)
+    interactions = list(result.scalars().all())
+    
+    # Send webhooks
+    sent_count = 0
+    for interaction in interactions:
+        try:
+            payload = interaction.to_webhook_payload()
+            success = await webhook.send_interaction_created(payload)
+            if success:
+                interaction.status = 'sent'
+                interaction.sent_at = datetime.utcnow()
+                sent_count += 1
+        except Exception as e:
+            logger.error(f"Failed to send interaction: {e}")
+            interaction.status = 'failed'
+    
+    await session.commit()
+    
+    logger.info(f"Generated {comments_generated} comments and {dms_count} DMs for user {user_id}, sent {sent_count}")
+    
+    return {
+        "status": "success",
+        "user_id": user_id,
+        "comments_generated": comments_generated,
+        "dms_generated": dms_count,
+        "sent_to_backend": sent_count
+    }
 
 
 if __name__ == "__main__":
