@@ -87,9 +87,10 @@ export function Hero() {
             </h1>
             
             <p className="text-lg md:text-xl text-secondary-dark leading-relaxed max-w-3xl mx-auto font-light">
-              Transform your <span className="text-primary-dark font-medium">social media engagement</span> with <span className="text-primary-dark font-medium">intelligent automation</span>, {' '}
-              <span className="text-holo-teal font-medium">drive growth</span> with <span className="text-holo-teal font-medium">actionable AI-driven insights</span>, and {' '}
-              <span className="text-holo-mint font-medium">boost monetisation</span> with <span className="text-holo-mint font-medium">strategic reports</span>.
+              Help creators grow their channels and increase revenue through {' '}
+              <span className="text-primary-dark font-medium">AI-powered automation</span>, {' '}
+              <span className="text-holo-teal font-medium">monetization insights</span>, and {' '}
+              <span className="text-holo-mint font-medium">cross-platform intelligence</span>.
             </p>
           </motion.div>
           
@@ -117,20 +118,20 @@ export function Hero() {
               <div className="relative z-10">
                 <div className="text-center mb-6">
                   <h3 className="text-3xl lg:text-4xl font-bold text-holo-mint mb-4">
-                    Get Started Today
+                    Join Early Access
                   </h3>
                   <p className="text-base text-secondary-dark font-medium mb-3">
-                    Join Repruv and start automating your social media engagement with AI-powered tools.
+                    Start growing your channel and revenue with AI-powered tools. Free during Early Access.
                   </p>
                   <div className="flex flex-wrap gap-3 justify-center mb-4">
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-holo-mint border border-border">
-                      🚀 Now Live
+                      ✓ YouTube & Instagram [BETA]
                     </span>
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-holo-teal border border-border">
-                      🔒 Secure &amp; Private
+                      ✓ Revenue opportunity identification
                     </span>
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-holo-purple border border-border">
-                      💎 Free Creator Use
+                      ✓ Free during Early Access
                     </span>
                   </div>
                 </div>
@@ -154,7 +155,7 @@ export function Hero() {
                         onClick={() => router.push('/signup')}
                         className="px-8 py-4 text-lg font-bold bg-holo-mint hover:bg-holo-mint-dark text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
                       >
-                        Get Started Free
+                        Join Early Access
                       </Button>
                       <Button 
                         onClick={() => router.push('/features')}
