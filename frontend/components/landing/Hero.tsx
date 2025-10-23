@@ -151,7 +151,7 @@ export function Hero() {
                     <>
                       <Button 
                         onClick={() => router.push('/signup')}
-                        className="px-8 py-4 text-lg font-bold bg-holo-mint hover:bg-holo-mint-dark text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                        className="px-8 py-4 text-lg font-bold bg-holo-mint hover:bg-holo-mint-dark text-gray-900 dark:text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
                       >
                         Join Early Access
                       </Button>

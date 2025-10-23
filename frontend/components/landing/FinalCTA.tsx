@@ -42,7 +42,7 @@ export function FinalCTA() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-white px-12 py-6 text-lg">
+            <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-gray-900 dark:text-white px-12 py-6 text-lg">
               <Link href="/signup" className="flex items-center gap-2">
                 Join Early Access - Free
                 <ArrowRight className="w-5 h-5" />

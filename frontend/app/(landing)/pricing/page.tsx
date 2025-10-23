@@ -75,7 +75,7 @@ export default function PricingPage() {
                 <div className="text-center">
                   <div className="text-6xl font-bold text-holo-mint mb-4">FREE</div>
                   <p className="text-lg text-secondary-dark mb-6">Unlimited everything during Early Access</p>
-                  <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-white px-12 py-6 text-lg">
+                  <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-gray-900 dark:text-white px-12 py-6 text-lg">
                     <Link href="/signup">
                       Join Early Access - Free
                     </Link>
@@ -268,7 +268,7 @@ export default function PricingPage() {
               ))}
             </div>
 
-            <Button asChild className="w-full bg-holo-mint hover:bg-holo-mint-dark text-white">
+            <Button asChild className="w-full bg-holo-mint hover:bg-holo-mint-dark text-gray-900 dark:text-white">
               <Link href="/signup">
                 Join Early Access for Free
               </Link>

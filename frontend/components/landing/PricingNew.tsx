@@ -128,7 +128,7 @@ export function PricingNew() {
                 <div className="text-center">
                   <div className="text-6xl font-bold text-holo-mint mb-4">FREE</div>
                   <p className="text-lg text-secondary-dark mb-6">Everything unlimited</p>
-                  <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-white px-12 py-6 text-lg">
+                  <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-gray-900 dark:text-white px-12 py-6 text-lg">
                     <Link href="/signup">Join Early Access</Link>
                   </Button>
                 </div>

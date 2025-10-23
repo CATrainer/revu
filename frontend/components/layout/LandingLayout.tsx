@@ -157,7 +157,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                           </NavigationMenuLink>
                         </li>
                         <li className="flex flex-col p-3">
-                          <Button asChild variant="outline" className="text-sm h-12 border-holo-mint text-holo-mint hover:bg-muted font-medium">
+                          <Button asChild variant="outline" className="text-sm h-12 border-holo-mint text-holo-mint hover:bg-holo-mint/10 font-medium">
                             <Link href="/signup">
                               Join Early Access
                             </Link>
@@ -192,7 +192,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                   </NavigationMenuItem>
                   
                   <NavigationMenuItem>
-                    <Button asChild className="bg-holo-mint hover:bg-holo-mint-dark text-white">
+                    <Button asChild className="bg-holo-mint hover:bg-holo-mint-dark text-gray-900 dark:text-white">
                       <Link href="/signup">
                         Join Early Access
                       </Link>
@@ -213,7 +213,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                     <Button variant="ghost" asChild>
                       <Link href="/login">Login</Link>
                     </Button>
-                    <Button asChild className="bg-holo-mint hover:bg-holo-mint-dark text-white">
+                    <Button asChild className="bg-holo-mint hover:bg-holo-mint-dark text-gray-900 dark:text-white">
                       <Link href="/signup">Join Early Access</Link>
                     </Button>
                   </>
@@ -283,7 +283,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                     <Button asChild variant="outline" className="w-full min-h-11">
                       <Link href="/login">Login</Link>
                     </Button>
-                    <Button asChild className="w-full min-h-11 bg-holo-mint hover:bg-holo-mint-dark text-white">
+                    <Button asChild className="w-full min-h-11 bg-holo-mint hover:bg-holo-mint-dark text-gray-900 dark:text-white">
                       <Link href="/signup">Join Early Access</Link>
                     </Button>
                   </>
