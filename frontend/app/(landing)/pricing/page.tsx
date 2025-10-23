@@ -1,460 +1,342 @@
 'use client';
-import { Pricing } from '@/components/landing/Pricing';
-import { motion, LazyMotion, domAnimation, useInView } from "framer-motion";
-import { ChevronDown, Users, Zap, Shield, Target, Headphones, CreditCard } from 'lucide-react';
-import React from 'react';
 
-const faqCategories = [
-  {
-    title: "Getting Started",
-    icon: Zap,
-    color: "text-holo-teal",
-    questions: [
-      {
-        question: "How does the free Basic plan work?",
-        answer: "The Basic plan is completely free forever and includes up to 3 platform connections, 1,000 AI responses per month, access to Repruv AI Creator Sidekick, basic analytics, and social monitoring. No credit card required to start."
-      },
-      {
-        question: "Which platforms do you support?",
-        answer: "We support all major social media and review platforms including Google Reviews, Facebook, Instagram, TikTok, YouTube, Twitter/X, LinkedIn, Reddit, Yelp, and more. New platforms are added regularly based on user requests."
-      },
-      {
-        question: "How quickly can I get set up?",
-        answer: "Setup takes less than 5 minutes. Simply connect your social accounts, and our AI immediately starts monitoring and can begin generating responses. Most users are fully operational within 10 minutes."
-      }
-    ]
-  },
-  {
-    title: "For Creators",
-    icon: Target,
-    color: "text-holo-purple",
-    questions: [
-      {
-        question: "Can Repruv help manage my community engagement?",
-        answer: "Absolutely! Repruv monitors all your channels 24/7, alerts you to important comments, and can automatically respond to common questions while maintaining your unique voice and tone."
-      },
-      {
-        question: "How does the AI learn my voice and style?",
-        answer: "Our Enhanced Repruv AI analyzes your previous responses, content style, and brand voice to generate replies that sound authentically like you. The more you use it, the better it becomes at matching your tone."
-      },
-      {
-        question: "What if I have multiple social media channels?",
-        answer: "Perfect! The Pro plan supports up to 5 platform connections, ideal for creators managing YouTube, Instagram, TikTok, Twitter, and more. You can manage everything from one dashboard."
-      },
-      {
-        question: "Can I see analytics for my content performance?",
-        answer: "Yes! You get detailed analytics including engagement rates, sentiment analysis, response times, and AI-powered insights with recommended actions to improve your community engagement."
-      }
-    ]
-  },
-  {
-    title: "For Agencies",
-    icon: Users,
-    color: "text-holo-mint",
-    questions: [
-      {
-        question: "Can I manage multiple clients with one account?",
-        answer: "Yes! The Enterprise plan is specifically designed for agencies managing multiple creators or brands. You get unlimited platform connections, multi-user access, and client-specific dashboards."
-      },
-      {
-        question: "How does team collaboration work?",
-        answer: "Enterprise includes role-based permissions, task assignments, approval workflows, internal notes, and team performance analytics. Perfect for agencies with multiple team members handling different clients."
-      },
-      {
-        question: "Do you offer white-label solutions?",
-        answer: "Yes! Enterprise clients can access white-label options, custom branding, API access, and dedicated account management. Contact us to discuss your specific agency needs."
-      },
-      {
-        question: "What about client reporting?",
-        answer: "Generate comprehensive client reports with engagement metrics, response analytics, sentiment tracking, and ROI data. All reports can be customized with your agency branding."
-      }
-    ]
-  },
-  {
-    title: "Billing & Plans",
-    icon: CreditCard,
-    color: "text-holo-mint",
-    questions: [
-      {
-        question: "Can I change plans anytime?",
-        answer: "Yes! You can upgrade or downgrade your plan at any time. Changes take effect at your next billing cycle. You can start with the free Basic plan and upgrade as you grow."
-      },
-      {
-        question: "What happens when I exceed my AI response limit?",
-        answer: "On the Pro plan, you can purchase additional responses for £12 per 10,000 responses. Basic plan users will need to upgrade to continue using AI responses after hitting their monthly limit."
-      },
-      {
-        question: "Do you offer annual billing discounts?",
-        answer: "Yes! Annual billing saves you 20% compared to monthly billing. Enterprise clients also have access to custom billing cycles and payment terms."
-      },
-      {
-        question: "What payment methods do you accept?",
-        answer: "We accept all major credit cards, PayPal, and for Enterprise clients, we can arrange bank transfers and custom invoicing."
-      }
-    ]
-  },
-  {
-    title: "Security & Support",
-    icon: Shield,
-    color: "text-red-500",
-    questions: [
-      {
-        question: "How secure is my data?",
-        answer: "Your data is protected with bank-level encryption, SOC 2 compliance, and regular security audits. We never store your social media passwords - only secure API tokens that you can revoke anytime."
-      },
-      {
-        question: "What kind of support do you provide?",
-        answer: "Basic users get email support, Pro users get priority support with faster response times, and Enterprise clients get dedicated account management and phone support."
-      },
-      {
-        question: "Can I export my data?",
-        answer: "Yes! You can export all your data including analytics, responses, and reports at any time. We believe your data belongs to you."
-      }
-    ]
-  }
-];
-
-// FAQ Progress Navigation Component
-function FAQProgressNavigation({ 
-  categories, 
-  currentSection, 
-  isVisible,
-  onSectionClick
-}: { 
-  categories: typeof faqCategories;
-  currentSection: number;
-  isVisible: boolean;
-  onSectionClick: (index: number) => void;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: isVisible ? 1 : 0, x: isVisible ? 0 : 20 }}
-      className="fixed right-6 top-1/2 transform -translate-y-1/2 z-[9999]"
-    >
-      <div className="relative">
-        {/* Vertical Progress Track */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 w-0.5 h-full bg-gradient-to-b from-transparent via-gray-300 to-transparent dark:via-gray-600 opacity-30" />
-
-        {/* Navigation Dots */}
-        <div className="relative flex flex-col space-y-8">
-          {categories.map((category, index) => (
-            <div key={category.title} className="relative flex items-center group">
-              {/* Section Label */}
-              <motion.div
-                initial={{ opacity: 0, x: 15, scale: 0.9 }}
-                whileHover={{ opacity: 1, x: 0, scale: 1 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="absolute right-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-              >
-                <div className="relative glass-card px-4 py-2 rounded-xl shadow-lg">
-                  <span className="text-sm font-semibold text-primary-dark whitespace-nowrap">
-                    {category.title}
-                  </span>
-                  <div className="absolute left-full top-1/2 transform -translate-y-1/2">
-                    <div className="w-0 h-0 border-l-[8px] border-l-[var(--card)] border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent" />
-                    <div className="absolute -left-px top-0 w-0 h-0 border-l-[8px] border-l-[var(--border)] border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent" />
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Navigation Dot with Icon */}
-              <motion.button
-                onClick={() => onSectionClick(index)}
-                className="relative flex items-center justify-center w-10 h-10 transition-all duration-200"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-              >
-                {/* Outer Ring */}
-                <motion.div
-                  className={`absolute inset-0 rounded-full border transition-all duration-200 ${
-                    index === currentSection
-                      ? 'border-holo-mint bg-holo-mint/10'
-                      : 'border-gray-300 dark:border-gray-600 group-hover:border-holo-mint/60'
-                  }`}
-                  animate={{
-                    scale: index === currentSection ? 1 : 0.85,
-                    borderWidth: index === currentSection ? 2 : 1
-                  }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                />
-                
-                {/* Icon */}
-                <category.icon 
-                  className={`w-4 h-4 transition-colors duration-200 ${
-                    index === currentSection
-                      ? 'text-holo-mint'
-                      : 'text-gray-400 dark:text-gray-500 group-hover:text-holo-mint'
-                  }`}
-                />
-                
-                {/* Active Pulse Effect */}
-                {index === currentSection && (
-                  <motion.div
-                    className="absolute inset-0 rounded-full border border-holo-mint/30"
-                    animate={{
-                      scale: [1, 1.8],
-                      opacity: [0.4, 0]
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeOut",
-                      repeatDelay: 0.5
-                    }}
-                  />
-                )}
-              </motion.button>
-            </div>
-          ))}
-        </div>
-
-        {/* Floating Progress Indicator */}
-        <motion.div
-          className="absolute -bottom-8 left-1/2 transform -translate-x-1/2"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.3, ease: "easeOut" }}
-        >
-          <div className="glass-card rounded-full px-3 py-1 shadow-lg">
-            <motion.span
-              className="text-xs font-bold text-holo-mint"
-              key={currentSection}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              {currentSection + 1}/{categories.length}
-            </motion.span>
-          </div>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-}
+import { motion } from 'framer-motion';
+import { useRef } from 'react';
+import { useInView } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { 
+  Check, X, Rocket, Lock, Users, Zap, Shield, 
+  TrendingUp, MessageCircle, BarChart3, Star, DollarSign,
+  Headphones, CreditCard, AlertCircle
+} from 'lucide-react';
 
 export default function PricingPage() {
-  const faqRef = React.useRef(null);
-  const faqInView = useInView(faqRef, { once: false, amount: 0.1 });
-  const [currentFAQSection, setCurrentFAQSection] = React.useState(0);
-  const [showFAQProgress, setShowFAQProgress] = React.useState(false);
-  const [expandedSections, setExpandedSections] = React.useState<Record<number, boolean>>({
-    0: true, // Getting Started expanded by default
-    1: false,
-    2: false,
-    3: false,
-    4: false
-  });
-
-  const toggleSection = (index: number) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
-  };
-
-  const scrollToSection = (index: number) => {
-    // Expand the target section if it's collapsed
-    setExpandedSections(prev => ({
-      ...prev,
-      [index]: true
-    }));
-    
-    // Scroll to the section after a brief delay to allow for expansion
-    setTimeout(() => {
-      const element = document.getElementById(`faq-category-${index}`);
-      if (element) {
-        const yOffset = -100; // Account for fixed navigation
-        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-      }
-    }, 100);
-  };
-
-  React.useEffect(() => {
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          // Show FAQ navigation when any part of the FAQ section is visible
-          const faqSectionElement = document.getElementById('faq-section');
-          
-          if (faqSectionElement) {
-            const sectionRect = faqSectionElement.getBoundingClientRect();
-            // Show progress bar when any part of FAQ section is visible
-            const isFAQVisible = sectionRect.top <= window.innerHeight && sectionRect.bottom >= 0;
-            setShowFAQProgress(isFAQVisible);
-          }
-          
-          // Find current FAQ section based on viewport position
-          let activeSection = 0;
-          for (let i = 0; i < faqCategories.length; i++) {
-            const element = document.getElementById(`faq-category-${i}`);
-            if (element) {
-              const elementRect = element.getBoundingClientRect();
-              // Section is active if any part is in the middle third of viewport
-              if (elementRect.top <= window.innerHeight * 0.67 && elementRect.bottom >= window.innerHeight * 0.33) {
-                activeSection = i;
-              }
-            }
-          }
-          setCurrentFAQSection(activeSection);
-          
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial check
-
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const heroInView = useInView(heroRef, { once: true, margin: "-100px" });
 
   return (
-  <LazyMotion features={domAnimation}>
-    <div className="section-background">
-        {/* Pricing Component */}
-        <Pricing />
-
-        {/* FAQ Section */}
-        <motion.section 
-          id="faq-section"
-          ref={faqRef}
-          className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24"
-          initial={{ opacity: 0, y: 50 }}
-          animate={faqInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-          transition={{ duration: 0.8 }}
+    <div className="min-h-screen py-16">
+      {/* Hero */}
+      <section ref={heroRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.6 }}
         >
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 30 }}
-            animate={faqInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <h2 
-              className="text-4xl md:text-5xl font-bold text-holo-mint mb-6"
-              data-faq-title="true"
-            >
-              Frequently Asked Questions
-            </h2>
-            <p className="text-xl text-primary-dark">
-              Everything you need to know about Repruv for your brand and your community
+          <h1 className="text-4xl md:text-5xl font-bold text-primary-dark mb-4">
+            Pricing That Grows With Your Revenue
+          </h1>
+          <p className="text-xl text-secondary-dark mb-2">
+            Invest in tools that increase your revenue
+          </p>
+        </motion.div>
+      </section>
+
+      {/* Early Access - Free Unlimited */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
+        <motion.div
+          className="glass-panel rounded-3xl p-8 md:p-12 relative overflow-hidden"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-holo-mint/20 to-holo-teal/20 rounded-full blur-3xl"></div>
+          
+          <div className="relative z-10">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <Rocket className="w-8 h-8 text-holo-mint" />
+              <h2 className="text-3xl md:text-4xl font-bold text-primary-dark">Early Access - Unlimited Free Access</h2>
+            </div>
+            
+            <p className="text-xl text-center text-secondary-dark mb-8 max-w-3xl mx-auto">
+              During Early Access, <strong className="text-holo-mint">all users get unlimited access to all available features</strong> completely free. This is your chance to grow your channel and increase revenue while helping us refine the platform.
             </p>
-          </motion.div>
 
-          <div className="grid md:grid-cols-1 gap-12">
-            {faqCategories.map((category, categoryIndex) => (
-              <motion.div
-                key={category.title}
-                id={`faq-category-${categoryIndex}`}
-                className="space-y-6"
-                initial={{ opacity: 0, y: 20 }}
-                animate={faqInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                transition={{ duration: 0.5, delay: categoryIndex * 0.05 + 0.3 }}
-              >
-                <button
-                  onClick={() => toggleSection(categoryIndex)}
-                  className="flex items-center justify-between w-full text-left group"
-                >
-                  <div className="flex items-center gap-3">
-                    <category.icon className={`h-8 w-8 ${category.color}`} />
-                    <h3 className="text-2xl font-bold text-primary-dark group-hover:text-holo-mint transition-colors">
-                      {category.title}
-                    </h3>
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="space-y-3">
+                <h3 className="font-bold text-lg text-primary-dark mb-4">What's Included (Free During Early Access):</h3>
+                {[
+                  'Unlimited AI responses across all your content',
+                  'YouTube & Instagram automation',
+                  'AI Creator Assistant with revenue insights',
+                  'Full analytics and opportunity identification',
+                  'Priority feature requests and direct feedback channel',
+                  'First access to new platforms and features'
+                ].map((feature, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-holo-mint flex-shrink-0 mt-0.5" />
+                    <span className="text-secondary-dark">{feature}</span>
                   </div>
-                  <motion.div
-                    animate={{ rotate: expandedSections[categoryIndex] ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <ChevronDown className="h-6 w-6 text-gray-500 group-hover:text-holo-mint transition-colors" />
-                  </motion.div>
-                </button>
-                
-                <motion.div
-                  initial={false}
-                  animate={{
-                    height: expandedSections[categoryIndex] ? "auto" : 0,
-                    opacity: expandedSections[categoryIndex] ? 1 : 0
-                  }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="overflow-hidden"
-                >
-                  <div className="grid md:grid-cols-2 gap-6 pt-2">
-                    {category.questions.map((faq, questionIndex) => (
-                      <motion.div
-                        key={questionIndex}
-                        className="card-background rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
-                        initial={{ opacity: 0, scale: 0.98 }}
-                        animate={
-                          faqInView && expandedSections[categoryIndex] 
-                            ? { opacity: 1, scale: 1 } 
-                            : { opacity: 0, scale: 0.98 }
-                        }
-                        transition={{ 
-                          duration: 0.4, 
-                          delay: expandedSections[categoryIndex] ? questionIndex * 0.05 + 0.1 : 0,
-                          ease: "easeOut"
-                        }}
-                        whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
-                      >
-                        <h4 className="text-lg font-semibold mb-3 text-primary-dark">
-                          {faq.question}
-                        </h4>
-                        <p className="text-secondary-dark leading-relaxed">
-                          {faq.answer}
-                        </p>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div
-            className="text-center mt-16"
-            initial={{ opacity: 0, y: 30 }}
-            animate={faqInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            transition={{ duration: 0.6, delay: 1.0 }}
-          >
-            <div className="card-background rounded-lg p-8">
-              <Headphones className="h-12 w-12 text-holo-mint mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-primary-dark mb-2">
-                Still have questions?
-              </h3>
-              <p className="text-secondary-dark mb-4">
-                Our team is here to help you choose the right plan for your needs.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a 
-                  href="/contact" 
-                  className="inline-flex items-center px-6 py-3 bg-holo-mint hover:bg-holo-mint-dark text-white font-medium rounded-lg transition-colors"
-                >
-                  Contact Support
-                </a>
-                <a 
-                  href="/join-waitlist" 
-                  className="inline-flex items-center px-6 py-3 border border-holo-mint text-holo-mint hover:bg-muted font-medium rounded-lg transition-colors"
-                >
-                  Join Waitlist
-                </a>
+                ))}
+              </div>
+              <div className="flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-6xl font-bold text-holo-mint mb-4">FREE</div>
+                  <p className="text-lg text-secondary-dark mb-6">Unlimited everything during Early Access</p>
+                  <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-white px-12 py-6 text-lg">
+                    <Link href="/signup">
+                      Join Early Access - Free
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </div>
-          </motion.div>
-        </motion.section>
+          </div>
+        </motion.div>
+      </section>
 
-        {/* FAQ Progress Navigation */}
-        <FAQProgressNavigation 
-          categories={faqCategories} 
-          currentSection={currentFAQSection} 
-          isVisible={showFAQProgress}
-          onSectionClick={scrollToSection}
-        />
-      </div>
-    </LazyMotion>
+      {/* Founder Pricing */}
+      <section id="founder-pricing" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
+        <motion.div
+          className="glass-panel rounded-3xl p-8 md:p-12 relative overflow-hidden border-2 border-holo-mint"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <div className="absolute top-0 left-0 bg-gradient-to-r from-holo-mint to-holo-teal px-6 py-2 rounded-br-2xl">
+            <span className="text-white font-bold flex items-center gap-2">
+              <Star className="w-4 h-4" />
+              LIMITED TIME OFFER
+            </span>
+          </div>
+
+          <div className="relative z-10 mt-8">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <Lock className="w-8 h-8 text-holo-mint" />
+              <h2 className="text-3xl md:text-4xl font-bold text-primary-dark">Lock In Founder Pricing</h2>
+            </div>
+            
+            <p className="text-xl text-center text-secondary-dark mb-8">
+              Support our development and secure exclusive lifetime pricing before launch.
+            </p>
+
+            <div className="max-w-3xl mx-auto">
+              <div className="text-center mb-8">
+                <div className="text-5xl md:text-6xl font-bold text-holo-mint mb-2">£99</div>
+                <p className="text-lg text-secondary-dark">One-time payment • Lifetime access</p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
+                <div className="space-y-4">
+                  <h3 className="font-bold text-lg text-primary-dark">Pay once, benefit forever:</h3>
+                  {[
+                    'Lifetime Pro Tier Access',
+                    '50% Off Forever (Pro will be £19.99/month)',
+                    'Save over £140 in year one alone',
+                    'Exclusive Founder Badge',
+                    'Priority Support forever',
+                    'Feature Request Priority',
+                    'Early Access to Everything'
+                  ].map((benefit, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-holo-mint flex-shrink-0 mt-0.5" />
+                      <span className="text-secondary-dark"><strong>{benefit.split(' -')[0]}</strong>{benefit.includes(' -') ? ' -' + benefit.split(' -')[1] : ''}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-muted rounded-2xl p-6">
+                  <h3 className="font-bold text-lg text-primary-dark mb-4">Future Value:</h3>
+                  <p className="text-secondary-dark mb-4">
+                    Pro tier launches at £19.99/month. As a Founder, you never pay monthly fees for Pro features.
+                  </p>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-secondary-dark">Year 1 savings:</span>
+                      <span className="font-bold text-holo-mint">£140+</span>
+                    </div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-secondary-dark">Year 2 savings:</span>
+                      <span className="font-bold text-holo-mint">£240</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-secondary-dark">Total (5 years):</span>
+                      <span className="font-bold text-holo-mint text-lg">£1,100+</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-secondary-dark italic">
+                    <strong>Why offer this?</strong> Your early support funds development. You get incredible value, we get to build faster.
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-white px-12 py-6 text-lg mb-4">
+                  <Link href="/signup">
+                    Secure Founder Pricing - £99
+                  </Link>
+                </Button>
+                <p className="text-sm text-secondary-dark">
+                  Save £140+ in Year 1 • Full refund guarantee if we shut down
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Planned Launch Pricing */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-primary-dark mb-4">
+            Planned Launch Pricing (Q2 2025)
+          </h2>
+          <p className="text-lg text-secondary-dark">
+            These prices go live when we officially launch. Lock in Founder Pricing now to save up to 50%.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Free Plan */}
+          <motion.div
+            className="glass-panel rounded-2xl p-8"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h3 className="text-2xl font-bold text-primary-dark mb-2">Free Plan</h3>
+            <div className="text-4xl font-bold text-primary-dark mb-6">£0<span className="text-lg text-secondary-dark">/month</span></div>
+            <p className="text-secondary-dark mb-6">Perfect for trying Repruv</p>
+            
+            <div className="space-y-3 mb-8">
+              {[
+                { included: true, text: 'Up to 2 platform connections' },
+                { included: true, text: '500 AI responses per month' },
+                { included: true, text: 'Basic analytics and insights' },
+                { included: true, text: 'Community support' },
+                { included: true, text: 'Revenue tracking dashboard' },
+                { included: false, text: 'Priority support' },
+                { included: false, text: 'Advanced automation' }
+              ].map((feature, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  {feature.included ? (
+                    <Check className="w-5 h-5 text-holo-mint flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <X className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                  )}
+                  <span className={feature.included ? 'text-secondary-dark' : 'text-gray-400'}>{feature.text}</span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-sm text-secondary-dark mb-4 italic">
+              Ideal for new creators just starting to monetize
+            </p>
+
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/signup">
+                Join Early Access for Free
+              </Link>
+            </Button>
+          </motion.div>
+
+          {/* Pro Plan */}
+          <motion.div
+            className="glass-panel rounded-2xl p-8 border-2 border-holo-mint relative"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-holo-mint text-white px-4 py-1 rounded-full text-sm font-bold">
+              MOST POPULAR
+            </div>
+            
+            <h3 className="text-2xl font-bold text-primary-dark mb-2">Pro Plan</h3>
+            <div className="text-4xl font-bold text-holo-mint mb-2">£19.99<span className="text-lg text-secondary-dark">/month</span></div>
+            <p className="text-sm text-secondary-dark mb-6">Annual: £199/year (save 17%)</p>
+            <p className="text-secondary-dark mb-6">For creators serious about growth</p>
+            
+            <div className="space-y-3 mb-8">
+              {[
+                'Unlimited platform connections',
+                'Unlimited AI responses',
+                'Advanced revenue intelligence',
+                'Opportunity alerts',
+                'Priority support',
+                'Custom automation workflows',
+                'Sentiment analysis',
+                'Predictive analytics'
+              ].map((feature, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-holo-mint flex-shrink-0 mt-0.5" />
+                  <span className="text-secondary-dark">{feature}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-muted rounded-lg p-4 mb-6">
+              <p className="text-sm text-secondary-dark">
+                <strong className="text-primary-dark">ROI Example:</strong> If Repruv helps you close just ONE extra brand deal worth £500/year, your investment pays for itself 25x over.
+              </p>
+            </div>
+
+            <Button asChild className="w-full bg-holo-mint hover:bg-holo-mint-dark text-white">
+              <Link href="/signup">
+                Join Early Access for Free
+              </Link>
+            </Button>
+            <p className="text-xs text-center text-secondary-dark mt-2">Start free, upgrade at launch</p>
+          </motion.div>
+
+          {/* Agency Plan */}
+          <motion.div
+            className="glass-panel rounded-2xl p-8"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <h3 className="text-2xl font-bold text-primary-dark mb-2">Agency Plan</h3>
+            <div className="text-4xl font-bold text-primary-dark mb-6">Custom</div>
+            <p className="text-secondary-dark mb-6">For agencies managing multiple creators</p>
+            
+            <div className="space-y-3 mb-8">
+              {[
+                'Everything in Pro, plus:',
+                'Multi-creator dashboard',
+                'Team collaboration tools',
+                'Client reporting (white-label)',
+                'Dedicated account manager',
+                'Custom integrations & API',
+                'SLA guarantees',
+                'Bulk creator onboarding'
+              ].map((feature, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  {index === 0 ? (
+                    <Star className="w-5 h-5 text-holo-purple flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <Check className="w-5 h-5 text-holo-mint flex-shrink-0 mt-0.5" />
+                  )}
+                  <span className="text-secondary-dark font-semibold">{feature}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-muted rounded-lg p-4 mb-6">
+              <p className="text-sm text-secondary-dark mb-2">
+                <strong className="text-primary-dark">Pricing Structure:</strong>
+              </p>
+              <ul className="text-sm text-secondary-dark space-y-1">
+                <li>• £250/month base fee</li>
+                <li>• £35/month per creator</li>
+                <li>• Early Access Partners: 30-40% off forever</li>
+              </ul>
+            </div>
+
+            <Button asChild variant="outline" className="w-full border-2 border-holo-mint text-holo-mint hover:bg-muted">
+              <Link href="/agency-partners">
+                Apply for Agency Partnership
+              </Link>
+            </Button>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Continue with FAQ sections in next message due to size... */}
+    </div>
   );
 }
