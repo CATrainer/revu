@@ -141,7 +141,7 @@ export function SocialProof() {
                 className={`w-3 h-3 p-2 rounded-full transition-all duration-300 ${ // p-2 increases touch target to >= 44px with icon size
                   currentCard === index 
                     ? 'bg-[var(--brand-primary)] scale-125' 
-                    : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                    : 'bg-muted hover:bg-muted-foreground/30'
                 }`}
                 whileHover={{ scale: 1.2 }}
                 whileTap={{ scale: 0.9 }}
@@ -155,7 +155,7 @@ export function SocialProof() {
           {/* Navigation Arrows */}
           <motion.button
             onClick={prevCard}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 p-3 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 p-3 bg-card rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-border"
             aria-label="Previous"
             whileHover={{ scale: 1.1, x: -5 }}
             whileTap={{ scale: 0.95 }}
@@ -163,12 +163,12 @@ export function SocialProof() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 1 }}
           >
-            <ChevronLeft className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+            <ChevronLeft className="w-6 h-6 text-primary-dark" />
           </motion.button>
 
           <motion.button
             onClick={nextCard}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 p-3 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700"
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 p-3 bg-card rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-border"
             aria-label="Next"
             whileHover={{ scale: 1.1, x: 5 }}
             whileTap={{ scale: 0.95 }}
@@ -176,7 +176,7 @@ export function SocialProof() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 1 }}
           >
-            <ChevronRight className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+            <ChevronRight className="w-6 h-6 text-primary-dark" />
           </motion.button>
 
           {/* Card Content */}
@@ -190,7 +190,7 @@ export function SocialProof() {
                 duration: 0.6, 
                 ease: [0.25, 0.46, 0.45, 0.94] 
               }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-6 lg:p-8 shadow-xl border border-gray-100 dark:border-gray-700"
+              className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center glass-panel rounded-2xl p-4 md:p-6 lg:p-8 shadow-xl"
             >
               
               {/* Video Section - Left Side */}
@@ -253,11 +253,11 @@ export function SocialProof() {
                         )
                       ) : (
                         // Only show explicit message when no video is provided for this card
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-xl">
-                          <svg className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-muted to-muted/70 rounded-xl">
+                          <svg className="w-12 h-12 text-muted-foreground mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                           </svg>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Video coming soon</p>
+                          <p className="text-sm text-secondary-dark font-medium">Video coming soon</p>
                         </div>
                       )}
 
@@ -377,7 +377,7 @@ export function SocialProof() {
               className={`p-4 rounded-xl transition-all duration-300 border-2 ${
                 currentCard === index
                   ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 shadow-lg'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-[var(--brand-primary)]/50 hover:bg-[var(--brand-primary)]/5'
+                  : 'border-muted hover:border-[var(--brand-primary)]/50 hover:bg-[var(--brand-primary)]/5'
               }`}
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
@@ -385,12 +385,12 @@ export function SocialProof() {
               <card.icon className={`w-6 h-6 ${
                 currentCard === index 
                   ? 'text-[var(--brand-primary)]' 
-                  : 'text-gray-400 dark:text-gray-500'
+                  : 'text-muted-foreground'
               }`} />
               <p className={`text-sm mt-2 font-medium font-['Poppins',sans-serif] ${
                 currentCard === index 
                   ? 'text-[var(--brand-primary)]' 
-                  : 'text-gray-600 dark:text-gray-400'
+                  : 'text-secondary-dark'
               }`}>
                 {card.title}
               </p>
