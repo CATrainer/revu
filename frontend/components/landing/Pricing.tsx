@@ -73,39 +73,39 @@ export function Pricing() {
 						transition={{ duration: 0.6 }}
 					>
 						<motion.span 
-							className="text-sm uppercase tracking-wider font-semibold text-green-600 mb-2 inline-block"
+							className="text-sm uppercase tracking-wider font-semibold text-holo-mint mb-2 inline-block"
 							initial={{ opacity: 0, y: -10 }}
 							animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
 							transition={{ duration: 0.5 }}
 						>
 							No hidden fees
 						</motion.span>
-						<h2 className="text-3xl md:text-4xl font-bold text-green-500 mb-3">
+						<h2 className="text-3xl md:text-4xl font-bold text-holo-mint mb-3">
 							Scalable &amp; Intuitive Pricing
 						</h2>
-						<p className="text-lg text-green-800 font-medium max-w-2xl mx-auto mb-2">
+						<p className="text-lg text-primary-dark font-medium max-w-2xl mx-auto mb-2">
 							Choose your perfect plan as a creator or agency of any size
 						</p>
-						<p className="text-gray-600 max-w-lg mx-auto mb-4">
+						<p className="text-secondary-dark max-w-lg mx-auto mb-4">
 							All plans include core features, with flexible options as you grow. Cancel anytime.
 						</p>
 						
 						<div className="flex items-center justify-center mb-6">
-							<span className={`text-sm font-medium mr-3 ${!isAnnual ? 'text-green-600' : 'text-gray-500'}`}>Monthly</span>
+							<span className={`text-sm font-medium mr-3 ${!isAnnual ? 'text-holo-mint' : 'text-secondary-dark'}`}>Monthly</span>
 							<button 
 								onClick={() => setIsAnnual(!isAnnual)} 
-								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-500 ${isAnnual ? 'bg-green-500' : 'bg-gray-300'}`}
+								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-holo-mint ${isAnnual ? 'bg-holo-mint' : 'bg-muted'}`}
 								role="switch"
 								aria-checked={isAnnual}
 							>
 								<span className="sr-only">Toggle annual billing</span>
 								<span 
-									className={`${isAnnual ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+									className={`${isAnnual ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-background transition-transform`}
 								/>
 							</button>
 							<div className="flex items-center ml-3">
-								<span className={`text-sm font-medium mr-2 ${isAnnual ? 'text-green-600' : 'text-gray-500'}`}>Annual</span>
-								<span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">Save 20%</span>
+								<span className={`text-sm font-medium mr-2 ${isAnnual ? 'text-holo-mint' : 'text-secondary-dark'}`}>Annual</span>
+								<span className="bg-muted text-holo-mint text-xs font-semibold px-2 py-0.5 rounded border border-border">Save 20%</span>
 							</div>
 						</div>
 					</motion.div>
@@ -142,7 +142,7 @@ export function Pricing() {
 											transition={{ delay: index * 0.15 + 0.1, duration: 0.5 }}
 											className="text-center"
 										>
-											<CardTitle className={`text-2xl md:text-3xl font-bold ${plan.name === 'Pro' ? 'text-green-600' : 'text-green-500'} text-center`}>
+											<CardTitle className={`text-2xl md:text-3xl font-bold ${plan.name === 'Pro' ? 'text-holo-mint' : 'text-holo-mint'} text-center`}>
 												{plan.name}
 											</CardTitle>
 										</motion.div>
@@ -152,7 +152,7 @@ export function Pricing() {
 											transition={{ delay: index * 0.15 + 0.2, duration: 0.5 }}
 											className="text-center"
 										>
-											<CardDescription className="text-green-800 font-bold mt-1 text-base md:text-lg">
+											<CardDescription className="text-primary-dark font-bold mt-1 text-base md:text-lg">
 												{plan.description}
 											</CardDescription>
 										</motion.div>
@@ -166,14 +166,14 @@ export function Pricing() {
 										>
 											<div className="flex items-center pl-3">
 												{plan.price === 'FREE' && (
-													<span className={`text-2xl font-bold text-green-800`}>
+													<span className={`text-2xl font-bold text-primary-dark`}>
 														{plan.price}
 													</span>
 												)}
 												
 												{plan.price !== 'FREE' && plan.price !== 'Custom' && (
 													<>
-														<span className={`text-2xl font-bold text-green-800`}>
+														<span className={`text-2xl font-bold text-primary-dark`}>
 															{isAnnual && plan.annualPrice ? plan.annualPrice : plan.price}
 														</span>
 														<span className="text-secondary-dark ml-1 font-medium text-base">
@@ -183,20 +183,20 @@ export function Pricing() {
 												)}
 												
 												{plan.price === 'Custom' && (
-													<span className={`text-2xl font-bold text-green-800`}>
+													<span className={`text-2xl font-bold text-primary-dark`}>
 														{plan.price}
 													</span>
 												)}
 											</div>
 											
-											<p className="text-sm text-gray-500 mt-2 pl-3">
+											<p className="text-sm text-secondary-dark mt-2 pl-3">
 												{plan.name === 'Pro' && isAnnual 
 													? 'per month, billed annually' 
 													: plan.priceDetail}
 											</p>
 											
 											{plan.popular && plan.savePercentage && plan.annualPrice && !isAnnual && (
-												<div className="mt-3 bg-green-50 text-green-800 rounded-full px-4 py-1.5 inline-flex items-center">
+												<div className="mt-3 bg-muted text-holo-mint rounded-full px-4 py-1.5 inline-flex items-center border border-border">
 													<span className="text-xs font-semibold mr-1">Save {plan.savePercentage}:</span>
 													<span className="text-sm font-bold">{plan.annualPrice}/mo</span>
 													<span className="text-xs ml-1">billed annually</span>
@@ -216,8 +216,8 @@ export function Pricing() {
 														duration: 0.4 
 													}}
 												>
-													<div className={`flex-shrink-0 h-5 w-5 rounded-full ${plan.popular ? 'bg-green-100' : 'bg-green-100'} flex items-center justify-center mr-3 mt-0.5`}>
-														<Check className={`h-3 w-3 text-green-500`} />
+													<div className={`flex-shrink-0 h-5 w-5 rounded-full bg-muted flex items-center justify-center mr-3 mt-0.5`}>
+														<Check className={`h-3 w-3 text-holo-mint`} />
 													</div>
 													<span className="text-secondary-dark text-sm leading-relaxed">
 														{feature}
@@ -234,7 +234,7 @@ export function Pricing() {
 											className="w-full"
 										>
 											<Button 
-												className={plan.popular ? 'w-full bg-green-600 hover:bg-green-700 text-white' : 'w-full border border-green-500 text-green-600 hover:bg-green-50'}
+												className={plan.popular ? 'w-full bg-holo-mint hover:bg-holo-mint-dark text-white' : 'w-full border border-holo-mint text-holo-mint hover:bg-muted'}
 												variant={plan.popular ? 'default' : 'outline'}
 												asChild
 											>
@@ -255,40 +255,40 @@ export function Pricing() {
 						animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
 						transition={{ delay: 0.8, duration: 0.6 }}
 					>
-						<div className="bg-white/80 backdrop-blur-sm max-w-3xl mx-auto py-4 px-6 rounded-2xl shadow-md border border-gray-100">
-							<div className="flex flex-col md:flex-row md:items-center gap-3 justify-between">
-								<div className="text-left">
-									<h3 className="text-lg font-semibold text-gray-900 mb-1">Got questions about pricing?</h3>
-									<p className="text-gray-600 text-sm">Our team is ready to help you choose the perfect plan</p>
-								</div>
-								<div className="flex flex-col sm:flex-row gap-2">
-									<Button className="bg-green-600 hover:bg-green-700 text-white py-3 px-4 text-sm">
-										<Link href="/contact">Contact Sales</Link>
-									</Button>
-									<Button className="bg-white border border-green-500 text-green-600 hover:bg-green-50 py-3 px-4 text-sm">
-										<Link href="/contact">Request Custom Quote</Link>
-									</Button>
-								</div>
+					<div className="glass-panel backdrop-blur-sm max-w-3xl mx-auto py-4 px-6 rounded-2xl shadow-md">
+						<div className="flex flex-col md:flex-row md:items-center gap-3 justify-between">
+							<div className="text-left">
+								<h3 className="text-lg font-semibold text-primary-dark mb-1">Got questions about pricing?</h3>
+								<p className="text-secondary-dark text-sm">Our team is ready to help you choose the perfect plan</p>
+							</div>
+							<div className="flex flex-col sm:flex-row gap-2">
+								<Button className="bg-holo-mint hover:bg-holo-mint-dark text-white py-3 px-4 text-sm">
+									<Link href="/contact">Contact Sales</Link>
+								</Button>
+								<Button className="bg-background border border-holo-mint text-holo-mint hover:bg-muted py-3 px-4 text-sm">
+									<Link href="/contact">Request Custom Quote</Link>
+								</Button>
 							</div>
 						</div>
-						
-						<div className="mt-8 flex flex-wrap items-center justify-center gap-6">
-							<div className="flex items-center gap-2">
-								<Check className="h-5 w-5 text-green-500" />
-								<span className="text-gray-600 text-sm">No credit card required</span>
-							</div>
-							<div className="flex items-center gap-2">
-								<Check className="h-5 w-5 text-green-500" />
-								<span className="text-gray-600 text-sm">Cancel anytime</span>
-							</div>
-							<div className="flex items-center gap-2">
-								<Check className="h-5 w-5 text-green-500" />
-								<span className="text-gray-600 text-sm">Premium support</span>
-							</div>
+					</div>
+					
+					<div className="mt-8 flex flex-wrap items-center justify-center gap-6">
+						<div className="flex items-center gap-2">
+							<Check className="h-5 w-5 text-holo-mint" />
+							<span className="text-secondary-dark text-sm">No credit card required</span>
 						</div>
-					</motion.div>
-				</div>
-			</section>
-		</LazyMotion>
-	);
+						<div className="flex items-center gap-2">
+							<Check className="h-5 w-5 text-holo-mint" />
+							<span className="text-secondary-dark text-sm">Cancel anytime</span>
+						</div>
+						<div className="flex items-center gap-2">
+							<Check className="h-5 w-5 text-holo-mint" />
+							<span className="text-secondary-dark text-sm">Premium support</span>
+						</div>
+					</div>
+				</motion.div>
+			</div>
+		</section>
+	</LazyMotion>
+);
 }
