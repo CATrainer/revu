@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import type { Metadata } from 'next';
 import { motion, LazyMotion, domAnimation, useInView } from 'framer-motion';
 import { } from 'lucide-react';
 import { 
@@ -11,11 +10,6 @@ import {
   FaReply
 } from 'react-icons/fa';
 import { BetaBadge } from '@/components/ui/BetaBadge';
-
-export const metadata: Metadata = {
-  title: 'Creator Tools for Revenue Growth | Repruv Features',
-  description: 'Discover how Repruv helps creators monetize better: AI automation, revenue intelligence, and growth analytics for YouTube, Instagram, and TikTok. Now in Early Access Beta.',
-};
 
 export default function FeaturesPage() {
   const heroRef = React.useRef(null);
@@ -410,8 +404,8 @@ export default function FeaturesPage() {
                       <div className="flex items-center justify-between mb-1">
                         <div className="text-xs font-medium text-gray-700">Recent Mentions</div>
                         <div className="flex gap-1">
-                          <div className="px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded-sm flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          <div className="px-1.5 py-0.5 bg-holo-mint/10 text-holo-mint text-xs rounded-sm flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full bg-holo-mint"></div>
                             <span>Positive</span>
                           </div>
                           <div className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-sm flex items-center gap-1">
@@ -517,7 +511,7 @@ export default function FeaturesPage() {
                           <div className="text-xs text-gray-500">Mentions</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-xs font-bold text-green-600">76%</div>
+                          <div className="text-xs font-bold text-holo-mint">76%</div>
                           <div className="text-xs text-gray-500">Positive</div>
                         </div>
                         <div className="text-center">
@@ -673,8 +667,8 @@ export default function FeaturesPage() {
                 <div className="grid grid-cols-4 gap-2 mb-3">
                   <div className="bg-white rounded-md p-2 shadow-sm border border-green-100">
                     <div className="text-xs text-gray-600 mb-0.5">Engagement Rate</div>
-                    <div className="text-base font-bold text-green-700">8.4%</div>
-                    <div className="flex items-center text-xs text-green-600">
+                    <div className="text-base font-bold text-holo-mint">8.4%</div>
+                    <div className="flex items-center text-xs text-holo-mint">
                       <span className="text-xs">↗</span> +1.2%
                     </div>
                   </div>
@@ -826,17 +820,17 @@ export default function FeaturesPage() {
                   </div>
                   
                   {/* AI Insights */}
-                  <div className="bg-white rounded-md p-2 border border-green-100 shadow-sm relative overflow-hidden">
+                  <div className="bg-white rounded-md p-2 border border-holo-mint shadow-sm relative overflow-hidden">
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="text-xs font-medium text-gray-700">AI Insights</div>
-                      <div className="px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded-sm flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                      <div className="px-1.5 py-0.5 bg-holo-mint/10 text-holo-mint text-xs rounded-sm flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 bg-holo-mint rounded-full animate-pulse"></div>
                         <span>Live</span>
                       </div>
                     </div>
                     <div className="space-y-1.5">
                       <div className="text-xs text-gray-700 flex items-start gap-1">
-                        <span className="text-green-600 text-xs mt-0.5">💡</span>
+                        <span className="text-holo-mint text-xs mt-0.5">💡</span>
                         <span>Engagement spikes on <span className="font-medium">Thursdays</span> - consider posting then</span>
                       </div>
                       <div className="text-xs text-gray-700 flex items-start gap-1">
@@ -848,8 +842,8 @@ export default function FeaturesPage() {
                         <span>Your <span className="font-medium">reply rate is 26% higher</span> than similar accounts</span>
                       </div>
                     </div>
-                    <div className="absolute -right-4 -bottom-4 w-12 h-12 rounded-full bg-green-50 opacity-70 flex items-center justify-center">
-                      <div className="w-6 h-6 text-green-500 flex items-center justify-center">🧠</div>
+                    <div className="absolute -right-4 -bottom-4 w-12 h-12 rounded-full bg-holo-mint/10 opacity-70 flex items-center justify-center">
+                      <div className="w-6 h-6 text-holo-mint flex items-center justify-center">🧠</div>
                     </div>
                   </div>
                 </div>
@@ -864,8 +858,8 @@ export default function FeaturesPage() {
                       <span>⚡</span> Optimize
                     </button>
                   </div>
-                  <div className="bg-green-50 border border-green-300 rounded-md px-2 py-1">
-                    <div className="text-xs text-green-700 flex items-center gap-1">
+                  <div className="bg-holo-mint/10 border border-holo-mint/30 rounded-md px-2 py-1">
+                    <div className="text-xs text-holo-mint flex items-center gap-1">
                       <span className="text-xs">📈</span> Performance Score: <span className="font-bold">92/100</span>
                     </div>
                   </div>
@@ -946,7 +940,7 @@ export default function FeaturesPage() {
                                 <span className="text-gray-700">Likes: <span className="font-medium">3,721</span></span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <span className="text-green-600">💬</span>
+                                <span className="text-holo-mint">💬</span>
                                 <span className="text-gray-700">Comments: <span className="font-medium">487</span></span>
                               </div>
                               <div className="flex items-center gap-1">
@@ -1122,7 +1116,7 @@ export default function FeaturesPage() {
                 animate={ctaInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-holo-mint" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </motion.div>
@@ -1196,7 +1190,7 @@ export default function FeaturesPage() {
                         <div className="flex flex-col mb-1">
                           <div className="flex items-center justify-between">
                             <span className="text-base font-medium text-gray-800">{feature.title}</span>
-                            <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                            <span className="text-xs font-bold text-holo-mint bg-holo-mint/10 px-2 py-1 rounded-full">
                               {feature.date}
                             </span>
                           </div>

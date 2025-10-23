@@ -150,7 +150,7 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                           <NavigationMenuLink asChild>
                             <Link href="/features#analytics-and-reports" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-center">
                               <div className="flex items-center justify-center mb-2">
-                                <FaChartBar className="text-green-500" size={20} />
+                                <FaChartBar className="text-holo-mint" size={20} />
                               </div>
                               <div className="text-sm font-medium leading-none">Analytics & Reports</div>
                               <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">

@@ -32,7 +32,7 @@ export function EarlyAccessBanner() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -100, opacity: 0 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="fixed top-0 left-0 right-0 z-[100] bg-gradient-to-r from-holo-purple via-holo-teal to-holo-purple text-white"
+          className="sticky top-0 left-0 right-0 z-[100] bg-gradient-to-r from-holo-purple via-holo-mint to-holo-teal text-white shadow-lg"
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between py-3">

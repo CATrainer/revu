@@ -1,6 +1,5 @@
 'use client';
 
-import type { Metadata } from 'next';
 import { motion } from 'framer-motion';
 import { useRef } from 'react';
 import { useInView } from 'framer-motion';
@@ -11,11 +10,6 @@ import {
   TrendingUp, MessageCircle, BarChart3, Star, DollarSign,
   Headphones, CreditCard, AlertCircle
 } from 'lucide-react';
-
-export const metadata: Metadata = {
-  title: 'Pricing - Free Early Access & Founder Pricing | Repruv',
-  description: 'Free unlimited access during Early Access. Lock in lifetime Founder Pricing at 50% off. Plans for creators and agencies starting Q2 2025.',
-};
 
 export default function PricingPage() {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -130,8 +124,8 @@ export default function PricingPage() {
                   <h3 className="font-bold text-lg text-primary-dark">Pay once, benefit forever:</h3>
                   {[
                     'Lifetime Pro Tier Access',
-                    '50% Off Forever (Pro will be £19.99/month)',
-                    'Save over £140 in year one alone',
+                    'Never pay subscription fees',
+                    'Save over £320 in year one alone',
                     'Exclusive Founder Badge',
                     'Priority Support forever',
                     'Feature Request Priority',
@@ -146,20 +140,20 @@ export default function PricingPage() {
                 <div className="bg-muted rounded-2xl p-6">
                   <h3 className="font-bold text-lg text-primary-dark mb-4">Future Value:</h3>
                   <p className="text-secondary-dark mb-4">
-                    Pro tier launches at £19.99/month. As a Founder, you never pay monthly fees for Pro features.
+                    Pro tier launches at £34.99/month. As a Founder, you pay once and never pay monthly fees.
                   </p>
                   <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm text-secondary-dark">Year 1 savings:</span>
-                      <span className="font-bold text-holo-mint">£140+</span>
+                      <span className="font-bold text-holo-mint">£320+</span>
                     </div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm text-secondary-dark">Year 2 savings:</span>
-                      <span className="font-bold text-holo-mint">£240</span>
+                      <span className="font-bold text-holo-mint">£420</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-secondary-dark">Total (5 years):</span>
-                      <span className="font-bold text-holo-mint text-lg">£1,100+</span>
+                      <span className="font-bold text-holo-mint text-lg">£2,000+</span>
                     </div>
                   </div>
                   <p className="text-sm text-secondary-dark italic">
@@ -175,7 +169,7 @@ export default function PricingPage() {
                   </Link>
                 </Button>
                 <p className="text-sm text-secondary-dark">
-                  Save £140+ in Year 1 • Full refund guarantee if we shut down
+                  Save £320+ in Year 1 • Full refund guarantee if we shut down
                 </p>
               </div>
             </div>
@@ -210,7 +204,7 @@ export default function PricingPage() {
             <div className="space-y-3 mb-8">
               {[
                 { included: true, text: 'Up to 2 platform connections' },
-                { included: true, text: '500 AI responses per month' },
+                { included: true, text: 'Limited Automation Usage' },
                 { included: true, text: 'Basic analytics and insights' },
                 { included: true, text: 'Community support' },
                 { included: true, text: 'Revenue tracking dashboard' },
@@ -252,14 +246,14 @@ export default function PricingPage() {
             </div>
             
             <h3 className="text-2xl font-bold text-primary-dark mb-2">Pro Plan</h3>
-            <div className="text-4xl font-bold text-holo-mint mb-2">£19.99<span className="text-lg text-secondary-dark">/month</span></div>
-            <p className="text-sm text-secondary-dark mb-6">Annual: £199/year (save 17%)</p>
+            <div className="text-4xl font-bold text-holo-mint mb-2">£34.99<span className="text-lg text-secondary-dark">/month</span></div>
+            <p className="text-sm text-secondary-dark mb-6">Annual: £349/year (save 17%)</p>
             <p className="text-secondary-dark mb-6">For creators serious about growth</p>
             
             <div className="space-y-3 mb-8">
               {[
                 'Unlimited platform connections',
-                'Unlimited AI responses',
+                '3x Automation Usage',
                 'Advanced revenue intelligence',
                 'Opportunity alerts',
                 'Priority support',
@@ -272,12 +266,6 @@ export default function PricingPage() {
                   <span className="text-secondary-dark">{feature}</span>
                 </div>
               ))}
-            </div>
-
-            <div className="bg-muted rounded-lg p-4 mb-6">
-              <p className="text-sm text-secondary-dark">
-                <strong className="text-primary-dark">ROI Example:</strong> If Repruv helps you close just ONE extra brand deal worth £500/year, your investment pays for itself 25x over.
-              </p>
             </div>
 
             <Button asChild className="w-full bg-holo-mint hover:bg-holo-mint-dark text-white">
@@ -307,8 +295,6 @@ export default function PricingPage() {
                 'Team collaboration tools',
                 'Client reporting (white-label)',
                 'Dedicated account manager',
-                'Custom integrations & API',
-                'SLA guarantees',
                 'Bulk creator onboarding'
               ].map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
@@ -320,17 +306,6 @@ export default function PricingPage() {
                   <span className="text-secondary-dark font-semibold">{feature}</span>
                 </div>
               ))}
-            </div>
-
-            <div className="bg-muted rounded-lg p-4 mb-6">
-              <p className="text-sm text-secondary-dark mb-2">
-                <strong className="text-primary-dark">Pricing Structure:</strong>
-              </p>
-              <ul className="text-sm text-secondary-dark space-y-1">
-                <li>• £250/month base fee</li>
-                <li>• £35/month per creator</li>
-                <li>• Early Access Partners: 30-40% off forever</li>
-              </ul>
             </div>
 
             <Button asChild variant="outline" className="w-full border-2 border-holo-mint text-holo-mint hover:bg-muted">
