@@ -50,7 +50,7 @@ export function CountdownBanner() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full bg-gradient-to-r from-green-600 via-blue-600 to-green-600 text-white py-2 px-4 text-center relative overflow-hidden"
+        className="w-full bg-gradient-to-r from-holo-purple via-holo-mint to-holo-teal text-white py-2 px-4 text-center relative overflow-hidden"
       >
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10 flex items-center justify-center gap-2 text-sm font-medium">
@@ -65,7 +65,7 @@ export function CountdownBanner() {
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full bg-gradient-to-r from-green-600 via-blue-600 to-green-600 text-white py-3 px-4 text-center relative overflow-hidden"
+      className="w-full bg-gradient-to-r from-holo-purple via-holo-mint to-holo-teal text-white py-3 px-4 text-center relative overflow-hidden"
     >
       {/* Animated background pattern */}
       <div className="absolute inset-0 opacity-20">

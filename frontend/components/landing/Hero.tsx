@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import SocialPlatformCarousel from '@/components/shared/SocialPlatformCarousel';
-import { CountdownBanner } from '@/components/shared/CountdownBanner';
 import { useAuth } from '@/lib/auth';
 
 export function Hero() {
@@ -48,7 +47,6 @@ export function Hero() {
 
   return (
     <>
-      <CountdownBanner />
       <motion.section 
         id="hero" 
         className="relative min-h-[90vh] section-background overflow-hidden"
