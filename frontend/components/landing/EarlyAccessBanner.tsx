@@ -32,7 +32,7 @@ export function EarlyAccessBanner() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -100, opacity: 0 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="sticky top-0 left-0 right-0 z-[100] bg-gradient-to-r from-holo-purple via-holo-mint to-holo-teal text-white shadow-lg"
+          className="relative w-full bg-gradient-to-r from-holo-purple via-holo-mint to-holo-teal shadow-lg"
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between py-3">
@@ -42,10 +42,10 @@ export function EarlyAccessBanner() {
                 className="hidden md:flex items-center gap-2 flex-1 justify-center hover:opacity-90 transition-opacity cursor-pointer"
               >
                 <span className="text-lg">🚀</span>
-                <span className="font-semibold text-sm md:text-base">
+                <span className="font-bold text-sm md:text-base drop-shadow-md">
                   Now in Early Access - Join creators building the future of social monetization
                 </span>
-                <span className="text-sm opacity-90 hidden lg:inline">
+                <span className="text-sm font-semibold drop-shadow-md hidden lg:inline">
                   | Limited spots available
                 </span>
               </Link>
@@ -56,7 +56,7 @@ export function EarlyAccessBanner() {
                 className="flex md:hidden items-center gap-2 flex-1 justify-center hover:opacity-90 transition-opacity cursor-pointer"
               >
                 <span className="text-lg">🚀</span>
-                <span className="font-semibold text-sm">
+                <span className="font-bold text-sm drop-shadow-md">
                   Early Access - Join Now
                 </span>
               </Link>

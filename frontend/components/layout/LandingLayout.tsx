@@ -41,9 +41,6 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Early Access Banner */}
-      <EarlyAccessBanner />
-      
       {/* Navigation */}
       <nav className="nav-background shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -313,6 +310,9 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
           </div>
         )}
       </nav>
+      
+      {/* Early Access Banner - below nav */}
+      <EarlyAccessBanner />
       
       {/* Main Content */}
       <main className="flex-grow">{children}</main>

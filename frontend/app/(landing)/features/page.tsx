@@ -426,7 +426,7 @@ export default function FeaturesPage() {
                             <div className="w-5 h-5 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs">IG</div>
                             <div className="flex items-center gap-1">
                               <span className="text-xs font-medium text-gray-700">@fashion_lover22</span>
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <div className="w-2 h-2 bg-holo-mint rounded-full"></div>
                             </div>
                             <div className="px-1.5 py-0.5 bg-pink-100 text-pink-800 text-xs rounded">Mentioned You</div>
                           </div>
@@ -467,7 +467,7 @@ export default function FeaturesPage() {
                             <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center text-white text-xs">TT</div>
                             <div className="flex items-center gap-1">
                               <span className="text-xs font-medium text-gray-700">@viral_creator</span>
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <div className="w-2 h-2 bg-holo-mint rounded-full"></div>
                             </div>
                             <div className="px-1.5 py-0.5 bg-red-100 text-red-800 text-xs rounded">Trending</div>
                           </div>
@@ -640,9 +640,9 @@ export default function FeaturesPage() {
               transition={{ duration: 0.8, delay: 0.4 }}
             >
               {/* Enhanced Analytics Dashboard UI Mockup */}
-              <div className="w-full h-full bg-gradient-to-br from-gray-50 to-green-50 rounded-lg p-4 relative overflow-hidden border border-green-200 shadow-lg">
+              <div className="w-full h-full bg-gradient-to-br from-gray-50 to-holo-mint/10 rounded-lg p-4 relative overflow-hidden border border-holo-mint/30 shadow-lg">
                 {/* Header with logo and controls */}
-                <div className="flex items-center justify-between mb-3 border-b border-green-100 pb-2">
+                <div className="flex items-center justify-between mb-3 border-b border-holo-mint/20 pb-2">
                   <div className="flex items-center gap-2">
                     <div className="bg-holo-mint rounded-md w-6 h-6 flex items-center justify-center text-white font-bold text-xs">R</div>
                     <h4 className="text-sm font-semibold text-gray-800">Repruv Analytics</h4>
@@ -665,43 +665,43 @@ export default function FeaturesPage() {
                 
                 {/* Key performance metrics */}
                 <div className="grid grid-cols-4 gap-2 mb-3">
-                  <div className="bg-white rounded-md p-2 shadow-sm border border-green-100">
+                  <div className="bg-white rounded-md p-2 shadow-sm border border-holo-mint/20">
                     <div className="text-xs text-gray-600 mb-0.5">Engagement Rate</div>
                     <div className="text-base font-bold text-holo-mint">8.4%</div>
                     <div className="flex items-center text-xs text-holo-mint">
                       <span className="text-xs">↗</span> +1.2%
                     </div>
                   </div>
-                  <div className="bg-white rounded-md p-2 shadow-sm border border-green-100">
+                  <div className="bg-white rounded-md p-2 shadow-sm border border-holo-mint/20">
                     <div className="text-xs text-gray-600 mb-0.5">Comments</div>
                     <div className="text-base font-bold text-gray-800">1,824</div>
-                    <div className="flex items-center text-xs text-green-600">
+                    <div className="flex items-center text-xs text-holo-mint">
                       <span className="text-xs">↗</span> +18%
                     </div>
                   </div>
-                  <div className="bg-white rounded-md p-2 shadow-sm border border-green-100">
+                  <div className="bg-white rounded-md p-2 shadow-sm border border-holo-mint/20">
                     <div className="text-xs text-gray-600 mb-0.5">Response Rate</div>
                     <div className="text-base font-bold text-gray-800">97%</div>
-                    <div className="flex items-center text-xs text-green-600">
+                    <div className="flex items-center text-xs text-holo-mint">
                       <span className="text-xs">↗</span> +3%
                     </div>
                   </div>
-                  <div className="bg-white rounded-md p-2 shadow-sm border border-green-100">
+                  <div className="bg-white rounded-md p-2 shadow-sm border border-holo-mint/20">
                     <div className="text-xs text-gray-600 mb-0.5">Sentiment</div>
                     <div className="text-base font-bold text-gray-800">4.8/5</div>
-                    <div className="flex items-center text-xs text-green-600">
+                    <div className="flex items-center text-xs text-holo-mint">
                       <span className="text-xs">↗</span> +0.3
                     </div>
                   </div>
                 </div>
                 
                 {/* Community Health Trend Chart */}
-                <div className="bg-white rounded-md p-2 border border-green-100 shadow-sm mb-3">
+                <div className="bg-white rounded-md p-2 border border-holo-mint/20 shadow-sm mb-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs font-medium text-gray-700">Community Engagement Trend</div>
                     <div className="flex gap-1.5">
                       <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        <div className="w-2 h-2 rounded-full bg-holo-mint"></div>
                         <span className="text-xs text-gray-600">Comments</span>
                       </div>
                       <div className="flex items-center gap-1">
@@ -1100,110 +1100,6 @@ export default function FeaturesPage() {
           </div>
         </motion.section>
 
-        {/* Horizontal Feature Timeline Section */}
-        <motion.section 
-          id="upcoming-features"
-          ref={ctaRef}
-          className="py-32 section-background-alt overflow-hidden mb-32"
-          initial={{ opacity: 0, y: 50 }}
-          animate={ctaInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-          transition={{ duration: 0.8 }}
-        >
-          <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-            <div className="flex items-center gap-3 mb-6 justify-center">
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={ctaInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-holo-mint" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </motion.div>
-              <h2 className="text-3xl font-bold brand-text">Upcoming Features Roadmap</h2>
-            </div>
-            <p className="text-lg font-bold mb-16 text-center max-w-3xl mx-auto" style={{ color: '#17633A' }}>
-              See what&apos;s coming next in our community engagement platform
-            </p>
-            
-            {/* Horizontal Timeline Component */}
-            <motion.div 
-              className="relative max-w-6xl mx-auto"
-              initial={{ opacity: 0 }}
-              animate={ctaInView ? { opacity: 1 } : { opacity: 0 }}
-              transition={{ duration: 0.8, delay: ctaInView ? 0.6 : 0 }}
-            >
-              {/* Timeline central line - uniform color */}
-              <div className="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 h-2 bg-holo-mint rounded-full"></div>
-              
-              {/* Timeline entries */}
-              <div className="flex justify-between items-center relative">
-                {[
-                  {
-                    title: "Platform Launch",
-                    description: "Official launch of Repruv platform with full features",
-                    date: "Oct 6th",
-                    icon: "??",
-                    delay: 0.8
-                  },
-                  {
-                    title: "TikTok Support",
-                    description: "TikTok support for DM's, Comments and @ Mentions",
-                    date: "Oct 13th",
-                    icon: "🎵",
-                    delay: 1.0
-                  },
-                  {
-                    title: "LinkedIn Support",
-                    description: "LinkedIn support for DM's, Comments and @ Mentions",
-                    date: "Oct 20th",
-                    icon: "??",
-                    delay: 1.2
-                  }
-                ].map((feature, index) => (
-                  <motion.div 
-                    key={feature.title}
-                    className="flex flex-col items-center relative px-4 w-1/3"
-                    initial={{ opacity: 0, y: index % 2 === 0 ? -50 : 50 }}
-                    animate={ctaInView ? { opacity: 1, y: 0 } : { opacity: 0, y: index % 2 === 0 ? -50 : 50 }}
-                    transition={{ duration: 0.8, delay: ctaInView ? feature.delay : 0 }}
-                  >
-                    {/* Timeline node - all using same color */}
-                    <motion.div 
-                      className="w-12 h-12 rounded-full bg-holo-mint flex items-center justify-center text-white shadow-lg z-10 mb-4"
-                      initial={{ scale: 0, rotate: -180 }}
-                      animate={ctaInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
-                      transition={{ 
-                        duration: 0.6, 
-                        delay: ctaInView ? feature.delay + 0.2 : 0,
-                        type: "spring",
-                        stiffness: 200
-                      }}
-                      whileHover={{ scale: 1.1 }}
-                    >
-                      <span className="text-xl">{feature.icon}</span>
-                    </motion.div>
-                    
-                    {/* Timeline content box - all top positions for consistency */}
-                    <div className="w-full">
-                      <div className="p-4 rounded-lg shadow-md bg-white border-t-4 border-green-500 hover:shadow-lg transition-shadow duration-300">
-                        <div className="flex flex-col mb-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-base font-medium text-gray-800">{feature.title}</span>
-                            <span className="text-xs font-bold text-holo-mint bg-holo-mint/10 px-2 py-1 rounded-full">
-                              {feature.date}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 mt-2">{feature.description}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        </motion.section>
     </div>
   </LazyMotion>
 );
