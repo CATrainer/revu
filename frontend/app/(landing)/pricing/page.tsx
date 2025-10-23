@@ -1,5 +1,6 @@
 'use client';
 
+import type { Metadata } from 'next';
 import { motion } from 'framer-motion';
 import { useRef } from 'react';
 import { useInView } from 'framer-motion';
@@ -10,6 +11,11 @@ import {
   TrendingUp, MessageCircle, BarChart3, Star, DollarSign,
   Headphones, CreditCard, AlertCircle
 } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Pricing - Free Early Access & Founder Pricing | Repruv',
+  description: 'Free unlimited access during Early Access. Lock in lifetime Founder Pricing at 50% off. Plans for creators and agencies starting Q2 2025.',
+};
 
 export default function PricingPage() {
   const heroRef = useRef<HTMLDivElement>(null);

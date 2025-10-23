@@ -1,5 +1,6 @@
 'use client';
 
+import type { Metadata } from 'next';
 import { motion } from 'framer-motion';
 import { useRef } from 'react';
 import { useInView } from 'framer-motion';
@@ -10,6 +11,11 @@ import {
   CheckCircle, Calendar, BarChart3, Shield, Headphones,
   ArrowRight, Rocket, Target, DollarSign
 } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Agency Partner Program - Build With Us | Repruv',
+  description: 'Partner with Repruv to help your creators grow channels and increase revenue. Free during beta, preferential pricing at launch. Limited spots available.',
+};
 
 export default function AgencyPartnersPage() {
   const heroRef = useRef<HTMLDivElement>(null);

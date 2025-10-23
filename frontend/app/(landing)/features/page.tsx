@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import type { Metadata } from 'next';
 import { motion, LazyMotion, domAnimation, useInView } from 'framer-motion';
 import { } from 'lucide-react';
 import { 
@@ -10,6 +11,11 @@ import {
   FaReply
 } from 'react-icons/fa';
 import { BetaBadge } from '@/components/ui/BetaBadge';
+
+export const metadata: Metadata = {
+  title: 'Creator Tools for Revenue Growth | Repruv Features',
+  description: 'Discover how Repruv helps creators monetize better: AI automation, revenue intelligence, and growth analytics for YouTube, Instagram, and TikTok. Now in Early Access Beta.',
+};
 
 export default function FeaturesPage() {
   const heroRef = React.useRef(null);
@@ -94,7 +100,7 @@ export default function FeaturesPage() {
                     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }
                 }}
-                className="group flex flex-col items-center p-4 rounded-xl card-background hover:shadow-lg transition-all duration-300 hover:scale-105 border border-transparent hover:border-green-200"
+                className="group flex flex-col items-center p-4 rounded-xl card-background hover:shadow-lg transition-all duration-300 hover:scale-105 border border-transparent hover:border-holo-mint/30"
                 initial={{ opacity: 0, y: 20, scale: 0.9 }}
                 animate={heroInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 20, scale: 0.9 }}
                 transition={{ duration: 0.6, delay: heroInView ? 0.8 + (index * 0.1) : 0 }}
@@ -108,7 +114,7 @@ export default function FeaturesPage() {
                 >
                   <feature.icon className={`${feature.color} h-8 w-8 group-hover:drop-shadow-lg transition-all duration-300`} />
                 </motion.div>
-                <span className="text-sm font-medium text-center brand-text group-hover:text-green-600 transition-colors duration-300">
+                <span className="text-sm font-medium text-center brand-text group-hover:text-holo-mint transition-colors duration-300">
                   {feature.title}
                 </span>
               </motion.button>
@@ -235,7 +241,7 @@ export default function FeaturesPage() {
                   </div>
                   <div className="bg-white rounded-md p-1.5 border border-blue-100 shadow-sm">
                     <div className="text-xs text-gray-500">Auto-replied</div>
-                    <div className="font-semibold text-green-600">42</div>
+                    <div className="font-semibold text-holo-mint">42</div>
                   </div>
                   <div className="bg-white rounded-md p-1.5 border border-blue-100 shadow-sm">
                     <div className="text-xs text-gray-500">Pending</div>
@@ -251,7 +257,7 @@ export default function FeaturesPage() {
                       <div className="flex items-center gap-1.5">
                         <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs">YT</div>
                         <span className="text-xs font-medium text-gray-700">@johndoe</span>
-                        <div className="px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded-sm">Auto</div>
+                        <div className="px-1.5 py-0.5 bg-holo-mint/10 text-holo-mint text-xs rounded-sm">Auto</div>
                       </div>
                       <span className="text-xs text-gray-500">2m</span>
                     </div>
@@ -283,7 +289,7 @@ export default function FeaturesPage() {
                           <span className="text-xs font-medium text-yellow-700">Draft Response</span>
                         </div>
                         <div className="flex gap-1">
-                          <button className="bg-green-100 hover:bg-green-200 text-green-700 text-xs px-1.5 rounded">✓</button>
+                          <button className="bg-holo-mint/10 hover:bg-holo-mint/20 text-holo-mint text-xs px-1.5 rounded">✓</button>
                           <button className="bg-red-100 hover:bg-red-200 text-red-700 text-xs px-1.5 rounded">✕</button>
                           <button className="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs px-1.5 rounded">✎</button>
                         </div>
@@ -298,7 +304,7 @@ export default function FeaturesPage() {
                       <div className="flex items-center gap-1.5">
                         <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center text-white text-xs">TT</div>
                         <span className="text-xs font-medium text-gray-700">@dance_queen</span>
-                        <div className="px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded-sm">Auto</div>
+                        <div className="px-1.5 py-0.5 bg-holo-mint/10 text-holo-mint text-xs rounded-sm">Auto</div>
                       </div>
                       <span className="text-xs text-gray-500">12m</span>
                     </div>
@@ -352,9 +358,9 @@ export default function FeaturesPage() {
                       <h4 className="text-sm font-semibold text-gray-800">Repruv Social Monitor</h4>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 px-2 py-1 bg-green-50 rounded-full border border-green-200">
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs font-medium text-green-700">Live Feed</span>
+                      <div className="flex items-center gap-1 px-2 py-1 bg-holo-mint/10 rounded-full border border-holo-mint/30">
+                        <div className="w-2 h-2 bg-holo-mint rounded-full animate-pulse"></div>
+                        <span className="text-xs font-medium text-holo-mint">Live Feed</span>
                       </div>
                       <div className="bg-pink-500 hover:bg-pink-600 transition-colors rounded-full w-5 h-5 flex items-center justify-center cursor-pointer">
                         <span className="text-white text-xs">⚙️</span>
@@ -644,12 +650,12 @@ export default function FeaturesPage() {
                 {/* Header with logo and controls */}
                 <div className="flex items-center justify-between mb-3 border-b border-green-100 pb-2">
                   <div className="flex items-center gap-2">
-                    <div className="bg-green-600 rounded-md w-6 h-6 flex items-center justify-center text-white font-bold text-xs">R</div>
+                    <div className="bg-holo-mint rounded-md w-6 h-6 flex items-center justify-center text-white font-bold text-xs">R</div>
                     <h4 className="text-sm font-semibold text-gray-800">Repruv Analytics</h4>
                   </div>
                   <div className="flex gap-2">
                     <div className="relative">
-                      <select className="appearance-none bg-green-600 text-white text-xs rounded px-2.5 py-1 pr-6 cursor-pointer">
+                      <select className="appearance-none bg-holo-mint text-white text-xs rounded px-2.5 py-1 pr-6 cursor-pointer">
                         <option>This Month</option>
                       </select>
                       <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white text-xs pointer-events-none">▼</div>
@@ -657,7 +663,7 @@ export default function FeaturesPage() {
                     <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded transition-colors flex items-center gap-1">
                       <span className="text-xs">📄</span> Export
                     </button>
-                    <div className="bg-green-500 hover:bg-green-600 transition-colors rounded-full w-5 h-5 flex items-center justify-center cursor-pointer">
+                    <div className="bg-holo-mint hover:bg-holo-mint-dark transition-colors rounded-full w-5 h-5 flex items-center justify-center cursor-pointer">
                       <span className="text-white text-xs">⚙️</span>
                     </div>
                   </div>
@@ -851,7 +857,7 @@ export default function FeaturesPage() {
                 {/* Action buttons */}
                 <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
                   <div className="flex gap-1.5">
-                    <button className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded transition-colors flex items-center gap-1">
+                    <button className="bg-holo-mint hover:bg-holo-mint-dark text-white text-xs px-2 py-1 rounded transition-colors flex items-center gap-1">
                       <span>📊</span> Full Report
                     </button>
                     <button className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition-colors flex items-center gap-1">
@@ -1134,7 +1140,7 @@ export default function FeaturesPage() {
               transition={{ duration: 0.8, delay: ctaInView ? 0.6 : 0 }}
             >
               {/* Timeline central line - uniform color */}
-              <div className="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 h-2 bg-green-500 rounded-full"></div>
+              <div className="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 h-2 bg-holo-mint rounded-full"></div>
               
               {/* Timeline entries */}
               <div className="flex justify-between items-center relative">
@@ -1170,7 +1176,7 @@ export default function FeaturesPage() {
                   >
                     {/* Timeline node - all using same color */}
                     <motion.div 
-                      className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-white shadow-lg z-10 mb-4"
+                      className="w-12 h-12 rounded-full bg-holo-mint flex items-center justify-center text-white shadow-lg z-10 mb-4"
                       initial={{ scale: 0, rotate: -180 }}
                       animate={ctaInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
                       transition={{ 

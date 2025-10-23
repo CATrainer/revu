@@ -6,10 +6,8 @@ import QueryProvider from '@/contexts/QueryProvider';
 import HelpProvider from '@/components/help/HelpProvider';
 
 export const metadata: Metadata = {
-
-  title: 'Repruv - Your Creator Side-Kick to Scale',
-
-  description: 'Manage reviews, monitor competitors, and grow your reputation with AI-powered insights',
+  title: 'Repruv - Help Creators Grow Channels & Increase Revenue',
+  description: 'Join Repruv\'s Early Access - AI-powered platform that helps creators grow channels and increase revenue through intelligent automation and monetization insights.',
 };
 
 export default function RootLayout({
