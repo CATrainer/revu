@@ -74,22 +74,22 @@ export function Hero() {
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-slate-900 dark:text-white leading-tight tracking-tight mb-4">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-primary-dark leading-tight tracking-tight mb-4">
               <div className="flex items-center justify-center gap-4 mb-2">
                 <span className="block">Increase Engagement.</span>
               </div>
               <div className="flex items-center justify-center gap-4 mb-2">
-                <span className="block text-blue-600 dark:text-blue-400">Drive Growth.</span>
+                <span className="block text-holo-teal">Drive Growth.</span>
               </div>
               <div className="flex items-center justify-center gap-4">
-                <span className="block text-green-600 dark:text-green-400">Boost Monetisation.</span>
+                <span className="block text-holo-mint">Boost Monetisation.</span>
               </div>
             </h1>
             
-            <p className="text-lg md:text-xl text-slate-600 dark:text-gray-300 leading-relaxed max-w-3xl mx-auto font-light">
-              Transform your <span className="text-slate-900 dark:text-white font-medium">social media engagement</span> with <span className="text-slate-900 dark:text-white font-medium">intelligent automation</span>, {' '}
-              <span className="text-blue-600 dark:text-blue-400 font-medium">drive growth</span> with <span className="text-blue-600 dark:text-blue-400 font-medium">actionable AI-driven insights</span>, and {' '}
-              <span className="text-green-600 dark:text-green-400 font-medium">boost monetisation</span> with <span className="text-green-600 dark:text-green-400 font-medium">strategic reports</span>.
+            <p className="text-lg md:text-xl text-secondary-dark leading-relaxed max-w-3xl mx-auto font-light">
+              Transform your <span className="text-primary-dark font-medium">social media engagement</span> with <span className="text-primary-dark font-medium">intelligent automation</span>, {' '}
+              <span className="text-holo-teal font-medium">drive growth</span> with <span className="text-holo-teal font-medium">actionable AI-driven insights</span>, and {' '}
+              <span className="text-holo-mint font-medium">boost monetisation</span> with <span className="text-holo-mint font-medium">strategic reports</span>.
             </p>
           </motion.div>
           
@@ -110,26 +110,26 @@ export function Hero() {
           transition={{ duration: 0.8, delay: 0.7 }}
         >
           <div className="max-w-7xl mx-auto px-4">
-            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl p-3 lg:p-4 shadow-2xl border border-slate-200/70 dark:border-gray-700/70 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-50/40 via-blue-50/20 to-green-50/40 dark:from-green-900/20 dark:via-blue-900/10 dark:to-green-900/20"></div>
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 via-blue-400 to-green-400 opacity-60"></div>
+            <div className="glass-panel backdrop-blur-xl rounded-3xl p-3 lg:p-4 shadow-2xl relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-holo-mint/10 via-holo-teal/10 to-holo-mint/10"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-holo-mint via-holo-teal to-holo-mint opacity-60"></div>
               
               <div className="relative z-10">
                 <div className="text-center mb-6">
-                  <h3 className="text-3xl lg:text-4xl font-bold text-green-600 mb-4">
+                  <h3 className="text-3xl lg:text-4xl font-bold text-holo-mint mb-4">
                     Get Started Today
                   </h3>
-                  <p className="text-base text-primary-dark/80 dark:text-gray-300 font-['Poppins',sans-serif] font-medium mb-3">
+                  <p className="text-base text-secondary-dark font-medium mb-3">
                     Join Repruv and start automating your social media engagement with AI-powered tools.
                   </p>
                   <div className="flex flex-wrap gap-3 justify-center mb-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-holo-mint border border-border">
                       🚀 Now Live
                     </span>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-holo-teal border border-border">
                       🔒 Secure &amp; Private
                     </span>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-holo-purple border border-border">
                       💎 Free Creator Use
                     </span>
                   </div>
@@ -144,7 +144,7 @@ export function Hero() {
                   {user ? (
                     <Button 
                       onClick={() => router.push('/dashboard')}
-                      className="px-8 py-4 text-lg font-bold bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                      className="px-8 py-4 text-lg font-bold bg-brand-primary hover:bg-holo-teal text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
                     >
                       Go to Dashboard
                     </Button>
@@ -152,14 +152,14 @@ export function Hero() {
                     <>
                       <Button 
                         onClick={() => router.push('/signup')}
-                        className="px-8 py-4 text-lg font-bold bg-green-600 hover:bg-green-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                        className="px-8 py-4 text-lg font-bold bg-holo-mint hover:bg-holo-mint-dark text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
                       >
                         Get Started Free
                       </Button>
                       <Button 
                         onClick={() => router.push('/features')}
                         variant="outline"
-                        className="px-8 py-4 text-lg font-bold border-2 border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                        className="px-8 py-4 text-lg font-bold border-2 border-holo-mint text-holo-mint hover:bg-muted rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                       >
                         Learn More
                       </Button>

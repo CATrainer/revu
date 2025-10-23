@@ -65,19 +65,23 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Retro-Futurism Color Palette
+        // Retro-Futurism Color Palette (using CSS variables for easy theme changes)
         holo: {
-          purple: '#a78bfa',
-          'purple-light': '#c084fc',
-          teal: '#22d3ee',
-          'teal-dark': '#06b6d4',
-          pink: '#f472b6',
-          'pink-dark': '#ec4899',
-          blue: '#60a5fa',
-          'blue-dark': '#3b82f6',
-          mint: '#6ee7b7',
-          'mint-dark': '#34d399',
+          purple: 'var(--holo-purple-from)',
+          'purple-light': 'var(--holo-purple-to)',
+          teal: 'var(--holo-teal-from)',
+          'teal-dark': 'var(--holo-teal-to)',
+          pink: 'var(--holo-pink-from)',
+          'pink-dark': 'var(--holo-pink-to)',
+          blue: 'var(--holo-blue-from)',
+          'blue-dark': 'var(--holo-blue-to)',
+          mint: 'var(--success)', // Uses success color for consistency
+          'mint-dark': 'var(--success)',
         },
+        // Semantic text colors for easy access
+        'primary-dark': 'var(--foreground)',
+        'secondary-dark': 'var(--muted-foreground)',
+        'brand-primary': 'var(--brand-primary)',
       },
       borderRadius: {
         lg: "var(--radius)",

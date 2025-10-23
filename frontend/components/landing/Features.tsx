@@ -38,25 +38,25 @@ interface Feature {
 const features: Feature[] = [
   {
     icon: FaReply,
-    iconColor: 'text-blue-500', // Blue for replies/communication
+    iconColor: 'text-holo-teal', // Teal for replies/communication
     title: 'DM & Comment Automation',
     description: 'Automate replies to DM\'s & Comments on your Posts, Reels and Videos on Instagram and Youtube.',
   },
   {
     icon: FaBrain,
-    iconColor: 'text-purple-500', // Purple for AI intelligence
+    iconColor: 'text-holo-purple', // Purple for AI intelligence
     title: 'AI Creator Sidekick',
     description: 'Your personalized AI chatbot that understands you and your community.',
   },
   {
     icon: FaHashtag,
-    iconColor: 'text-pink-500', // Pink for social media
+    iconColor: 'text-holo-pink', // Pink for social media
     title: 'Social Monitoring',
     description: 'Keep on top of what people are saying about you on online across all of your channels.',
   },
   {
     icon: FaChartBar,
-    iconColor: 'text-green-500', // Green for growth/analytics
+    iconColor: 'text-holo-mint', // Mint for growth/analytics
     title: 'Analytics & Reports',
     description: 'Get actionable insights with comprehensive reporting and analytics derived from your data',
   },
