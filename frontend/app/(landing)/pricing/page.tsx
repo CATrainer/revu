@@ -8,7 +8,7 @@ const faqCategories = [
   {
     title: "Getting Started",
     icon: Zap,
-    color: "text-blue-500",
+    color: "text-holo-teal",
     questions: [
       {
         question: "How does the free Basic plan work?",
@@ -27,7 +27,7 @@ const faqCategories = [
   {
     title: "For Creators",
     icon: Target,
-    color: "text-purple-500",
+    color: "text-holo-purple",
     questions: [
       {
         question: "Can Repruv help manage my community engagement?",
@@ -50,7 +50,7 @@ const faqCategories = [
   {
     title: "For Agencies",
     icon: Users,
-    color: "text-green-500",
+    color: "text-holo-mint",
     questions: [
       {
         question: "Can I manage multiple clients with one account?",
@@ -73,7 +73,7 @@ const faqCategories = [
   {
     title: "Billing & Plans",
     icon: CreditCard,
-    color: "text-green-500",
+    color: "text-holo-mint",
     questions: [
       {
         question: "Can I change plans anytime?",
@@ -170,8 +170,8 @@ function FAQProgressNavigation({
                 <motion.div
                   className={`absolute inset-0 rounded-full border transition-all duration-200 ${
                     index === currentSection
-                      ? 'border-green-600 bg-green-600/10'
-                      : 'border-gray-300 dark:border-gray-600 group-hover:border-green-600/60'
+                      ? 'border-holo-mint bg-holo-mint/10'
+                      : 'border-gray-300 dark:border-gray-600 group-hover:border-holo-mint/60'
                   }`}
                   animate={{
                     scale: index === currentSection ? 1 : 0.85,
@@ -184,15 +184,15 @@ function FAQProgressNavigation({
                 <category.icon 
                   className={`w-4 h-4 transition-colors duration-200 ${
                     index === currentSection
-                      ? 'text-green-600'
-                      : 'text-gray-400 dark:text-gray-500 group-hover:text-green-600'
+                      ? 'text-holo-mint'
+                      : 'text-gray-400 dark:text-gray-500 group-hover:text-holo-mint'
                   }`}
                 />
                 
                 {/* Active Pulse Effect */}
                 {index === currentSection && (
                   <motion.div
-                    className="absolute inset-0 rounded-full border border-green-600/30"
+                    className="absolute inset-0 rounded-full border border-holo-mint/30"
                     animate={{
                       scale: [1, 1.8],
                       opacity: [0.4, 0]
@@ -219,7 +219,7 @@ function FAQProgressNavigation({
         >
           <div className="glass-card rounded-full px-3 py-1 shadow-lg">
             <motion.span
-              className="text-xs font-bold text-green-600"
+              className="text-xs font-bold text-holo-mint"
               key={currentSection}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -336,12 +336,12 @@ export default function PricingPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <h2 
-              className="text-4xl md:text-5xl font-bold text-green-600 mb-6"
+              className="text-4xl md:text-5xl font-bold text-holo-mint mb-6"
               data-faq-title="true"
             >
               Frequently Asked Questions
             </h2>
-            <p className="text-xl text-green-800">
+            <p className="text-xl text-primary-dark">
               Everything you need to know about Repruv for your brand and your community
             </p>
           </motion.div>
@@ -362,7 +362,7 @@ export default function PricingPage() {
                 >
                   <div className="flex items-center gap-3">
                     <category.icon className={`h-8 w-8 ${category.color}`} />
-                    <h3 className="text-2xl font-bold text-primary-dark group-hover:text-green-600 transition-colors">
+                    <h3 className="text-2xl font-bold text-primary-dark group-hover:text-holo-mint transition-colors">
                       {category.title}
                     </h3>
                   </div>
@@ -370,7 +370,7 @@ export default function PricingPage() {
                     animate={{ rotate: expandedSections[categoryIndex] ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown className="h-6 w-6 text-gray-500 group-hover:text-green-600 transition-colors" />
+                    <ChevronDown className="h-6 w-6 text-gray-500 group-hover:text-holo-mint transition-colors" />
                   </motion.div>
                 </button>
                 
@@ -422,7 +422,7 @@ export default function PricingPage() {
             transition={{ duration: 0.6, delay: 1.0 }}
           >
             <div className="card-background rounded-lg p-8">
-              <Headphones className="h-12 w-12 text-green-500 mx-auto mb-4" />
+              <Headphones className="h-12 w-12 text-holo-mint mx-auto mb-4" />
               <h3 className="text-2xl font-bold text-primary-dark mb-2">
                 Still have questions?
               </h3>
@@ -432,13 +432,13 @@ export default function PricingPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a 
                   href="/contact" 
-                  className="inline-flex items-center px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors"
+                  className="inline-flex items-center px-6 py-3 bg-holo-mint hover:bg-holo-mint-dark text-white font-medium rounded-lg transition-colors"
                 >
                   Contact Support
                 </a>
                 <a 
                   href="/join-waitlist" 
-                  className="inline-flex items-center px-6 py-3 border border-green-500 text-green-500 hover:bg-green-50 font-medium rounded-lg transition-colors"
+                  className="inline-flex items-center px-6 py-3 border border-holo-mint text-holo-mint hover:bg-muted font-medium rounded-lg transition-colors"
                 >
                   Join Waitlist
                 </a>

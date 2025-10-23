@@ -149,18 +149,18 @@ export function Features() {
                 {/* AI Background Icons for AI Creator Sidekick */}
                 {feature.title === 'AI Creator Sidekick' && (
                   <div className="absolute inset-0 opacity-15 pointer-events-none">
-                    <FaRobot className="absolute top-4 right-4 text-blue-500" size={36} />
-                    <FaBrain className="absolute top-16 right-12 text-purple-500" size={32} />
-                    <FaMicrochip className="absolute top-8 right-24 text-green-500" size={28} />
-                    <FaLightbulb className="absolute bottom-16 right-8 text-yellow-500" size={34} />
-                    <FaCog className="absolute bottom-8 right-20 text-gray-600" size={28} />
-                    <FaCode className="absolute bottom-4 right-32 text-indigo-500" size={32} />
-                    <FaRobot className="absolute bottom-12 left-8 text-blue-500" size={30} />
-                    <FaBrain className="absolute top-12 left-4 text-purple-500" size={36} />
-                    <FaMicrochip className="absolute bottom-20 left-16 text-green-500" size={26} />
-                    <FaLightbulb className="absolute top-20 left-12 text-yellow-500" size={32} />
-                    <FaCog className="absolute bottom-6 left-24 text-gray-600" size={30} />
-                    <FaCode className="absolute top-28 left-32 text-indigo-500" size={28} />
+                    <FaRobot className="absolute top-4 right-4 text-holo-purple" size={36} />
+                    <FaBrain className="absolute top-16 right-12 text-holo-purple" size={32} />
+                    <FaMicrochip className="absolute top-8 right-24 text-holo-teal" size={28} />
+                    <FaLightbulb className="absolute bottom-16 right-8 text-holo-pink" size={34} />
+                    <FaCog className="absolute bottom-8 right-20 text-muted-foreground" size={28} />
+                    <FaCode className="absolute bottom-4 right-32 text-holo-purple" size={32} />
+                    <FaRobot className="absolute bottom-12 left-8 text-holo-purple" size={30} />
+                    <FaBrain className="absolute top-12 left-4 text-holo-purple" size={36} />
+                    <FaMicrochip className="absolute bottom-20 left-16 text-holo-teal" size={26} />
+                    <FaLightbulb className="absolute top-20 left-12 text-holo-pink" size={32} />
+                    <FaCog className="absolute bottom-6 left-24 text-muted-foreground" size={30} />
+                    <FaCode className="absolute top-28 left-32 text-holo-purple" size={28} />
                   </div>
                 )}
 
@@ -185,17 +185,17 @@ export function Features() {
                 {/* Analytics Background Icons for Analytics & Reports */}
                 {feature.title === 'Analytics & Reports' && (
                   <div className="absolute inset-0 opacity-15 pointer-events-none">
-                    <FaChartLine className="absolute top-4 right-4 text-blue-500" size={36} />
-                    <FaChartBar className="absolute top-16 right-12 text-green-500" size={32} />
-                    <FaChartPie className="absolute top-8 right-24 text-purple-500" size={28} />
-                    <FaFileAlt className="absolute bottom-16 right-8 text-orange-500" size={34} />
-                    <FaTable className="absolute bottom-8 right-20 text-indigo-500" size={28} />
-                    <FaCalculator className="absolute bottom-4 right-32 text-gray-600" size={32} />
-                    <FaChartLine className="absolute bottom-12 left-8 text-blue-500" size={30} />
-                    <FaChartBar className="absolute top-12 left-4 text-green-500" size={36} />
-                    <FaChartPie className="absolute bottom-20 left-16 text-purple-500" size={26} />
-                    <FaFileAlt className="absolute top-20 left-12 text-orange-500" size={32} />
-                    <FaTable className="absolute bottom-6 left-24 text-indigo-500" size={30} />
+                    <FaChartLine className="absolute top-4 right-4 text-holo-teal" size={36} />
+                    <FaChartBar className="absolute top-16 right-12 text-holo-mint" size={32} />
+                    <FaChartPie className="absolute top-8 right-24 text-holo-purple" size={28} />
+                    <FaFileAlt className="absolute bottom-16 right-8 text-holo-pink" size={34} />
+                    <FaTable className="absolute bottom-8 right-20 text-holo-purple" size={28} />
+                    <FaCalculator className="absolute bottom-4 right-32 text-muted-foreground" size={32} />
+                    <FaChartLine className="absolute bottom-12 left-8 text-holo-teal" size={30} />
+                    <FaChartBar className="absolute top-12 left-4 text-holo-mint" size={36} />
+                    <FaChartPie className="absolute bottom-20 left-16 text-holo-purple" size={26} />
+                    <FaFileAlt className="absolute top-20 left-12 text-holo-pink" size={32} />
+                    <FaTable className="absolute bottom-6 left-24 text-holo-purple" size={30} />
                     <FaArrowUp className="absolute top-28 left-32 text-emerald-500" size={28} />
                   </div>
                 )}

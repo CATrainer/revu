@@ -76,13 +76,13 @@ const aiFeatures = [
     icon: TrendingUp,
     title: 'Growth Analytics',
     description: 'Data-driven insights to boost your following',
-    color: 'from-blue-500 to-cyan-500'
+    color: 'from-holo-teal to-holo-teal-dark'
   },
   {
     icon: MessageSquare,
     title: 'Social Monitoring',
     description: 'Track what people say about you across platforms',
-    color: 'from-green-500 to-emerald-500'
+    color: 'from-holo-mint to-holo-mint-dark'
   }
 ];
 
@@ -99,9 +99,9 @@ export function SocialMediaInsights() {
             </span>
           </div>
           <div className="hidden sm:flex items-center space-x-2">
-            <div className="flex items-center space-x-1 px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs text-green-700 dark:text-green-300 font-medium">Live</span>
+            <div className="flex items-center space-x-1 px-2 py-1 rounded-full bg-muted border border-border">
+              <div className="w-2 h-2 rounded-full bg-holo-mint animate-pulse" />
+              <span className="text-xs text-holo-mint font-medium">Live</span>
             </div>
           </div>
         </div>
@@ -127,7 +127,7 @@ export function SocialMediaInsights() {
         {/* Platform Metrics */}
         <div>
           <h3 className="text-lg font-semibold text-primary-dark mb-4 flex items-center space-x-2">
-            <TrendingUp className="w-5 h-5 text-blue-500" />
+            <TrendingUp className="w-5 h-5 text-holo-teal" />
             <span>Platform Performance</span>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -147,7 +147,7 @@ export function SocialMediaInsights() {
                   )}>
                     {platformLogos[insight.platform]}
                   </div>
-                  <div className="flex items-center space-x-1 text-green-600 dark:text-green-400">
+                  <div className="flex items-center space-x-1 text-holo-mint">
                     <TrendingUp className="w-3 h-3" />
                     <span className="text-xs font-medium">{insight.change}</span>
                   </div>
@@ -197,7 +197,7 @@ export function SocialMediaInsights() {
         {/* Mock Comments with AI Responses */}
         <div>
           <h3 className="text-lg font-semibold text-primary-dark mb-4 flex items-center space-x-2">
-            <MessageSquare className="w-5 h-5 text-blue-500" />
+            <MessageSquare className="w-5 h-5 text-holo-teal" />
             <span>Recent AI Responses</span>
           </h3>
           <div className="space-y-3">
@@ -237,7 +237,7 @@ export function SocialMediaInsights() {
 
       {/* Animated background elements */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-2xl animate-pulse" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-full blur-xl animate-pulse delay-700" />
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-br from-holo-teal/10 to-holo-teal-dark/10 rounded-full blur-xl animate-pulse delay-700" />
     </div>
   );
 }

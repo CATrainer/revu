@@ -128,10 +128,10 @@ export function Pricing() {
 								className={`cursor-pointer ${plan.popular ? 'z-10' : 'z-0'}`}
 							>
 								<Card 
-									className={`${plan.popular ? 'shadow-xl ring-2 ring-green-500 scale-103' : 'shadow-lg'} card-background hover:shadow-xl transition-all duration-300 h-full relative`}
+									className={`${plan.popular ? 'shadow-xl ring-2 ring-holo-mint scale-103' : 'shadow-lg'} card-background hover:shadow-xl transition-all duration-300 h-full relative`}
 								>
 									{plan.popular && (
-										<div className="absolute -top-4 left-0 right-0 mx-auto w-max px-3 py-1 bg-gradient-to-r from-green-500 to-green-600 text-white text-center text-xs font-semibold rounded-full shadow-md">
+										<div className="absolute -top-4 left-0 right-0 mx-auto w-max px-3 py-1 bg-gradient-to-r from-holo-mint to-holo-mint-dark text-white text-center text-xs font-semibold rounded-full shadow-md">
 											⭐ BEST VALUE
 										</div>
 									)}
