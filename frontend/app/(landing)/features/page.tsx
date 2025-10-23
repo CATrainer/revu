@@ -2,14 +2,14 @@
 
 import React from 'react';
 import { motion, LazyMotion, domAnimation, useInView } from 'framer-motion';
-import { 
-} from 'lucide-react';
+import { } from 'lucide-react';
 import { 
   FaChartBar, 
   FaBrain,
   FaHashtag,
   FaReply
 } from 'react-icons/fa';
+import { BetaBadge } from '@/components/ui/BetaBadge';
 
 export default function FeaturesPage() {
   const heroRef = React.useRef(null);
@@ -38,14 +38,20 @@ export default function FeaturesPage() {
           animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.8 }}
         >
-          <motion.h1 
-            className="text-4xl md:text-5xl font-bold brand-text mb-6"
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.6, delay: heroInView ? 0.2 : 0 }}
           >
-            Your Creator Side-Kick Tools to Boost Engagement, Growth & Monetisation
-          </motion.h1>
+            <h1 className="text-4xl md:text-5xl font-bold brand-text mb-4">
+              Creator Tools Built for Revenue Growth
+            </h1>
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <span className="text-lg text-secondary-dark">EARLY ACCESS BETA</span>
+              <span className="text-secondary-dark">•</span>
+              <span className="text-lg text-holo-mint font-semibold">Help us build the future of creator monetization</span>
+            </div>
+          </motion.div>
 
           {/* Quick Feature Navigation */}
           <motion.div 
@@ -57,26 +63,26 @@ export default function FeaturesPage() {
             {[
               { 
                 icon: FaReply, 
-                color: "text-blue-500", 
-                title: "DM & Comment Automation", 
+                color: "text-holo-teal", 
+                title: "Smart Engagement Automation", 
                 id: "comment-automation" 
               },
               { 
                 icon: FaHashtag, 
-                color: "text-pink-500", 
-                title: "Social Monitoring", 
+                color: "text-holo-pink", 
+                title: "Revenue Intelligence Monitoring", 
                 id: "social-monitoring" 
               },
               { 
                 icon: FaBrain, 
-                color: "text-purple-500", 
-                title: "AI Creator Sidekick", 
+                color: "text-holo-purple", 
+                title: "AI Creator Assistant", 
                 id: "ai-responses" 
               },
               { 
                 icon: FaChartBar, 
-                color: "text-green-500", 
-                title: "Analytics & Reports", 
+                color: "text-holo-mint", 
+                title: "Analytics & Revenue Intelligence", 
                 id: "analytics-and-reports" 
               }
             ].map((feature, index) => (
@@ -136,15 +142,16 @@ export default function FeaturesPage() {
                   animate={responseInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
                   transition={{ duration: 0.6, delay: responseInView ? 0.4 : 0 }}
                 >
-                  <FaReply className="text-blue-500 h-12 w-12" />
+                  <FaReply className="text-holo-teal h-12 w-12" />
                 </motion.div>
                 <motion.h2 
-                  className="text-3xl font-bold brand-text"
+                  className="text-3xl font-bold brand-text flex items-center gap-3"
                   initial={{ opacity: 0, x: -20 }}
                   animate={responseInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                   transition={{ duration: 0.6, delay: responseInView ? 0.5 : 0 }}
                 >
-                  DM & Comment Automation
+                  Smart Engagement Automation
+                  <BetaBadge variant="blue" />
                 </motion.h2>
               </motion.div>
               <motion.p 
@@ -154,7 +161,7 @@ export default function FeaturesPage() {
                 animate={responseInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.6, delay: responseInView ? 0.5 : 0 }}
               >
-                Create automation workflows to help you better respond to DM&apos;s and Comments from all your Posts, Reels and Videos on Instagram and Youtube.
+                Never miss a revenue opportunity. Automatically respond to comments and DMs while prioritizing brand deals, product inquiries, and high-value interactions. Fast responses = better conversions.
               </motion.p>
               <motion.ul 
                 className="space-y-3"
@@ -163,11 +170,11 @@ export default function FeaturesPage() {
                 transition={{ duration: 0.6, delay: responseInView ? 0.6 : 0 }}
               >
                   {[
-                    'View all comments and DMs in the dashboard',
-                    'Send manual responses or automated responses',
-                    'Create automation workflows that can use templates or ai to respond on your behalf',
-                    'Built in approval system for responses that need your attention',
-                    'Automated comment moderation'
+                    'Priority Intelligence - Automatically flags brand deals & product inquiries',
+                    'Fast Response = Higher Conversion - Respond in minutes, not hours',
+                    'Authentic Voice - AI learns your style, maintains your brand',
+                    'Never Miss Revenue - Automated responses to product questions',
+                    'Multi-Platform - Manage YouTube and Instagram in one place'
                   ].map((item, index) => (
                     <motion.li 
                       key={index}
@@ -531,12 +538,15 @@ export default function FeaturesPage() {
                     animate={socialInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
                     transition={{ duration: 0.6, delay: 0.6 }}
                   >
-                    <FaHashtag className="text-pink-500 h-12 w-12" />
+                    <FaHashtag className="text-holo-pink h-12 w-12" />
                   </motion.div>
-                  <h2 className="text-3xl font-bold brand-text">Social Monitoring</h2>
+                  <h2 className="text-3xl font-bold brand-text flex items-center gap-3">
+                    Revenue Intelligence Monitoring
+                    <BetaBadge variant="purple" />
+                  </h2>
                 </div>
                 <p className="text-lg font-bold mb-6" style={{ color: '#17633A' }}>
-                  Connect your socials and keep ontop of what people are saying about you.
+                  Track what people are saying about you across all channels. Identify monetization opportunities, brand mentions, and trending topics that could drive revenue.
                 </p>
                 <motion.ul 
                   className="space-y-3"
@@ -545,8 +555,10 @@ export default function FeaturesPage() {
                   transition={{ duration: 0.6, delay: 0.8 }}
                 >
                   {[
-                    'All mentions are automatically classified so you can filter them',
-                    'Real-time sentiment analysis and alerts'
+                    'Identify monetization opportunities automatically',
+                    'Track brand mentions and collaboration requests',
+                    'Real-time sentiment analysis and alerts',
+                    'Trending topics that could drive revenue'
                   ].map((item, index) => (
                     <motion.li 
                       key={index}
@@ -586,12 +598,15 @@ export default function FeaturesPage() {
                   animate={analyticsInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
                 >
-                  <FaChartBar className="text-green-500 h-12 w-12" />
+                  <FaChartBar className="text-holo-mint h-12 w-12" />
                 </motion.div>
-                <h2 className="text-3xl font-bold brand-text">Analytics & Reports</h2>
+                <h2 className="text-3xl font-bold brand-text flex items-center gap-3">
+                  Analytics & Revenue Intelligence
+                  <BetaBadge variant="blue" />
+                </h2>
               </div>
               <p className="text-lg font-bold mb-6" style={{ color: '#17633A' }}>
-                Get actionable insights with comprehensive reporting and analytics derived from your data
+                Understand what drives your revenue and how to increase it. Get actionable insights to grow your channel and earnings.
               </p>
               <motion.ul 
                 className="space-y-3"
@@ -600,9 +615,10 @@ export default function FeaturesPage() {
                 transition={{ duration: 0.6, delay: 0.6 }}
               >
                 {[
-                  'Performance metrics.',
-                  'Sentiment trend analysis.',
-                  'AI suggestion to increase reach and engagement.'
+                  'Track channel growth across all platforms',
+                  'Sentiment trend analysis and audience insights',
+                  'AI recommendations to increase earnings',
+                  'Opportunity alerts for monetization'
                 ].map((item, index) => (
                   <motion.li 
                     key={index}
