@@ -19,6 +19,7 @@ import { useAuth } from '@/lib/auth';
 import { AccountDropdown } from './AccountDropdown';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { VideoModal } from '@/components/ui/VideoModal';
+import { EarlyAccessBanner } from '@/components/landing/EarlyAccessBanner';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -40,18 +41,8 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Top Banner */}
-      <div className="bg-green-600 text-white py-2 px-4 text-center text-sm">
-        <div className="max-w-7xl mx-auto">
-          <span className="font-medium">Repruv is Your Creator Side-Kick to Scale → </span>
-          <button 
-            onClick={() => setVideoModalOpen(true)}
-            className="underline hover:no-underline font-medium cursor-pointer bg-transparent border-none text-white"
-          >
-            Watch How We Help Creators Here!
-          </button>
-        </div>
-      </div>
+      {/* Early Access Banner */}
+      <EarlyAccessBanner />
       
       {/* Navigation */}
       <nav className="nav-background shadow-sm sticky top-0 z-50">
@@ -169,9 +160,9 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                           </NavigationMenuLink>
                         </li>
                         <li className="flex flex-col p-3">
-                          <Button asChild variant="outline" className="text-sm h-12 border-green-600 text-green-600 hover:bg-green-50 font-medium">
+                          <Button asChild variant="outline" className="text-sm h-12 border-holo-mint text-holo-mint hover:bg-muted font-medium">
                             <Link href="/signup">
-                              Get Started
+                              Join Early Access
                             </Link>
                           </Button>
                         </li>
@@ -196,9 +187,17 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                   </NavigationMenuItem>
                   
                   <NavigationMenuItem>
-                    <Button asChild className="bg-green-600 hover:bg-green-700 text-white">
+                    <NavigationMenuLink asChild>
+                      <Link href="/agency-partners" className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
+                        Agency Partners
+                      </Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                  
+                  <NavigationMenuItem>
+                    <Button asChild className="bg-holo-mint hover:bg-holo-mint-dark text-white">
                       <Link href="/signup">
-                        Get Started
+                        Join Early Access
                       </Link>
                     </Button>
                   </NavigationMenuItem>
@@ -217,8 +216,8 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                     <Button variant="ghost" asChild>
                       <Link href="/login">Login</Link>
                     </Button>
-                    <Button asChild className="bg-green-600 hover:bg-green-700 text-white">
-                      <Link href="/signup">Sign Up</Link>
+                    <Button asChild className="bg-holo-mint hover:bg-holo-mint-dark text-white">
+                      <Link href="/signup">Join Early Access</Link>
                     </Button>
                   </>
                 )
@@ -274,19 +273,26 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
               >
                 Pricing
               </Link>
+              <Link
+                href="/agency-partners"
+                role="menuitem"
+                className="nav-mobile-link block px-4 py-3 text-base"
+              >
+                Agency Partners
+              </Link>
               <div className="px-3 py-2 space-y-2">
                 {!isLoading && !isAuthenticated && (
                   <>
                     <Button asChild variant="outline" className="w-full min-h-11">
                       <Link href="/login">Login</Link>
                     </Button>
-                    <Button asChild className="w-full min-h-11 bg-green-600 hover:bg-green-700 text-white">
-                      <Link href="/signup">Sign Up</Link>
+                    <Button asChild className="w-full min-h-11 bg-holo-mint hover:bg-holo-mint-dark text-white">
+                      <Link href="/signup">Join Early Access</Link>
                     </Button>
                   </>
                 )}
                 {!isLoading && isAuthenticated && (
-                  <Button asChild className="w-full min-h-11 bg-green-600 hover:bg-green-700 text-white">
+                  <Button asChild className="w-full min-h-11 bg-holo-mint hover:bg-holo-mint-dark text-white">
                     <Link href="/dashboard">Go to Dashboard</Link>
                   </Button>
                 )}
