@@ -1,7 +1,7 @@
 """add user approval workflow and application tables
 
 Revision ID: 20251024_120500
-Revises: 20251020_1602-2aa5e9a1f29b_add_is_demo_to_fans
+Revises: 2aa5e9a1f29b
 Create Date: 2025-10-24 12:05:00
 
 """
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 
-revision = "20251024_120500_add_user_application_workflow"
-down_revision = "20251020_1602-2aa5e9a1f29b_add_is_demo_to_fans"
+revision = "20251024_120500"
+down_revision = "2aa5e9a1f29b"
 branch_labels = None
 depends_on = None
 
