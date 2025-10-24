@@ -14,7 +14,7 @@ class Application(Base):
 
     user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     account_type = Column(
-        Enum('creator', 'agency', name='application_status_enum'),
+        Enum('creator', 'agency', 'legacy', name='account_type_enum'),
         nullable=False,
         comment="Type of account being applied for"
     )
