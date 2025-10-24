@@ -30,8 +30,8 @@ def upgrade() -> None:
     application_status_enum.create(op.get_bind(), checkfirst=True)
     
     # Add new columns to users table
-    op.add_column('users', sa.Column('account_type', postgresql.ENUM('creator', 'agency', 'legacy', name='account_type_enum'), nullable=True))
-    op.add_column('users', sa.Column('approval_status', postgresql.ENUM('pending', 'approved', 'rejected', name='approval_status_enum'), nullable=False, server_default='pending'))
+    op.add_column('users', sa.Column('account_type', postgresql.ENUM('creator', 'agency', 'legacy', name='account_type_enum', create_type=False), nullable=True))
+    op.add_column('users', sa.Column('approval_status', postgresql.ENUM('pending', 'approved', 'rejected', name='approval_status_enum', create_type=False), nullable=False, server_default='pending'))
     op.add_column('users', sa.Column('application_submitted_at', sa.DateTime(timezone=True), nullable=True))
     op.add_column('users', sa.Column('approved_at', sa.DateTime(timezone=True), nullable=True))
     op.add_column('users', sa.Column('approved_by', postgresql.UUID(as_uuid=True), nullable=True))
@@ -80,7 +80,7 @@ def upgrade() -> None:
         'applications',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text('uuid_generate_v4()')),
         sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('account_type', sa.Enum('creator', 'agency', name='account_type_enum', create_type=False), nullable=False),
+        sa.Column('account_type', sa.Enum('creator', 'agency', 'legacy', name='account_type_enum', create_type=False), nullable=False),
         sa.Column('application_data', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column('submitted_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
         sa.Column('reviewed_at', sa.DateTime(timezone=True), nullable=True),
