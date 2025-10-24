@@ -121,7 +121,7 @@ export default function AgencyPartnersPage() {
     },
     {
       question: 'When will agency features be ready?',
-      answer: 'Core agency dashboard and multi-creator management targeting end of January 2025. Advanced features (white-label, API, advanced reporting) in Q2 2025.'
+      answer: 'Core agency dashboard and multi-creator management targeting end of November 2025. Advanced features (white-label, API, advanced reporting) in Q1 2026.'
     },
     {
       question: 'Can we pilot with just a few creators first?',
@@ -285,7 +285,7 @@ export default function AgencyPartnersPage() {
               </ul>
             </motion.div>
 
-            {/* Q1 2025 */}
+            {/* December 2025 */}
             <motion.div
               className="glass-panel rounded-2xl p-8"
               initial={{ opacity: 0, y: 30 }}
@@ -295,7 +295,7 @@ export default function AgencyPartnersPage() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <Rocket className="w-8 h-8 text-holo-teal" />
-                <h3 className="text-2xl font-bold text-primary-dark">In Development (Q1 2025)</h3>
+                <h3 className="text-2xl font-bold text-primary-dark">In Development (December 2025)</h3>
               </div>
               <ul className="space-y-3">
                 {q1Features.map((feature, index) => (
@@ -307,7 +307,7 @@ export default function AgencyPartnersPage() {
               </ul>
             </motion.div>
 
-            {/* Q2 2025 */}
+            {/* Q1 2026 */}
             <motion.div
               className="glass-panel rounded-2xl p-8"
               initial={{ opacity: 0, y: 30 }}
@@ -317,7 +317,7 @@ export default function AgencyPartnersPage() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <Target className="w-8 h-8 text-holo-purple" />
-                <h3 className="text-2xl font-bold text-primary-dark">Coming Q2 2025</h3>
+                <h3 className="text-2xl font-bold text-primary-dark">Coming Q1 2026</h3>
               </div>
               <ul className="space-y-3">
                 {q2Features.map((feature, index) => (

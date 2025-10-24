@@ -46,10 +46,10 @@ const TrustedByCarousel = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <h3 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-2">
+        <h3 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
           Trusted by <span className="text-green-600">10,000+</span> Creators
         </h3>
-        <p className="text-slate-600 text-lg">
+        <p className="text-slate-600 dark:text-slate-300 text-lg">
           Join successful creators who are already scaling their engagement
         </p>
       </motion.div>
@@ -70,7 +70,7 @@ const TrustedByCarousel = () => {
           {extendedTrustedBy.map((creator, index) => (
             <motion.div
               key={`${creator.handle}-${index}`}
-              className="flex-shrink-0 w-64 bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-slate-200/70 hover:shadow-xl transition-all duration-300"
+              className="flex-shrink-0 w-64 bg-white/90 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-slate-200/70 dark:border-slate-700/60 hover:shadow-xl transition-all duration-300"
               whileHover={{ 
                 scale: 1.02,
                 y: -2
@@ -94,10 +94,10 @@ const TrustedByCarousel = () => {
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-bold text-slate-900 text-lg leading-tight">
+                  <h4 className="font-bold text-slate-900 dark:text-slate-100 text-lg leading-tight">
                     {creator.name}
                   </h4>
-                  <p className="text-slate-600 text-sm">
+                  <p className="text-slate-600 dark:text-slate-300 text-sm">
                     {creator.handle}
                   </p>
                 </div>
@@ -105,24 +105,24 @@ const TrustedByCarousel = () => {
 
               <div className="flex items-center justify-between mb-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {creator.followers}
                   </div>
-                  <div className="text-xs text-slate-500 uppercase tracking-wide">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                     Followers
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     +{creator.growth}%
                   </div>
-                  <div className="text-xs text-slate-500 uppercase tracking-wide">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                     Growth
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-1 text-yellow-500">
+              <div className="flex items-center space-x-1 text-yellow-500 dark:text-yellow-300">
                 {[...Array(5)].map((_, i) => (
                   <svg key={i} className="w-4 h-4 fill-current" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
@@ -140,7 +140,7 @@ const TrustedByCarousel = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.5 }}
       >
-        <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-600">
+        <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-600 dark:text-slate-300">
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <span>Average 25% engagement increase</span>

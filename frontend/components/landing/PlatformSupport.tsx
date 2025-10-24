@@ -5,7 +5,8 @@ import { useRef } from 'react';
 import { useInView } from 'framer-motion';
 import { Check, Clock } from 'lucide-react';
 import { BetaBadge } from '@/components/ui/BetaBadge';
-import { FaYoutube, FaInstagram, FaTiktok, FaTwitter, FaLinkedin } from 'react-icons/fa';
+import { FaYoutube, FaInstagram, FaTiktok, FaLinkedin } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 
 export function PlatformSupport() {
   const ref = useRef<HTMLDivElement>(null);
@@ -17,9 +18,9 @@ export function PlatformSupport() {
   ];
 
   const comingSoonPlatforms = [
-    { name: 'TikTok', timeline: 'Q1 2025', icon: FaTiktok, color: 'text-black dark:text-white' },
-    { name: 'Twitter/X', timeline: 'Q1 2025', icon: FaTwitter, color: 'text-blue-400' },
-    { name: 'LinkedIn', timeline: 'Q2 2025', icon: FaLinkedin, color: 'text-blue-700' },
+    { name: 'TikTok', timeline: 'December 2025', icon: FaTiktok, color: 'text-black dark:text-white' },
+    { name: 'X', timeline: 'December 2025', icon: FaXTwitter, color: 'text-black dark:text-white' },
+    { name: 'LinkedIn', timeline: 'Q1 2026', icon: FaLinkedin, color: 'text-blue-700' },
   ];
 
   return (

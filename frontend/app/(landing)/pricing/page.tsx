@@ -97,7 +97,7 @@ export default function PricingPage() {
           transition={{ duration: 0.6, delay: 0.2 }}
         >
           <div className="absolute top-0 left-0 bg-gradient-to-r from-holo-mint to-holo-teal px-6 py-2 rounded-br-2xl">
-            <span className="text-white font-bold flex items-center gap-2">
+            <span className="text-gray-900 dark:text-white font-bold flex items-center gap-2">
               <Star className="w-4 h-4" />
               LIMITED TIME OFFER
             </span>
@@ -163,7 +163,7 @@ export default function PricingPage() {
               </div>
 
               <div className="text-center">
-                <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-white px-12 py-6 text-lg mb-4">
+                <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-gray-900 dark:text-white px-12 py-6 text-lg mb-4">
                   <Link href="/signup">
                     Secure Founder Pricing - £99
                   </Link>
@@ -184,7 +184,7 @@ export default function PricingPage() {
             Planned Launch Pricing (Q2 2025)
           </h2>
           <p className="text-lg text-secondary-dark">
-            These prices go live when we officially launch. Lock in Founder Pricing now to save up to 50%.
+            These prices go live when we officially launch. Lock in Founder Pricing now to get lifetime Pro Plan.
           </p>
         </div>
 
@@ -241,7 +241,7 @@ export default function PricingPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-holo-mint text-white px-4 py-1 rounded-full text-sm font-bold">
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-holo-mint text-gray-900 dark:text-white px-4 py-1 rounded-full text-sm font-bold">
               MOST POPULAR
             </div>
             
