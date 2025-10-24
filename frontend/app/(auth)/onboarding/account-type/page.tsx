@@ -17,7 +17,7 @@ type AccountType = 'creator' | 'agency';
 
 export default function AccountTypePage() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, checkAuth } = useAuth();
   const [selectedType, setSelectedType] = useState<AccountType | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -27,6 +27,9 @@ export default function AccountTypePage() {
 
     try {
       await api.post('/onboarding/account-type', { account_type: type });
+      
+      // Refresh user state to get updated account_type
+      await checkAuth();
       
       // Redirect to appropriate application form
       if (type === 'creator') {
