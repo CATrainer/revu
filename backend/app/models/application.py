@@ -1,7 +1,7 @@
 """Application models for user onboarding workflow."""
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM, JSONB, UUID as PGUUID
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -14,7 +14,7 @@ class Application(Base):
 
     user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     account_type = Column(
-        Enum('creator', 'agency', 'legacy', name='account_type_enum'),
+        PG_ENUM('creator', 'agency', 'legacy', name='account_type_enum', create_type=False),
         nullable=False,
         comment="Type of account being applied for"
     )
@@ -40,7 +40,7 @@ class Application(Base):
         comment="Admin who reviewed the application"
     )
     status = Column(
-        Enum('pending', 'approved', 'rejected', name='application_status_enum'),
+        PG_ENUM('pending', 'approved', 'rejected', name='application_status_enum', create_type=False),
         nullable=False,
         default='pending',
         comment="Current status of the application"

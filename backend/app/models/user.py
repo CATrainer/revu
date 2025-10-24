@@ -4,8 +4,8 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, String, Text, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM, JSONB, UUID as PGUUID
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -45,12 +45,12 @@ class User(Base):
     
     # New approval workflow fields
     account_type = Column(
-        Enum('creator', 'agency', 'legacy', name='account_type_enum'),
+        PG_ENUM('creator', 'agency', 'legacy', name='account_type_enum', create_type=False),
         nullable=True,
         comment="Account type: creator, agency, or legacy (pre-application users)"
     )
     approval_status = Column(
-        Enum('pending', 'approved', 'rejected', name='approval_status_enum'),
+        PG_ENUM('pending', 'approved', 'rejected', name='approval_status_enum', create_type=False),
         nullable=False,
         default='pending',
         comment="Approval status for application-based signup"
