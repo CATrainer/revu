@@ -46,18 +46,18 @@ def upgrade() -> None:
     # Data migration for existing users
     op.execute("""
         UPDATE users 
-        SET account_type = 'legacy' 
+        SET account_type = 'legacy'::account_type_enum 
         WHERE account_type IS NULL
     """)
     
     op.execute("""
         UPDATE users 
-        SET approval_status = CASE 
+        SET approval_status = (CASE 
             WHEN access_status = 'full' THEN 'approved'
             WHEN access_status = 'waiting' THEN 'pending'
             ELSE 'pending'
-        END
-        WHERE approval_status = 'pending' AND access_status IS NOT NULL
+        END)::approval_status_enum
+        WHERE approval_status = 'pending'::approval_status_enum AND access_status IS NOT NULL
     """)
     
     op.execute("""
@@ -65,7 +65,7 @@ def upgrade() -> None:
         SET approved_at = early_access_granted_at
         WHERE early_access_granted_at IS NOT NULL 
         AND approved_at IS NULL
-        AND approval_status = 'approved'
+        AND approval_status = 'approved'::approval_status_enum
     """)
     
     # Add indexes for performance
@@ -80,12 +80,12 @@ def upgrade() -> None:
         'applications',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text('uuid_generate_v4()')),
         sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('account_type', postgresql.ENUM('creator', 'agency', name='application_status_enum'), nullable=False),
+        sa.Column('account_type', sa.Enum('creator', 'agency', name='account_type_enum', create_type=False), nullable=False),
         sa.Column('application_data', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column('submitted_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
         sa.Column('reviewed_at', sa.DateTime(timezone=True), nullable=True),
         sa.Column('reviewed_by', postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column('status', postgresql.ENUM('pending', 'approved', 'rejected', name='application_status_enum'), nullable=False, server_default='pending'),
+        sa.Column('status', sa.Enum('pending', 'approved', 'rejected', name='application_status_enum', create_type=False), nullable=False, server_default='pending'),
         sa.Column('admin_notes', sa.Text(), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
