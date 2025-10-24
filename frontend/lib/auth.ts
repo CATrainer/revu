@@ -127,7 +127,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       
       // Get user data
       const userResponse = await api.get('/auth/me');
-      set({ user: userResponse.data, isAuthenticated: true });
+      set({ user: userResponse.data, isAuthenticated: true, isLoading: false });
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -160,7 +160,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       }
 
       // Use the signup response data which should have the updated user info
-      set({ user: response.data, isAuthenticated: true });
+      set({ user: response.data, isAuthenticated: true, isLoading: false });
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
@@ -179,7 +179,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
     }
-    set({ user: null, isAuthenticated: false });
+    set({ user: null, isAuthenticated: false, isLoading: false });
   },
 
   checkAuth: async () => {
