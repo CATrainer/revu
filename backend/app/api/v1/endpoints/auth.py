@@ -104,7 +104,7 @@ async def signup(
                 detail="Email already registered",
             )
 
-    # Create new user with full access immediately
+    # Create new user with pending approval (application-based signup)
     user = await user_service.create(
         user_create=UserCreate(
             email=user_in.email,
@@ -113,15 +113,16 @@ async def signup(
         )
     )
     
-    # Grant full access immediately (post-launch behavior)
-    user.access_status = "full"
-    user.user_kind = "content"
+    # Set pending status - user must complete application
+    user.access_status = "waiting"  # Legacy field for backward compatibility
+    user.user_kind = "content"  # Default, will be updated by account_type
     user.has_account = True
-    user.early_access_granted_at = datetime.utcnow()
+    user.approval_status = "pending"  # New approval workflow
+    user.account_type = None  # Will be set in onboarding flow
     await db.commit()
     await db.refresh(user)
 
-    logger.info(f"New user created with full access: {user.email}")
+    logger.info(f"New user created (pending approval): {user.email}")
     
     # DISABLED: Post-launch, no automated welcome emails
     # try:
@@ -291,16 +292,36 @@ async def get_current_user_info(
         id=current_user.id,
         email=current_user.email,
         full_name=current_user.full_name,
+        phone=current_user.phone,
+        company_name=current_user.company_name,
+        industry=current_user.industry,
         is_active=current_user.is_active,
         is_admin=current_user.is_admin,
         created_at=current_user.created_at,
         updated_at=current_user.updated_at,
         last_login_at=current_user.last_login_at,
-    access_status=current_user.access_status,
+        access_status=current_user.access_status,
+        user_kind=current_user.user_kind,
+        account_type=current_user.account_type,
+        approval_status=current_user.approval_status,
+        application_submitted_at=current_user.application_submitted_at,
+        approved_at=current_user.approved_at,
+        approved_by=current_user.approved_by,
+        rejected_at=current_user.rejected_at,
+        rejected_by=current_user.rejected_by,
+        rejection_reason=current_user.rejection_reason,
         joined_waiting_list_at=current_user.joined_waiting_list_at,
         early_access_granted_at=current_user.early_access_granted_at,
         demo_requested=current_user.demo_requested,
         demo_requested_at=current_user.demo_requested_at,
+        demo_scheduled_at=current_user.demo_scheduled_at,
+        demo_completed=current_user.demo_completed,
+        demo_completed_at=current_user.demo_completed_at,
+        company_size=current_user.company_size,
+        current_solution=current_user.current_solution,
+        demo_prep_notes=current_user.demo_prep_notes,
+        follow_up_reminders=current_user.follow_up_reminders,
+        user_qualification_notes=current_user.user_qualification_notes,
     )
 
 

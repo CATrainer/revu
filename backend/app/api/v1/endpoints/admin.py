@@ -28,10 +28,18 @@ class UserResponse(BaseModel):
     is_active: bool
     is_admin: bool
     has_account: bool
+    # Legacy fields
     access_status: str
     user_kind: str | None = None
-    joined_waiting_list_at: str | None
-    early_access_granted_at: str | None
+    # New approval workflow fields
+    account_type: str | None = None
+    approval_status: str = "pending"
+    application_submitted_at: str | None = None
+    approved_at: str | None = None
+    rejected_at: str | None = None
+    # Other fields
+    joined_waiting_list_at: str | None = None
+    early_access_granted_at: str | None = None
     demo_requested: bool
     created_at: str
 
@@ -113,6 +121,11 @@ async def get_waiting_list(
             has_account=user.has_account,
             access_status=user.access_status,
             user_kind=getattr(user, "user_kind", None),
+            account_type=getattr(user, "account_type", None),
+            approval_status=getattr(user, "approval_status", "pending"),
+            application_submitted_at=user.application_submitted_at.isoformat() if getattr(user, "application_submitted_at", None) else None,
+            approved_at=user.approved_at.isoformat() if getattr(user, "approved_at", None) else None,
+            rejected_at=user.rejected_at.isoformat() if getattr(user, "rejected_at", None) else None,
             joined_waiting_list_at=user.joined_waiting_list_at.isoformat() if user.joined_waiting_list_at else None,
             early_access_granted_at=user.early_access_granted_at.isoformat() if user.early_access_granted_at else None,
             demo_requested=user.demo_requested,
@@ -148,6 +161,11 @@ async def get_all_users(
             has_account=user.has_account,
             access_status=user.access_status,
             user_kind=getattr(user, "user_kind", None),
+            account_type=getattr(user, "account_type", None),
+            approval_status=getattr(user, "approval_status", "pending"),
+            application_submitted_at=user.application_submitted_at.isoformat() if getattr(user, "application_submitted_at", None) else None,
+            approved_at=user.approved_at.isoformat() if getattr(user, "approved_at", None) else None,
+            rejected_at=user.rejected_at.isoformat() if getattr(user, "rejected_at", None) else None,
             joined_waiting_list_at=user.joined_waiting_list_at.isoformat() if user.joined_waiting_list_at else None,
             early_access_granted_at=user.early_access_granted_at.isoformat() if user.early_access_granted_at else None,
             demo_requested=user.demo_requested,

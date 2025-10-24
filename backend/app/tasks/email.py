@@ -805,6 +805,277 @@ async def _send_trial_expiration_email(email: str, name: str, days_left: int) ->
         return False
 
 
+@celery_app.task(name="app.tasks.email.send_application_approved_email")
+def send_application_approved_email(user_email: str, user_name: str, account_type: str) -> bool:
+    """
+    Send approval email when application is approved.
+    
+    Args:
+        user_email: Recipient email address
+        user_name: Recipient name
+        account_type: Type of account (creator or agency)
+    
+    Returns:
+        bool: Success status
+    """
+    try:
+        subject = "Welcome to Repruv — Your Application is Approved! 🎉"
+        
+        account_label = "Creator" if account_type == "creator" else "Agency"
+        
+        html_content = f"""
+        <!doctype html>
+        <html>
+        <body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:24px;margin:0;">
+            <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                <!-- Header -->
+                <div style="text-align:center;margin-bottom:24px;">
+                    <h1 style="margin:0;color:#0f172a;font-weight:800;font-size:28px;">🎉 Welcome to Repruv!</h1>
+                </div>
+                
+                <!-- Main Content -->
+                <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
+                    Hi {user_name},
+                </p>
+                
+                <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
+                    Great news! Your <strong>{account_label}</strong> application has been approved. You now have full access to Repruv's AI-powered comment management platform.
+                </p>
+                
+                <!-- Benefits Box -->
+                <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:20px;margin:24px 0;border-radius:8px;">
+                    <h3 style="margin:0 0 12px;color:#15803d;font-size:18px;font-weight:700;">What's Next?</h3>
+                    <ul style="margin:0;padding-left:20px;color:#166534;font-size:14px;line-height:22px;">
+                        <li style="margin-bottom:8px;">Connect your social media accounts (YouTube, Instagram, TikTok)</li>
+                        <li style="margin-bottom:8px;">Set up your AI comment reply preferences</li>
+                        <li style="margin-bottom:8px;">Explore automation workflows</li>
+                        <li style="margin-bottom:0;">Start engaging with your community more efficiently</li>
+                    </ul>
+                </div>
+                
+                <!-- CTA Button -->
+                <div style="text-align:center;margin:32px 0;">
+                    <a href="{settings.FRONTEND_URL}/dashboard" 
+                       style="background:linear-gradient(to right,#16a34a,#15803d);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;display:inline-block;font-weight:600;font-size:16px;">
+                        Get Started →
+                    </a>
+                </div>
+                
+                <!-- Support Section -->
+                <div style="background:#f8fafc;padding:16px;border-radius:8px;margin-top:24px;">
+                    <p style="margin:0;color:#64748b;font-size:14px;line-height:20px;">
+                        <strong style="color:#334155;">Need help getting started?</strong><br>
+                        Our support team is here to help. Reply to this email or visit our 
+                        <a href="{settings.FRONTEND_URL}/help" style="color:#16a34a;text-decoration:none;font-weight:600;">Help Center</a>.
+                    </p>
+                </div>
+                
+                <!-- Footer -->
+                <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;text-align:center;line-height:18px;">
+                    You're receiving this email because your Repruv application was approved.<br>
+                    © {datetime.utcnow().year} Repruv. All rights reserved.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return send_email(user_email, subject, html_content)
+        
+    except Exception as e:
+        logger.error(f"Failed to send application approved email to {user_email}: {e}")
+        return False
+
+
+@celery_app.task(name="app.tasks.email.send_application_rejected_email")
+def send_application_rejected_email(
+    user_email: str, 
+    user_name: str, 
+    account_type: str,
+    rejection_reason: str | None = None
+) -> bool:
+    """
+    Send rejection email when application is rejected.
+    
+    Args:
+        user_email: Recipient email address
+        user_name: Recipient name
+        account_type: Type of account (creator or agency)
+        rejection_reason: Optional reason for rejection
+    
+    Returns:
+        bool: Success status
+    """
+    try:
+        subject = "Update on Your Repruv Application"
+        
+        account_label = "Creator" if account_type == "creator" else "Agency"
+        
+        reason_html = ""
+        if rejection_reason:
+            reason_html = f"""
+            <div style="background:#fef2f2;border-left:4px solid#ef4444;padding:16px;margin:20px 0;border-radius:8px;">
+                <p style="margin:0;color:#991b1b;font-size:14px;line-height:20px;">
+                    <strong>Reason:</strong><br>
+                    {rejection_reason}
+                </p>
+            </div>
+            """
+        
+        html_content = f"""
+        <!doctype html>
+        <html>
+        <body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:24px;margin:0;">
+            <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                <!-- Header -->
+                <div style="text-align:center;margin-bottom:24px;">
+                    <h1 style="margin:0;color:#0f172a;font-weight:700;font-size:24px;">Update on Your Application</h1>
+                </div>
+                
+                <!-- Main Content -->
+                <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
+                    Hi {user_name},
+                </p>
+                
+                <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
+                    Thank you for your interest in Repruv. After careful review, we're unable to approve your <strong>{account_label}</strong> application at this time.
+                </p>
+                
+                {reason_html}
+                
+                <!-- Next Steps -->
+                <div style="background:#f0f9ff;border-left:4px solid #3b82f6;padding:20px;margin:24px 0;border-radius:8px;">
+                    <h3 style="margin:0 0 12px;color:#1e40af;font-size:16px;font-weight:600;">What You Can Do</h3>
+                    <ul style="margin:0;padding-left:20px;color:#1e3a8a;font-size:14px;line-height:22px;">
+                        <li style="margin-bottom:8px;">You're welcome to reapply in the future as our criteria evolve</li>
+                        <li style="margin-bottom:8px;">Contact us at support@repruv.com to discuss your application</li>
+                        <li style="margin-bottom:0;">Follow us on social media for updates on new opportunities</li>
+                    </ul>
+                </div>
+                
+                <!-- Support Section -->
+                <div style="background:#f8fafc;padding:16px;border-radius:8px;margin-top:24px;">
+                    <p style="margin:0;color:#64748b;font-size:14px;line-height:20px;">
+                        <strong style="color:#334155;">Have questions about this decision?</strong><br>
+                        Our team is happy to provide more information. Reply to this email or contact us at 
+                        <a href="mailto:support@repruv.com" style="color:#16a34a;text-decoration:none;font-weight:600;">support@repruv.com</a>.
+                    </p>
+                </div>
+                
+                <!-- Footer -->
+                <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;text-align:center;line-height:18px;">
+                    We appreciate your interest in Repruv.<br>
+                    © {datetime.utcnow().year} Repruv. All rights reserved.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return send_email(user_email, subject, html_content)
+        
+    except Exception as e:
+        logger.error(f"Failed to send application rejected email to {user_email}: {e}")
+        return False
+
+
+@celery_app.task(name="app.tasks.email.send_new_application_notification_to_admins")
+def send_new_application_notification_to_admins(
+    applicant_email: str,
+    applicant_name: str,
+    account_type: str,
+    application_id: str
+) -> dict:
+    """
+    Notify configured admin emails about new application submission.
+    
+    Args:
+        applicant_email: Applicant's email
+        applicant_name: Applicant's name
+        account_type: Type of account (creator or agency)
+        application_id: UUID of the application
+    
+    Returns:
+        dict: Summary of notifications sent
+    """
+    try:
+        from app.models.admin_notification_settings import AdminNotificationSettings
+        
+        async def _send_notifications():
+            sent = 0
+            failed = 0
+            
+            async with async_session_maker() as session:
+                # Get active admins who want this notification type
+                notification_key = f"{account_type}_applications"
+                stmt = select(AdminNotificationSettings).where(
+                    AdminNotificationSettings.is_active == True  # noqa: E712
+                )
+                result = await session.execute(stmt)
+                admin_settings = result.scalars().all()
+                
+                for admin in admin_settings:
+                    # Check if they want this type of notification
+                    if not admin.notification_types.get(notification_key, False):
+                        continue
+                    
+                    try:
+                        subject = f"New {account_type.title()} Application — {applicant_name}"
+                        account_label = "Creator" if account_type == "creator" else "Agency"
+                        
+                        html_content = f"""
+                        <!doctype html>
+                        <html>
+                        <body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:20px;margin:0;">
+                            <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;padding:24px;">
+                                <h2 style="margin:0 0 16px;color:#0f172a;font-size:20px;">New {account_label} Application</h2>
+                                
+                                <div style="background:#f8fafc;padding:16px;border-radius:6px;margin-bottom:20px;">
+                                    <p style="margin:0 0 8px;color:#64748b;font-size:14px;"><strong>Applicant:</strong> {applicant_name}</p>
+                                    <p style="margin:0 0 8px;color:#64748b;font-size:14px;"><strong>Email:</strong> {applicant_email}</p>
+                                    <p style="margin:0;color:#64748b;font-size:14px;"><strong>Type:</strong> {account_label}</p>
+                                </div>
+                                
+                                <div style="text-align:center;margin-top:24px;">
+                                    <a href="{settings.FRONTEND_URL}/admin/applications/{application_id}" 
+                                       style="background:#16a34a;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;display:inline-block;font-weight:600;">
+                                        Review Application →
+                                    </a>
+                                </div>
+                                
+                                <p style="margin:20px 0 0;color:#94a3b8;font-size:12px;text-align:center;">
+                                    Repruv Admin Notifications
+                                </p>
+                            </div>
+                        </body>
+                        </html>
+                        """
+                        
+                        if send_email(admin.email, subject, html_content):
+                            sent += 1
+                        else:
+                            failed += 1
+                            
+                    except Exception as e:  # noqa: BLE001
+                        logger.error(f"Failed to notify admin {admin.email}: {e}")
+                        failed += 1
+            
+            return {"sent": sent, "failed": failed}
+        
+        # Run async function
+        try:
+            result = asyncio.get_event_loop().run_until_complete(_send_notifications())
+        except RuntimeError:
+            result = asyncio.run(_send_notifications())
+        
+        logger.info(f"Admin notifications for application {application_id}: sent={result['sent']}, failed={result['failed']}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Failed to send admin notifications for application {application_id}: {e}")
+        return {"sent": 0, "failed": 0, "error": str(e)}
+
+
 # DEPRECATED: Review feature removed - this task is no longer used
 # @celery_app.task(name="app.tasks.email.send_review_alert")
 # def send_review_alert(

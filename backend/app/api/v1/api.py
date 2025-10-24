@@ -36,6 +36,8 @@ from app.api.v1.endpoints import (
     credits,
     insights,
     action_plans,
+    onboarding,
+    applications,
 )
 from app.api.v1.endpoints import workflows as workflows_endpoints
 from app.api.v1.endpoints import marketing_admin
@@ -69,6 +71,18 @@ api_router.include_router(
     auth.router,
     prefix="/auth",
     tags=["authentication"],
+)
+
+api_router.include_router(
+    onboarding.router,
+    prefix="/onboarding",
+    tags=["onboarding"],
+)
+
+api_router.include_router(
+    applications.router,
+    prefix="/admin/applications",
+    tags=["admin", "applications"],
 )
 
 api_router.include_router(

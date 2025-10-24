@@ -24,11 +24,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoading || !isAuthenticated || !user) return;
-    // Users without dashboard access -> redirect to login
+    
+    // Users without dashboard access -> redirect to appropriate page
     if (!canAccessDashboard()) {
-      router.push('/login');
+      const { getRedirectPath } = useAuth.getState();
+      const redirectPath = getRedirectPath();
+      router.push(redirectPath);
       return;
     }
+    
     // All authenticated users with access go to dashboard
     if (pathname === '/') {
       router.push('/dashboard');

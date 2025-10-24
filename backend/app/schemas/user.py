@@ -11,6 +11,8 @@ from pydantic import BaseModel, EmailStr, Field
 # Type alias for simplified access status
 AccessStatus = Literal["waiting", "full"]
 UserKind = Literal["content", "business"]
+AccountType = Literal["creator", "agency", "legacy"]
+ApprovalStatus = Literal["pending", "approved", "rejected"]
 
 
 class UserBase(BaseModel):
@@ -100,8 +102,22 @@ class User(UserBase):
     created_at: datetime
     updated_at: datetime
     last_login_at: Optional[datetime] = None
+    
+    # Legacy access control fields
     access_status: AccessStatus = "waiting"
     user_kind: Optional[UserKind] = "content"
+    
+    # New approval workflow fields
+    account_type: Optional[AccountType] = None
+    approval_status: ApprovalStatus = "pending"
+    application_submitted_at: Optional[datetime] = None
+    approved_at: Optional[datetime] = None
+    approved_by: Optional[UUID] = None
+    rejected_at: Optional[datetime] = None
+    rejected_by: Optional[UUID] = None
+    rejection_reason: Optional[str] = None
+    
+    # Other fields
     joined_waiting_list_at: Optional[datetime] = None
     early_access_granted_at: Optional[datetime] = None
     demo_requested: bool = False

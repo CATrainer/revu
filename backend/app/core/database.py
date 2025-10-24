@@ -195,6 +195,7 @@ async def create_db_and_tables() -> None:
                 ai_training,
                 youtube,
                 workflow,
+                application,
             )
 
             # Configure the registry to resolve any relationship mapping issues

@@ -19,6 +19,14 @@ interface User {
   demo_requested: boolean;
   demo_requested_at: string | null;
   demo_access_type?: 'creator' | 'business' | 'agency_creators' | 'agency_businesses' | null;
+  account_type?: 'creator' | 'agency' | 'legacy' | null;
+  approval_status?: 'pending' | 'approved' | 'rejected';
+  application_submitted_at?: string | null;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  rejected_at?: string | null;
+  rejected_by?: string | null;
+  rejection_reason?: string | null;
 }
 
 interface AuthState {
@@ -216,17 +224,69 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   canAccessDashboard: (): boolean => {
     const { user } = get();
-    return user?.access_status === 'full';
+    if (!user) return false;
+    
+    // Admin always has access
+    if (user.is_admin) return true;
+    
+    // Legacy users have access
+    if (user.account_type === 'legacy') return true;
+    
+    // New approval workflow - must be approved
+    if (user.approval_status === 'approved') return true;
+    
+    // Fallback to old access_status for backward compatibility
+    return user.access_status === 'full';
   },
 
   getRedirectPath: (): string => {
     const { user } = get();
-  if (!user) return '/login';
-  // Admin users go to admin dashboard
-  if (user.is_admin) return '/admin';
-  // Regular users
-  if (user.access_status === 'waiting') return '/waiting-area';
-  if (user.access_status === 'full') return '/dashboard';
-  return '/waiting-area';
+    if (!user) return '/login';
+    
+    // Admin users go to admin dashboard
+    if (user.is_admin) return '/admin';
+    
+    // New approval workflow routing
+    if (user.approval_status) {
+      // If user hasn't selected account type yet
+      if (!user.account_type) {
+        return '/onboarding/account-type';
+      }
+      
+      // If user hasn't submitted application yet
+      if (!user.application_submitted_at) {
+        if (user.account_type === 'creator') {
+          return '/onboarding/creator-application';
+        } else if (user.account_type === 'agency') {
+          return '/onboarding/agency-application';
+        }
+      }
+      
+      // If application is pending
+      if (user.approval_status === 'pending') {
+        return '/onboarding/pending';
+      }
+      
+      // If application was rejected
+      if (user.approval_status === 'rejected') {
+        return '/onboarding/rejected';
+      }
+      
+      // If approved, proceed to dashboard
+      if (user.approval_status === 'approved') {
+        return '/dashboard';
+      }
+    }
+    
+    // Legacy users (existing users before approval workflow)
+    if (user.account_type === 'legacy') {
+      return '/dashboard';
+    }
+    
+    // Fallback to access_status for backward compatibility
+    if (user.access_status === 'waiting') return '/waiting-area';
+    if (user.access_status === 'full') return '/dashboard';
+    
+    return '/onboarding/account-type';
   },
 }));

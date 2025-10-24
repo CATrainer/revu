@@ -47,8 +47,8 @@ export default function SignupPage() {
     try {
       await signup(data.email, data.password, data.fullName);
       
-      // Redirect to dashboard with full access
-      router.push('/dashboard');
+      // Redirect to onboarding flow (account type selection)
+      router.push('/onboarding/account-type');
     } catch (err) {
       console.error('Signup error:', err);
       const axiosError = err as AxiosError<ErrorResponse>;

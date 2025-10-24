@@ -38,6 +38,7 @@ from app.models.content import (
     ActionPlan,
     ActionItem,
 )
+from app.models.application import Application, AdminNotificationSettings
 
 __all__ = [
     "Organization",
@@ -77,4 +78,6 @@ __all__ = [
     "ContentTheme",
     "ActionPlan",
     "ActionItem",
+    "Application",
+    "AdminNotificationSettings",
 ]

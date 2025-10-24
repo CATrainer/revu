@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import relationship
 
@@ -28,19 +28,64 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False, comment="Admin user flag")
     
-    # Access control fields
+    # Access control fields (legacy - kept for backward compatibility)
     access_status = Column(
         String(20), 
         nullable=False, 
         default="waiting",
-        comment="Access level: waiting, full"
+        comment="Access level: waiting, full (legacy field)"
     )
-    # Simple user category flag (content creator vs business)
+    # Simple user category flag (content creator vs business - legacy)
     user_kind = Column(
         String(20),
         nullable=False,
         default="content",
-        comment="User kind: content | business"
+        comment="User kind: content | business (legacy field)"
+    )
+    
+    # New approval workflow fields
+    account_type = Column(
+        Enum('creator', 'agency', 'legacy', name='account_type_enum'),
+        nullable=True,
+        comment="Account type: creator, agency, or legacy (pre-application users)"
+    )
+    approval_status = Column(
+        Enum('pending', 'approved', 'rejected', name='approval_status_enum'),
+        nullable=False,
+        default='pending',
+        comment="Approval status for application-based signup"
+    )
+    application_submitted_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="When user submitted their application"
+    )
+    approved_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="When user was approved"
+    )
+    approved_by = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True,
+        comment="Admin who approved the user"
+    )
+    rejected_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="When user was rejected"
+    )
+    rejected_by = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True,
+        comment="Admin who rejected the user"
+    )
+    rejection_reason = Column(
+        Text,
+        nullable=True,
+        comment="Internal reason for rejection"
     )
     joined_waiting_list_at = Column(DateTime(timezone=True))
     early_access_granted_at = Column(DateTime(timezone=True))
@@ -100,6 +145,7 @@ class User(Base):
     credit_balance = relationship("UserCreditBalance", back_populates="user", uselist=False, cascade="all, delete-orphan")
     content_pieces = relationship("ContentPiece", back_populates="user", cascade="all, delete-orphan")
     action_plans = relationship("ActionPlan", back_populates="user", cascade="all, delete-orphan")
+    applications = relationship("Application", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<User(email='{self.email}')>"

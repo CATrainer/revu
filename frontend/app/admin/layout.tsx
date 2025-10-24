@@ -27,7 +27,7 @@ export default function AdminLayout({ children }: PropsWithChildren) {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary-dark">Admin</h1>
-          <p className="text-secondary-dark text-sm">Manage users and monitor system metrics.</p>
+          <p className="text-secondary-dark text-sm">Manage users, review applications, and monitor system metrics.</p>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/dashboard" className="text-sm underline">Back to app</Link>
@@ -36,6 +36,7 @@ export default function AdminLayout({ children }: PropsWithChildren) {
 
       <div className="flex items-center gap-2">
         <TabLink href="/admin" label="Users" />
+        <TabLink href="/admin/applications" label="Applications" />
         <TabLink href="/admin/metrics" label="Metrics" />
       </div>
 
