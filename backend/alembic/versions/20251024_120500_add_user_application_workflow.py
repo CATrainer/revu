@@ -19,10 +19,30 @@ depends_on = None
 def upgrade() -> None:
     """Apply new onboarding workflow schema changes."""
     
-    # Create ENUM types using raw SQL for idempotency
-    op.execute("CREATE TYPE IF NOT EXISTS account_type_enum AS ENUM ('creator', 'agency', 'legacy')")
-    op.execute("CREATE TYPE IF NOT EXISTS approval_status_enum AS ENUM ('pending', 'approved', 'rejected')")
-    op.execute("CREATE TYPE IF NOT EXISTS application_status_enum AS ENUM ('pending', 'approved', 'rejected')")
+    # Create ENUM types using DO blocks for idempotency (IF NOT EXISTS not supported for CREATE TYPE)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE account_type_enum AS ENUM ('creator', 'agency', 'legacy');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
+    
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE approval_status_enum AS ENUM ('pending', 'approved', 'rejected');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
+    
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE application_status_enum AS ENUM ('pending', 'approved', 'rejected');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
     
     # Add new columns to users table
     op.add_column('users', sa.Column('account_type', postgresql.ENUM('creator', 'agency', 'legacy', name='account_type_enum', create_type=False), nullable=True))
