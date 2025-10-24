@@ -293,14 +293,9 @@ export const useAuth = create<AuthState>((set, get) => ({
         return '/dashboard';
       }
       
-      // Old waiting list users who got upgraded to full access
+      // Old users who had full access before approval workflow
       if (user.access_status === 'full') {
         return '/dashboard';
-      }
-      
-      // Old waiting list users still waiting
-      if (user.access_status === 'waiting' || user.access_status === 'waiting_list') {
-        return '/waiting-area';
       }
     }
     

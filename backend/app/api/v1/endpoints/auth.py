@@ -44,67 +44,35 @@ async def signup(
     user_in: UserSignup,
 ) -> Any:
     """
-    Create new user account.
+    Create new user account with application-based approval workflow.
     
-    If user previously joined waiting list with this email, their account
-    will be upgraded to full access. Otherwise, a new account with full
-    access is created immediately.
+    New users start with pending status and must:
+    1. Select account type (creator/agency)
+    2. Submit application
+    3. Wait for admin approval
 
     Args:
         db: Database session
         user_in: User signup data
 
     Returns:
-        User: Created or upgraded user object
+        User: Created user object
 
     Raises:
-        HTTPException: If email already has full account
+        HTTPException: If email already registered
     """
-    from datetime import datetime
     user_service = UserService(db)
 
     # Check if user exists
     existing_user = await user_service.get_by_email(email=user_in.email)
     
     if existing_user:
-        # If user was on waiting list, upgrade them to full access
-        if existing_user.access_status in ["waiting", "waiting_list"]:
-            logger.info(f"Upgrading waiting list user to full access: {existing_user.email}")
-            
-            # Set password and full name if provided
-            if user_in.password:
-                from app.core.security import get_password_hash
-                existing_user.hashed_password = get_password_hash(user_in.password)
-            if user_in.full_name:
-                existing_user.full_name = user_in.full_name
-            
-            # Upgrade to full access
-            existing_user.access_status = "full"
-            existing_user.has_account = True
-            existing_user.early_access_granted_at = datetime.utcnow()
-            if not existing_user.user_kind:
-                existing_user.user_kind = "content"
-            
-            await db.commit()
-            await db.refresh(existing_user)
-            
-            logger.info(f"Waiting list user upgraded: {existing_user.email}")
-            
-            # DISABLED: Post-launch, no automated welcome emails
-            # try:
-            #     send_welcome_email.delay(existing_user.email, existing_user.full_name)
-            # except Exception as e:
-            #     logger.error(f"Failed to enqueue welcome email for {existing_user.email}: {e}")
-            
-            return existing_user
-        else:
-            # User already has full account
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered",
-            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered",
+        )
 
-    # Create new user with pending approval (application-based signup)
+    # Create new user with pending approval
     user = await user_service.create(
         user_create=UserCreate(
             email=user_in.email,
@@ -113,23 +81,17 @@ async def signup(
         )
     )
     
-    # Set pending status - user must complete application
-    # IMPORTANT: Use "pending" not "waiting" to avoid triggering old upgrade logic
-    user.access_status = "pending"  # New users start as pending (not "waiting" which triggers upgrades)
-    user.user_kind = "content"  # Default, will be updated by account_type
+    # Initialize user for approval workflow
+    user.access_status = "pending"  # Legacy field for backward compatibility
+    user.user_kind = "content"  # Default kind
     user.has_account = True
-    user.approval_status = "pending"  # New approval workflow
-    user.account_type = None  # Will be set in onboarding flow
+    user.approval_status = "pending"  # Must complete application and get approved
+    user.account_type = None  # Will be set during onboarding
+    
     await db.commit()
     await db.refresh(user)
 
     logger.info(f"New user created (pending approval): {user.email}")
-    
-    # DISABLED: Post-launch, no automated welcome emails
-    # try:
-    #     send_welcome_email.delay(user.email, user.full_name)
-    # except Exception as e:
-    #     logger.error(f"Failed to enqueue welcome email for {user.email}: {e}")
     
     return user
 
@@ -473,7 +435,7 @@ async def get_my_access_status(
     return {
         "access_status": current_user.access_status,
         "user_kind": getattr(current_user, "user_kind", None),
-        "can_access_dashboard": current_user.access_status in ["full"],
+        "can_access_dashboard": current_user.can_access_dashboard,
         "joined_waiting_list_at": current_user.joined_waiting_list_at,
         "early_access_granted_at": current_user.early_access_granted_at,
         "demo_requested": current_user.demo_requested,

@@ -32,8 +32,8 @@ class User(Base):
     access_status = Column(
         String(20), 
         nullable=False, 
-        default="waiting",
-        comment="Access level: waiting, full (legacy field)"
+        default="pending",
+        comment="Access level: pending (new users), full (approved/legacy users)"
     )
     # Simple user category flag (content creator vs business - legacy)
     user_kind = Column(
@@ -157,30 +157,42 @@ class User(Base):
     
     @property
     def is_waiting_list(self) -> bool:
-        """Check if user is on waiting list."""
-        # Support legacy value waiting_list as well
-        return self.access_status in ("waiting", "waiting_list")
-    
-    @property
-    def has_early_access(self) -> bool:
-        """Deprecated: early access collapsed into full access."""
+        """Deprecated: No longer using waiting list. Check approval_status instead."""
         return False
     
     @property
+    def has_early_access(self) -> bool:
+        """Deprecated: Check approval_status == 'approved' instead."""
+        return self.approval_status == "approved" if self.approval_status else self.access_status == "full"
+    
+    @property
     def has_full_access(self) -> bool:
-        """Check if user has full access."""
-        return self.access_status in ("full", "full_access")
+        """Check if user has full access (approved or legacy)."""
+        # New workflow: must be approved
+        if self.approval_status:
+            return self.approval_status == "approved"
+        # Legacy: check old field
+        return self.access_status == "full"
     
     @property
     def can_access_dashboard(self) -> bool:
         """Check if user can access the main dashboard."""
-        return self.access_status in ("full", "full_access")
+        # Admins always have access
+        if self.is_admin:
+            return True
+        # New workflow: must be approved
+        if self.approval_status:
+            return self.approval_status == "approved"
+        # Legacy users with full access
+        return self.access_status == "full"
     
     def grant_early_access(self) -> None:
-        """Deprecated: map to full access."""
+        """Deprecated: Use approval workflow instead."""
+        # Update both old and new fields for backward compatibility
         self.access_status = "full"
-        if not self.early_access_granted_at:
-            self.early_access_granted_at = datetime.utcnow()
+        self.approval_status = "approved"
+        if not self.approved_at:
+            self.approved_at = datetime.utcnow()
 
     @property
     def is_content(self) -> bool:

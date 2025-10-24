@@ -17,17 +17,27 @@ depends_on = None
 
 
 def upgrade() -> None:
-    """Add 'pending' to access_status check constraint for new approval workflow."""
+    """Replace 'waiting' with 'pending' for new approval workflow."""
+    
+    # Migrate existing 'waiting' users to 'pending'
+    op.execute("""
+        UPDATE users 
+        SET access_status = 'pending' 
+        WHERE access_status = 'waiting'
+    """)
     
     # Drop existing check constraint
     op.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS ck_users_check_user_access_status")
     
-    # Recreate with pending added
+    # Recreate with only 'pending' and 'full' (remove 'waiting')
     op.create_check_constraint(
         'check_user_access_status',
         'users',
-        "access_status IN ('waiting','pending','full')",
+        "access_status IN ('pending','full')",
     )
+    
+    # Update default value for access_status column
+    op.execute("ALTER TABLE users ALTER COLUMN access_status SET DEFAULT 'pending'")
 
 
 def downgrade() -> None:

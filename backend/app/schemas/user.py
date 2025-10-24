@@ -8,8 +8,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
-# Type alias for simplified access status
-AccessStatus = Literal["waiting", "full"]
+# Type aliases for user attributes
+# AccessStatus: Legacy field - 'pending' for new users in approval workflow, 'full' for approved/legacy users
+AccessStatus = Literal["pending", "full"]
 UserKind = Literal["content", "business"]
 AccountType = Literal["creator", "agency", "legacy"]
 ApprovalStatus = Literal["pending", "approved", "rejected"]
@@ -103,8 +104,8 @@ class User(UserBase):
     updated_at: datetime
     last_login_at: Optional[datetime] = None
     
-    # Legacy access control fields
-    access_status: AccessStatus = "waiting"
+    # Legacy access control fields (kept for backward compatibility)
+    access_status: AccessStatus = "pending"
     user_kind: Optional[UserKind] = "content"
     
     # New approval workflow fields

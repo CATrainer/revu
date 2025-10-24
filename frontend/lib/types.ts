@@ -3,7 +3,8 @@
 export type Role = 'Owner' | 'Admin' | 'Manager' | 'Analyst' | 'Responder';
 
 // Auth/access control (revamped)
-export type AccessStatus = 'waiting' | 'waiting_list' | 'pending' | 'full';
+// pending = new users in approval workflow, full = approved/legacy users
+export type AccessStatus = 'pending' | 'full';
 export type UserKind = 'content' | 'business';
 export type DemoAccessType = never;
 
