@@ -215,10 +215,8 @@ export default function AgencyApplicationPage() {
 
     setIsSubmitting(true);
     try {
-      await api.post('/onboarding/agency-application', {
-        account_type: 'agency',
-        application_data: formData,
-      });
+      // Send formData directly - backend expects AgencyApplicationData schema
+      await api.post('/onboarding/agency-application', formData);
 
       // Refresh user state to get updated application_submitted_at
       await checkAuth();

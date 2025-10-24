@@ -143,10 +143,8 @@ export default function CreatorApplicationPage() {
 
     setIsSubmitting(true);
     try {
-      await api.post('/onboarding/creator-application', {
-        account_type: 'creator',
-        application_data: formData,
-      });
+      // Send formData directly - backend expects CreatorApplicationData schema
+      await api.post('/onboarding/creator-application', formData);
 
       // Refresh user state to get updated application_submitted_at
       await checkAuth();
