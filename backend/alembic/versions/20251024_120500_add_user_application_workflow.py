@@ -19,15 +19,10 @@ depends_on = None
 def upgrade() -> None:
     """Apply new onboarding workflow schema changes."""
     
-    # Create ENUM types
-    account_type_enum = postgresql.ENUM('creator', 'agency', 'legacy', name='account_type_enum', create_type=True)
-    account_type_enum.create(op.get_bind(), checkfirst=True)
-    
-    approval_status_enum = postgresql.ENUM('pending', 'approved', 'rejected', name='approval_status_enum', create_type=True)
-    approval_status_enum.create(op.get_bind(), checkfirst=True)
-    
-    application_status_enum = postgresql.ENUM('pending', 'approved', 'rejected', name='application_status_enum', create_type=True)
-    application_status_enum.create(op.get_bind(), checkfirst=True)
+    # Create ENUM types using raw SQL for idempotency
+    op.execute("CREATE TYPE IF NOT EXISTS account_type_enum AS ENUM ('creator', 'agency', 'legacy')")
+    op.execute("CREATE TYPE IF NOT EXISTS approval_status_enum AS ENUM ('pending', 'approved', 'rejected')")
+    op.execute("CREATE TYPE IF NOT EXISTS application_status_enum AS ENUM ('pending', 'approved', 'rejected')")
     
     # Add new columns to users table
     op.add_column('users', sa.Column('account_type', postgresql.ENUM('creator', 'agency', 'legacy', name='account_type_enum', create_type=False), nullable=True))
