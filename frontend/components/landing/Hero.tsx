@@ -73,15 +73,7 @@ export function Hero() {
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-primary-dark leading-tight tracking-tight mb-4">
-              <div className="flex items-center justify-center gap-4 mb-2">
-                <span className="block">Increase Engagement.</span>
-              </div>
-              <div className="flex items-center justify-center gap-4 mb-2">
-                <span className="block text-holo-teal">Drive Growth.</span>
-              </div>
-              <div className="flex items-center justify-center gap-4">
-                <span className="block text-holo-mint">Boost Monetisation.</span>
-              </div>
+              Automating monetisation for the creator economy.
             </h1>
             
             <p className="text-lg md:text-xl text-secondary-dark leading-relaxed max-w-3xl mx-auto font-light">
