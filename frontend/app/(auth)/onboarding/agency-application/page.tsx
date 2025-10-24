@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { pushToast } from '@/components/ui/toast';
 import {
   ArrowLeft,
@@ -79,12 +80,13 @@ const REFERRAL_SOURCES = [
 
 export default function AgencyApplicationPage() {
   const router = useRouter();
+  const { user, checkAuth } = useAuth();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newCreatorEmail, setNewCreatorEmail] = useState('');
   const [formData, setFormData] = useState<FormData>({
     agency_name: '',
-    contact_name: '',
+    contact_name: user?.full_name || '',
     contact_role: '',
     agency_website: '',
     creator_count: 0,
@@ -217,6 +219,9 @@ export default function AgencyApplicationPage() {
         account_type: 'agency',
         application_data: formData,
       });
+
+      // Refresh user state to get updated application_submitted_at
+      await checkAuth();
 
       pushToast('Application submitted successfully!', 'success');
       router.push('/onboarding/pending');

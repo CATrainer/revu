@@ -76,7 +76,15 @@ class UserService:
 
         Returns:
             User: Created user object
+            
+        Raises:
+            ValueError: If user already exists in database
         """
+        # Check if user already exists in PostgreSQL database
+        existing_user = await self.get_by_email(user_create.email)
+        if existing_user:
+            raise ValueError(f"User with email {user_create.email} already exists in database")
+        
         # Create user in Supabase
         try:
             supabase_user = await self.supabase_auth.create_user(
@@ -87,7 +95,7 @@ class UserService:
             auth_id = supabase_user["id"]
         except Exception as e:
             logger.error(f"Failed to create Supabase user: {e}")
-            # Fallback to local auth
+            # Fallback to local auth (user may exist in Supabase but not in our DB)
             auth_id = None
 
         # Hash password for local storage (backup auth)

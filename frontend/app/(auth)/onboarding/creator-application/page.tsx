@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { pushToast } from '@/components/ui/toast';
 import { ArrowLeft, ArrowRight, Check, Youtube, Instagram, Music2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
@@ -62,10 +63,11 @@ const REFERRAL_SOURCES = [
 
 export default function CreatorApplicationPage() {
   const router = useRouter();
+  const { user, checkAuth } = useAuth();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    full_name: '',
+    full_name: user?.full_name || '',
     creator_name: '',
     platforms: {
       youtube: { enabled: false },
@@ -145,6 +147,9 @@ export default function CreatorApplicationPage() {
         account_type: 'creator',
         application_data: formData,
       });
+
+      // Refresh user state to get updated application_submitted_at
+      await checkAuth();
 
       pushToast('Application submitted successfully!', 'success');
       router.push('/onboarding/pending');
