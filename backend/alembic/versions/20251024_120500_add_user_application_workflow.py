@@ -44,19 +44,34 @@ def upgrade() -> None:
         END $$;
     """)
     
-    # Add new columns to users table
-    op.add_column('users', sa.Column('account_type', postgresql.ENUM('creator', 'agency', 'legacy', name='account_type_enum', create_type=False), nullable=True))
-    op.add_column('users', sa.Column('approval_status', postgresql.ENUM('pending', 'approved', 'rejected', name='approval_status_enum', create_type=False), nullable=False, server_default='pending'))
-    op.add_column('users', sa.Column('application_submitted_at', sa.DateTime(timezone=True), nullable=True))
-    op.add_column('users', sa.Column('approved_at', sa.DateTime(timezone=True), nullable=True))
-    op.add_column('users', sa.Column('approved_by', postgresql.UUID(as_uuid=True), nullable=True))
-    op.add_column('users', sa.Column('rejected_at', sa.DateTime(timezone=True), nullable=True))
-    op.add_column('users', sa.Column('rejected_by', postgresql.UUID(as_uuid=True), nullable=True))
-    op.add_column('users', sa.Column('rejection_reason', sa.Text(), nullable=True))
+    # Add new columns to users table using raw SQL to avoid type recreation
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS account_type account_type_enum")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS approval_status approval_status_enum NOT NULL DEFAULT 'pending'")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS application_submitted_at TIMESTAMP WITH TIME ZONE")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS approved_by UUID")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS rejected_at TIMESTAMP WITH TIME ZONE")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS rejected_by UUID")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS rejection_reason TEXT")
     
-    # Create foreign key constraints for approved_by and rejected_by
-    op.create_foreign_key('fk_users_approved_by', 'users', 'users', ['approved_by'], ['id'])
-    op.create_foreign_key('fk_users_rejected_by', 'users', 'users', ['rejected_by'], ['id'])
+    # Create foreign key constraints for approved_by and rejected_by (with exception handling)
+    op.execute("""
+        DO $$ BEGIN
+            ALTER TABLE users ADD CONSTRAINT fk_users_approved_by 
+                FOREIGN KEY (approved_by) REFERENCES users(id);
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
+    
+    op.execute("""
+        DO $$ BEGIN
+            ALTER TABLE users ADD CONSTRAINT fk_users_rejected_by 
+                FOREIGN KEY (rejected_by) REFERENCES users(id);
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
     
     # Data migration for existing users
     op.execute("""
@@ -83,51 +98,53 @@ def upgrade() -> None:
         AND approval_status = 'approved'::approval_status_enum
     """)
     
-    # Add indexes for performance
-    op.create_index('idx_users_approval_status', 'users', ['approval_status'])
-    op.create_index('idx_users_account_type', 'users', ['account_type'])
-    op.create_index('idx_users_approval_account', 'users', ['approval_status', 'account_type'])
-    op.create_index('idx_users_is_admin', 'users', ['is_admin'], postgresql_where=sa.text('is_admin = true'))
-    op.create_index('idx_users_access_status', 'users', ['access_status'])
+    # Add indexes for performance (idempotent)
+    op.execute("CREATE INDEX IF NOT EXISTS idx_users_approval_status ON users (approval_status)")
+    op.execute("CREATE INDEX IF NOT EXISTS idx_users_account_type ON users (account_type)")
+    op.execute("CREATE INDEX IF NOT EXISTS idx_users_approval_account ON users (approval_status, account_type)")
+    op.execute("CREATE INDEX IF NOT EXISTS idx_users_is_admin ON users (is_admin) WHERE is_admin = true")
+    op.execute("CREATE INDEX IF NOT EXISTS idx_users_access_status ON users (access_status)")
     
-    # Create applications table
-    op.create_table(
-        'applications',
-        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text('uuid_generate_v4()')),
-        sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('account_type', sa.Enum('creator', 'agency', 'legacy', name='account_type_enum', create_type=False), nullable=False),
-        sa.Column('application_data', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column('submitted_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
-        sa.Column('reviewed_at', sa.DateTime(timezone=True), nullable=True),
-        sa.Column('reviewed_by', postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column('status', sa.Enum('pending', 'approved', 'rejected', name='application_status_enum', create_type=False), nullable=False, server_default='pending'),
-        sa.Column('admin_notes', sa.Text(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
-        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
-        sa.ForeignKeyConstraint(['user_id'], ['users.id'], name='fk_applications_user_id', ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['reviewed_by'], ['users.id'], name='fk_applications_reviewed_by'),
-    )
+    # Create applications table using raw SQL to avoid type recreation
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS applications (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            user_id UUID NOT NULL,
+            account_type account_type_enum NOT NULL,
+            application_data JSONB NOT NULL,
+            submitted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            reviewed_at TIMESTAMP WITH TIME ZONE,
+            reviewed_by UUID,
+            status application_status_enum NOT NULL DEFAULT 'pending',
+            admin_notes TEXT,
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            CONSTRAINT fk_applications_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            CONSTRAINT fk_applications_reviewed_by FOREIGN KEY (reviewed_by) REFERENCES users(id)
+        )
+    """)
     
-    op.create_index('idx_applications_user_id', 'applications', ['user_id'])
-    op.create_index('idx_applications_status', 'applications', ['status'])
-    op.create_index('idx_applications_submitted_at', 'applications', ['submitted_at'], postgresql_using='btree', postgresql_ops={'submitted_at': 'DESC'})
-    op.create_index('idx_applications_account_type', 'applications', ['account_type'])
+    op.execute("CREATE INDEX IF NOT EXISTS idx_applications_user_id ON applications (user_id)")
+    op.execute("CREATE INDEX IF NOT EXISTS idx_applications_status ON applications (status)")
+    op.execute("CREATE INDEX IF NOT EXISTS idx_applications_submitted_at ON applications (submitted_at DESC)")
+    op.execute("CREATE INDEX IF NOT EXISTS idx_applications_account_type ON applications (account_type)")
     
-    # Create admin_notification_settings table
-    op.create_table(
-        'admin_notification_settings',
-        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text('uuid_generate_v4()')),
-        sa.Column('email', sa.String(255), nullable=False, unique=True),
-        sa.Column('notification_types', postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default='{"creator_applications": true, "agency_applications": true}'),
-        sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
-        sa.Column('added_by', postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column('added_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
-        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
-        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
-        sa.ForeignKeyConstraint(['added_by'], ['users.id'], name='fk_admin_notifications_added_by'),
-    )
+    # Create admin_notification_settings table using raw SQL
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS admin_notification_settings (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            email VARCHAR(255) NOT NULL UNIQUE,
+            notification_types JSONB NOT NULL DEFAULT '{"creator_applications": true, "agency_applications": true}',
+            is_active BOOLEAN NOT NULL DEFAULT true,
+            added_by UUID,
+            added_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            CONSTRAINT fk_admin_notifications_added_by FOREIGN KEY (added_by) REFERENCES users(id)
+        )
+    """)
     
-    op.create_index('idx_admin_notifications_active', 'admin_notification_settings', ['is_active'])
+    op.execute("CREATE INDEX IF NOT EXISTS idx_admin_notifications_active ON admin_notification_settings (is_active)")
 
 
 def downgrade() -> None:
