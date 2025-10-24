@@ -3,7 +3,7 @@
 export type Role = 'Owner' | 'Admin' | 'Manager' | 'Analyst' | 'Responder';
 
 // Auth/access control (revamped)
-export type AccessStatus = 'waiting' | 'full';
+export type AccessStatus = 'waiting' | 'waiting_list' | 'pending' | 'full';
 export type UserKind = 'content' | 'business';
 export type DemoAccessType = never;
 

@@ -229,14 +229,21 @@ export const useAuth = create<AuthState>((set, get) => ({
     // Admin always has access
     if (user.is_admin) return true;
     
-    // Legacy users have access
-    if (user.account_type === 'legacy') return true;
+    // New approval workflow (users with approval_status field)
+    if (user.approval_status) {
+      // Must be approved to access dashboard
+      if (user.approval_status === 'approved') return true;
+      // Pending or rejected users cannot access
+      return false;
+    }
     
-    // New approval workflow - must be approved
-    if (user.approval_status === 'approved') return true;
+    // Legacy users (pre-approval workflow) - check old fields
+    if (user.account_type === 'legacy' && user.access_status === 'full') return true;
     
-    // Fallback to old access_status for backward compatibility
-    return user.access_status === 'full';
+    // Old waiting list users who got full access before approval workflow
+    if (!user.approval_status && user.access_status === 'full') return true;
+    
+    return false;
   },
 
   getRedirectPath: (): string => {
@@ -246,47 +253,58 @@ export const useAuth = create<AuthState>((set, get) => ({
     // Admin users go to admin dashboard
     if (user.is_admin) return '/admin';
     
-    // New approval workflow routing
+    // New approval workflow routing (users with approval_status field)
     if (user.approval_status) {
-      // If user hasn't selected account type yet
-      if (!user.account_type) {
+      // Step 1: Select account type
+      if (!user.account_type || user.account_type === null) {
         return '/onboarding/account-type';
       }
       
-      // If user hasn't submitted application yet
+      // Step 2: Submit application
       if (!user.application_submitted_at) {
         if (user.account_type === 'creator') {
           return '/onboarding/creator-application';
         } else if (user.account_type === 'agency') {
           return '/onboarding/agency-application';
         }
+        // Fallback if account_type is set but not creator/agency
+        return '/onboarding/account-type';
       }
       
-      // If application is pending
+      // Step 3: Check approval status
       if (user.approval_status === 'pending') {
         return '/onboarding/pending';
       }
       
-      // If application was rejected
       if (user.approval_status === 'rejected') {
         return '/onboarding/rejected';
       }
       
-      // If approved, proceed to dashboard
       if (user.approval_status === 'approved') {
         return '/dashboard';
       }
     }
     
-    // Legacy users (existing users before approval workflow)
-    if (user.account_type === 'legacy') {
-      return '/dashboard';
+    // Legacy workflow (users without approval_status)
+    // These are old users who signed up before the approval workflow
+    if (!user.approval_status) {
+      // Legacy users with full access
+      if (user.account_type === 'legacy' && user.access_status === 'full') {
+        return '/dashboard';
+      }
+      
+      // Old waiting list users who got upgraded to full access
+      if (user.access_status === 'full') {
+        return '/dashboard';
+      }
+      
+      // Old waiting list users still waiting
+      if (user.access_status === 'waiting' || user.access_status === 'waiting_list') {
+        return '/waiting-area';
+      }
     }
     
-    // Fallback to access_status for backward compatibility
-    if (user.access_status === 'waiting') return '/waiting-area';
-    if (user.access_status === 'full') return '/dashboard';
-    
+    // Fallback - send to account type selection
     return '/onboarding/account-type';
   },
 }));

@@ -114,7 +114,8 @@ async def signup(
     )
     
     # Set pending status - user must complete application
-    user.access_status = "waiting"  # Legacy field for backward compatibility
+    # IMPORTANT: Use "pending" not "waiting" to avoid triggering old upgrade logic
+    user.access_status = "pending"  # New users start as pending (not "waiting" which triggers upgrades)
     user.user_kind = "content"  # Default, will be updated by account_type
     user.has_account = True
     user.approval_status = "pending"  # New approval workflow
