@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { api } from '@/lib/api';
+import { pollJobStatus, pollDemoStatus } from '@/lib/polling';
 
 const NICHES = [
   { value: 'tech_reviews', label: 'Tech Reviews' },
@@ -76,8 +76,11 @@ export default function DemoModePage() {
   const loadDemoStatus = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/demo/status');
-      setDemoStatus(response.data);
+      const response = await fetch('/api/demo/status');
+      if (response.ok) {
+        const data = await response.json();
+        setDemoStatus(data);
+      }
     } catch (error) {
       console.error('Failed to load demo status:', error);
     } finally {
@@ -106,13 +109,48 @@ export default function DemoModePage() {
             dm_frequency: dmFrequency,
           };
 
-      await api.post('/demo/enable', config);
+      // Call new API route
+      const response = await fetch('/api/demo/enable', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      });
       
-      alert('Demo Mode Enabled! Your demo profile is being set up. Interactions will start arriving shortly.');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to enable demo mode');
+      }
       
+      const result = await response.json();
+      
+      // Show success message
+      alert(`Demo Mode is being enabled! This will take about a minute. Status: ${result.status}`);
+      
+      // Reload status immediately to show "enabling" state
       await loadDemoStatus();
+      
+      // Poll for completion in background
+      if (result.job_id) {
+        pollJobStatus(result.job_id, {
+          onUpdate: (job) => {
+            console.log('Job status:', job.status);
+          },
+          onComplete: async (job) => {
+            console.log('Demo mode enabled!', job);
+            // Reload status to show "enabled"
+            await loadDemoStatus();
+            alert('Demo Mode Enabled! Interactions will start arriving shortly.');
+          },
+          onError: (error) => {
+            console.error('Job failed:', error);
+            alert('Demo mode failed to enable. Please try again.');
+            loadDemoStatus();
+          },
+        }).catch(console.error);
+      }
+      
     } catch (error: any) {
-      alert('Failed to Enable Demo: ' + (error.response?.data?.detail || 'An error occurred'));
+      alert('Failed to Enable Demo: ' + (error.message || 'An error occurred'));
     } finally {
       setActionLoading(false);
     }
@@ -125,13 +163,42 @@ export default function DemoModePage() {
     
     try {
       setActionLoading(true);
-      await api.post('/demo/disable');
       
-      alert('Demo Mode Disabled. Switched back to real platform connections.');
+      // Call new API route
+      const response = await fetch('/api/demo/disable', {
+        method: 'POST',
+      });
       
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to disable demo mode');
+      }
+      
+      const result = await response.json();
+      
+      alert('Demo Mode is being disabled. This will take a moment.');
+      
+      // Reload status immediately to show "disabling" state
       await loadDemoStatus();
+      
+      // Poll for completion
+      if (result.job_id) {
+        pollJobStatus(result.job_id, {
+          onComplete: async (job) => {
+            console.log('Demo mode disabled!', job);
+            await loadDemoStatus();
+            alert(`Demo Mode Disabled. ${job.result_data?.interactions_deleted || 0} interactions and ${job.result_data?.content_deleted || 0} content pieces removed.`);
+          },
+          onError: (error) => {
+            console.error('Job failed:', error);
+            alert('Demo mode failed to disable properly. Please try again.');
+            loadDemoStatus();
+          },
+        }).catch(console.error);
+      }
+      
     } catch (error: any) {
-      alert('Failed to Disable Demo: ' + (error.response?.data?.detail || 'An error occurred'));
+      alert('Failed to Disable Demo: ' + (error.message || 'An error occurred'));
     } finally {
       setActionLoading(false);
     }
@@ -161,10 +228,11 @@ export default function DemoModePage() {
             <div>
               <CardTitle>Current Status</CardTitle>
               <CardDescription>
-                {demoStatus?.demo_mode 
-                  ? 'Demo mode is active - using simulated platform data'
-                  : 'Demo mode is inactive - using real platform connections'
-                }
+                {demoStatus?.status === 'enabled' && 'Demo mode is active - using simulated platform data'}
+                {demoStatus?.status === 'disabled' && 'Demo mode is inactive - using real platform connections'}
+                {demoStatus?.status === 'enabling' && 'Demo mode is being set up...'}
+                {demoStatus?.status === 'disabling' && 'Demo mode is being disabled...'}
+                {demoStatus?.status === 'failed' && 'Demo mode encountered an error'}
               </CardDescription>
             </div>
             <Button
@@ -181,13 +249,22 @@ export default function DemoModePage() {
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className={`h-3 w-3 rounded-full ${demoStatus?.demo_mode ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <div className={`h-3 w-3 rounded-full ${
+                demoStatus?.status === 'enabled' ? 'bg-green-500' : 
+                demoStatus?.status === 'enabling' || demoStatus?.status === 'disabling' ? 'bg-yellow-500 animate-pulse' :
+                demoStatus?.status === 'failed' ? 'bg-red-500' :
+                'bg-gray-300'
+              }`} />
               <span className="font-medium">
-                {demoStatus?.demo_mode ? 'Demo Mode Active' : 'Real Mode Active'}
+                {demoStatus?.status === 'enabled' && 'Demo Mode Active'}
+                {demoStatus?.status === 'disabled' && 'Real Mode Active'}
+                {demoStatus?.status === 'enabling' && 'Enabling Demo Mode...'}
+                {demoStatus?.status === 'disabling' && 'Disabling Demo Mode...'}
+                {demoStatus?.status === 'failed' && 'Demo Mode Failed'}
               </span>
             </div>
             
-            {demoStatus?.demo_mode && (
+            {demoStatus?.status === 'enabled' && (
               <Button
                 variant="destructive"
                 size="sm"
@@ -224,7 +301,52 @@ export default function DemoModePage() {
       </Card>
 
       {/* Enable Demo Mode */}
-      {!demoStatus?.demo_mode && (
+      {/* Show error if failed */}
+      {demoStatus?.status === 'failed' && demoStatus?.error && (
+        <Card className="border-red-500">
+          <CardHeader>
+            <CardTitle className="text-red-500">Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-red-600">{demoStatus.error}</p>
+            <Button
+              onClick={() => {
+                // Reset to disabled state
+                fetch('/api/demo/status').then(() => loadDemoStatus());
+              }}
+              variant="outline"
+              size="sm"
+              className="mt-4"
+            >
+              Dismiss
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Show enabling/disabling progress */}
+      {(demoStatus?.status === 'enabling' || demoStatus?.status === 'disabling') && (
+        <Card className="border-yellow-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5 animate-spin" />
+              {demoStatus.status === 'enabling' ? 'Setting Up Demo Mode' : 'Cleaning Up Demo Mode'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              This process may take 1-2 minutes. You can close this page and come back later.
+            </p>
+            {demoStatus.job_id && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Job ID: {demoStatus.job_id}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {!demoStatus?.demo_mode && demoStatus?.status !== 'enabling' && demoStatus?.status !== 'disabling' && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

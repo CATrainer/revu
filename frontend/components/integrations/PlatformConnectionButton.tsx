@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/lib/store';
-import { api } from '@/lib/api';
 import ConnectButton from '@/components/youtube/ConnectButton';
 import { AlertCircle } from 'lucide-react';
 
@@ -27,8 +26,11 @@ export function PlatformConnectionButton({
   useEffect(() => {
     const fetchDemoStatus = async () => {
       try {
-        const response = await api.get('/demo/status');
-        setDemoMode(response.data.demo_mode || false);
+        const response = await fetch('/api/demo/status');
+        if (response.ok) {
+          const data = await response.json();
+          setDemoMode(data.status === 'enabled');
+        }
       } catch (error) {
         console.error('Failed to fetch demo status:', error);
       }

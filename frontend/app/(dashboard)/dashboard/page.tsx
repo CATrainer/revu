@@ -9,7 +9,6 @@ import AutomationImpactWidget from '@/components/intelligence/AutomationImpactWi
 import { features } from '@/lib/features';
 import { PlatformConnectionButton } from '@/components/integrations/PlatformConnectionButton';
 import { Youtube, Instagram, Music, TrendingUp, Users, MessageCircle, Zap, Sparkles, Settings2 } from 'lucide-react';
-import { api } from '@/lib/api';
 
 interface DashboardMetrics {
   total_followers: number;
@@ -45,9 +44,12 @@ export default function DashboardPage() {
 
     const fetchDemoStatus = async () => {
       try {
-        const response = await api.get('/demo/status');
-        setDemoMode(response.data.demo_mode || false);
-        setDemoProfile(response.data.profile || null);
+        const response = await fetch('/api/demo/status');
+        if (response.ok) {
+          const data = await response.json();
+          setDemoMode(data.status === 'enabled');
+          setDemoProfile(data.profile || null);
+        }
       } catch (error) {
         console.error('Failed to fetch demo status:', error);
       }
@@ -87,6 +89,32 @@ export default function DashboardPage() {
               <ModernButton variant="outline" size="sm">
                 <Settings2 className="h-4 w-4 mr-2" />
                 Manage Demo
+              </ModernButton>
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Demo Mode Enabling Banner */}
+      {!demoMode && demoProfile?.status === 'enabling' && (
+        <div className="glass-panel rounded-2xl border border-yellow-500/30 p-6 shadow-glow-yellow backdrop-blur-md">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="h-3 w-3 rounded-full bg-yellow-500 animate-pulse" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-yellow-500" />
+                  <span className="font-bold text-lg text-yellow-500">Demo Mode Setting Up</span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1.5">
+                  Your demo profile is being created. This takes about 1-2 minutes. You can close this page and come back.
+                </p>
+              </div>
+            </div>
+            <Link href="/settings/demo-mode">
+              <ModernButton variant="outline" size="sm">
+                <Settings2 className="h-4 w-4 mr-2" />
+                View Progress
               </ModernButton>
             </Link>
           </div>

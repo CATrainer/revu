@@ -17,9 +17,20 @@ class PlatformConnection(Base):
 
     location_id = Column(PGUUID(as_uuid=True), ForeignKey("locations.id"), nullable=False)
     platform = Column(String(50), nullable=False)
+    
+    # Connection state tracking
+    connection_status = Column(String(20), default='disconnected', nullable=False, comment="Current connection state")
+    connection_error = Column(Text, nullable=True, comment="Error message if connection failed")
+    oauth_state = Column(String(255), nullable=True, comment="OAuth state for CSRF protection")
+    
+    # OAuth tokens
     access_token = Column(Text)
     refresh_token = Column(Text)
     token_expires_at = Column(DateTime(timezone=True))
+    last_token_refresh_at = Column(DateTime(timezone=True), comment="When token was last refreshed")
+    next_token_refresh_at = Column(DateTime(timezone=True), comment="When token should be refreshed next")
+    
+    # Platform data
     account_info = Column(JSONB, default=dict, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     last_sync_at = Column(DateTime(timezone=True))

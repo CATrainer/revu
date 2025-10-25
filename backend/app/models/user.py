@@ -117,9 +117,13 @@ class User(Base):
     trial_notified_1d = Column(Boolean, default=False, nullable=False, comment="1-day expiration notice sent")
     subscription_status = Column(String(20), default="trial", nullable=False, comment="trial, active, cancelled, expired")
     
-    # Demo mode for simulated platform connections
-    demo_mode = Column(Boolean, default=False, nullable=False, comment="Using demo simulator instead of real platforms")
+    # Demo mode for simulated platform connections (with state tracking)
+    demo_mode = Column(Boolean, default=False, nullable=False, comment="DEPRECATED: Use demo_mode_status")
     demo_mode_enabled_at = Column(DateTime(timezone=True), nullable=True, comment="When demo mode was first enabled")
+    demo_mode_status = Column(String(20), default='disabled', nullable=False, comment="Current demo mode state")
+    demo_mode_error = Column(Text, nullable=True, comment="Error message if demo mode failed")
+    demo_profile_id = Column(String(255), nullable=True, comment="ID of demo profile in demo service")
+    demo_mode_disabled_at = Column(DateTime(timezone=True), nullable=True, comment="When demo mode was disabled")
 
     # Demo-specific information
     company_size = Column(String(50))
@@ -151,6 +155,8 @@ class User(Base):
         primaryjoin="User.id==foreign(Application.user_id)",
         cascade="all, delete-orphan"
     )
+    background_jobs = relationship("BackgroundJob", back_populates="user", cascade="all, delete-orphan")
+    sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<User(email='{self.email}')>"

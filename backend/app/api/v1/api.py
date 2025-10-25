@@ -44,7 +44,7 @@ from app.api.v1.endpoints import marketing_admin
 # New interaction management endpoints
 from app.api.v1.endpoints import interactions, views, fans
 # Demo mode endpoints
-from app.api.v1.endpoints import demo, demo_webhooks, analytics
+from app.api.v1.endpoints import demo, demo_webhooks, analytics, jobs
 
 # Create the main API router
 api_router = APIRouter()
@@ -288,6 +288,11 @@ api_router.include_router(
     action_plans.router,
     prefix="/action-plans",
     tags=["action-plans", "goals"],
+)
+
+api_router.include_router(
+    jobs.router,
+    tags=["jobs"],
 )
 
 

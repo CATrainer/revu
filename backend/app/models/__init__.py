@@ -1,4 +1,8 @@
+"""Models package."""
+
 from app.models.organization import Organization
+from app.models.background_job import BackgroundJob
+from app.models.session import UserSession
 from app.models.location import Location
 from app.models.user import User
 from app.models.platform import PlatformConnection
@@ -44,6 +48,8 @@ __all__ = [
     "Organization",
     "Location",
     "User",
+    "BackgroundJob",
+    "UserSession",
     "PlatformConnection",
     "AutomationRule",
     "ResponseTemplate",

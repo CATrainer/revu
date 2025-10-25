@@ -50,59 +50,31 @@ async def enable_demo_mode(
 ):
     """Enable demo mode for the current user."""
     
-    if current_user.demo_mode:
-        raise HTTPException(400, "Demo mode already enabled")
+    # Check current status
+    if current_user.demo_mode_status in ('enabled', 'enabling'):
+        raise HTTPException(400, f"Demo mode already {current_user.demo_mode_status}")
     
-    # Call demo simulator service to create profile
-    demo_service_url = getattr(settings, 'DEMO_SERVICE_URL', None)
-    
-    if not demo_service_url:
-        raise HTTPException(500, "Demo service not configured")
-    
-    payload = {
-        "user_id": str(current_user.id),
-        **config.dict(),
-    }
-    
-    async with httpx.AsyncClient(timeout=10.0) as client:  # 10s timeout for creation
-        try:
-            response = await client.post(
-                f"{demo_service_url}/profiles",
-                json=payload,
-            )
-            
-            # If profile already exists and is active, deactivate it first then retry
-            if response.status_code == 400 and "already has an active" in response.text:
-                # Deactivate existing profile
-                await client.delete(f"{demo_service_url}/profiles/{current_user.id}")
-                
-                # Retry creation
-                response = await client.post(
-                    f"{demo_service_url}/profiles",
-                    json=payload,
-                )
-            
-            if response.status_code != 200:
-                raise HTTPException(500, f"Failed to create demo profile: {response.text}")
-            
-            profile_data = response.json()
-            
-        except httpx.TimeoutException:
-            raise HTTPException(504, "Demo service timed out - it may be restarting. Please try again in a moment.")
-        except httpx.RequestError as e:
-            raise HTTPException(500, f"Demo service unavailable: {str(e)}")
-    
-    # Enable demo mode for user
-    current_user.demo_mode = True
-    # Set timestamp only if this is the first time enabling demo mode
-    if not current_user.demo_mode_enabled_at:
-        from datetime import datetime
-        current_user.demo_mode_enabled_at = datetime.utcnow()
+    # Immediately update status to 'enabling'
+    current_user.demo_mode_status = 'enabling'
+    current_user.demo_mode_error = None
     await session.commit()
     
+    # Create background job
+    from app.services.background_jobs import BackgroundJobService
+    job_service = BackgroundJobService(session)
+    job = await job_service.create_job(
+        job_type='demo_enable',
+        user_id=current_user.id,
+    )
+    
+    # Queue Celery task
+    from app.tasks.demo_operations import enable_demo_mode_task
+    enable_demo_mode_task.delay(str(current_user.id), str(job.id))
+    
     return {
-        "status": "demo_enabled",
-        "profile": profile_data,
+        "status": "enabling",
+        "job_id": str(job.id),
+        "message": "Demo mode is being enabled. This may take a minute.",
     }
 
 
@@ -113,72 +85,30 @@ async def disable_demo_mode(
 ):
     """Disable demo mode for the current user."""
     
-    if not current_user.demo_mode:
-        raise HTTPException(400, "Demo mode not enabled")
+    if current_user.demo_mode_status not in ('enabled', 'failed'):
+        raise HTTPException(400, f"Cannot disable demo mode with status: {current_user.demo_mode_status}")
     
-    # Call demo simulator to deactivate profile
-    demo_service_url = getattr(settings, 'DEMO_SERVICE_URL', None)
-    
-    if demo_service_url:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            try:
-                await client.delete(
-                    f"{demo_service_url}/profiles/{current_user.id}",
-                )
-            except (httpx.RequestError, httpx.TimeoutException):
-                # Continue even if deactivation fails
-                pass
-    
-    # CRITICAL: Clean up all demo data before disabling
-    from app.models.interaction import Interaction
-    from sqlalchemy import delete
-    
-    logger.info(f"Starting demo data cleanup for user {current_user.id}")
-    
-    # Count demo data before deletion
-    count_interactions_stmt = select(func.count(Interaction.id)).where(
-        Interaction.user_id == current_user.id,
-        Interaction.is_demo == True
-    )
-    interactions_count_result = await session.execute(count_interactions_stmt)
-    interactions_count = interactions_count_result.scalar() or 0
-    
-    count_content_stmt = select(func.count(ContentPiece.id)).where(
-        ContentPiece.user_id == current_user.id,
-        ContentPiece.is_demo == True
-    )
-    content_count_result = await session.execute(count_content_stmt)
-    content_count = content_count_result.scalar() or 0
-    
-    logger.info(f"Found {interactions_count} demo interactions and {content_count} demo content pieces to delete")
-    
-    # Bulk delete demo interactions (much more efficient than individual deletes)
-    delete_interactions_stmt = delete(Interaction).where(
-        Interaction.user_id == current_user.id,
-        Interaction.is_demo == True
-    )
-    await session.execute(delete_interactions_stmt)
-    
-    # Bulk delete demo content (cascade will handle related records)
-    delete_content_stmt = delete(ContentPiece).where(
-        ContentPiece.user_id == current_user.id,
-        ContentPiece.is_demo == True
-    )
-    await session.execute(delete_content_stmt)
-    
-    logger.info(f"✅ Cleaned up {interactions_count} demo interactions and {content_count} demo content pieces for user {current_user.id}")
-    
-    # Disable demo mode
-    current_user.demo_mode = False
+    # Immediately update status to 'disabling'
+    current_user.demo_mode_status = 'disabling'
+    current_user.demo_mode_error = None
     await session.commit()
     
+    # Create background job
+    from app.services.background_jobs import BackgroundJobService
+    job_service = BackgroundJobService(session)
+    job = await job_service.create_job(
+        job_type='demo_disable',
+        user_id=current_user.id,
+    )
+    
+    # Queue Celery task
+    from app.tasks.demo_operations import disable_demo_mode_task
+    disable_demo_mode_task.delay(str(current_user.id), str(job.id))
+    
     return {
-        "status": "demo_disabled",
-        "cleanup": {
-            "interactions_deleted": interactions_count,
-            "content_deleted": content_count
-        },
-        "message": f"Demo mode disabled. Removed {interactions_count} demo interactions and {content_count} demo content pieces."
+        "status": "disabling",
+        "job_id": str(job.id),
+        "message": "Demo mode is being disabled. This may take a minute.",
     }
 
 
@@ -190,16 +120,34 @@ async def get_demo_status(
     """Get demo mode status for current user."""
     
     status_data = {
-        "demo_mode": current_user.demo_mode,
+        "demo_mode": current_user.demo_mode_status == 'enabled',  # Backward compat
+        "status": current_user.demo_mode_status,
+        "error": current_user.demo_mode_error,
         "user_id": str(current_user.id),
     }
     
-    if current_user.demo_mode:
-        # Get profile info from demo service
+    # If enabling or disabling, get the latest job status
+    if current_user.demo_mode_status in ('enabling', 'disabling'):
+        from app.services.background_jobs import BackgroundJobService
+        job_service = BackgroundJobService(session)
+        
+        job_type = 'demo_enable' if current_user.demo_mode_status == 'enabling' else 'demo_disable'
+        latest_job = await job_service.get_latest_job(
+            user_id=current_user.id,
+            job_type=job_type,
+        )
+        
+        if latest_job:
+            status_data["job_id"] = str(latest_job.id)
+            status_data["job_status"] = latest_job.status
+            status_data["job_error"] = latest_job.error_message
+    
+    # If enabled, get profile info from demo service
+    if current_user.demo_mode_status == 'enabled':
         demo_service_url = getattr(settings, 'DEMO_SERVICE_URL', None)
         
         if demo_service_url:
-            async with httpx.AsyncClient(timeout=5.0) as client:  # Reduced to 5s
+            async with httpx.AsyncClient(timeout=5.0) as client:
                 try:
                     response = await client.get(
                         f"{demo_service_url}/profiles/{current_user.id}",
@@ -208,11 +156,9 @@ async def get_demo_status(
                     if response.status_code == 200:
                         status_data["profile"] = response.json()
                     elif response.status_code == 404:
-                        # Profile not found - demo mode enabled but profile doesn't exist
                         status_data["profile"] = None
                         
                 except (httpx.RequestError, httpx.TimeoutException):
-                    # Demo service unavailable - return basic status without profile info
                     status_data["profile"] = None
     
     return status_data
