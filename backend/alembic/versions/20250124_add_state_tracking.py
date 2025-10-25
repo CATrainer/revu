@@ -1,7 +1,7 @@
 """Add state tracking for async operations
 
 Revision ID: 20250124_state_tracking
-Revises: previous_revision
+Revises: 20251024_140000
 Create Date: 2025-01-24 18:20:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '20250124_state_tracking'
-down_revision = None  # Update with actual previous revision
+down_revision = '20251024_140000'  # Points to latest application workflow migration
 branch_labels = None
 depends_on = None
 
