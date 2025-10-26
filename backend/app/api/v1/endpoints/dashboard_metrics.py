@@ -30,17 +30,54 @@ async def get_dashboard_metrics(
     Returns demo data if user is in demo mode.
     """
     
-    # Return demo data if user is in demo mode
-    if current_user.demo_mode:
+    # Check if user is in demo mode
+    show_demo_data = (current_user.demo_mode_status == 'enabled')
+    
+    # If demo mode, query real demo interactions instead of returning fake random data
+    if show_demo_data:
+        from app.models.interaction import Interaction
+        from sqlalchemy import func
+        from datetime import datetime, timedelta
+        
+        # Count today's interactions
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        yesterday_start = today_start - timedelta(days=1)
+        
+        # Interactions today
+        today_stmt = select(func.count(Interaction.id)).where(
+            Interaction.user_id == current_user.id,
+            Interaction.is_demo == True,
+            Interaction.created_at >= today_start
+        )
+        today_result = await db.execute(today_stmt)
+        interactions_today = today_result.scalar() or 0
+        
+        # Interactions yesterday
+        yesterday_stmt = select(func.count(Interaction.id)).where(
+            Interaction.user_id == current_user.id,
+            Interaction.is_demo == True,
+            Interaction.created_at >= yesterday_start,
+            Interaction.created_at < today_start
+        )
+        yesterday_result = await db.execute(yesterday_stmt)
+        interactions_yesterday = yesterday_result.scalar() or 0
+        
+        # Calculate percentage change
+        if interactions_yesterday > 0:
+            interactions_change = round(((interactions_today - interactions_yesterday) / interactions_yesterday) * 100, 1)
+        else:
+            interactions_change = 0.0
+        
+        # Return real metrics from demo data
         return {
-            "total_followers": random.randint(45000, 55000),
-            "total_subscribers": random.randint(95000, 105000),
-            "engagement_rate": round(random.uniform(3.5, 5.5), 1),
-            "interactions_today": random.randint(120, 180),
-            "active_workflows": random.randint(3, 5),
-            "follower_change": round(random.uniform(2.0, 8.0), 1),
-            "engagement_change": round(random.uniform(0.5, 3.0), 1),
-            "interactions_change": round(random.uniform(5.0, 15.0), 1),
+            "total_followers": 50000,  # Static for demo
+            "total_subscribers": 100000,  # Static for demo
+            "engagement_rate": 4.2,  # Static for demo
+            "interactions_today": interactions_today,
+            "active_workflows": 4,  # Static for demo
+            "follower_change": 5.0,  # Static for demo
+            "engagement_change": 2.0,  # Static for demo
+            "interactions_change": interactions_change,
         }
     
     # Total Subscribers from YouTube

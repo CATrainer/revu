@@ -28,11 +28,14 @@ async def get_analytics_overview(
     cutoff = datetime.utcnow() - timedelta(days=days)
     
     # Total interactions
+    # Check if demo mode is enabled (use demo_mode_status, not deprecated demo_mode boolean)
+    show_demo_data = (current_user.demo_mode_status == 'enabled')
+    
     total_stmt = select(func.count(Interaction.id)).where(
         and_(
             Interaction.user_id == current_user.id,
             Interaction.created_at >= cutoff,
-            Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
+            Interaction.is_demo == show_demo_data  # Filter by demo mode status
         )
     )
     total_result = await session.execute(total_stmt)
@@ -46,7 +49,7 @@ async def get_analytics_overview(
         and_(
             Interaction.user_id == current_user.id,
             Interaction.created_at >= cutoff,
-            Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
+            Interaction.is_demo == show_demo_data
         )
     ).group_by(Interaction.status)
     
@@ -61,7 +64,7 @@ async def get_analytics_overview(
         and_(
             Interaction.user_id == current_user.id,
             Interaction.created_at >= cutoff,
-            Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
+            Interaction.is_demo == show_demo_data
         )
     ).group_by(Interaction.platform)
     
@@ -76,7 +79,7 @@ async def get_analytics_overview(
         and_(
             Interaction.user_id == current_user.id,
             Interaction.created_at >= cutoff,
-            Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
+            Interaction.is_demo == show_demo_data
         )
     ).group_by(Interaction.sentiment)
     
@@ -106,6 +109,7 @@ async def get_workflow_analytics(
     """Get workflow performance analytics."""
     
     cutoff = datetime.utcnow() - timedelta(days=days)
+    show_demo_data = (current_user.demo_mode_status == 'enabled')
     
     # Get all workflows
     workflows_stmt = select(Workflow).where(
@@ -122,7 +126,7 @@ async def get_workflow_analytics(
             and_(
                 Interaction.workflow_id == workflow.id,
                 Interaction.created_at >= cutoff,
-                Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
+                Interaction.is_demo == show_demo_data
             )
         )
         triggered_result = await session.execute(triggered_stmt)
@@ -134,7 +138,7 @@ async def get_workflow_analytics(
                 Interaction.workflow_id == workflow.id,
                 Interaction.workflow_action == 'auto_responded',
                 Interaction.created_at >= cutoff,
-                Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
+                Interaction.is_demo == show_demo_data
             )
         )
         auto_responded_result = await session.execute(auto_responded_stmt)
@@ -146,7 +150,7 @@ async def get_workflow_analytics(
                 Interaction.workflow_id == workflow.id,
                 Interaction.workflow_action == 'flagged_for_approval',
                 Interaction.created_at >= cutoff,
-                Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
+                Interaction.is_demo == show_demo_data
             )
         )
         flagged_result = await session.execute(flagged_stmt)
@@ -207,6 +211,7 @@ async def get_interactions_timeline(
     """Get interactions over time for charts."""
     
     cutoff = datetime.utcnow() - timedelta(days=days)
+    show_demo_data = (current_user.demo_mode_status == 'enabled')
     
     # Group by date
     stmt = select(
@@ -216,7 +221,7 @@ async def get_interactions_timeline(
         and_(
             Interaction.user_id == current_user.id,
             Interaction.created_at >= cutoff,
-            Interaction.is_demo == current_user.demo_mode  # Filter by demo mode
+            Interaction.is_demo == show_demo_data
         )
     ).group_by(func.date(Interaction.created_at)).order_by('date')
     

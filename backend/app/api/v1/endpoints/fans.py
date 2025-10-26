@@ -67,9 +67,10 @@ async def list_fans(
 ):
     """List all fans with filtering and pagination."""
     # CRITICAL: Filter by demo mode to prevent data mixing
+    show_demo_data = (current_user.demo_mode_status == 'enabled')
     query = select(Fan).where(
         Fan.user_id == current_user.id,
-        Fan.is_demo == current_user.demo_mode
+        Fan.is_demo == show_demo_data
     )
     
     # Apply filters
@@ -135,7 +136,8 @@ async def get_fan(
         raise HTTPException(status_code=404, detail="Fan not found")
     
     # CRITICAL: Prevent cross-mode access (demo vs real)
-    if fan.is_demo != current_user.demo_mode:
+    show_demo_data = (current_user.demo_mode_status == 'enabled')
+    if fan.is_demo != show_demo_data:
         raise HTTPException(status_code=404, detail="Fan not found")
     
     return fan
@@ -158,7 +160,8 @@ async def update_fan(
         raise HTTPException(status_code=403, detail="Not authorized")
     
     # CRITICAL: Prevent cross-mode modifications
-    if fan.is_demo != current_user.demo_mode:
+    show_demo_data = (current_user.demo_mode_status == 'enabled')
+    if fan.is_demo != show_demo_data:
         raise HTTPException(status_code=404, detail="Fan not found")
     
     # Update fields
@@ -188,7 +191,8 @@ async def delete_fan(
         raise HTTPException(status_code=403, detail="Not authorized")
     
     # CRITICAL: Prevent cross-mode deletions
-    if fan.is_demo != current_user.demo_mode:
+    show_demo_data = (current_user.demo_mode_status == 'enabled')
+    if fan.is_demo != show_demo_data:
         raise HTTPException(status_code=404, detail="Fan not found")
     
     await session.delete(fan)
@@ -241,10 +245,11 @@ async def list_superfans(
     current_user: User = Depends(get_current_active_user),
 ):
     """Get top superfans by engagement score."""
+    show_demo_data = (current_user.demo_mode_status == 'enabled')
     query = select(Fan).where(
         Fan.user_id == current_user.id,
         Fan.is_superfan == True,
-        Fan.is_demo == current_user.demo_mode  # CRITICAL: Filter by demo mode
+        Fan.is_demo == show_demo_data  # CRITICAL: Filter by demo mode
     ).order_by(
         desc(Fan.engagement_score),
         desc(Fan.total_interactions)

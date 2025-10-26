@@ -182,7 +182,8 @@ async def list_interactions(
     
     # Build query
     query = select(Interaction)
-    query = build_filter_query(query, filters, current_user.id, current_user.demo_mode)
+    show_demo_data = (current_user.demo_mode_status == 'enabled')
+    query = build_filter_query(query, filters, current_user.id, show_demo_data)
     
     # Apply sorting
     if sort_by == "newest":
@@ -243,7 +244,8 @@ async def list_interactions_by_view(
     
     # Build query
     query = select(Interaction)
-    query = build_filter_query(query, filters, current_user.id, current_user.demo_mode)
+    show_demo_data = (current_user.demo_mode_status == 'enabled')
+    query = build_filter_query(query, filters, current_user.id, show_demo_data)
     
     # Apply view's sort preferences
     sort_by = view.display.get('sortBy', 'newest')
