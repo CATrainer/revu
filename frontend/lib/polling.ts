@@ -38,8 +38,12 @@ export async function pollUntil(
       try {
         attempts++;
         
+        // Get auth token from localStorage
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+        
         const response = await fetch(url, {
           cache: 'no-store', // Don't cache poll requests
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         });
         
         if (!response.ok) {

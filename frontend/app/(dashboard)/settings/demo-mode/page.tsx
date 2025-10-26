@@ -76,7 +76,10 @@ export default function DemoModePage() {
   const loadDemoStatus = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/demo/status');
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/demo/status', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
       if (response.ok) {
         const data = await response.json();
         setDemoStatus(data);
@@ -110,9 +113,13 @@ export default function DemoModePage() {
           };
 
       // Call new API route
+      const token = localStorage.getItem('access_token');
       const response = await fetch('/api/demo/enable', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(config),
       });
       
@@ -165,8 +172,10 @@ export default function DemoModePage() {
       setActionLoading(true);
       
       // Call new API route
+      const token = localStorage.getItem('access_token');
       const response = await fetch('/api/demo/disable', {
         method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       });
       
       if (!response.ok) {
