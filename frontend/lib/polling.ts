@@ -47,6 +47,13 @@ export async function pollUntil(
         });
         
         if (!response.ok) {
+          // For the first 3 attempts, retry on 404 (job may not be committed yet)
+          if (response.status === 404 && attempts <= 3) {
+            console.log(`Job not found yet (attempt ${attempts}/3), retrying...`);
+            setTimeout(poll, interval);
+            return;
+          }
+          
           const error = await response.json();
           onError?.(error);
           reject(error);
@@ -98,6 +105,9 @@ export async function pollJobStatus(
   jobId: string,
   options: PollOptions = {}
 ): Promise<any> {
+  // Wait 500ms before first poll to let DB commit
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
   return pollUntil(
     `/api/jobs/${jobId}/status`,
     (data) => {

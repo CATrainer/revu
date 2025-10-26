@@ -130,11 +130,10 @@ export default function DemoModePage() {
       
       const result = await response.json();
       
-      // Show success message
-      alert(`Demo Mode is being enabled! This will take about a minute. Status: ${result.status}`);
-      
       // Reload status immediately to show "enabling" state
       await loadDemoStatus();
+      
+      console.log(`Demo Mode is being enabled! Job ID: ${result.job_id}`);
       
       // Poll for completion in background
       if (result.job_id) {
@@ -146,11 +145,10 @@ export default function DemoModePage() {
             console.log('Demo mode enabled!', job);
             // Reload status to show "enabled"
             await loadDemoStatus();
-            alert('Demo Mode Enabled! Interactions will start arriving shortly.');
           },
           onError: (error) => {
-            console.error('Job failed:', error);
-            alert('Demo mode failed to enable. Please try again.');
+            console.error('Job polling error:', error);
+            // Reload status - the demo_mode_error field will show the issue
             loadDemoStatus();
           },
         }).catch(console.error);

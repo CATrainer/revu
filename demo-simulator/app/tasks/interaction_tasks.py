@@ -20,11 +20,16 @@ def generate_comments_batch():
 
 async def _generate_comments_async():
     """Async implementation of comment generation."""
+    from sqlalchemy.orm import selectinload
+    
     async with AsyncSessionLocal() as session:
         # Get content from last 48 hours that still needs comments
         cutoff = datetime.utcnow() - timedelta(hours=48)
         
-        stmt = select(DemoContent).where(
+        # Use selectinload to eager load relationships and prevent lazy loading
+        stmt = select(DemoContent).options(
+            selectinload(DemoContent.profile)
+        ).where(
             and_(
                 DemoContent.published_at >= cutoff,
                 DemoContent.engagement_complete == False
@@ -32,7 +37,7 @@ async def _generate_comments_async():
         ).limit(20)  # Process 20 pieces of content at a time
         
         result = await session.execute(stmt)
-        content_items = list(result.scalars().all())
+        content_items = result.scalars().all()
         
         if not content_items:
             logger.info("No content needing comments")
@@ -41,13 +46,14 @@ async def _generate_comments_async():
         engine = SimulationEngine()
         
         for content in content_items:
-            # Eager load attributes to avoid lazy loading issues with asyncpg
-            content_id = content.id
-            target_comments = content.target_comments
-            comments_count = content.comments_count
-            published_at = content.published_at
-            
+            content_id = None
             try:
+                # Access attributes within session context to avoid detached state
+                content_id = content.id
+                target_comments = content.target_comments
+                comments_count = content.comments_count
+                published_at = content.published_at
+                
                 remaining = max(0, target_comments - comments_count)
                 
                 if remaining <= 0:
@@ -70,7 +76,7 @@ async def _generate_comments_async():
                     )
                 
             except Exception as e:
-                logger.error(f"Error generating comments for content {content_id}: {str(e)}")
+                logger.error(f"Error generating comments for content {content_id or 'unknown'}: {str(e)}")
                 await session.rollback()
 
 
@@ -87,7 +93,7 @@ async def _generate_dms_async():
         # Get all active profiles
         stmt = select(DemoProfile).where(DemoProfile.is_active == True)
         result = await session.execute(stmt)
-        profiles = list(result.scalars().all())
+        profiles = result.scalars().all()
         
         if not profiles:
             return
@@ -95,11 +101,12 @@ async def _generate_dms_async():
         engine = SimulationEngine()
         
         for profile in profiles:
-            # Eager load attributes to avoid lazy loading issues with asyncpg
-            profile_id = profile.id
-            dm_frequency = profile.dm_frequency
-            
+            profile_id = None
             try:
+                # Access attributes within session context to avoid detached state
+                profile_id = profile.id
+                dm_frequency = profile.dm_frequency
+                
                 # Generate 1-5 DMs per batch based on frequency
                 # Inline get_dm_target logic
                 if dm_frequency == 'low':
@@ -116,7 +123,7 @@ async def _generate_dms_async():
                     await engine.generate_dm(session, profile)
                 
             except Exception as e:
-                logger.error(f"Error generating DMs for profile {profile_id}: {str(e)}")
+                logger.error(f"Error generating DMs for profile {profile_id or 'unknown'}: {str(e)}")
                 await session.rollback()
 
 
@@ -147,7 +154,7 @@ async def _send_interactions_async():
         ).limit(50)  # Send 50 at a time
         
         result = await session.execute(stmt)
-        interactions = list(result.scalars().all())
+        interactions = result.scalars().all()
         
         if not interactions:
             return
@@ -157,9 +164,10 @@ async def _send_interactions_async():
         failed_count = 0
         
         for interaction in interactions:
-            interaction_id = interaction.id  # Load before try block
-            
+            interaction_id = None
             try:
+                # Access id within try block to avoid lazy loading issues
+                interaction_id = interaction.id
                 # Convert to webhook payload
                 payload = interaction.to_webhook_payload()
                 
@@ -178,10 +186,13 @@ async def _send_interactions_async():
                 await session.commit()
                 
             except Exception as e:
-                logger.error(f"Error sending interaction {interaction_id}: {str(e)}")
-                interaction.status = 'failed'
-                interaction.error_message = str(e)
-                await session.commit()
+                logger.error(f"Error sending interaction {interaction_id or 'unknown'}: {str(e)}")
+                try:
+                    interaction.status = 'failed'
+                    interaction.error_message = str(e)
+                    await session.commit()
+                except Exception:
+                    pass  # If we can't update the status, just continue
                 failed_count += 1
         
         logger.info(f"Sent {sent_count} interactions, {failed_count} failed")

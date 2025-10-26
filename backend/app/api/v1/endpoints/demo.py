@@ -54,28 +54,37 @@ async def enable_demo_mode(
     if current_user.demo_mode_status in ('enabled', 'enabling'):
         raise HTTPException(400, f"Demo mode already {current_user.demo_mode_status}")
     
-    # Immediately update status to 'enabling'
-    current_user.demo_mode_status = 'enabling'
-    current_user.demo_mode_error = None
-    await session.commit()
-    
-    # Create background job
-    from app.services.background_jobs import BackgroundJobService
-    job_service = BackgroundJobService(session)
-    job = await job_service.create_job(
-        job_type='demo_enable',
-        user_id=current_user.id,
-    )
-    
-    # Queue Celery task
-    from app.tasks.demo_operations import enable_demo_mode_task
-    enable_demo_mode_task.delay(str(current_user.id), str(job.id))
-    
-    return {
-        "status": "enabling",
-        "job_id": str(job.id),
-        "message": "Demo mode is being enabled. This may take a minute.",
-    }
+    try:
+        # Immediately update status to 'enabling'
+        current_user.demo_mode_status = 'enabling'
+        current_user.demo_mode_error = None
+        await session.commit()
+        
+        # Create background job
+        from app.services.background_jobs import BackgroundJobService
+        job_service = BackgroundJobService(session)
+        job = await job_service.create_job(
+            job_type='demo_enable',
+            user_id=current_user.id,
+        )
+        
+        # Queue Celery task
+        from app.tasks.demo_operations import enable_demo_mode_task
+        enable_demo_mode_task.delay(str(current_user.id), str(job.id))
+        
+        return {
+            "status": "enabling",
+            "job_id": str(job.id),
+            "message": "Demo mode is being enabled. This may take a minute.",
+        }
+    except Exception as e:
+        # If anything fails, roll back status to disabled
+        await session.rollback()
+        current_user.demo_mode_status = 'disabled'
+        current_user.demo_mode_error = str(e)
+        await session.commit()
+        logger.error(f"Failed to enable demo mode for user {current_user.id}: {e}")
+        raise HTTPException(500, f"Failed to enable demo mode: {str(e)}")
 
 
 @router.post("/demo/disable")
@@ -88,28 +97,40 @@ async def disable_demo_mode(
     if current_user.demo_mode_status not in ('enabled', 'failed'):
         raise HTTPException(400, f"Cannot disable demo mode with status: {current_user.demo_mode_status}")
     
-    # Immediately update status to 'disabling'
-    current_user.demo_mode_status = 'disabling'
-    current_user.demo_mode_error = None
-    await session.commit()
+    # Store original status in case we need to roll back
+    original_status = current_user.demo_mode_status
     
-    # Create background job
-    from app.services.background_jobs import BackgroundJobService
-    job_service = BackgroundJobService(session)
-    job = await job_service.create_job(
-        job_type='demo_disable',
-        user_id=current_user.id,
-    )
-    
-    # Queue Celery task
-    from app.tasks.demo_operations import disable_demo_mode_task
-    disable_demo_mode_task.delay(str(current_user.id), str(job.id))
-    
-    return {
-        "status": "disabling",
-        "job_id": str(job.id),
-        "message": "Demo mode is being disabled. This may take a minute.",
-    }
+    try:
+        # Immediately update status to 'disabling'
+        current_user.demo_mode_status = 'disabling'
+        current_user.demo_mode_error = None
+        await session.commit()
+        
+        # Create background job
+        from app.services.background_jobs import BackgroundJobService
+        job_service = BackgroundJobService(session)
+        job = await job_service.create_job(
+            job_type='demo_disable',
+            user_id=current_user.id,
+        )
+        
+        # Queue Celery task
+        from app.tasks.demo_operations import disable_demo_mode_task
+        disable_demo_mode_task.delay(str(current_user.id), str(job.id))
+        
+        return {
+            "status": "disabling",
+            "job_id": str(job.id),
+            "message": "Demo mode is being disabled. This may take a minute.",
+        }
+    except Exception as e:
+        # If anything fails, roll back to original status
+        await session.rollback()
+        current_user.demo_mode_status = original_status
+        current_user.demo_mode_error = str(e)
+        await session.commit()
+        logger.error(f"Failed to disable demo mode for user {current_user.id}: {e}")
+        raise HTTPException(500, f"Failed to disable demo mode: {str(e)}")
 
 
 @router.get("/demo/status")
