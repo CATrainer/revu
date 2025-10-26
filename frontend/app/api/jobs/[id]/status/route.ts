@@ -11,10 +11,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://revu-backend-product
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     // Get access token
     const cookieStore = await cookies();

@@ -80,6 +80,7 @@ def upgrade() -> None:
         sa.Column('result_data', postgresql.JSONB(), nullable=True),
         sa.Column('retry_count', sa.Integer(), nullable=False, server_default='0'),
         sa.Column('max_retries', sa.Integer(), nullable=False, server_default='3'),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('NOW()')),
     )
     
     # Add check constraint for job status
@@ -109,6 +110,7 @@ def upgrade() -> None:
         sa.Column('user_agent', sa.Text(), nullable=True),
         sa.Column('is_valid', sa.Boolean(), nullable=False, server_default='true'),
         sa.Column('revoked_at', sa.DateTime(timezone=True), nullable=True),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('NOW()')),
     )
     
     # Create indexes for user_sessions
