@@ -92,7 +92,7 @@ export function Features() {
               Your Creator Side-Kick Tools to Help You Scale.
             </motion.h2>
             <motion.p 
-              className="text-lg md:text-xl text-primary-dark max-w-2xl mx-auto font-['Poppins',sans-serif] font-bold"
+              className="text-lg md:text-xl text-[var(--success)] max-w-2xl mx-auto font-['Poppins',sans-serif] font-bold"
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ duration: 0.6, delay: 0.5 }}
@@ -212,7 +212,9 @@ export function Features() {
                     />
                   </motion.div>
                   <motion.h3 
-                    className="text-xl font-semibold text-primary-dark mb-2 font-['Poppins',sans-serif] text-center"
+                    className={`text-xl font-semibold mb-2 font-['Poppins',sans-serif] text-center ${
+                      feature.title === 'DM & Comment Automation' ? 'text-holo-pink' : 'text-brand-text'
+                    }`}
                     initial={{ opacity: 0 }}
                     animate={isInView ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ delay: 0.8 + (index * 0.1), duration: 0.5 }}
@@ -220,7 +222,7 @@ export function Features() {
                     {feature.title}
                   </motion.h3>
                   <motion.p 
-                    className="text-secondary-dark font-['Poppins',sans-serif]"
+                    className="text-[var(--success)] font-['Poppins',sans-serif]"
                     initial={{ opacity: 0 }}
                     animate={isInView ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ delay: 1.0 + (index * 0.1), duration: 0.5 }}

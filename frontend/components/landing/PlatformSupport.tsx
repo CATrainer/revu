@@ -38,10 +38,10 @@ export function PlatformSupport() {
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-dark mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold brand-text mb-4">
             Supported Platforms
           </h2>
-          <p className="text-lg text-secondary-dark max-w-2xl mx-auto">
+          <p className="text-lg text-[var(--success)] max-w-2xl mx-auto">
             Start with YouTube and Instagram today. More platforms added based on community feedback.
           </p>
         </motion.div>
@@ -56,7 +56,7 @@ export function PlatformSupport() {
           >
             <div className="flex items-center gap-3 mb-6">
               <Check className="w-6 h-6 text-holo-mint" />
-              <h3 className="text-2xl font-bold text-primary-dark">Available Now</h3>
+              <h3 className="text-2xl font-bold brand-text">Available Now</h3>
               <BetaBadge variant="blue" />
             </div>
             <div className="space-y-4">
@@ -69,7 +69,7 @@ export function PlatformSupport() {
                   transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
                 >
                   <platform.icon className={`w-8 h-8 ${platform.color}`} />
-                  <span className="text-lg font-semibold text-primary-dark">{platform.name}</span>
+                  <span className="text-lg font-semibold brand-text">{platform.name}</span>
                   <Check className="w-5 h-5 text-holo-mint ml-auto" />
                 </motion.div>
               ))}
@@ -85,7 +85,7 @@ export function PlatformSupport() {
           >
             <div className="flex items-center gap-3 mb-6">
               <Clock className="w-6 h-6 text-holo-purple" />
-              <h3 className="text-2xl font-bold text-primary-dark">Coming Soon</h3>
+              <h3 className="text-2xl font-bold brand-text">Coming Soon</h3>
             </div>
             <div className="space-y-4">
               {comingSoonPlatforms.map((platform, index) => (
@@ -98,7 +98,7 @@ export function PlatformSupport() {
                 >
                   <platform.icon className={`w-8 h-8 ${platform.color}`} />
                   <div className="flex-1">
-                    <span className="text-lg font-semibold text-primary-dark block">{platform.name}</span>
+                    <span className="text-lg font-semibold brand-text block">{platform.name}</span>
                     <span className="text-sm text-secondary-dark">{platform.timeline}</span>
                   </div>
                 </motion.div>

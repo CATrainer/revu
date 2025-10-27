@@ -33,7 +33,7 @@ export function FinalCTA() {
         >
           <Rocket className="w-16 h-16 text-holo-mint mx-auto mb-6" />
           
-          <h2 className="text-4xl md:text-5xl font-bold text-primary-dark mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold brand-text mb-6">
             Ready to Grow Your Channel?
           </h2>
           

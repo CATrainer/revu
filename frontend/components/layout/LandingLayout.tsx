@@ -156,29 +156,14 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                             </Link>
                           </NavigationMenuLink>
                         </li>
-                        <li className="flex flex-col p-3">
-                          <Button asChild variant="outline" className="text-sm h-12 border-holo-mint text-holo-mint hover:bg-holo-mint/10 font-medium">
-                            <Link href="/signup">
-                              Join Early Access
-                            </Link>
-                          </Button>
-                        </li>
                       </ul>
                     </NavigationMenuContent>
                   </NavigationMenuItem>
                   
                   <NavigationMenuItem>
                     <NavigationMenuLink asChild>
-                      <Link href="/ai" className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
-                        Repruv AI
-                      </Link>
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                  
-                  <NavigationMenuItem>
-                    <NavigationMenuLink asChild>
                       <Link href="/pricing" className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
-                        Pricing
+                        Our Pricing
                       </Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
@@ -189,14 +174,6 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                         Agency Partners
                       </Link>
                     </NavigationMenuLink>
-                  </NavigationMenuItem>
-                  
-                  <NavigationMenuItem>
-                    <Button asChild className="bg-holo-mint hover:bg-holo-mint-dark text-gray-900 dark:text-white">
-                      <Link href="/signup">
-                        Join Early Access
-                      </Link>
-                    </Button>
                   </NavigationMenuItem>
                 </NavigationMenuList>
               </NavigationMenu>
@@ -255,13 +232,6 @@ export function LandingLayout({ children }: { children: React.ReactNode }) {
                 className="nav-mobile-link block px-4 py-3 text-base"
               >
                 Features
-              </Link>
-              <Link
-                href="/ai"
-                role="menuitem"
-                className="nav-mobile-link block px-4 py-3 text-base"
-              >
-                Repruv AI
               </Link>
               <Link
                 href="/pricing"

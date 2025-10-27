@@ -66,28 +66,32 @@ export function SocialProof() {
     }
   ];
 
+  // Filter out "Our Vision" card
+  const visibleCards = avatarCards.filter(card => card.id !== 'default');
+
   const nextCard = () => {
-    setCurrentCard((prev) => (prev + 1) % avatarCards.length);
+    setCurrentCard((prev) => (prev + 1) % visibleCards.length);
   };
 
   const prevCard = () => {
-    setCurrentCard((prev) => (prev - 1 + avatarCards.length) % avatarCards.length);
+    setCurrentCard((prev) => (prev - 1 + visibleCards.length) % visibleCards.length);
   };
 
-  const currentAvatar = avatarCards[currentCard];
+  const currentAvatar = visibleCards[currentCard];
 
   // Manage YouTube thumbnail fallback sequence per current avatar
   // Initialize thumbnail synchronously to prevent initial placeholder when a video exists
-  const [thumbSrc, setThumbSrc] = useState<string>(() =>
-    currentAvatar.videoId ? `https://i.ytimg.com/vi/${currentAvatar.videoId}/maxresdefault.jpg` : ''
-  );
+  const [thumbSrc, setThumbSrc] = useState<string>(() => {
+    if (!currentAvatar || !currentAvatar.videoId) return '';
+    return `https://i.ytimg.com/vi/${currentAvatar.videoId}/maxresdefault.jpg`;
+  });
   useEffect(() => {
-    if (currentAvatar.videoId) {
+    if (currentAvatar && currentAvatar.videoId) {
       setThumbSrc(`https://i.ytimg.com/vi/${currentAvatar.videoId}/maxresdefault.jpg`);
     } else {
       setThumbSrc('');
     }
-  }, [currentAvatar.videoId]);
+  }, [currentAvatar]);
 
   return (
     // Reduced padding on mobile for better spacing
@@ -369,7 +373,7 @@ export function SocialProof() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2 }}
         >
-          {avatarCards.map((card, index) => (
+          {visibleCards.map((card, index) => (
             <motion.button
               key={card.id}
               onClick={() => setCurrentCard(index)}

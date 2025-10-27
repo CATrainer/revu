@@ -6,10 +6,11 @@ import { useInView } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, Play, Zap, Award } from 'lucide-react';
 import { api } from '@/lib/api';
 import SocialPlatformCarousel from '@/components/shared/SocialPlatformCarousel';
 import { useAuth } from '@/lib/auth';
+import { VideoModal } from '@/components/ui/VideoModal';
 
 export function Hero() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export function Hero() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,15 +74,15 @@ export function Hero() {
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-primary-dark leading-tight tracking-tight mb-4">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold brand-text leading-tight tracking-tight mb-4">
               Automating monetisation for the creator economy.
             </h1>
             
-            <p className="text-lg md:text-xl text-secondary-dark leading-relaxed max-w-3xl mx-auto font-light">
+            <p className="text-lg md:text-xl text-[var(--success)] leading-relaxed max-w-3xl mx-auto font-light">
               Help creators grow their channels and increase revenue through {' '}
-              <span className="text-primary-dark font-medium">AI-powered automation</span>, {' '}
-              <span className="text-holo-teal font-medium">monetization insights</span>, and {' '}
-              <span className="text-holo-mint font-medium">cross-platform intelligence</span>.
+              <span className="font-medium">AI-powered automation</span>, {' '}
+              <span className="font-medium">monetization insights</span>, and {' '}
+              <span className="font-medium">cross-platform intelligence</span>.
             </p>
           </motion.div>
           
@@ -107,22 +109,25 @@ export function Hero() {
               
               <div className="relative z-10">
                 <div className="text-center mb-6">
-                  <h3 className="text-3xl lg:text-4xl font-bold text-holo-mint mb-4">
+                  <h3 className="text-3xl lg:text-4xl font-bold text-[var(--success)] mb-4">
                     Join Early Access
                   </h3>
-                  <p className="text-base text-secondary-dark font-medium mb-3">
+                  <p className="text-base text-[var(--success)] font-medium mb-3">
                     Start growing your channel and revenue with AI-powered tools. Free during Early Access.
                   </p>
                   <div className="flex flex-wrap gap-3 justify-center mb-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-holo-mint border border-border">
-                      ✓ YouTube & Instagram [BETA]
-                    </span>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-holo-teal border border-border">
-                      ✓ Revenue opportunity identification
-                    </span>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-holo-purple border border-border">
-                      ✓ Free during Early Access
-                    </span>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-red-500/10 to-pink-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 shadow-sm hover:shadow-md transition-all duration-200">
+                      <Play className="w-4 h-4" />
+                      YouTube & Instagram [BETA]
+                    </div>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-cyan-500/10 to-teal-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800/50 shadow-sm hover:shadow-md transition-all duration-200">
+                      <Zap className="w-4 h-4" />
+                      Revenue opportunity identification
+                    </div>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-emerald-500/10 to-green-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 shadow-sm hover:shadow-md transition-all duration-200">
+                      <Award className="w-4 h-4" />
+                      Free during Early Access
+                    </div>
                   </div>
                 </div>
                 
@@ -143,14 +148,14 @@ export function Hero() {
                     <>
                       <Button 
                         onClick={() => router.push('/signup')}
-                        className="px-8 py-4 text-lg font-bold bg-holo-mint hover:bg-holo-mint-dark text-gray-900 dark:text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                        className="px-8 py-4 text-lg font-bold bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
                       >
                         Join Early Access
                       </Button>
                       <Button 
-                        onClick={() => router.push('/features')}
+                        onClick={() => setVideoModalOpen(true)}
                         variant="outline"
-                        className="px-8 py-4 text-lg font-bold border-2 border-holo-mint text-holo-mint hover:bg-muted rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                        className="px-8 py-4 text-lg font-bold border-2 border-[var(--brand-primary)] text-[var(--brand-primary)] hover:bg-muted rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                       >
                         Learn More
                       </Button>
@@ -171,6 +176,13 @@ export function Hero() {
       >
         <div className="w-96 h-96 brand-background rounded-full opacity-20 blur-3xl"></div>
       </motion.div>
+
+      <VideoModal 
+        videoId="Vzg3Ltsmmw4"
+        isOpen={videoModalOpen}
+        onClose={() => setVideoModalOpen(false)}
+        isShort={false}
+      />
     </motion.section>
     </>
   );
