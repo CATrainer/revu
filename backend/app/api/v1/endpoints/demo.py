@@ -140,6 +140,40 @@ async def get_demo_status(
 ):
     """Get demo mode status for current user."""
     
+    # Check for stuck states (>5 minutes in enabling/disabling)
+    if current_user.demo_mode_status in ('enabling', 'disabling'):
+        from datetime import datetime, timedelta
+        
+        # Get the latest job
+        from app.services.background_jobs import BackgroundJobService
+        job_service = BackgroundJobService(session)
+        job_type = 'demo_enable' if current_user.demo_mode_status == 'enabling' else 'demo_disable'
+        latest_job = await job_service.get_latest_job(
+            user_id=current_user.id,
+            job_type=job_type,
+        )
+        
+        # If job is stuck for >5 minutes, auto-fail it
+        if latest_job and latest_job.status in ('pending', 'running'):
+            stuck_threshold = datetime.utcnow() - timedelta(minutes=5)
+            if latest_job.created_at < stuck_threshold:
+                logger.warning(f"Auto-failing stuck {job_type} job {latest_job.id} for user {current_user.id}")
+                latest_job.mark_failed(
+                    error_message="Job timed out after 5 minutes",
+                    error_details={"reason": "timeout", "stuck_since": latest_job.created_at.isoformat()}
+                )
+                
+                # Update user status
+                if current_user.demo_mode_status == 'enabling':
+                    current_user.demo_mode_status = 'disabled'
+                else:  # disabling
+                    current_user.demo_mode_status = 'enabled'
+                
+                current_user.demo_mode_error = "Operation timed out. Please try again."
+                await session.commit()
+                
+                logger.info(f"Reset user {current_user.id} from stuck '{job_type}' state")
+    
     status_data = {
         "demo_mode": current_user.demo_mode_status == 'enabled',  # Backward compat
         "status": current_user.demo_mode_status,

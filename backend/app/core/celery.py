@@ -93,6 +93,12 @@ celery_app.conf.beat_schedule = {
         "task": "chat.cleanup_old_streams",
         "schedule": crontab(minute=0),  # Every hour
     },
+    
+    # Demo mode: Cleanup stuck jobs every 10 minutes
+    "cleanup-stuck-demo-jobs": {
+        "task": "demo.cleanup_stuck_jobs",
+        "schedule": crontab(minute="*/10"),  # Every 10 minutes
+    },
 }
 
 

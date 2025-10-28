@@ -19,7 +19,13 @@ from app.models.content import ContentPiece
 from app.services.background_jobs import BackgroundJobService
 
 
-@celery.task(name="demo.enable", bind=True, max_retries=3)
+@celery.task(
+    name="demo.enable",
+    bind=True,
+    max_retries=2,
+    time_limit=300,  # 5 minute hard limit
+    soft_time_limit=240,  # 4 minute soft limit
+)
 def enable_demo_mode_task(self, user_id: str, job_id: str):
     """
     Celery task to enable demo mode for a user.
@@ -33,9 +39,16 @@ def enable_demo_mode_task(self, user_id: str, job_id: str):
     Args:
         user_id: User ID (string UUID)
         job_id: Background job ID (string UUID)
+    
+    Timeout: 5 minutes hard limit, 4 minutes soft limit
     """
     import asyncio
-    asyncio.run(_enable_demo_mode_async(user_id, job_id))
+    try:
+        asyncio.run(_enable_demo_mode_async(user_id, job_id))
+    except Exception as e:
+        logger.error(f"Fatal error in enable_demo_mode_task: {e}", exc_info=True)
+        # The async function should handle DB updates, but log here too
+        raise
 
 
 async def _enable_demo_mode_async(user_id: str, job_id: str):
@@ -138,7 +151,13 @@ async def _enable_demo_mode_async(user_id: str, job_id: str):
             raise
 
 
-@celery.task(name="demo.disable", bind=True, max_retries=3)
+@celery.task(
+    name="demo.disable",
+    bind=True,
+    max_retries=2,
+    time_limit=180,  # 3 minute hard limit
+    soft_time_limit=150,  # 2.5 minute soft limit
+)
 def disable_demo_mode_task(self, user_id: str, job_id: str):
     """
     Celery task to disable demo mode for a user.
@@ -152,9 +171,16 @@ def disable_demo_mode_task(self, user_id: str, job_id: str):
     Args:
         user_id: User ID (string UUID)
         job_id: Background job ID (string UUID)
+    
+    Timeout: 3 minutes hard limit, 2.5 minutes soft limit
     """
     import asyncio
-    asyncio.run(_disable_demo_mode_async(user_id, job_id))
+    try:
+        asyncio.run(_disable_demo_mode_async(user_id, job_id))
+    except Exception as e:
+        logger.error(f"Fatal error in disable_demo_mode_task: {e}", exc_info=True)
+        # The async function should handle DB updates, but log here too
+        raise
 
 
 async def _disable_demo_mode_async(user_id: str, job_id: str):
@@ -255,3 +281,77 @@ async def _disable_demo_mode_async(user_id: str, job_id: str):
             
             logger.error(f"❌ Failed to disable demo mode for user {user_id}: {e}")
             raise
+
+
+@celery.task(name="demo.cleanup_stuck_jobs")
+def cleanup_stuck_demo_jobs():
+    """
+    Periodic task to cleanup stuck demo enable/disable jobs.
+    
+    Runs every 10 minutes via Celery Beat to catch jobs that:
+    - Have been pending/running for >5 minutes
+    - Never completed due to worker crashes or timeouts
+    
+    This prevents users from being stuck forever in 'enabling' or 'disabling' states.
+    """
+    import asyncio
+    asyncio.run(_cleanup_stuck_jobs_async())
+
+
+async def _cleanup_stuck_jobs_async():
+    """Async implementation of stuck job cleanup."""
+    from datetime import datetime, timedelta
+    from sqlalchemy import select, and_
+    
+    async with get_async_session_context() as db:
+        try:
+            stuck_threshold = datetime.utcnow() - timedelta(minutes=5)
+            
+            # Find stuck jobs (pending/running for >5 minutes)
+            stmt = select(BackgroundJob).where(
+                and_(
+                    BackgroundJob.job_type.in_(['demo_enable', 'demo_disable']),
+                    BackgroundJob.status.in_(['pending', 'running']),
+                    BackgroundJob.created_at < stuck_threshold
+                )
+            )
+            
+            result = await db.execute(stmt)
+            stuck_jobs = result.scalars().all()
+            
+            if not stuck_jobs:
+                logger.debug("No stuck demo jobs found")
+                return
+            
+            logger.warning(f"Found {len(stuck_jobs)} stuck demo jobs, cleaning up...")
+            
+            for job in stuck_jobs:
+                try:
+                    # Mark job as failed
+                    job.mark_failed(
+                        error_message="Job timed out and was auto-cleaned up",
+                        error_details={"reason": "auto_cleanup", "stuck_since": job.created_at.isoformat()}
+                    )
+                    
+                    # Get user and reset status
+                    user = await db.get(User, job.user_id)
+                    if user:
+                        if user.demo_mode_status == 'enabling':
+                            user.demo_mode_status = 'disabled'
+                            user.demo_mode_error = "Setup timed out. Please try again."
+                        elif user.demo_mode_status == 'disabling':
+                            user.demo_mode_status = 'enabled'
+                            user.demo_mode_error = "Cleanup timed out. Please try again."
+                        
+                        logger.info(f"Reset user {user.id} from stuck '{job.job_type}' state")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to cleanup job {job.id}: {e}")
+                    continue
+            
+            await db.commit()
+            logger.info(f"✅ Cleaned up {len(stuck_jobs)} stuck demo jobs")
+            
+        except Exception as e:
+            logger.error(f"Error in cleanup_stuck_demo_jobs: {e}", exc_info=True)
+            await db.rollback()
