@@ -134,10 +134,16 @@ class Settings(BaseSettings):
     OPENAI_MAX_TOKENS: int = 500
     OPENAI_TEMPERATURE: float = 0.7
 
-    # Claude (optional)
-    CLAUDE_API_KEY: Optional[str] = None
-    CLAUDE_MODEL: Optional[str] = "claude-3-opus-20240229"
+    # Anthropic/Claude API
+    ANTHROPIC_API_KEY: Optional[str] = None  # Primary name
+    CLAUDE_API_KEY: Optional[str] = None     # Alias for backwards compatibility
+    CLAUDE_MODEL: Optional[str] = "claude-3-5-sonnet-latest"
     CLAUDE_MAX_TOKENS: int = 500
+    
+    @property
+    def EFFECTIVE_ANTHROPIC_KEY(self) -> Optional[str]:
+        """Return whichever API key is set (ANTHROPIC_API_KEY takes precedence)."""
+        return self.ANTHROPIC_API_KEY or self.CLAUDE_API_KEY
 
     # YouTube / OAuth (optional)
     YOUTUBE_API_KEY: Optional[str] = None

@@ -64,19 +64,17 @@ class DemoActionProvider(PlatformActionProvider):
                     }
         
         except httpx.TimeoutException:
-            logger.warning("Demo service timeout - falling back to local update")
-            # Graceful degradation: update locally even if demo service is down
+            logger.error("Demo service timeout - cannot send reply")
             return {
-                "success": True,
-                "reply_id": f"offline_reply_{interaction.id}",
-                "fallback": True
+                "success": False,
+                "error": "Demo service is unreachable (timeout). Response not sent."
             }
         
         except Exception as e:
             logger.error(f"Error sending reply to demo service: {e}", exc_info=True)
             return {
                 "success": False,
-                "error": str(e)
+                "error": f"Failed to reach demo service: {str(e)}"
             }
     
     async def delete_interaction(
@@ -106,8 +104,8 @@ class DemoActionProvider(PlatformActionProvider):
                     }
         
         except httpx.TimeoutException:
-            logger.warning("Demo service timeout on delete - marking as deleted locally")
-            return {"success": True, "fallback": True}
+            logger.error("Demo service timeout on delete")
+            return {"success": False, "error": "Demo service unreachable"}
         
         except Exception as e:
             logger.error(f"Error deleting demo interaction: {e}", exc_info=True)
@@ -140,8 +138,8 @@ class DemoActionProvider(PlatformActionProvider):
                     }
         
         except httpx.TimeoutException:
-            logger.warning("Demo service timeout on mark_as_read")
-            return {"success": True, "fallback": True}
+            logger.error("Demo service timeout on mark_as_read")
+            return {"success": False, "error": "Demo service unreachable"}
         
         except Exception as e:
             logger.error(f"Error marking demo interaction as read: {e}", exc_info=True)

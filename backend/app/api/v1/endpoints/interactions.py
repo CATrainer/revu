@@ -579,12 +579,21 @@ async def generate_response(
     if not interaction or interaction.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Interaction not found")
     
+    # Check if API key is configured
+    from app.core.config import settings
+    api_key = settings.EFFECTIVE_ANTHROPIC_KEY
+    
+    if not api_key:
+        raise HTTPException(
+            status_code=503, 
+            detail="AI response generation is not configured. Please set ANTHROPIC_API_KEY environment variable."
+        )
+    
     try:
         # Use Claude API (similar to AI assistant implementation)
         from anthropic import Anthropic
-        import os
         
-        client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        client = Anthropic(api_key=api_key)
         
         # Build context
         context_parts = [
