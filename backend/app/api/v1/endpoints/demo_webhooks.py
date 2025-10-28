@@ -100,8 +100,9 @@ async def handle_interaction_created(session: AsyncSession, data: Dict) -> Dict:
         logger.error(error_msg)
         raise ValueError(error_msg)
     
-    if not user.demo_mode:
-        error_msg = f"User {user_id} is not in demo mode - rejecting demo data"
+    # Check if user is in demo mode (use demo_mode_status, not deprecated demo_mode)
+    if user.demo_mode_status != 'enabled':
+        error_msg = f"User {user_id} is not in demo mode (status: {user.demo_mode_status}) - rejecting demo data"
         logger.warning(error_msg)
         raise ValueError(error_msg)
     

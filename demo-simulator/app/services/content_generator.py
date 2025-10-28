@@ -167,7 +167,9 @@ Return as JSON array with this exact format:
 IMPORTANT: Return ONLY the JSON array, no explanation."""
         
         # Retry logic for API overload errors
-        max_retries = 3
+        max_retries = 1  # Reduced from 3 to save API costs
+        response = None
+        
         for attempt in range(max_retries):
             try:
                 response = self.client.messages.create(
@@ -178,7 +180,22 @@ IMPORTANT: Return ONLY the JSON array, no explanation."""
                 )
                 break  # Success!
             except Exception as e:
-                if attempt < max_retries - 1 and ('overloaded' in str(e).lower() or '500' in str(e)):
+                error_str = str(e).lower()
+                
+                # Check for credit balance errors - stop immediately, don't retry
+                if 'credit balance' in error_str or 'too low' in error_str:
+                    logger.error(f"❌ CRITICAL: Anthropic credit balance exhausted. Returning fallback comments to prevent further charges.")
+                    # Return fallback comments immediately
+                    return [
+                        {"text": f"Great content! Really enjoyed this.", "sentiment": "positive"},
+                        {"text": f"Thanks for sharing!", "sentiment": "positive"},
+                        {"text": f"Interesting perspective", "sentiment": "neutral"},
+                        {"text": f"Love this!", "sentiment": "positive"},
+                        {"text": f"Helpful info", "sentiment": "neutral"},
+                    ][:count]
+                
+                # Retry only for overload/500 errors
+                if attempt < max_retries - 1 and ('overloaded' in error_str or '500' in error_str):
                     logger.warning(f"Anthropic API overloaded, retry {attempt + 1}/{max_retries} in 2s...")
                     import asyncio
                     await asyncio.sleep(2)  # Wait 2 seconds before retry
@@ -191,6 +208,15 @@ IMPORTANT: Return ONLY the JSON array, no explanation."""
                         {"text": f"Thanks for sharing!", "sentiment": "positive"},
                         {"text": f"Interesting perspective", "sentiment": "neutral"},
                     ][:count]
+        
+        # If no response after retries, return fallback
+        if response is None:
+            logger.error("No response from Anthropic API, using fallback comments")
+            return [
+                {"text": f"Great content! Really enjoyed this.", "sentiment": "positive"},
+                {"text": f"Thanks for sharing!", "sentiment": "positive"},
+                {"text": f"Interesting perspective", "sentiment": "neutral"},
+            ][:count]
         
         import json
         content_text = response.content[0].text.strip()

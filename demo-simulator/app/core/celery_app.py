@@ -26,26 +26,27 @@ celery_app.conf.update(
 )
 
 # Beat schedule for periodic tasks
+# IMPORTANT: Reduced frequencies to prevent excessive API usage
 celery_app.conf.beat_schedule = {
-    # Upload new content - run every 30 minutes to ensure profiles get content quickly
+    # Upload new content - run every 6 hours (only creates content, not interactions)
     "upload-demo-content": {
         "task": "app.tasks.content_tasks.upload_content_for_active_profiles",
-        "schedule": 60.0 * 30,  # 30 minutes (reduced from 4 hours for faster initial content)
+        "schedule": 60.0 * 60 * 6,  # 6 hours (4x per day max)
     },
-    # Generate comments every 5 minutes
+    # Generate comments every 30 minutes (was 5 mins - way too frequent)
     "generate-comments": {
         "task": "app.tasks.interaction_tasks.generate_comments_batch",
-        "schedule": 60.0 * 5,  # 5 minutes
+        "schedule": 60.0 * 30,  # 30 minutes (48x per day max)
     },
-    # Generate DMs every 30 minutes
+    # Generate DMs every 2 hours (was 30 mins)
     "generate-dms": {
         "task": "app.tasks.interaction_tasks.generate_dms_batch",
-        "schedule": 60.0 * 30,  # 30 minutes
+        "schedule": 60.0 * 60 * 2,  # 2 hours (12x per day max)
     },
-    # Send queued interactions every minute
+    # Send queued interactions every 2 minutes (was 1 min)
     "send-interactions": {
         "task": "app.tasks.interaction_tasks.send_queued_interactions",
-        "schedule": 60.0,  # 1 minute
+        "schedule": 60.0 * 2,  # 2 minutes
     },
     # Cleanup old data daily at 3 AM
     "cleanup-old-data": {
