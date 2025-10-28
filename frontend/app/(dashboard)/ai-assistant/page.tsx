@@ -7,7 +7,8 @@ import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+// Use direct import path to avoid barrel export pulling in async dependencies
+import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/light';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 // Import only the languages you need
 import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
@@ -18,7 +19,7 @@ import bash from 'react-syntax-highlighter/dist/esm/languages/prism/bash';
 import css from 'react-syntax-highlighter/dist/esm/languages/prism/css';
 import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql';
 
-// Register languages
+// Register languages with the light build
 SyntaxHighlighter.registerLanguage('typescript', typescript);
 SyntaxHighlighter.registerLanguage('javascript', javascript);
 SyntaxHighlighter.registerLanguage('python', python);
