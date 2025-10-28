@@ -115,11 +115,26 @@ async def handle_interaction_created(session: AsyncSession, data: Dict) -> Dict:
         user_id,
     )
     
+    # Extract parent content data (what the interaction is about)
+    content_data = data.get('content', {})
+    parent_content_id = content_data.get('id')
+    parent_content_title = content_data.get('title')
+    parent_content_url = None  # Demo service doesn't provide URL yet, but we can generate it
+    if parent_content_id:
+        # Generate a realistic demo URL based on platform
+        platform = data.get('platform', 'youtube')
+        if platform == 'youtube':
+            parent_content_url = f"https://youtube.com/watch?v={parent_content_id}"
+        elif platform == 'instagram':
+            parent_content_url = f"https://instagram.com/p/{parent_content_id}"
+        elif platform == 'tiktok':
+            parent_content_url = f"https://tiktok.com/@demo/video/{parent_content_id}"
+    
     # Create interaction
     interaction_id = uuid.uuid4()
     platform_id = interaction_data.get('id') or f"demo_{interaction_id}"
     
-    logger.debug(f"Creating interaction with platform_id: {platform_id}")
+    logger.debug(f"Creating interaction with platform_id: {platform_id}, parent_content: {parent_content_title}")
     
     interaction = Interaction(
         id=interaction_id,
@@ -141,6 +156,10 @@ async def handle_interaction_created(session: AsyncSession, data: Dict) -> Dict:
         user_id=user_id,
         organization_id=user.organization_id,  # Include organization_id
         is_demo=True,  # CRITICAL: Mark as demo data
+        # Add parent content metadata for rich context
+        parent_content_id=parent_content_id,
+        parent_content_title=parent_content_title,
+        parent_content_url=parent_content_url,
     )
     
     # Check if interaction with this platform_id already exists (idempotent handling)

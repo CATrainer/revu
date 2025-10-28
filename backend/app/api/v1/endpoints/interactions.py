@@ -222,10 +222,16 @@ async def list_interactions_by_view(
     view_id: UUID,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    sort_by: Optional[str] = Query(None, description="newest, oldest, priority, engagement - overrides view default"),
+    tab: Optional[str] = Query(None, description="all, unanswered, awaiting_approval, answered"),
+    platforms: Optional[List[str]] = Query(None, description="Filter by platforms - overrides view default"),
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    """List interactions filtered by a specific view's configuration."""
+    """List interactions filtered by a specific view's configuration.
+    
+    Query params (sort_by, tab, platforms) override view defaults.
+    """
     # Get view
     view = await session.get(InteractionView, view_id)
     
@@ -242,19 +248,35 @@ async def list_interactions_by_view(
     # Parse view filters
     filters = InteractionFilters(**view.filters)
     
+    # Override with query params if provided
+    if platforms:
+        filters.platforms = platforms
+    
+    # Apply tab-based filtering (overrides view filters)
+    if tab:
+        if tab == "unanswered":
+            filters.status = ["unread", "read"]
+        elif tab == "awaiting_approval":
+            filters.status = ["awaiting_approval"]
+        elif tab == "answered":
+            filters.status = ["answered"]
+        # "all" tab doesn't filter by status
+    
     # Build query
     query = select(Interaction)
     show_demo_data = (current_user.demo_mode_status == 'enabled')
     query = build_filter_query(query, filters, current_user.id, show_demo_data)
     
-    # Apply view's sort preferences
-    sort_by = view.display.get('sortBy', 'newest')
-    if sort_by == "newest":
+    # Apply sorting (query param overrides view default)
+    effective_sort = sort_by or view.display.get('sortBy', 'newest')
+    if effective_sort == "newest":
         query = query.order_by(desc(Interaction.created_at))
-    elif sort_by == "oldest":
+    elif effective_sort == "oldest":
         query = query.order_by(Interaction.created_at.asc())
-    elif sort_by == "priority":
+    elif effective_sort == "priority":
         query = query.order_by(desc(Interaction.priority_score), desc(Interaction.created_at))
+    elif effective_sort == "engagement":
+        query = query.order_by(desc(Interaction.like_count + Interaction.reply_count), desc(Interaction.created_at))
     
     # Get total count
     count_query = select(func.count()).select_from(query.subquery())
