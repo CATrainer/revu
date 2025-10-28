@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Send, Loader2, Sparkles, MessageSquare, ExternalLink, Zap } from 'lucide-react';
+import { X, Send, Loader2, Sparkles, MessageSquare, ExternalLink, Zap, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { pushToast } from '@/components/ui/toast';
 
 interface Interaction {
   id: string;
@@ -112,12 +113,17 @@ export function InteractionDetailPanel({
       
       if (data.pending_response) {
         setResponseText(data.pending_response.text);
+        pushToast("✨ AI response generated successfully!", "success");
+      } else {
+        throw new Error('No response generated');
       }
       
       await loadContext(); // Reload to get updated status
       onUpdate?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to generate response:', error);
+      const errorMsg = error?.response?.data?.detail || error?.message || "Failed to generate AI response";
+      pushToast(`❌ ${errorMsg}`, "error");
     } finally {
       setGenerating(false);
     }
@@ -128,20 +134,33 @@ export function InteractionDetailPanel({
 
     try {
       setSending(true);
-      await api.post(`/interactions/${interactionId}/respond`, {
+      const response = await api.post(`/interactions/${interactionId}/respond`, {
         text: responseText,
         send_immediately: !addToQueue,
         add_to_approval_queue: addToQueue,
       });
 
-      await loadContext();
-      onUpdate?.();
+      const data = response.data;
       
-      if (!addToQueue) {
-        setResponseText('');
+      if (data.success) {
+        const msg = addToQueue 
+          ? "📋 Response added to approval queue"
+          : "✅ Response sent successfully!";
+        pushToast(msg, "success");
+        
+        await loadContext();
+        onUpdate?.();
+        
+        if (!addToQueue) {
+          setResponseText('');
+        }
+      } else {
+        throw new Error(data.message || 'Failed to send response');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to send response:', error);
+      const errorMsg = error?.response?.data?.detail || error?.message || "Failed to send response";
+      pushToast(`❌ ${errorMsg}`, "error");
     } finally {
       setSending(false);
     }
