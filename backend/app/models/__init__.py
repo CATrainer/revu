@@ -43,6 +43,12 @@ from app.models.content import (
     ActionItem,
 )
 from app.models.application import Application, AdminNotificationSettings
+from app.models.credit_usage import (
+    CreditUsageEvent,
+    UserCreditBalance,
+    CreditActionCost,
+    ActionType,
+)
 
 __all__ = [
     "Organization",
@@ -86,4 +92,8 @@ __all__ = [
     "ActionItem",
     "Application",
     "AdminNotificationSettings",
+    "CreditUsageEvent",
+    "UserCreditBalance",
+    "CreditActionCost",
+    "ActionType",
 ]
