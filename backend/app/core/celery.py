@@ -41,6 +41,7 @@ celery_app.conf.update(
         "app.tasks.email",
         "app.tasks.marketing",
         "app.tasks.chat_tasks",
+        "app.tasks.demo_operations",  # Demo mode enable/disable tasks
     ],
 
     # Worker settings
