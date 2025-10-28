@@ -300,12 +300,12 @@ def cleanup_stuck_demo_jobs():
 
 async def _cleanup_stuck_jobs_async():
     """Async implementation of stuck job cleanup."""
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
     from sqlalchemy import select, and_
     
     async with get_async_session_context() as db:
         try:
-            stuck_threshold = datetime.utcnow() - timedelta(minutes=5)
+            stuck_threshold = datetime.now(timezone.utc) - timedelta(minutes=5)
             
             # Find stuck jobs (pending/running for >5 minutes)
             stmt = select(BackgroundJob).where(

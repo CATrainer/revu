@@ -142,7 +142,7 @@ async def get_demo_status(
     
     # Check for stuck states (>5 minutes in enabling/disabling)
     if current_user.demo_mode_status in ('enabling', 'disabling'):
-        from datetime import datetime, timedelta
+        from datetime import datetime, timedelta, timezone
         
         # Get the latest job
         from app.services.background_jobs import BackgroundJobService
@@ -155,7 +155,7 @@ async def get_demo_status(
         
         # If job is stuck for >5 minutes, auto-fail it
         if latest_job and latest_job.status in ('pending', 'running'):
-            stuck_threshold = datetime.utcnow() - timedelta(minutes=5)
+            stuck_threshold = datetime.now(timezone.utc) - timedelta(minutes=5)
             if latest_job.created_at < stuck_threshold:
                 logger.warning(f"Auto-failing stuck {job_type} job {latest_job.id} for user {current_user.id}")
                 latest_job.mark_failed(
