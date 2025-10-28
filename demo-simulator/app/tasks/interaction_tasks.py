@@ -19,8 +19,14 @@ def generate_comments_batch():
 
 
 async def _generate_comments_async():
-    """Async implementation of comment generation."""
+    """
+    Async implementation of comment generation.
+    
+    OPTIMIZATION: Batch multiple videos into ONE API call to reduce costs by 10x.
+    Instead of 10 videos = 10 API calls, we do 10 videos = 1 API call.
+    """
     from sqlalchemy.orm import selectinload
+    import random
     
     async with AsyncSessionLocal() as session:
         # Get content from last 48 hours that still needs comments
@@ -34,22 +40,22 @@ async def _generate_comments_async():
                 DemoContent.published_at >= cutoff,
                 DemoContent.engagement_complete == False
             )
-        ).limit(20)  # Process 20 pieces of content at a time
+        ).limit(10)  # Reduced from 20 to 10 to keep prompt size manageable
         
         result = await session.execute(stmt)
-        content_items = result.scalars().all()
+        content_items = list(result.scalars().all())
         
         if not content_items:
             logger.info("No content needing comments")
             return
         
+        # OPTIMIZATION: Batch all videos into one API call
         engine = SimulationEngine()
         
+        # Prepare batch data
+        batch_requests = []
         for content in content_items:
-            content_id = None
             try:
-                # Access attributes within session context to avoid detached state
-                content_id = content.id
                 target_comments = content.target_comments
                 comments_count = content.comments_count
                 published_at = content.published_at
@@ -61,23 +67,31 @@ async def _generate_comments_async():
                     await session.commit()
                     continue
                 
-                # Generate comments based on engagement wave
-                hours_since_publish = (datetime.utcnow() - published_at).total_seconds() / 3600
-                wave_multiplier = content.calculate_engagement_wave(int(hours_since_publish))
-                
-                # Generate 10-30 comments per batch, adjusted by wave
-                batch_size = int(min(remaining, random.randint(10, 30) * wave_multiplier))
+                # Calculate how many comments to generate (2-5 per video to keep totals reasonable)
+                batch_size = min(remaining, random.randint(2, 5))
                 
                 if batch_size > 0:
-                    await engine.generate_comments_for_content(
-                        session,
-                        content,
-                        batch_size
-                    )
+                    batch_requests.append({
+                        'content': content,
+                        'count': batch_size,
+                        'title': content.title
+                    })
                 
             except Exception as e:
-                logger.error(f"Error generating comments for content {content_id or 'unknown'}: {str(e)}")
-                await session.rollback()
+                logger.error(f"Error preparing content {content.id}: {str(e)}")
+        
+        if not batch_requests:
+            logger.info("No comments to generate")
+            return
+        
+        # Generate ALL comments in ONE API call (massive cost savings!)
+        try:
+            logger.info(f"🚀 Batching {len(batch_requests)} videos into ONE API call ({sum(r['count'] for r in batch_requests)} total comments)")
+            await engine.generate_comments_batch_optimized(session, batch_requests)
+            logger.info(f"✅ Successfully generated comments for {len(batch_requests)} videos in single API call")
+        except Exception as e:
+            logger.error(f"Error in batched comment generation: {str(e)}")
+            await session.rollback()
 
 
 @celery_app.task(name="app.tasks.interaction_tasks.generate_dms_batch")

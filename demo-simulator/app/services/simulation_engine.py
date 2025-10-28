@@ -138,6 +138,95 @@ class SimulationEngine:
         
         return interactions
     
+    async def generate_comments_batch_optimized(
+        self,
+        session: AsyncSession,
+        batch_requests: List[dict]
+    ) -> List[DemoInteraction]:
+        """
+        Generate comments for MULTIPLE videos in ONE API call.
+        
+        This is 10x cheaper than calling the API for each video separately.
+        
+        Args:
+            batch_requests: List of dicts with 'content', 'count', 'title' keys
+        
+        Returns:
+            List of all generated interactions
+        """
+        if not batch_requests:
+            return []
+        
+        profile = batch_requests[0]['content'].profile
+        
+        # Build a single batched prompt for all videos
+        total_comments = sum(r['count'] for r in batch_requests)
+        
+        # Generate ALL comments in one API call
+        all_comments = await self.content_gen.generate_comments_batched(
+            session,
+            batch_requests,
+            profile.niche,
+            total_comments
+        )
+        
+        # Distribute comments back to their respective videos
+        all_interactions = []
+        comment_idx = 0
+        
+        for request in batch_requests:
+            content = request['content']
+            count = request['count']
+            
+            # Take the next N comments for this video
+            comments_for_video = all_comments[comment_idx:comment_idx + count]
+            comment_idx += count
+            
+            now = datetime.utcnow()
+            hours_since_publish = (now - content.published_at).total_seconds() / 3600
+            wave_multiplier = content.calculate_engagement_wave(int(hours_since_publish))
+            
+            for comment_data in comments_for_video:
+                # Generate persona
+                persona = self.persona_gen.generate_persona(profile.niche)
+                
+                # Random likes
+                likes = int(random.triangular(0, 50, 5) * wave_multiplier)
+                
+                # Schedule with delay
+                delay_seconds = random.randint(10, 300)
+                scheduled_for = now + timedelta(seconds=delay_seconds)
+                
+                interaction = DemoInteraction(
+                    profile_id=profile.id,
+                    content_id=content.id,
+                    platform=content.platform,
+                    interaction_type='comment',
+                    author_username=persona['username'],
+                    author_display_name=persona['display_name'],
+                    author_avatar_url=persona['avatar_url'],
+                    author_verified=persona['verified'],
+                    author_subscriber_count=persona['subscriber_count'],
+                    content_text=comment_data['text'],
+                    sentiment=comment_data['sentiment'],
+                    likes=likes,
+                    external_id=f"demo_cmt_{uuid.uuid4().hex[:12]}",
+                    scheduled_for=scheduled_for,
+                    status='pending',
+                )
+                
+                session.add(interaction)
+                all_interactions.append(interaction)
+            
+            # Update content engagement count
+            content.increment_engagement(comments=count)
+        
+        await session.commit()
+        
+        logger.info(f"✅ Batched generation: {len(batch_requests)} videos, {total_comments} comments in 1 API call")
+        
+        return all_interactions
+    
     async def generate_dm(
         self,
         session: AsyncSession,

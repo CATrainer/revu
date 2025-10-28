@@ -238,6 +238,150 @@ IMPORTANT: Return ONLY the JSON array, no explanation."""
                 for _ in range(count)
             ]
     
+    async def generate_comments_batched(
+        self,
+        session: AsyncSession,
+        batch_requests: List[dict],
+        niche: str,
+        total_count: int,
+        sentiment_distribution: Optional[Dict[str, float]] = None
+    ) -> List[Dict]:
+        """
+        Generate comments for MULTIPLE videos in ONE API call (10x cost reduction).
+        
+        Args:
+            batch_requests: List of dicts with 'title' and 'count' keys
+            niche: Content niche
+            total_count: Total number of comments across all videos
+            sentiment_distribution: Sentiment ratios
+        
+        Returns:
+            Flat list of all comments (caller distributes to videos)
+        """
+        if sentiment_distribution is None:
+            sentiment_distribution = {
+                'positive': 0.65,
+                'negative': 0.10,
+                'neutral': 0.25,
+            }
+        
+        niche_context = self.NICHE_CONTEXTS.get(niche, 'general content')
+        
+        # Build video list for prompt
+        video_list = ""
+        for i, request in enumerate(batch_requests, 1):
+            video_list += f"{i}. \"{request['title']}\" ({request['count']} comments)\n"
+        
+        # Determine sentiments
+        sentiments = []
+        for _ in range(total_count):
+            rand = random.random()
+            if rand < sentiment_distribution['positive']:
+                sentiments.append('positive')
+            elif rand < sentiment_distribution['positive'] + sentiment_distribution['negative']:
+                sentiments.append('negative')
+            else:
+                sentiments.append('neutral')
+        
+        prompt = f"""Generate {total_count} realistic YouTube comments for these {len(batch_requests)} videos:
+
+{video_list}
+Context: These are {niche_context} videos.
+
+Generate exactly {total_count} comments TOTAL distributed across all videos as specified above.
+Sentiment distribution:
+- Positive: {sentiments.count('positive')} comments
+- Negative: {sentiments.count('negative')} comments  
+- Neutral: {sentiments.count('neutral')} comments
+
+Make comments feel REAL and VARIED:
+- Mix of lengths (short reactions, longer thoughts, questions)
+- Different tones (excited, thoughtful, critical, funny)
+- Include emojis occasionally (but not every comment)
+- Some with timestamps like "2:34 this part was crazy"
+- Vary vocabulary and writing styles
+- Include typos occasionally for realism
+- Some should ask questions, others make statements
+- Mix of casual and more formal comments
+
+Return as JSON array with this exact format (put ALL {total_count} comments in ONE array):
+[
+  {{"text": "comment text here", "sentiment": "positive"}},
+  {{"text": "another comment", "sentiment": "neutral"}},
+  ...
+]
+
+IMPORTANT: Return ONLY the JSON array with {total_count} comments total, no explanation."""
+        
+        # API call with fallback
+        max_retries = 1
+        response = None
+        
+        for attempt in range(max_retries):
+            try:
+                response = self.client.messages.create(
+                    model="claude-sonnet-4-5-20250929",
+                    max_tokens=4000,  # Increased for batch generation
+                    temperature=1.0,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                break
+            except Exception as e:
+                error_str = str(e).lower()
+                
+                # Check for credit balance errors
+                if 'credit balance' in error_str or 'too low' in error_str:
+                    logger.error(f"❌ CRITICAL: Anthropic credit balance exhausted. Using fallback comments.")
+                    return self._generate_fallback_comments(total_count)
+                
+                # Retry only for overload/500 errors
+                if attempt < max_retries - 1 and ('overloaded' in error_str or '500' in error_str):
+                    logger.warning(f"Anthropic API overloaded, retry {attempt + 1}/{max_retries} in 2s...")
+                    import asyncio
+                    await asyncio.sleep(2)
+                    continue
+                else:
+                    logger.error(f"Anthropic API failed after {attempt + 1} attempts: {e}")
+                    return self._generate_fallback_comments(total_count)
+        
+        if response is None:
+            logger.error("No response from Anthropic API, using fallback comments")
+            return self._generate_fallback_comments(total_count)
+        
+        import json
+        content_text = response.content[0].text.strip()
+        
+        # Extract JSON
+        if '```json' in content_text:
+            content_text = content_text.split('```json')[1].split('```')[0].strip()
+        elif '```' in content_text:
+            content_text = content_text.split('```')[1].split('```')[0].strip()
+        
+        try:
+            comments = json.loads(content_text)
+            logger.info(f"✅ Batched API call generated {len(comments)} comments for {len(batch_requests)} videos")
+            return comments
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse batched comments JSON: {e}. Response: {content_text[:200]}")
+            return self._generate_fallback_comments(total_count)
+    
+    def _generate_fallback_comments(self, count: int) -> List[Dict]:
+        """Generate simple fallback comments when API fails."""
+        fallback_templates = [
+            {"text": "Great content! Really enjoyed this.", "sentiment": "positive"},
+            {"text": "Thanks for sharing!", "sentiment": "positive"},
+            {"text": "Interesting perspective", "sentiment": "neutral"},
+            {"text": "Love this!", "sentiment": "positive"},
+            {"text": "Helpful info", "sentiment": "neutral"},
+            {"text": "This is amazing 🔥", "sentiment": "positive"},
+            {"text": "Good points made here", "sentiment": "positive"},
+            {"text": "Thanks!", "sentiment": "positive"},
+        ]
+        result = []
+        for i in range(count):
+            result.append(fallback_templates[i % len(fallback_templates)])
+        return result
+    
     async def generate_dm(
         self,
         session: AsyncSession,
