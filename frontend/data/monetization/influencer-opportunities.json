@@ -1,0 +1,625 @@
+[
+  {
+    "id": "influencer-membership",
+    "title": "Launch Premium Styling Community",
+    "icon": "👥",
+    "revenueMin": 3200,
+    "revenueMax": 12000,
+    "confidence": "high",
+    "effort": "medium",
+    "timeline": "3-5 weeks",
+    "category": "community",
+    "tagline": "Your followers ask for outfit advice daily - monetize that expertise",
+    "metrics": {
+      "contentPerformance": "Your styling posts average 52K views with 9.2% engagement rate",
+      "audienceSignals": "289 comments per week asking 'where did you get this?' or 'how do I style this?'",
+      "competitiveBenchmark": "Fashion creators with 80K+ followers average $8,400/mo with premium communities"
+    },
+    "whyThisWorks": [
+      "You have 289 weekly comments asking for styling advice and outfit recommendations",
+      "Your styling content consistently outperforms other content by 3.2x",
+      "94% of your engaged followers are women aged 22-35 with disposable income",
+      "You already respond to DMs - this monetizes that time investment",
+      "15+ followers comment on every single post showing strong community potential"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Foundation",
+        "timeline": "Week 1",
+        "steps": [
+          {
+            "task": "Choose platform (Discord or Circle recommended for fashion communities)",
+            "time": "2 hours",
+            "cost": 0,
+            "details": "Discord: Free, great for real-time chat. Circle: $39/mo, better for structured content. Consider your audience's platform familiarity.",
+            "resources": ["Discord.com", "Circle.so"],
+            "proTip": "Start with Discord's free tier - upgrade to Circle later if needed"
+          },
+          {
+            "task": "Define 3 membership tiers (e.g., $15 Style Squad, $35 VIP Styling, $99 Personal Stylist)",
+            "time": "3 hours",
+            "cost": 0,
+            "details": "Research competitor pricing. Your tiers should offer clear value jumps. Most successful: Basic (access), Mid (+ monthly content), Premium (+ 1-on-1 time).",
+            "proTip": "Price the middle tier at your target - most people choose the middle option"
+          },
+          {
+            "task": "Create welcome content library (10-15 foundational styling guides)",
+            "time": "8 hours",
+            "cost": 0,
+            "details": "Topics: Wardrobe essentials, body type styling, color theory, seasonal trends, budget shopping. Repurpose your best existing content.",
+            "proTip": "Use Canva templates to batch-create guides quickly"
+          }
+        ]
+      },
+      {
+        "phase": "Launch Preparation",
+        "timeline": "Week 2-3",
+        "steps": [
+          {
+            "task": "Create launch content (teaser posts, stories, announcement video)",
+            "time": "6 hours",
+            "cost": 0,
+            "details": "Build hype for 1 week before launch. Share behind-the-scenes, preview content, founder member benefits.",
+            "proTip": "Use urgency - 'First 50 members get 40% off lifetime'"
+          },
+          {
+            "task": "DM your top 50 most engaged followers with early access",
+            "time": "4 hours",
+            "cost": 0,
+            "details": "Personal invitations convert 10-15x better than public posts. Offer founding member discount (30-50% off)."
+          }
+        ]
+      },
+      {
+        "phase": "Growth & Engagement",
+        "timeline": "Week 4-8",
+        "steps": [
+          {
+            "task": "Weekly live styling sessions (1 hour each)",
+            "time": "5 hours per week",
+            "cost": 0,
+            "details": "Set consistent schedule (e.g., every Tuesday 7pm). Review outfits, answer questions, style challenges.",
+            "proTip": "Let members submit outfits/questions in advance to keep sessions flowing"
+          }
+        ]
+      }
+    ],
+    "successMetrics": [
+      "Target: 80 members by month 3 ($3,200+ MRR at $40 avg)",
+      "Engagement: 45%+ weekly active members",
+      "Retention: 85%+ month-to-month (fashion communities have high retention)",
+      "Revenue: $5,000+ MRR by month 6"
+    ],
+    "whatYouNeed": {
+      "tools": [
+        "Discord (free) or Circle ($39-79/mo)",
+        "Stripe for payments (2.9% + $0.30 per transaction)",
+        "Canva Pro for graphics ($13/mo)"
+      ],
+      "timeCommitment": "8-10 hours/week initially, 5-6 hours/week ongoing",
+      "upfrontCost": "$50-150/month in tools",
+      "breakEven": "~15 members at $30/mo average"
+    },
+    "successStories": [
+      {
+        "creator": "@StyledByEmma",
+        "followers": "92K followers",
+        "quote": "Started with 20 founding members, now at 340 paying members",
+        "revenue": "$11,200/mo",
+        "timeToScale": "8 months"
+      }
+    ]
+  },
+  {
+    "id": "influencer-course",
+    "title": "Create 'Find Your Signature Style' Course",
+    "icon": "📚",
+    "revenueMin": 2400,
+    "revenueMax": 15000,
+    "confidence": "high",
+    "effort": "high",
+    "timeline": "4-6 weeks",
+    "category": "digital-product",
+    "tagline": "Turn your most-asked question into a premium course",
+    "metrics": {
+      "contentPerformance": "Your 'personal style' content gets 3.2x more saves than average",
+      "audienceSignals": "194 comments per month asking 'how do I find my style?'",
+      "competitiveBenchmark": "Fashion courses at $97-197 convert at 2-4% of audience"
+    },
+    "whyThisWorks": [
+      "Your followers constantly ask how to develop personal style",
+      "Style-finding content gets saved 3.2x more (high intent)",
+      "One-time creation, unlimited sales potential (passive income)",
+      "Courses establish you as an expert"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Course Design",
+        "timeline": "Week 1-2",
+        "steps": [
+          {
+            "task": "Outline course curriculum (8-10 modules recommended)",
+            "time": "6 hours",
+            "cost": 0,
+            "details": "Modules: Body type, Color analysis, Style personalities, Wardrobe planning, Shopping strategy, Outfit formulas.",
+            "proTip": "Survey your audience - ask what they struggle with most"
+          }
+        ]
+      },
+      {
+        "phase": "Content Production",
+        "timeline": "Week 3-5",
+        "steps": [
+          {
+            "task": "Record all video modules (8-10 modules, 15-25 min each)",
+            "time": "24 hours",
+            "cost": 200,
+            "details": "Invest in good lighting and mic. Record in batches.",
+            "proTip": "Record all modules in 2-3 full days for consistency"
+          }
+        ]
+      }
+    ],
+    "successMetrics": [
+      "Target: 50 sales in first launch at $147 = $7,350",
+      "Ongoing: 15-30 sales per month = $2,200-4,400/mo"
+    ],
+    "whatYouNeed": {
+      "tools": ["Teachable ($39/mo)", "Lighting + mic ($100-150)", "Canva Pro ($13/mo)"],
+      "timeCommitment": "60-80 hours upfront, 5-10 hours/month ongoing",
+      "upfrontCost": "$300-1,000",
+      "breakEven": "3-7 sales"
+    },
+    "successStories": [
+      {
+        "creator": "@ChicOnABudget",
+        "followers": "78K followers",
+        "quote": "Sold 340 courses in first year, now my main income source",
+        "revenue": "$4,800/mo average",
+        "timeToScale": "Steady growth over 12 months"
+      }
+    ]
+  },
+  {
+    "id": "influencer-sponsorships",
+    "title": "Launch Structured Brand Partnership Program",
+    "icon": "🤝",
+    "revenueMin": 4000,
+    "revenueMax": 18000,
+    "confidence": "high",
+    "effort": "low",
+    "timeline": "2-3 weeks",
+    "category": "sponsorships",
+    "tagline": "Your 6.8% engagement rate is 2.1x industry average",
+    "metrics": {
+      "contentPerformance": "6.8% engagement (industry average: 3.2%)",
+      "audienceSignals": "Product posts get 82% more saves and 4.3x more 'link?' questions",
+      "competitiveBenchmark": "Influencers at 87K with 6%+ engagement charge $1,200-2,500 per post"
+    },
+    "whyThisWorks": [
+      "Exceptional engagement rate - brands pay premium",
+      "You already post products organically",
+      "Fashion/beauty brands have large influencer budgets",
+      "Your audience shows strong buying intent"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Foundation",
+        "timeline": "Week 1",
+        "steps": [
+          {
+            "task": "Create media kit showcasing your stats",
+            "time": "4 hours",
+            "cost": 30,
+            "details": "Include follower count, engagement rate, demographics, top posts.",
+            "proTip": "Highlight your engagement rate - it's your strongest asset"
+          }
+        ]
+      },
+      {
+        "phase": "Outreach",
+        "timeline": "Week 2-3",
+        "steps": [
+          {
+            "task": "Send 10 personalized pitches per week",
+            "time": "3 hours per week",
+            "cost": 0,
+            "details": "Research brands, find decision-makers, craft custom pitches.",
+            "proTip": "Tag them organically first, then pitch partnership"
+          }
+        ]
+      }
+    ],
+    "successMetrics": [
+      "Target: 3-4 brand deals per month by month 3",
+      "Average deal: $1,800-2,500",
+      "Monthly revenue: $5,000-10,000 once pipeline is full"
+    ],
+    "whatYouNeed": {
+      "tools": ["Canva Pro ($13/mo)", "Email tracking (free)"],
+      "timeCommitment": "10-15 hours/week outreach, 4-6 hours per post",
+      "upfrontCost": "$50-100",
+      "breakEven": "First paid partnership"
+    },
+    "successStories": [
+      {
+        "creator": "@EverydayElegance",
+        "followers": "95K followers",
+        "quote": "Went from 0 to 6 partnerships per month",
+        "revenue": "$12,500/mo",
+        "timeToScale": "3 months"
+      }
+    ]
+  },
+  {
+    "id": "influencer-shopping",
+    "title": "Personal Shopping Service",
+    "icon": "🛍️",
+    "revenueMin": 1800,
+    "revenueMax": 7500,
+    "confidence": "medium",
+    "effort": "medium",
+    "timeline": "2-3 weeks",
+    "category": "services",
+    "tagline": "Virtual 1-on-1 shopping sessions at $150-300 each",
+    "metrics": {
+      "contentPerformance": "Shopping haul videos get 3.8x more engagement",
+      "audienceSignals": "156 followers asking 'can you help me shop?' monthly",
+      "competitiveBenchmark": "Fashion creators charge $150-300 per session"
+    },
+    "whyThisWorks": [
+      "Audience trusts your shopping judgment",
+      "High-value service, minimal overhead",
+      "Can be done virtually",
+      "Often leads to repeat bookings"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Setup",
+        "timeline": "Week 1",
+        "steps": [
+          {
+            "task": "Define packages (Quick $150, Full $300)",
+            "time": "3 hours",
+            "cost": 0,
+            "details": "Quick: 60-min call + curated links. Full: 90-min + personalized lookbook."
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["Target: 8-12 sessions per month", "Revenue: $1,800-3,000/mo"],
+    "whatYouNeed": {
+      "tools": ["Calendly", "Zoom", "Canva"],
+      "timeCommitment": "2-3 hours per session including prep",
+      "upfrontCost": "$20-50",
+      "breakEven": "1 session"
+    },
+    "successStories": [
+      {
+        "creator": "@PersonalStylePro",
+        "followers": "65K",
+        "quote": "Book 15 sessions per month consistently",
+        "revenue": "$3,500/mo",
+        "timeToScale": "Month 2"
+      }
+    ]
+  },
+  {
+    "id": "influencer-presets",
+    "title": "Sell Photo Editing Presets",
+    "icon": "📸",
+    "revenueMin": 800,
+    "revenueMax": 4000,
+    "confidence": "high",
+    "effort": "low",
+    "timeline": "1-2 weeks",
+    "category": "digital-product",
+    "tagline": "Your signature look = sellable product",
+    "metrics": {
+      "contentPerformance": "Followers constantly ask about your editing style",
+      "audienceSignals": "218 'what preset?' comments per month",
+      "competitiveBenchmark": "Preset packs sell for $19-49, top creators make $2-5K/mo"
+    },
+    "whyThisWorks": [
+      "Low effort, high margin digital product",
+      "One-time creation, infinite sales",
+      "Followers already want your aesthetic",
+      "Easy to market to existing audience"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Creation",
+        "timeline": "Week 1",
+        "steps": [
+          {
+            "task": "Create 8-12 presets covering different moods",
+            "time": "6 hours",
+            "cost": 0,
+            "details": "Export your go-to edits as Lightroom presets."
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["Target: 50 sales first month at $29 = $1,450", "Ongoing: 25-40 sales/mo"],
+    "whatYouNeed": {
+      "tools": ["Lightroom", "Gumroad or Shopify"],
+      "timeCommitment": "10 hours upfront, 2 hours/month",
+      "upfrontCost": "$20-50",
+      "breakEven": "2-3 sales"
+    },
+    "successStories": [
+      {
+        "creator": "@GoldenHourAesthetic",
+        "followers": "110K",
+        "quote": "Created once, sold 2,400+ times",
+        "revenue": "$3,200/mo average",
+        "timeToScale": "Immediate sales"
+      }
+    ]
+  },
+  {
+    "id": "influencer-affiliate",
+    "title": "Curated Affiliate Storefront",
+    "icon": "🔗",
+    "revenueMin": 1200,
+    "revenueMax": 6000,
+    "confidence": "medium",
+    "effort": "low",
+    "timeline": "1 week",
+    "category": "affiliate",
+    "tagline": "Earn commission on products you already recommend",
+    "metrics": {
+      "contentPerformance": "Product recommendation posts get 4.1x more saves",
+      "audienceSignals": "Average 340 'link?' requests per week",
+      "competitiveBenchmark": "Fashion creators earn 10-15% commission, $1-6K/mo"
+    },
+    "whyThisWorks": [
+      "Zero upfront cost or inventory",
+      "Passive income from existing content",
+      "LTK and Amazon have huge product catalogs",
+      "Your audience already buying these items"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Setup",
+        "timeline": "Week 1",
+        "steps": [
+          {
+            "task": "Join LTK and Amazon Associates",
+            "time": "3 hours",
+            "cost": 0,
+            "details": "Apply to programs, get approved, set up profiles."
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["Target: $1,500/mo by month 3", "Scale to $3-6K/mo by month 6"],
+    "whatYouNeed": {
+      "tools": ["LTK app", "Amazon Associates account"],
+      "timeCommitment": "3-5 hours/week curating links",
+      "upfrontCost": "$0",
+      "breakEven": "Immediate profit"
+    },
+    "successStories": [
+      {
+        "creator": "@EverydayOutfits",
+        "followers": "89K",
+        "quote": "Most passive income stream",
+        "revenue": "$4,800/mo",
+        "timeToScale": "Month 2"
+      }
+    ]
+  },
+  {
+    "id": "influencer-subscription-box",
+    "title": "Curated Subscription Box",
+    "icon": "📦",
+    "revenueMin": 3000,
+    "revenueMax": 12000,
+    "confidence": "medium",
+    "effort": "high",
+    "timeline": "6-8 weeks",
+    "category": "product",
+    "tagline": "Monthly box of your favorite fashion/beauty picks",
+    "metrics": {
+      "contentPerformance": "Unboxing content performs exceptionally well",
+      "audienceSignals": "Strong interest in 'curated by you' concept",
+      "competitiveBenchmark": "Subscription boxes at $35-60/mo, 100+ subscribers = $3-6K MRR"
+    },
+    "whyThisWorks": [
+      "Recurring revenue model",
+      "High perceived value",
+      "Deeper connection with audience",
+      "Can partner with brands for products"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Planning",
+        "timeline": "Week 1-3",
+        "steps": [
+          {
+            "task": "Source products and negotiate wholesale pricing",
+            "time": "20 hours",
+            "cost": "1000-3000",
+            "details": "Partner with brands or source from wholesalers."
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["Target: 100 subscribers at $45/mo = $4,500 MRR", "Margin: 40-50%"],
+    "whatYouNeed": {
+      "tools": ["Cratejoy platform", "Fulfillment partner"],
+      "timeCommitment": "20-30 hours/month",
+      "upfrontCost": "$2,000-5,000",
+      "breakEven": "50-80 subscribers"
+    },
+    "successStories": [
+      {
+        "creator": "@CuratedChic",
+        "followers": "125K",
+        "quote": "Most work but most rewarding",
+        "revenue": "$8,900/mo",
+        "timeToScale": "6 months"
+      }
+    ]
+  },
+  {
+    "id": "influencer-wardrobe-audits",
+    "title": "Virtual Wardrobe Audits",
+    "icon": "👗",
+    "revenueMin": 1500,
+    "revenueMax": 5000,
+    "confidence": "high",
+    "effort": "medium",
+    "timeline": "2 weeks",
+    "category": "services",
+    "tagline": "90-minute closet reviews at $150-250/session",
+    "metrics": {
+      "contentPerformance": "Decluttering content highly saved",
+      "audienceSignals": "Followers ask for help organizing wardrobes",
+      "competitiveBenchmark": "Stylists charge $150-300 per audit"
+    },
+    "whyThisWorks": [
+      "High-ticket service with minimal time",
+      "Helps clients see immediate value",
+      "Often leads to shopping service upsell",
+      "Can do 2-3 per day"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Launch",
+        "timeline": "Week 1-2",
+        "steps": [
+          {
+            "task": "Create audit framework and checklist",
+            "time": "5 hours",
+            "cost": 0,
+            "details": "Develop systematic approach to wardrobe assessment."
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["Target: 8-12 audits per month", "Revenue: $1,500-3,000/mo"],
+    "whatYouNeed": {
+      "tools": ["Zoom", "Screen recording", "Canva"],
+      "timeCommitment": "2 hours per audit including prep",
+      "upfrontCost": "$30",
+      "breakEven": "1 audit"
+    },
+    "successStories": [
+      {
+        "creator": "@ClosetConfidence",
+        "followers": "52K",
+        "quote": "Easiest high-ticket service to sell",
+        "revenue": "$3,400/mo",
+        "timeToScale": "Month 1"
+      }
+    ]
+  },
+  {
+    "id": "influencer-lookbooks",
+    "title": "Seasonal Lookbook Sales",
+    "icon": "📖",
+    "revenueMin": 600,
+    "revenueMax": 3000,
+    "confidence": "medium",
+    "effort": "low",
+    "timeline": "1 week per season",
+    "category": "digital-product",
+    "tagline": "Quarterly digital lookbooks at $19-29 each",
+    "metrics": {
+      "contentPerformance": "Seasonal outfit content highly anticipated",
+      "audienceSignals": "Followers screenshot your outfits constantly",
+      "competitiveBenchmark": "Digital lookbooks sell 50-150 copies per season"
+    },
+    "whyThisWorks": [
+      "Low effort quarterly launch",
+      "Timely and relevant content",
+      "Easy to create from existing photos",
+      "Builds anticipation each season"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Creation",
+        "timeline": "Week 1",
+        "steps": [
+          {
+            "task": "Design 30-page lookbook with outfit formulas",
+            "time": "8 hours",
+            "cost": 0,
+            "details": "Use Canva to create beautiful PDF with shoppable links."
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["Target: 80 sales per quarter at $24 = $1,920", "4 seasons = $7,680/year"],
+    "whatYouNeed": {
+      "tools": ["Canva Pro", "Gumroad"],
+      "timeCommitment": "10 hours per quarter",
+      "upfrontCost": "$15",
+      "breakEven": "1 sale"
+    },
+    "successStories": [
+      {
+        "creator": "@SeasonalStyle",
+        "followers": "71K",
+        "quote": "Low effort, nice quarterly bonus",
+        "revenue": "$2,100 per season avg",
+        "timeToScale": "Immediate"
+      }
+    ]
+  },
+  {
+    "id": "influencer-retainers",
+    "title": "Brand Ambassador Retainers",
+    "icon": "💼",
+    "revenueMin": 2000,
+    "revenueMax": 10000,
+    "confidence": "medium",
+    "effort": "medium",
+    "timeline": "2-4 months to land",
+    "category": "sponsorships",
+    "tagline": "Long-term exclusive 6-12 month brand partnerships",
+    "metrics": {
+      "contentPerformance": "Proven track record with brand content",
+      "audienceSignals": "Brands see strong ROI from your posts",
+      "competitiveBenchmark": "Retainers at your level: $2-5K/month per brand"
+    },
+    "whyThisWorks": [
+      "Stable monthly income vs one-off posts",
+      "Deeper brand relationships",
+      "Often more creative freedom",
+      "Premium rates for exclusivity"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Positioning",
+        "timeline": "Month 1-2",
+        "steps": [
+          {
+            "task": "Identify brands for long-term partnerships",
+            "time": "10 hours",
+            "cost": 0,
+            "details": "Target brands you've worked with successfully or align perfectly with."
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["Target: 1-2 retainer clients", "Revenue: $3,000-8,000/mo stable"],
+    "whatYouNeed": {
+      "tools": ["Portfolio", "Case studies", "Media kit"],
+      "timeCommitment": "15-25 hours/month per client",
+      "upfrontCost": "$50",
+      "breakEven": "First month"
+    },
+    "successStories": [
+      {
+        "creator": "@BrandPartnerPro",
+        "followers": "98K",
+        "quote": "Two retainers provide my base income",
+        "revenue": "$7,000/mo guaranteed",
+        "timeToScale": "4 months to land first"
+      }
+    ]
+  }
+]

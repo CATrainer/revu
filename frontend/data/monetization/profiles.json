@@ -1,0 +1,35 @@
+[
+  {
+    "id": "influencer",
+    "name": "Fashion Influencer",
+    "platform": "Instagram",
+    "followers": 87000,
+    "avgViews": 42000,
+    "engagementRate": 6.8,
+    "contentCount": 156,
+    "engagedComments": 3420,
+    "description": "Based on 156 posts, 87K followers, and 3,420 engaged comments"
+  },
+  {
+    "id": "wellness",
+    "name": "Wellness Creator",
+    "platform": "YouTube & Instagram",
+    "followers": 45000,
+    "avgViews": 28000,
+    "engagementRate": 8.2,
+    "contentCount": 89,
+    "engagedComments": 2180,
+    "description": "Based on 89 videos, 45K followers, and 2,180 engaged comments"
+  },
+  {
+    "id": "gaming",
+    "name": "Gaming Streamer",
+    "platform": "Twitch & YouTube",
+    "followers": 32000,
+    "avgViews": 18000,
+    "engagementRate": 12.4,
+    "contentCount": 203,
+    "engagedComments": 4560,
+    "description": "Based on 203 streams, 32K followers, and 4,560 engaged comments"
+  }
+]

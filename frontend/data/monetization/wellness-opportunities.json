@@ -1,0 +1,597 @@
+[
+  {
+    "id": "wellness-coaching",
+    "title": "Launch 1-on-1 Wellness Coaching",
+    "icon": "🧘",
+    "revenueMin": 2800,
+    "revenueMax": 12000,
+    "confidence": "high",
+    "effort": "medium",
+    "timeline": "2-3 weeks",
+    "category": "services",
+    "tagline": "127 people asked about personal coaching this month",
+    "metrics": {
+      "contentPerformance": "Transformation content gets 11.4% engagement (3.2x your average)",
+      "audienceSignals": "127 DMs this month asking 'do you offer coaching?' or 'can you help me personally?'",
+      "competitiveBenchmark": "Wellness coaches with 45K followers charge $200-400/session, book 12-20 clients/month"
+    },
+    "whyThisWorks": [
+      "You have 127 direct requests for coaching in past month",
+      "Your transformation content massively outperforms",
+      "Wellness niche has high willingness to pay",
+      "You already give free advice - coaching monetizes expertise",
+      "8.2% engagement shows deep audience trust"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Program Design",
+        "timeline": "Week 1",
+        "steps": [
+          {
+            "task": "Define coaching methodology and framework",
+            "time": "6 hours",
+            "cost": 0,
+            "details": "Create 4-6 step framework you'll use with all clients. This becomes your signature system.",
+            "proTip": "Name your framework - 'The [YourName] Method' builds brand recognition"
+          },
+          {
+            "task": "Create 3 coaching packages (Kickstart, Transform, VIP)",
+            "time": "4 hours",
+            "cost": 0,
+            "details": "Kickstart: 3 sessions/$600. Transform: 8 sessions/$1,800. VIP: 12 sessions + Voxer/$3,500.",
+            "proTip": "Most clients choose middle tier - price it where you want to be"
+          }
+        ]
+      },
+      {
+        "phase": "Launch",
+        "timeline": "Week 2-3",
+        "steps": [
+          {
+            "task": "Create coaching sales page on website",
+            "time": "8 hours",
+            "cost": 0,
+            "details": "Your story, transformation promise, packages, FAQ, booking calendar.",
+            "proTip": "Video introduction converts 3x better - film 2-min 'why I coach' video"
+          },
+          {
+            "task": "DM the 127 people who asked about coaching",
+            "time": "6 hours",
+            "cost": 0,
+            "details": "Personal message referencing their question with link to sales page.",
+            "proTip": "This alone should book 4-8 clients - they already expressed interest"
+          }
+        ]
+      }
+    ],
+    "successMetrics": [
+      "Target: 8-12 active 1-on-1 clients by month 3",
+      "Average client value: $1,200-2,000 per package",
+      "Monthly revenue: $5,000-8,000 from 1-on-1"
+    ],
+    "whatYouNeed": {
+      "tools": ["Calendly ($10-16/mo)", "Zoom Pro ($15/mo)", "Canva Pro ($13/mo)"],
+      "timeCommitment": "15-25 hours/week with 8-12 clients",
+      "upfrontCost": "$50-100",
+      "breakEven": "1-2 clients"
+    },
+    "successStories": [
+      {
+        "creator": "@WellnessWithRachel",
+        "followers": "38K followers",
+        "quote": "Went from free advice to $9K/month in coaching",
+        "revenue": "$9,200/mo",
+        "timeToScale": "Fully booked in month 2"
+      }
+    ]
+  },
+  {
+    "id": "wellness-membership",
+    "title": "Create Monthly Challenge Membership",
+    "icon": "💪",
+    "revenueMin": 1900,
+    "revenueMax": 9000,
+    "confidence": "high",
+    "effort": "medium",
+    "timeline": "3-4 weeks",
+    "category": "community",
+    "tagline": "Your challenge posts get 4.7x more engagement",
+    "metrics": {
+      "contentPerformance": "Challenge content gets 38.4% engagement vs 8.2% average",
+      "audienceSignals": "478 people commented 'I'm in!' on your last free challenge",
+      "competitiveBenchmark": "Wellness creators charge $27-47/month, average 150 members"
+    },
+    "whyThisWorks": [
+      "Challenge posts massively outperform",
+      "478 people actively engaged with last challenge",
+      "Recurring revenue is stable",
+      "Challenges create accountability and community",
+      "You already create this content"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Program Structure",
+        "timeline": "Week 1-2",
+        "steps": [
+          {
+            "task": "Design signature monthly challenge format (21-Day Wellness Reset)",
+            "time": "8 hours",
+            "cost": 0,
+            "details": "Daily prompts/tasks, weekly themes, progressive difficulty.",
+            "proTip": "21-30 days is sweet spot - achievable but long enough to build habits"
+          },
+          {
+            "task": "Create first 3 months of challenge content",
+            "time": "24 hours",
+            "cost": 0,
+            "details": "Batch-create daily prompts, educational content, recipes/workouts.",
+            "proTip": "Repurpose your best existing content"
+          }
+        ]
+      },
+      {
+        "phase": "Launch",
+        "timeline": "Week 3",
+        "steps": [
+          {
+            "task": "Launch with founding member offer",
+            "time": "4 hours",
+            "cost": 0,
+            "details": "Special pricing for first 50 members. Create urgency.",
+            "proTip": "Use countdown timer on sales page"
+          }
+        ]
+      }
+    ],
+    "successMetrics": [
+      "Target: 80 members by month 3 at $37/mo = $2,960 MRR",
+      "Retention: 75%+ month-to-month",
+      "Revenue: $4,500-7,000/mo by month 6"
+    ],
+    "whatYouNeed": {
+      "tools": ["Circle or Mighty Networks ($41-89/mo)", "ConvertKit ($25-38/mo)"],
+      "timeCommitment": "10-15 hours/week",
+      "upfrontCost": "$100-150/month",
+      "breakEven": "~10 members"
+    },
+    "successStories": [
+      {
+        "creator": "@WellnessJourneyWithJess",
+        "followers": "41K followers",
+        "quote": "Started with 45 founding members, now at 220",
+        "revenue": "$7,800/mo",
+        "timeToScale": "Hit 100 members in 5 months"
+      }
+    ]
+  },
+  {
+    "id": "wellness-course",
+    "title": "Digital Wellness Course",
+    "icon": "📚",
+    "revenueMin": 2200,
+    "revenueMax": 10000,
+    "confidence": "high",
+    "effort": "high",
+    "timeline": "4-6 weeks",
+    "category": "digital-product",
+    "tagline": "Self-paced course on your signature topic",
+    "metrics": {
+      "contentPerformance": "Educational content highly saved and shared",
+      "audienceSignals": "Constant questions about how to implement your methods",
+      "competitiveBenchmark": "Wellness courses at $97-197 sell 30-80 copies per launch"
+    },
+    "whyThisWorks": [
+      "Package your expertise into scalable format",
+      "One-time creation, ongoing sales",
+      "Establishes authority in your niche",
+      "Can be launching pad for coaching"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Course Creation",
+        "timeline": "Week 1-4",
+        "steps": [
+          {
+            "task": "Outline curriculum for signature method",
+            "time": "8 hours",
+            "cost": 0,
+            "details": "Break down your approach into 8-12 modules.",
+            "proTip": "Survey audience first to ensure you're solving their biggest problems"
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["First launch: 40-60 sales at $147 = $5,880-8,820", "Ongoing: 10-25 sales/mo"],
+    "whatYouNeed": {
+      "tools": ["Teachable ($39/mo)", "Recording equipment ($150)"],
+      "timeCommitment": "60-80 hours upfront, 5 hours/month",
+      "upfrontCost": "$200-500",
+      "breakEven": "3-5 sales"
+    },
+    "successStories": [
+      {
+        "creator": "@HolisticHealth",
+        "followers": "53K",
+        "quote": "Course provides steady passive income",
+        "revenue": "$3,800/mo average",
+        "timeToScale": "6 months"
+      }
+    ]
+  },
+  {
+    "id": "wellness-meal-plans",
+    "title": "Meal Plan Subscription",
+    "icon": "🥗",
+    "revenueMin": 1400,
+    "revenueMax": 6000,
+    "confidence": "medium",
+    "effort": "medium",
+    "timeline": "3 weeks",
+    "category": "subscription",
+    "tagline": "Weekly meal plans + shopping lists at $19-29/month",
+    "metrics": {
+      "contentPerformance": "Recipe content consistently top-performing",
+      "audienceSignals": "284 comments asking 'what do you eat in a day?'",
+      "competitiveBenchmark": "Meal plan subscriptions average 80-200 members"
+    },
+    "whyThisWorks": [
+      "Solves constant pain point (meal planning)",
+      "Recurring revenue model",
+      "Can batch-create content monthly",
+      "Low churn if quality is high"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Setup",
+        "timeline": "Week 1-3",
+        "steps": [
+          {
+            "task": "Create first month of meal plans",
+            "time": "16 hours",
+            "cost": 0,
+            "details": "4 weekly plans with recipes, macros, shopping lists.",
+            "proTip": "Include dietary variations (vegan, gluten-free)"
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["Target: 100 subscribers at $24/mo = $2,400 MRR", "Retention: 70%+"],
+    "whatYouNeed": {
+      "tools": ["Patreon or Memberful", "Canva for PDF design"],
+      "timeCommitment": "12 hours/month creating plans",
+      "upfrontCost": "$30",
+      "breakEven": "~5 subscribers"
+    },
+    "successStories": [
+      {
+        "creator": "@PlantBasedMeals",
+        "followers": "47K",
+        "quote": "Most requested service, easiest to deliver",
+        "revenue": "$4,200/mo",
+        "timeToScale": "Month 4"
+      }
+    ]
+  },
+  {
+    "id": "wellness-retreat",
+    "title": "Wellness Retreat/Workshop",
+    "icon": "🌄",
+    "revenueMin": 3000,
+    "revenueMax": 15000,
+    "confidence": "medium",
+    "effort": "high",
+    "timeline": "8-12 weeks planning",
+    "category": "events",
+    "tagline": "In-person or virtual multi-day immersive experience",
+    "metrics": {
+      "contentPerformance": "Community engagement shows interest in deeper connection",
+      "audienceSignals": "Followers ask about meeting you in person",
+      "competitiveBenchmark": "Retreats: $500-2,000 per person, 10-20 attendees"
+    },
+    "whyThisWorks": [
+      "High-ticket offering",
+      "Creates unforgettable experience",
+      "Strengthens community bonds",
+      "Can be annual or bi-annual event"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Planning",
+        "timeline": "Week 1-8",
+        "steps": [
+          {
+            "task": "Choose location and dates",
+            "time": "10 hours",
+            "cost": "3000-8000",
+            "details": "Venue, accommodation, catering. Or host virtual for lower risk."
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["Target: 12-15 attendees at $800 = $9,600-12,000 revenue", "Profit margin: 30-40%"],
+    "whatYouNeed": {
+      "tools": ["Event management platform", "Payment processor"],
+      "timeCommitment": "80-120 hours planning + event time",
+      "upfrontCost": "$3,000-10,000",
+      "breakEven": "6-8 attendees"
+    },
+    "successStories": [
+      {
+        "creator": "@WellnessEscape",
+        "followers": "68K",
+        "quote": "Annual retreat sells out in 48 hours",
+        "revenue": "$14,500 per retreat",
+        "timeToScale": "First retreat in 3 months"
+      }
+    ]
+  },
+  {
+    "id": "wellness-affiliates",
+    "title": "Affiliate Wellness Products",
+    "icon": "🔗",
+    "revenueMin": 800,
+    "revenueMax": 4000,
+    "confidence": "high",
+    "effort": "low",
+    "timeline": "1 week",
+    "category": "affiliate",
+    "tagline": "Supplements, workout gear, wellness tools you already use",
+    "metrics": {
+      "contentPerformance": "Product recommendations highly trusted",
+      "audienceSignals": "Constant questions about tools/supplements you use",
+      "competitiveBenchmark": "Wellness affiliates earn 10-20% commission"
+    },
+    "whyThisWorks": [
+      "Zero upfront investment",
+      "Monetize existing recommendations",
+      "Passive income potential",
+      "Wellness products have good commission rates"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Setup",
+        "timeline": "Week 1",
+        "steps": [
+          {
+            "task": "Join affiliate programs for brands you use",
+            "time": "4 hours",
+            "cost": 0,
+            "details": "Apply to supplement, fitness equipment, wellness tool programs."
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["Target: $1,000/mo by month 2", "Scale to $2-4K/mo by month 6"],
+    "whatYouNeed": {
+      "tools": ["Link management tool", "Affiliate dashboards"],
+      "timeCommitment": "3-5 hours/week",
+      "upfrontCost": "$0",
+      "breakEven": "Immediate profit"
+    },
+    "successStories": [
+      {
+        "creator": "@HolisticLiving",
+        "followers": "39K",
+        "quote": "Easiest money I make",
+        "revenue": "$2,900/mo",
+        "timeToScale": "Month 1"
+      }
+    ]
+  },
+  {
+    "id": "wellness-meditation-library",
+    "title": "Guided Meditation/Yoga Library",
+    "icon": "🧘‍♀️",
+    "revenueMin": 1100,
+    "revenueMax": 5000,
+    "confidence": "medium",
+    "effort": "medium",
+    "timeline": "4 weeks",
+    "category": "subscription",
+    "tagline": "Subscription to your recorded sessions at $15-25/month",
+    "metrics": {
+      "contentPerformance": "Meditation/yoga content highly requested",
+      "audienceSignals": "Followers want longer, deeper sessions",
+      "competitiveBenchmark": "Meditation libraries: 80-200 subscribers typical"
+    },
+    "whyThisWorks": [
+      "Create once, sell forever",
+      "Recurring subscription model",
+      "Complements your live offerings",
+      "Low maintenance once library is built"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Content Creation",
+        "timeline": "Week 1-4",
+        "steps": [
+          {
+            "task": "Record 20-30 initial sessions (meditation, yoga, breathwork)",
+            "time": "30 hours",
+            "cost": 100,
+            "details": "Various lengths and styles. Quality audio is essential.",
+            "proTip": "Include both short (10-min) and long (45-min) sessions"
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["Target: 100 subscribers at $19/mo = $1,900 MRR", "Add 2-4 new sessions monthly"],
+    "whatYouNeed": {
+      "tools": ["Patreon or custom platform", "Quality mic ($100)"],
+      "timeCommitment": "30 hours upfront, 6 hours/month ongoing",
+      "upfrontCost": "$150",
+      "breakEven": "~10 subscribers"
+    },
+    "successStories": [
+      {
+        "creator": "@MindfulMovement",
+        "followers": "43K",
+        "quote": "Library grows while I sleep",
+        "revenue": "$3,400/mo",
+        "timeToScale": "Month 3"
+      }
+    ]
+  },
+  {
+    "id": "wellness-corporate",
+    "title": "Corporate Wellness Workshops",
+    "icon": "💼",
+    "revenueMin": 2000,
+    "revenueMax": 8000,
+    "confidence": "low",
+    "effort": "medium",
+    "timeline": "2-3 months to land first",
+    "category": "services",
+    "tagline": "Hired by companies for employee wellness sessions",
+    "metrics": {
+      "contentPerformance": "Professional content shows expertise",
+      "audienceSignals": "Corporate followers comment on posts",
+      "competitiveBenchmark": "Corporate workshops: $500-2,000 per session"
+    },
+    "whyThisWorks": [
+      "High-paying corporate budgets",
+      "Bulk bookings possible",
+      "Establishes you as expert",
+      "Can lead to ongoing contracts"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Positioning",
+        "timeline": "Month 1-2",
+        "steps": [
+          {
+            "task": "Create corporate-focused offerings and materials",
+            "time": "12 hours",
+            "cost": 0,
+            "details": "Professional deck, corporate testimonials, packages.",
+            "proTip": "Target HR departments on LinkedIn"
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["Target: 2-3 corporate clients per month", "Revenue: $2,000-5,000/mo"],
+    "whatYouNeed": {
+      "tools": ["Professional presentation deck", "Zoom", "LinkedIn Sales Nav"],
+      "timeCommitment": "Varies by bookings",
+      "upfrontCost": "$50",
+      "breakEven": "1 booking"
+    },
+    "successStories": [
+      {
+        "creator": "@CorporateWellness",
+        "followers": "31K",
+        "quote": "One client led to 12 company referrals",
+        "revenue": "$6,800/mo",
+        "timeToScale": "6 months"
+      }
+    ]
+  },
+  {
+    "id": "wellness-journal",
+    "title": "Wellness Journal/Planner",
+    "icon": "📔",
+    "revenueMin": 1500,
+    "revenueMax": 7000,
+    "confidence": "medium",
+    "effort": "high",
+    "timeline": "6-8 weeks",
+    "category": "product",
+    "tagline": "Physical or digital product with your methodology",
+    "metrics": {
+      "contentPerformance": "Journaling content resonates deeply",
+      "audienceSignals": "Followers love your prompts and frameworks",
+      "competitiveBenchmark": "Wellness planners sell 200-1000 copies at $24-39"
+    },
+    "whyThisWorks": [
+      "Physical product creates tangible connection",
+      "Can sell year after year",
+      "Higher perceived value than digital",
+      "Fans love branded products"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Design",
+        "timeline": "Week 1-4",
+        "steps": [
+          {
+            "task": "Design journal layout and prompts",
+            "time": "30 hours",
+            "cost": "300-800",
+            "details": "Hire designer or DIY with Canva. Print test copy.",
+            "proTip": "Start with digital version to test demand"
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["Target: 150 sales at $29 = $4,350", "Reorder for subsequent years"],
+    "whatYouNeed": {
+      "tools": ["Print-on-demand or bulk printer", "Shopify"],
+      "timeCommitment": "40 hours upfront, 5 hours/month",
+      "upfrontCost": "$500-1,500",
+      "breakEven": "30-50 sales"
+    },
+    "successStories": [
+      {
+        "creator": "@JournalYourWellness",
+        "followers": "56K",
+        "quote": "Sold 840 journals first year",
+        "revenue": "$24,360 in year 1",
+        "timeToScale": "Ongoing"
+      }
+    ]
+  },
+  {
+    "id": "wellness-supplement-line",
+    "title": "Supplement/Product Line",
+    "icon": "💊",
+    "revenueMin": 3000,
+    "revenueMax": 20000,
+    "confidence": "low",
+    "effort": "very-high",
+    "timeline": "6-12 months",
+    "category": "product",
+    "tagline": "Partner with manufacturer or white-label your own line",
+    "metrics": {
+      "contentPerformance": "Strong authority in wellness space",
+      "audienceSignals": "Loyal following that trusts your recommendations",
+      "competitiveBenchmark": "Successful launches: $10-50K first month"
+    },
+    "whyThisWorks": [
+      "Ultimate authority builder",
+      "High profit margins (40-60%)",
+      "Scalable business model",
+      "Recurring purchases from customers"
+    ],
+    "implementationPhases": [
+      {
+        "phase": "Development",
+        "timeline": "Month 1-6",
+        "steps": [
+          {
+            "task": "Partner with white-label manufacturer",
+            "time": "50 hours",
+            "cost": "5000-15000",
+            "details": "Research manufacturers, test products, finalize formulations.",
+            "commonPitfall": "Minimum order quantities can be high - start small"
+          }
+        ]
+      }
+    ],
+    "successMetrics": ["Target: $10K first month", "Scale to $20-50K/mo by month 12"],
+    "whatYouNeed": {
+      "tools": ["E-commerce platform", "Fulfillment partner", "Legal compliance"],
+      "timeCommitment": "Full-time effort for launch period",
+      "upfrontCost": "$10,000-30,000",
+      "breakEven": "3-6 months"
+    },
+    "successStories": [
+      {
+        "creator": "@WellnessSupplements",
+        "followers": "125K",
+        "quote": "Biggest investment but biggest return",
+        "revenue": "$38,000/mo",
+        "timeToScale": "12 months"
+      }
+    ]
+  }
+]

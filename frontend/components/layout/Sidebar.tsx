@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Brain, ChartPie, Settings, ChevronLeft, ChevronRight, MessageSquare, Zap, Radio } from 'lucide-react';
+import { BarChart3, Brain, ChartPie, Settings, ChevronLeft, ChevronRight, MessageSquare, Zap, Radio, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { features } from '@/lib/features';
 import { useState, useMemo } from 'react';
@@ -15,6 +15,7 @@ const baseNav = [
   { name: 'Interactions', href: '/comments', icon: MessageSquare },
   { name: 'Automation', href: '/automation', icon: Zap },
   { name: 'Analytics', href: '/analytics', icon: ChartPie },
+  { name: 'Monetization', href: '/monetization', icon: DollarSign },
   { name: 'Social Monitoring', href: '/social-monitoring', icon: Radio },
   { name: 'AI Assistant', href: '/ai-assistant', icon: Brain },
   { name: 'Settings', href: '/settings', icon: Settings },
