@@ -84,17 +84,19 @@ export function InteractionDetailPanel({
     loadContext();
   }, [interactionId]);
 
+  useEffect(() => {
+    // Only auto-fill if textarea is empty and there's a pending response
+    if (context?.interaction?.pending_response?.text && !responseText) {
+      setResponseText(context.interaction.pending_response.text);
+    }
+  }, [context]);
+
   const loadContext = async () => {
     try {
       setLoading(true);
       const response = await api.get(`/interactions/${interactionId}/context`);
       const data = response.data;
       setContext(data);
-      
-      // Pre-fill with pending response if exists
-      if (data.interaction.pending_response) {
-        setResponseText(data.interaction.pending_response.text);
-      }
     } catch (error) {
       console.error('Failed to load context:', error);
     } finally {
@@ -362,58 +364,143 @@ export function InteractionDetailPanel({
 
       {/* Response Section */}
       <div className="border-t px-6 py-4 bg-muted/10">
-        <h3 className="text-base font-semibold text-primary-dark mb-3">Your Response</h3>
-        
-        <Textarea
-          value={responseText}
-          onChange={(e) => setResponseText(e.target.value)}
-          placeholder="Type your response..."
-          className="mb-3 min-h-[100px]"
-        />
+        {/* Show approval UI when there's a pending response */}
+        {interaction.pending_response && interaction.status === 'awaiting_approval' ? (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                <Sparkles className="h-5 w-5" />
+                Review AI Response
+              </h3>
+              <span className="text-xs px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200">
+                Awaiting Approval
+              </span>
+            </div>
+            
+            <Textarea
+              value={responseText}
+              onChange={(e) => setResponseText(e.target.value)}
+              placeholder="Edit the AI-generated response..."
+              className="mb-3 min-h-[100px] bg-white dark:bg-gray-900"
+            />
 
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={() => handleSendResponse(false)}
-            disabled={!responseText.trim() || sending}
-            className="flex-1"
-          >
-            {sending ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              <>
-                <Send className="h-4 w-4 mr-2" />
-                Send Now
-              </>
-            )}
-          </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => handleSendResponse(false)}
+                disabled={!responseText.trim() || sending}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Approve & Send
+                  </>
+                )}
+              </Button>
 
-          <Button
-            variant="outline"
-            onClick={() => handleSendResponse(true)}
-            disabled={!responseText.trim() || sending}
-          >
-            Add to Queue
-          </Button>
+              <Button
+                variant="outline"
+                onClick={handleGenerateResponse}
+                disabled={generating}
+                className="border-amber-300 dark:border-amber-700"
+              >
+                {generating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Regenerate
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                variant="ghost"
+                onClick={async () => {
+                  try {
+                    await api.delete(`/interactions/${interactionId}/pending-response`);
+                    setResponseText('');
+                    await loadContext();
+                    onUpdate?.();
+                    pushToast("❌ AI response rejected", "info");
+                  } catch (error: any) {
+                    console.error('Failed to reject:', error);
+                    pushToast("Failed to reject response", "error");
+                  }
+                }}
+                disabled={sending}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+              >
+                Reject
+              </Button>
+            </div>
 
-          <Button
-            variant="outline"
-            onClick={handleGenerateResponse}
-            disabled={generating}
-          >
-            {generating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              💡 Edit the response if needed, then click "Approve & Send" to publish it.
+            </p>
+          </div>
+        ) : (
+          // Normal compose mode
+          <div className="space-y-3">
+            <h3 className="text-base font-semibold text-primary-dark">Your Response</h3>
+            
+            <Textarea
+              value={responseText}
+              onChange={(e) => setResponseText(e.target.value)}
+              placeholder="Type your response..."
+              className="mb-3 min-h-[100px]"
+            />
 
-        <p className="text-xs text-secondary-dark mt-2">
-          Tip: Click <Sparkles className="h-3 w-3 inline" /> to generate an AI response
-        </p>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => handleSendResponse(false)}
+                disabled={!responseText.trim() || sending}
+                className="flex-1"
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Send Now
+                  </>
+                )}
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => handleSendResponse(true)}
+                disabled={!responseText.trim() || sending}
+              >
+                Add to Queue
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={handleGenerateResponse}
+                disabled={generating}
+              >
+                {generating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+
+            <p className="text-xs text-secondary-dark mt-2">
+              Tip: Click <Sparkles className="h-3 w-3 inline" /> to generate an AI response
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -653,6 +653,34 @@ Keep it concise and authentic."""
         raise HTTPException(status_code=500, detail=f"Failed to generate response: {str(e)}")
 
 
+@router.delete("/interactions/{interaction_id}/pending-response")
+async def reject_pending_response(
+    interaction_id: UUID,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Reject/clear a pending AI-generated response."""
+    interaction = await session.get(Interaction, interaction_id)
+    
+    if not interaction or interaction.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Interaction not found")
+    
+    if not interaction.pending_response:
+        raise HTTPException(status_code=400, detail="No pending response to reject")
+    
+    # Clear pending response and revert status
+    interaction.pending_response = None
+    interaction.status = "read" if interaction.status == "awaiting_approval" else interaction.status
+    
+    await session.commit()
+    
+    return {
+        "success": True,
+        "message": "Pending response rejected",
+        "status": interaction.status,
+    }
+
+
 @router.post("/interactions/{interaction_id}/respond")
 async def send_response(
     interaction_id: UUID,
