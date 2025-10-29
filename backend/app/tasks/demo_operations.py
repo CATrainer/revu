@@ -15,8 +15,9 @@ from app.core.database import get_async_session_context
 from app.models.user import User
 from app.models.background_job import BackgroundJob
 from app.models.interaction import Interaction
-from app.models.content import ContentPiece
+from app.models.content import ContentPiece, ContentTheme
 from app.services.background_jobs import BackgroundJobService
+from app.services.demo_content_seeder import seed_demo_content
 
 
 @celery.task(
@@ -121,9 +122,21 @@ async def _enable_demo_mode_async(user_id: str, job_id: str):
             if not user.demo_mode_enabled_at:
                 user.demo_mode_enabled_at = datetime.utcnow()
             
+            await db.commit()
+            
+            # Seed demo content for insights dashboard
+            logger.info(f"Seeding demo content data for user {user_id}")
+            try:
+                content_result = await seed_demo_content(db, UUID(user_id))
+                logger.info(f"✅ Demo content seeded: {content_result}")
+                profile_data['content_seeded'] = content_result
+            except Exception as content_error:
+                # Log error but don't fail the entire task
+                logger.error(f"Failed to seed demo content: {content_error}")
+                profile_data['content_seed_error'] = str(content_error)
+            
             # Mark job as completed
             job.mark_completed(result_data=profile_data)
-            
             await db.commit()
             
             logger.info(f"✅ Demo mode enabled for user {user_id}, profile {profile_data.get('id')}")
@@ -227,22 +240,36 @@ async def _disable_demo_mode_async(user_id: str, job_id: str):
             content_count_result = await db.execute(content_count_stmt)
             content_count = content_count_result.scalar() or 0
             
-            logger.info(f"Found {interactions_count} demo interactions and {content_count} demo content pieces to delete")
+            themes_count_stmt = select(func.count(ContentTheme.id)).where(
+                ContentTheme.user_id == user.id
+            )
+            themes_count_result = await db.execute(themes_count_stmt)
+            themes_count = themes_count_result.scalar() or 0
+            
+            logger.info(f"Found {interactions_count} demo interactions, {content_count} demo content pieces, and {themes_count} themes to delete")
             
             # Step 3: Bulk delete demo data
+            # Delete interactions
             delete_interactions_stmt = delete(Interaction).where(
                 Interaction.user_id == user.id,
                 Interaction.is_demo == True
             )
             await db.execute(delete_interactions_stmt)
             
+            # Delete content pieces (cascade will handle performance & insights)
             delete_content_stmt = delete(ContentPiece).where(
                 ContentPiece.user_id == user.id,
                 ContentPiece.is_demo == True
             )
             await db.execute(delete_content_stmt)
             
-            logger.info(f"✅ Cleaned up {interactions_count} interactions and {content_count} content pieces")
+            # Delete themes (all themes for demo users)
+            delete_themes_stmt = delete(ContentTheme).where(
+                ContentTheme.user_id == user.id
+            )
+            await db.execute(delete_themes_stmt)
+            
+            logger.info(f"✅ Cleaned up {interactions_count} interactions, {content_count} content pieces, and {themes_count} themes")
             
             # Step 4: Update user status to disabled
             user.demo_mode_status = 'disabled'
@@ -254,6 +281,7 @@ async def _disable_demo_mode_async(user_id: str, job_id: str):
             job.mark_completed(result_data={
                 "interactions_deleted": interactions_count,
                 "content_deleted": content_count,
+                "themes_deleted": themes_count,
             })
             
             await db.commit()

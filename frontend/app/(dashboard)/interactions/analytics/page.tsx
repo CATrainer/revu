@@ -127,22 +127,28 @@ export default function AnalyticsPage() {
           <CardDescription>Interactions by platform</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {Object.entries(overview?.by_platform || {}).map(([platform, count]: [string, any]) => (
-              <div key={platform} className="flex items-center gap-3">
-                <div className="w-24 text-sm font-medium capitalize">{platform}</div>
-                <div className="flex-1 bg-muted rounded-full h-8 overflow-hidden">
-                  <div
-                    className="bg-brand-primary h-full flex items-center justify-end px-3 text-xs text-white font-medium"
-                    style={{
-                      width: `${(count / overview.total_interactions) * 100}%`,
-                    }}
-                  >
-                    {count}
+          <div className="space-y-4">
+            {Object.entries(overview?.by_platform || {}).map(([platform, count]: [string, any]) => {
+              const percentage = overview.total_interactions > 0 
+                ? (count / overview.total_interactions) * 100 
+                : 0;
+              return (
+                <div key={platform} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium capitalize text-primary-dark">{platform}</span>
+                    <span className="text-secondary-dark font-semibold">{count} ({Math.round(percentage)}%)</span>
+                  </div>
+                  <div className="flex-1 bg-muted rounded-full h-3 overflow-hidden">
+                    <div
+                      className="bg-brand-primary h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${Math.max(percentage, 2)}%`,
+                      }}
+                    />
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
