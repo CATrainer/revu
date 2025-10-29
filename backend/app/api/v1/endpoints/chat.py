@@ -21,6 +21,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from pydantic import BaseModel
+import httpx
 
 from app.core.database import get_async_session
 from app.core.security import get_current_active_user
@@ -43,10 +44,181 @@ class SendMessageRequest(BaseModel):
     content: str
 
 
+async def _get_demo_profile_context(user_id: UUID, db: AsyncSession) -> str:
+    """Get demo mode profile metadata and statistics."""
+    try:
+        # Get user to check demo mode status
+        user_result = await db.execute(
+            text("SELECT demo_mode_status, demo_profile_id FROM users WHERE id = :uid"),
+            {"uid": str(user_id)}
+        )
+        user_data = user_result.first()
+        
+        if not user_data or user_data[0] != 'enabled':
+            return ""
+        
+        # Fetch profile from demo service if available
+        demo_service_url = getattr(settings, 'DEMO_SERVICE_URL', None)
+        profile_data = None
+        
+        if demo_service_url:
+            try:
+                async with httpx.AsyncClient(timeout=3.0) as client:
+                    response = await client.get(f"{demo_service_url}/profiles/{user_id}")
+                    if response.status_code == 200:
+                        profile_data = response.json()
+            except Exception:
+                pass  # Continue without profile data
+        
+        # Build context string
+        context = "\n\n🎬 DEMO MODE - Channel Profile:\n"
+        
+        if profile_data:
+            # Extract channel info from demo profile
+            channel_name = profile_data.get('channel_name', 'Demo Creator')
+            niche = profile_data.get('niche', 'content creation')
+            context += f"Channel: {channel_name}\n"
+            context += f"Niche: {niche.replace('_', ' ').title()}\n"
+            
+            # Platform stats
+            if 'platforms' in profile_data:
+                context += "\nPlatform Stats:\n"
+                platforms = profile_data['platforms']
+                if 'youtube' in platforms:
+                    yt = platforms['youtube']
+                    context += f"- YouTube: {yt.get('subscribers', 0):,} subscribers, {yt.get('avg_views', 0):,} avg views\n"
+                if 'instagram' in platforms:
+                    ig = platforms['instagram']
+                    context += f"- Instagram: {ig.get('followers', 0):,} followers\n"
+                if 'tiktok' in platforms:
+                    tt = platforms['tiktok']
+                    context += f"- TikTok: {tt.get('followers', 0):,} followers\n"
+        else:
+            # Fallback when demo service unavailable
+            context += "Channel: Demo Creator\n"
+            context += "Niche: Tech Reviews & Content Creation\n"
+            context += "\nPlatform Stats:\n"
+            context += "- YouTube: 100,000 subscribers, 50,000 avg views\n"
+            context += "- Instagram: 50,000 followers\n"
+            context += "- TikTok: 200,000 followers\n"
+        
+        # Get demo data statistics from database
+        demo_stats = await db.execute(
+            text("""
+                SELECT 
+                    (SELECT COUNT(*) FROM content_pieces WHERE user_id = :uid AND is_demo = true) as content_count,
+                    (SELECT COUNT(*) FROM interactions WHERE user_id = :uid AND is_demo = true) as interaction_count,
+                    (SELECT COUNT(*) FROM fans WHERE user_id = :uid AND is_demo = true) as fan_count
+            """),
+            {"uid": str(user_id)}
+        )
+        stats = demo_stats.first()
+        
+        if stats:
+            context += f"\nDemo Data Available:\n"
+            context += f"- {stats[0]} content pieces with performance metrics\n"
+            context += f"- {stats[1]} interactions (comments, DMs)\n"
+            context += f"- {stats[2]} fan profiles\n"
+        
+        context += "\n⚡ You have full access to this demo data. Use it to showcase features and provide detailed, data-driven insights!\n"
+        
+        return context
+        
+    except Exception as e:
+        from loguru import logger
+        logger.debug(f"Could not fetch demo profile context: {e}")
+        return ""
+
+
 async def _get_performance_context(user_id: UUID, db: AsyncSession) -> str:
     """Get user's content performance data to enhance AI responses."""
     try:
-        # Check if user has any performance data
+        # Check if user is in demo mode
+        user_result = await db.execute(
+            text("SELECT demo_mode_status FROM users WHERE id = :uid"),
+            {"uid": str(user_id)}
+        )
+        user_data = user_result.first()
+        is_demo_mode = user_data and user_data[0] == 'enabled'
+        
+        # For demo mode, fetch demo content performance
+        if is_demo_mode:
+            # Get demo content performance from content_pieces and content_performance
+            perf_check = await db.execute(
+                text("""
+                    SELECT COUNT(*) as count
+                    FROM content_pieces cp
+                    WHERE cp.user_id = :uid AND cp.is_demo = true
+                """),
+                {"uid": str(user_id)}
+            )
+            
+            count = perf_check.scalar_one()
+            if count == 0:
+                return ""
+            
+            # Get demo content performance summary
+            summary = await db.execute(
+                text("""
+                    SELECT 
+                        cp.platform,
+                        COUNT(*) as content_count,
+                        AVG(perf.engagement_rate) as avg_engagement,
+                        SUM(perf.views) as total_views,
+                        MAX(perf.engagement_rate) as best_engagement
+                    FROM content_pieces cp
+                    INNER JOIN content_performance perf ON cp.id = perf.content_id
+                    WHERE cp.user_id = :uid AND cp.is_demo = true
+                    AND cp.published_at > NOW() - INTERVAL '30 days'
+                    GROUP BY cp.platform
+                """),
+                {"uid": str(user_id)}
+            )
+            
+            platforms_data = []
+            for row in summary.fetchall():
+                platforms_data.append(
+                    f"{row.platform.title()}: {row.content_count} videos, "
+                    f"{row.avg_engagement:.1f}% avg engagement, "
+                    f"{row.total_views:,} total views"
+                )
+            
+            if not platforms_data:
+                return ""
+            
+            # Get top performing demo content
+            top_content = await db.execute(
+                text("""
+                    SELECT cp.title, perf.engagement_rate, perf.views
+                    FROM content_pieces cp
+                    INNER JOIN content_performance perf ON cp.id = perf.content_id
+                    WHERE cp.user_id = :uid AND cp.is_demo = true
+                    AND cp.published_at > NOW() - INTERVAL '30 days'
+                    ORDER BY perf.engagement_rate DESC
+                    LIMIT 3
+                """),
+                {"uid": str(user_id)}
+            )
+            
+            top_videos = []
+            for video in top_content.fetchall():
+                if video.title:
+                    top_videos.append(
+                        f'"{video.title[:50]}..." ({video.engagement_rate:.1f}% engagement, {video.views:,} views)'
+                    )
+            
+            context = "\n\n📊 Recent Content Performance (Demo Data):\n"
+            context += "\n".join(f"- {data}" for data in platforms_data)
+            
+            if top_videos:
+                context += "\n\nTop Performing Content:\n"
+                context += "\n".join(f"- {video}" for video in top_videos)
+            
+            context += "\n\nUse this demo data to provide personalized, data-driven recommendations and showcase platform capabilities."
+            
+            return context
+        
+        # Original logic for non-demo users with user_content_performance table
         perf_check = await db.execute(
             text("""
                 SELECT COUNT(*) as count
@@ -790,6 +962,11 @@ async def send_message(
     if user_context_str:
         system_prompt += f"\n\nUser Context: {user_context_str}\n\nUse this context to personalize your responses."
     
+    # Get demo profile context (channel metadata and stats) if in demo mode
+    demo_profile_context = await _get_demo_profile_context(current_user.id, db)
+    if demo_profile_context:
+        system_prompt += demo_profile_context
+    
     # Get performance context
     performance_context = await _get_performance_context(current_user.id, db)
     if performance_context:
@@ -882,6 +1059,11 @@ async def send_message(
                 if user_context_str:
                     system_prompt += f"\n\nUser Context: {user_context_str}\n\nUse this context to personalize your responses and provide more relevant advice specific to their channel, niche, and goals."
                 
+                # Add demo profile context (channel metadata and stats) if in demo mode
+                demo_profile_context = await _get_demo_profile_context(current_user.id, db)
+                if demo_profile_context:
+                    system_prompt += demo_profile_context
+                
                 # Add performance data context (legacy)
                 performance_context = await _get_performance_context(current_user.id, db)
                 if performance_context:
@@ -943,6 +1125,11 @@ async def send_message(
                 # Add user-specific context if available
                 if user_context_str:
                     system_prompt += f"\n\nUser Context: {user_context_str}\n\nUse this context to personalize your responses and provide more relevant advice specific to their channel, niche, and goals."
+                
+                # Add demo profile context (channel metadata and stats) if in demo mode
+                demo_profile_context = await _get_demo_profile_context(current_user.id, db)
+                if demo_profile_context:
+                    system_prompt += demo_profile_context
                 
                 # Add performance data context (legacy)
                 performance_context = await _get_performance_context(current_user.id, db)

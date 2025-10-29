@@ -43,10 +43,32 @@ from app.api.actions import router as actions_router
 app.include_router(actions_router, tags=["actions"])
 
 
+# Helper functions
+def _generate_channel_name(niche: str) -> str:
+    """Generate a realistic channel name based on niche."""
+    channel_names = {
+        'tech_reviews': ['TechReview Pro', 'GadgetGuru', 'TechBytes', 'Digital Insights', 'TechVision'],
+        'gaming': ['ProGamerHQ', 'GamersUnite', 'LevelUp Gaming', 'Elite Gamers', 'Gaming Arena'],
+        'beauty': ['GlamourGuide', 'Beauty Insider', 'MakeupMaven', 'Glow & Beauty', 'Style Studio'],
+        'fitness': ['FitLife Coach', 'Muscle Motion', 'Wellness Warriors', 'FitZone', 'Active Living'],
+        'cooking': ["Chef's Table", 'TastyBites', 'Culinary Corner', 'Kitchen Magic', 'Food Fusion'],
+        'travel': ['Wanderlust Journey', 'Travel Tales', 'Global Explorer', 'Adventure Awaits', 'Destination Diaries'],
+        'education': ['Learning Hub', 'Knowledge Zone', 'EduPro', 'Study Masters', 'Wisdom Academy'],
+        'music': ['Music Vibes', 'Sound Studio', 'Melody Makers', 'Rhythm & Beat', 'Audio Arena'],
+        'comedy': ['Laugh Factory', 'Comedy Central', 'Funny Times', 'Humor Hub', 'Jest Jest'],
+        'business': ['Business Insights', 'Success Strategies', 'Market Masters', 'Growth Academy', 'Biz Pro'],
+    }
+    
+    # Get channel names for niche or use default
+    names = channel_names.get(niche, ['Demo Creator', 'Content Pro', 'The Channel'])
+    return random.choice(names)
+
+
 # Schemas
 class ProfileCreate(BaseModel):
     user_id: str
     profile_type: str  # 'auto' or 'manual'
+    channel_name: Optional[str] = None  # AI Assistant context
     niche: Optional[str] = 'tech_reviews'
     personality: Optional[str] = 'friendly_professional'
     
@@ -72,6 +94,7 @@ class ProfileResponse(BaseModel):
     id: str
     user_id: str
     profile_type: str
+    channel_name: Optional[str] = None
     niche: str
     is_active: bool
     created_at: str
@@ -368,6 +391,7 @@ async def create_profile(
                 id=str(existing.id),
                 user_id=str(existing.user_id),
                 profile_type=existing.profile_type,
+                channel_name=existing.channel_name or _generate_channel_name(existing.niche),
                 niche=existing.niche,
                 is_active=True,
                 created_at=existing.created_at.isoformat(),
@@ -377,6 +401,7 @@ async def create_profile(
     profile = DemoProfile(
         user_id=uuid.UUID(payload.user_id),
         profile_type=payload.profile_type,
+        channel_name=payload.channel_name or _generate_channel_name(payload.niche),
         niche=payload.niche,
         personality=payload.personality,
         yt_subscribers=payload.yt_subscribers,
@@ -403,6 +428,7 @@ async def create_profile(
         id=str(profile.id),
         user_id=str(profile.user_id),
         profile_type=profile.profile_type,
+        channel_name=profile.channel_name,
         niche=profile.niche,
         is_active=True,
         created_at=profile.created_at.isoformat(),
@@ -414,7 +440,7 @@ async def get_profile(
     user_id: str,
     session: AsyncSession = Depends(get_async_session)
 ):
-    """Get demo profile for a user."""
+    """Get demo profile for a user - structured for AI Assistant integration."""
     stmt = select(DemoProfile).where(DemoProfile.user_id == uuid.UUID(user_id))
     result = await session.execute(stmt)
     profile = result.scalar_one_or_none()
@@ -422,16 +448,38 @@ async def get_profile(
     if not profile:
         raise HTTPException(404, "Profile not found")
     
+    # Return structured data for AI Assistant context
     return {
         "id": str(profile.id),
         "user_id": str(profile.user_id),
-        "profile_type": profile.profile_type,
+        "channel_name": profile.channel_name or _generate_channel_name(profile.niche),
         "niche": profile.niche,
+        "personality": profile.personality,
+        "platforms": {
+            "youtube": {
+                "subscribers": profile.yt_subscribers,
+                "avg_views": profile.yt_avg_views,
+                "engagement_rate": profile.yt_engagement_rate,
+                "upload_frequency": profile.yt_upload_frequency,
+            },
+            "instagram": {
+                "followers": profile.ig_followers,
+                "avg_likes": profile.ig_avg_likes,
+                "story_views": profile.ig_story_views,
+                "post_frequency": profile.ig_post_frequency,
+            },
+            "tiktok": {
+                "followers": profile.tt_followers,
+                "avg_views": profile.tt_avg_views,
+                "engagement_rate": profile.tt_engagement_rate,
+                "post_frequency": profile.tt_post_frequency,
+            },
+        },
+        "comment_volume": profile.comment_volume,
+        "dm_frequency": profile.dm_frequency,
         "is_active": profile.is_active,
-        "yt_subscribers": profile.yt_subscribers,
-        "ig_followers": profile.ig_followers,
-        "tt_followers": profile.tt_followers,
         "created_at": profile.created_at.isoformat(),
+        "last_activity_at": profile.last_activity_at.isoformat() if profile.last_activity_at else None,
     }
 
 
@@ -451,7 +499,11 @@ async def delete_profile(
     profile.is_active = False
     await session.commit()
     
-    return {"status": "deactivated"}
+    return {
+        "success": True,
+        "user_id": str(profile.user_id),
+        "deactivated_at": datetime.utcnow().isoformat()
+    }
 
 
 if __name__ == "__main__":

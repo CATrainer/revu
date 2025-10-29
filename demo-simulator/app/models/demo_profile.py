@@ -18,6 +18,7 @@ class DemoProfile(Base):
     
     # Profile configuration
     profile_type = Column(String(20), nullable=False)  # 'auto' or 'manual'
+    channel_name = Column(String(100), nullable=True)  # Creator channel name for AI context
     niche = Column(String(50), nullable=False)  # tech, gaming, beauty, etc.
     personality = Column(String(50), nullable=False)  # friendly, professional, casual, etc.
     

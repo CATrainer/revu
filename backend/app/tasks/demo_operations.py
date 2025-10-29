@@ -77,6 +77,7 @@ async def _enable_demo_mode_async(user_id: str, job_id: str):
             payload = {
                 "user_id": str(user.id),
                 "profile_type": "auto",
+                "channel_name": "TechReview Pro",  # Can be randomized or user-configured
                 "niche": "tech_reviews",
                 "personality": "friendly_professional",
                 "yt_subscribers": 100000,

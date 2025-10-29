@@ -50,9 +50,10 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db():
     """
-    Initialize database tables.
+    Initialize database tables and run schema migrations.
     
     Creates tables if they don't exist. Does not drop existing tables.
+    Applies schema changes for new columns automatically.
     """
     # Import models to register them with Base.metadata
     from app.models import DemoProfile, DemoContent, DemoInteraction, GenerationCache  # noqa: F401
@@ -60,3 +61,38 @@ async def init_db():
     async with engine.begin() as conn:
         # Create all tables if they don't exist (idempotent)
         await conn.run_sync(Base.metadata.create_all)
+        
+        # Run schema migrations (add missing columns)
+        await _apply_schema_migrations(conn)
+
+
+async def _apply_schema_migrations(conn):
+    """
+    Apply schema migrations for existing tables.
+    
+    Since we use create_all() instead of Alembic, we need to manually
+    handle column additions for existing tables.
+    """
+    # Migration 1: Add channel_name to demo_profiles
+    check_column = text("""
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'demo_profiles' 
+        AND column_name = 'channel_name'
+    """)
+    
+    result = await conn.execute(check_column)
+    if result.fetchone() is None:
+        print("📦 Adding channel_name column to demo_profiles...")
+        add_column = text("""
+            ALTER TABLE demo_profiles 
+            ADD COLUMN channel_name VARCHAR(100)
+        """)
+        await conn.execute(add_column)
+        print("✅ Added channel_name column successfully!")
+    
+    # Add future migrations here as needed
+    # Example:
+    # if not await _column_exists(conn, 'table_name', 'new_column'):
+    #     await conn.execute(text("ALTER TABLE ..."))
+    #     print("✅ Added new_column...")
