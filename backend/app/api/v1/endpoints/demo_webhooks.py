@@ -136,6 +136,29 @@ async def handle_interaction_created(session: AsyncSession, data: Dict) -> Dict:
     
     logger.debug(f"Creating interaction with platform_id: {platform_id}, parent_content: {parent_content_title}")
     
+    # Try to find existing interactions from same author on same content (for threading)
+    thread_id = None
+    reply_to_id = None
+    if parent_content_id and author_data.get('username'):
+        # Look for previous interactions from this author on this content
+        thread_stmt = select(Interaction).where(
+            and_(
+                Interaction.user_id == user_id,
+                Interaction.parent_content_id == parent_content_id,
+                Interaction.author_username == author_data.get('username'),
+                Interaction.is_demo == True
+            )
+        ).order_by(Interaction.created_at.desc()).limit(1)
+        
+        thread_result = await session.execute(thread_stmt)
+        previous_interaction = thread_result.scalar_one_or_none()
+        
+        if previous_interaction:
+            # This is a follow-up from the same user
+            thread_id = previous_interaction.thread_id or previous_interaction.id
+            reply_to_id = previous_interaction.id
+            logger.info(f"Linking new interaction to thread {thread_id} (replying to {reply_to_id})")
+    
     interaction = Interaction(
         id=interaction_id,
         platform=data.get('platform'),
@@ -160,6 +183,10 @@ async def handle_interaction_created(session: AsyncSession, data: Dict) -> Dict:
         parent_content_id=parent_content_id,
         parent_content_title=parent_content_title,
         parent_content_url=parent_content_url,
+        # Thread linking
+        thread_id=thread_id,
+        reply_to_id=reply_to_id,
+        is_reply=reply_to_id is not None,
     )
     
     # Check if interaction with this platform_id already exists (idempotent handling)

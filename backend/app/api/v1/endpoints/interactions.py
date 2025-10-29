@@ -618,9 +618,9 @@ Keep it concise and authentic."""
         
         user_prompt = "\n".join(context_parts)
         
-        # Generate response
+        # Generate response (using same model as demo-simulator)
         response = client.messages.create(
-            model="claude-3-5-sonnet-latest",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=500,
             temperature=0.7,
             system=system_prompt,
@@ -633,7 +633,7 @@ Keep it concise and authentic."""
         pending = PendingResponse(
             text=generated_text,
             generated_at=datetime.utcnow(),
-            model="claude-3-5-sonnet-latest",
+            model="claude-sonnet-4-5-20250929",
             confidence=0.85,  # Placeholder
         )
         
@@ -701,6 +701,39 @@ async def send_response(
                 detail=f"Failed to send response: {result.get('error', 'Unknown error')}"
             )
         
+        # Create a reply interaction record so it shows in the thread
+        from uuid import uuid4
+        reply_interaction = Interaction(
+            id=uuid4(),
+            platform=interaction.platform,
+            type='reply',  # Mark as your reply
+            platform_id=result.get("reply_id", f"reply_{uuid4().hex[:12]}"),
+            content=payload.text,
+            author_username=current_user.email,  # Your username
+            author_name=current_user.full_name or current_user.email,
+            author_is_verified=True,  # You're verified as the creator
+            status='answered',
+            priority_score=0,  # Replies don't need priority
+            user_id=current_user.id,
+            organization_id=current_user.organization_id,
+            is_demo=interaction.is_demo,  # Match original interaction
+            thread_id=interaction.thread_id or interaction.id,  # Link to thread
+            parent_content_id=interaction.parent_content_id,
+            parent_content_title=interaction.parent_content_title,
+            parent_content_url=interaction.parent_content_url,
+            reply_to_id=interaction.id,  # This is a reply to the original
+            is_reply=True,
+            created_at=datetime.utcnow(),
+            platform_created_at=datetime.utcnow(),
+        )
+        
+        # If original interaction doesn't have a thread_id, set it now
+        if not interaction.thread_id:
+            interaction.thread_id = interaction.id
+            reply_interaction.thread_id = interaction.id
+        
+        session.add(reply_interaction)
+        
         # Status and timestamps already updated by platform_service
         interaction.pending_response = None
         await session.commit()
@@ -710,6 +743,7 @@ async def send_response(
             "message": "Response sent successfully",
             "status": "answered",
             "reply_id": result.get("reply_id"),
+            "thread_updated": True,
         }
     
     return {
