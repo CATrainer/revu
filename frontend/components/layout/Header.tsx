@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, BarChart3, Brain, ChartPie, Settings as SettingsIcon, MessageSquare, Zap, Radio, Sparkles } from 'lucide-react';
+import { Menu, BarChart3, Brain, ChartPie, Settings as SettingsIcon, MessageSquare, Zap, Radio, Sparkles, DollarSign } from 'lucide-react';
 import { PauseCircle, PlayCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -33,6 +33,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
   { name: 'Interactions', href: '/interactions', icon: MessageSquare },
   { name: 'Insights', href: '/insights', icon: Sparkles },
+  { name: 'Monetization', href: '/monetization', icon: DollarSign },
   { name: 'AI Assistant', href: '/ai-assistant', icon: Brain },
   { name: 'Settings', href: '/settings', icon: SettingsIcon },
 ];
