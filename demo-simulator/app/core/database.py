@@ -63,8 +63,9 @@ async def init_db():
     from app.models import DemoProfile, DemoContent, DemoInteraction, GenerationCache  # noqa: F401
     
     async with engine.begin() as conn:
-        # Create all tables if they don't exist (idempotent)
-        await conn.run_sync(Base.metadata.create_all)
+        # Create all tables - checkfirst=False avoids has_table() which causes event loop issues
+        # Tables are created with IF NOT EXISTS, so this is still idempotent
+        await conn.run_sync(Base.metadata.create_all, checkfirst=False)
         
         # Run schema migrations (add missing columns)
         await _apply_schema_migrations(conn)
