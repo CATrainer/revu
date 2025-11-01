@@ -3,9 +3,7 @@ import type { Metadata } from 'next';
 import { Hero } from '@/components/landing/Hero';
 import { PlatformSupport } from '@/components/landing/PlatformSupport';
 import { Features } from '@/components/landing/Features';
-import { SocialProof } from '@/components/landing/SocialProof';
 import { WhyEarlyAccess } from '@/components/landing/WhyEarlyAccess';
-import { FinalCTA } from '@/components/landing/FinalCTA';
 
 export const metadata: Metadata = {
   title: 'Repruv - AI-Powered Creator Growth Platform | Early Access',
@@ -18,9 +16,7 @@ export default function HomePage() {
       <Hero />
       <PlatformSupport />
       <Features />
-      <SocialProof />
       <WhyEarlyAccess />
-      <FinalCTA />
     </>
   );
 }

@@ -41,8 +41,8 @@ export function PlatformSupport() {
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold brand-text mb-4">
             Supported Platforms
           </h2>
-          <p className="text-lg text-[var(--success)] max-w-2xl mx-auto">
-            Start with YouTube and Instagram today. More platforms added based on community feedback.
+          <p className="text-lg text-[var(--success)] max-w-2xl mx-auto font-bold">
+            Start with YouTube and Instagram today. More platforms to be supported soon.
           </p>
         </motion.div>
 
