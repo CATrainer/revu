@@ -1,7 +1,7 @@
 """Main FastAPI application for demo simulator."""
 import logging
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -265,7 +265,7 @@ async def generate_initial_content(user_id: str, profile_id: str):
         result = await session.execute(stmt)
         interactions = list(result.scalars().all())
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         for interaction in interactions:
             interaction.scheduled_for = now  # Send immediately, not with delay
         await session.commit()
@@ -299,32 +299,53 @@ async def generate_initial_content(user_id: str, profile_id: str):
                 logger.error(f"Error sending interaction: {e}")
                 failed_ids.append(str(interaction.id))
         
-        # Now update statuses in database in batches
+        # Now update statuses in database in smaller batches with fresh sessions
         logger.info(f"Updating interaction statuses in database...")
         from sqlalchemy import update as sql_update
         
         if sent_ids:
-            # Update sent interactions in batches
-            for i in range(0, len(sent_ids), 100):
-                batch = sent_ids[i:i+100]
-                stmt = sql_update(DemoInteraction).where(
-                    DemoInteraction.id.in_([uuid.UUID(id) for id in batch])
-                ).values(
-                    status='sent',
-                    sent_at=datetime.utcnow()
-                )
-                await session.execute(stmt)
-                await session.commit()
+            # Update sent interactions in smaller batches (50 at a time)
+            for i in range(0, len(sent_ids), 50):
+                batch = sent_ids[i:i+50]
+                try:
+                    # Use a fresh session for each batch to avoid connection timeouts
+                    if i > 0 and i % 200 == 0:
+                        await session.commit()
+                        await session.close()
+                        session = AsyncSessionLocal()
+                    
+                    stmt = sql_update(DemoInteraction).where(
+                        DemoInteraction.id.in_([uuid.UUID(id) for id in batch])
+                    ).values(
+                        status='sent',
+                        sent_at=datetime.now(timezone.utc),
+                        updated_at=datetime.now(timezone.utc)
+                    )
+                    await session.execute(stmt)
+                    await session.commit()
+                    
+                    if (i + 50) % 100 == 0:
+                        logger.info(f"Updated {i + 50}/{len(sent_ids)} sent interactions")
+                except Exception as e:
+                    logger.error(f"Failed to update batch {i}-{i+50}: {e}")
+                    await session.rollback()
         
         if failed_ids:
-            # Update failed interactions
-            for i in range(0, len(failed_ids), 100):
-                batch = failed_ids[i:i+100]
-                stmt = sql_update(DemoInteraction).where(
-                    DemoInteraction.id.in_([uuid.UUID(id) for id in batch])
-                ).values(status='failed')
-                await session.execute(stmt)
-                await session.commit()
+            # Update failed interactions in smaller batches
+            for i in range(0, len(failed_ids), 50):
+                batch = failed_ids[i:i+50]
+                try:
+                    stmt = sql_update(DemoInteraction).where(
+                        DemoInteraction.id.in_([uuid.UUID(id) for id in batch])
+                    ).values(
+                        status='failed',
+                        updated_at=datetime.now(timezone.utc)
+                    )
+                    await session.execute(stmt)
+                    await session.commit()
+                except Exception as e:
+                    logger.error(f"Failed to update failed batch {i}-{i+50}: {e}")
+                    await session.rollback()
         
         logger.info(f"✅ Sent {len(sent_ids)} interactions to main app ({len(failed_ids)} failed)")
         logger.info(f"🎉 Demo mode fully initialized for user {user_id} - {len(sent_ids)} interactions visible immediately")

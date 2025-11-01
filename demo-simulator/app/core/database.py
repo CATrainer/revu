@@ -2,7 +2,7 @@
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.pool import NullPool
+from sqlalchemy.pool import QueuePool
 from sqlalchemy import text
 
 from app.core.config import settings
@@ -14,11 +14,16 @@ if DATABASE_URL.startswith("postgres://"):
 if not DATABASE_URL.startswith("postgresql+asyncpg://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-# Create async engine
+# Create async engine with proper connection pooling
 engine = create_async_engine(
     DATABASE_URL,
     echo=settings.DB_ECHO,
-    poolclass=NullPool,
+    poolclass=QueuePool,
+    pool_size=20,  # Increased from default 5
+    max_overflow=40,  # Allow up to 60 total connections
+    pool_timeout=30,  # Wait up to 30s for a connection
+    pool_recycle=3600,  # Recycle connections after 1 hour
+    pool_pre_ping=True,  # Test connections before using
     future=True,
 )
 
