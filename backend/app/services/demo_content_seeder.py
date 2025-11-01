@@ -1,6 +1,6 @@
 """Demo content data seeder for insights dashboard."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 import random
 from typing import List
@@ -51,8 +51,8 @@ async def seed_demo_content(db: AsyncSession, user_id: UUID) -> dict:
                 total_views=0,
                 avg_engagement_rate=0,
                 avg_performance_score=0,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
             themes.append(theme)
             db.add(theme)
@@ -92,13 +92,13 @@ async def seed_demo_content(db: AsyncSession, user_id: UUID) -> dict:
         for i, template in enumerate(content_templates):
             # Create content piece
             theme_obj = next((t for t in themes if t.name == template["theme"]), themes[0])
-            published_date = datetime.utcnow() - timedelta(days=random.randint(1, 25))
+            published_date = datetime.now(timezone.utc) - timedelta(days=random.randint(1, 25))
             
             content = ContentPiece(
                 id=uuid4(),
                 user_id=user_id,
                 platform=template["platform"],
-                platform_id=f"demo_{template['platform']}_{i}_{int(datetime.utcnow().timestamp())}",
+                platform_id=f"demo_{template['platform']}_{i}_{int(datetime.now(timezone.utc).timestamp())}",
                 content_type=template["type"],
                 title=template["title"],
                 description=f"Demo content: {template['title']}",
@@ -112,8 +112,8 @@ async def seed_demo_content(db: AsyncSession, user_id: UUID) -> dict:
                 theme=theme_obj.name,
                 summary=f"Demo content showcasing {template['theme'].lower()}",
                 is_demo=True,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
             content_pieces.append(content)
             db.add(content)
@@ -149,9 +149,9 @@ async def seed_demo_content(db: AsyncSession, user_id: UUID) -> dict:
                 performance_category=template["category"],
                 views_last_24h=int(views * random.uniform(0.05, 0.15)),
                 engagement_last_24h=int((likes + comments) * random.uniform(0.05, 0.15)),
-                calculated_at=datetime.utcnow(),
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                calculated_at=datetime.now(timezone.utc),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
             performances.append(performance)
             db.add(performance)
@@ -185,9 +185,9 @@ async def seed_demo_content(db: AsyncSession, user_id: UUID) -> dict:
                     is_positive=insight_tmpl["positive"],
                     confidence_score=random.uniform(0.7, 0.95),
                     is_actionable=True,
-                    generated_at=datetime.utcnow(),
-                    created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow(),
+                    generated_at=datetime.now(timezone.utc),
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
                 )
                 insights_list.append(insight)
                 db.add(insight)
@@ -202,7 +202,7 @@ async def seed_demo_content(db: AsyncSession, user_id: UUID) -> dict:
                 theme.total_views = sum(p.views for p in theme_performances)
                 theme.avg_engagement_rate = round(sum(p.engagement_rate for p in theme_performances) / len(theme_performances), 2)
                 theme.avg_performance_score = round(sum(p.performance_score for p in theme_performances) / len(theme_performances), 2)
-                theme.last_calculated_at = datetime.utcnow()
+                theme.last_calculated_at = datetime.now(timezone.utc)
         
         await db.commit()
         

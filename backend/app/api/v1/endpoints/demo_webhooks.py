@@ -14,7 +14,7 @@ from app.core.config import settings
 from app.models.user import User
 from app.models.interaction import Interaction
 from app.models.fan import Fan
-from sqlalchemy import select
+from sqlalchemy import select, and_
 
 logger = logging.getLogger(__name__)
 

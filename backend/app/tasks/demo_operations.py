@@ -1,6 +1,6 @@
 """Celery tasks for demo mode operations."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 import httpx
@@ -120,7 +120,7 @@ async def _enable_demo_mode_async(user_id: str, job_id: str):
             user.demo_profile_id = profile_data.get('id')
             user.demo_mode_error = None
             if not user.demo_mode_enabled_at:
-                user.demo_mode_enabled_at = datetime.utcnow()
+                user.demo_mode_enabled_at = datetime.now(timezone.utc)
             
             await db.commit()
             
@@ -273,7 +273,7 @@ async def _disable_demo_mode_async(user_id: str, job_id: str):
             
             # Step 4: Update user status to disabled
             user.demo_mode_status = 'disabled'
-            user.demo_mode_disabled_at = datetime.utcnow()
+            user.demo_mode_disabled_at = datetime.now(timezone.utc)
             user.demo_mode_error = None
             user.demo_profile_id = None
             

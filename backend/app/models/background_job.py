@@ -1,6 +1,6 @@
 """Background job model for tracking async operations."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 import uuid
 
@@ -25,7 +25,7 @@ class BackgroundJob(Base):
     # Status values: pending, running, completed, failed, cancelled
     
     # Timestamps
-    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
     started_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     failed_at = Column(DateTime(timezone=True), nullable=True)
@@ -63,25 +63,25 @@ class BackgroundJob(Base):
         if not self.started_at:
             return None
         
-        end_time = self.completed_at or self.failed_at or datetime.utcnow()
+        end_time = self.completed_at or self.failed_at or datetime.now(timezone.utc)
         return (end_time - self.started_at).total_seconds()
     
     def mark_running(self):
         """Mark job as running."""
         self.status = 'running'
-        self.started_at = datetime.utcnow()
+        self.started_at = datetime.now(timezone.utc)
     
     def mark_completed(self, result_data: dict = None):
         """Mark job as completed with optional result data."""
         self.status = 'completed'
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
         if result_data:
             self.result_data = result_data
     
     def mark_failed(self, error_message: str, error_details: dict = None):
         """Mark job as failed with error information."""
         self.status = 'failed'
-        self.failed_at = datetime.utcnow()
+        self.failed_at = datetime.now(timezone.utc)
         self.error_message = error_message
         if error_details:
             self.error_details = error_details
