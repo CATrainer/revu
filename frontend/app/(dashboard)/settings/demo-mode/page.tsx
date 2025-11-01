@@ -82,10 +82,20 @@ export default function DemoModePage() {
       });
       if (response.ok) {
         const data = await response.json();
-        setDemoStatus(data);
+        // Ensure we have a valid status object
+        if (data && typeof data === 'object') {
+          setDemoStatus(data);
+        } else {
+          console.error('Invalid demo status response:', data);
+          setDemoStatus({ status: 'disabled', demo_mode: false });
+        }
+      } else {
+        console.error('Demo status API error:', response.status);
+        setDemoStatus({ status: 'disabled', demo_mode: false });
       }
     } catch (error) {
       console.error('Failed to load demo status:', error);
+      setDemoStatus({ status: 'disabled', demo_mode: false });
     } finally {
       setLoading(false);
     }
@@ -219,6 +229,20 @@ export default function DemoModePage() {
     );
   }
 
+  // Safety check - ensure we have valid demo status data
+  if (!demoStatus) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto space-y-6">
+        <div className="text-center py-12">
+          <p className="text-secondary-dark">Unable to load demo mode settings.</p>
+          <Button onClick={loadDemoStatus} className="mt-4">
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div>
@@ -289,18 +313,28 @@ export default function DemoModePage() {
             <div className="mt-4 p-4 bg-muted rounded-lg">
               <p className="text-sm font-medium mb-2">Demo Profile:</p>
               <div className="grid grid-cols-3 gap-2 text-sm">
-                <div>
-                  <span className="text-secondary-dark">Niche:</span>
-                  <span className="ml-2 font-medium capitalize">{demoStatus.profile.niche.replace('_', ' ')}</span>
-                </div>
-                <div>
-                  <span className="text-secondary-dark">YouTube:</span>
-                  <span className="ml-2 font-medium">{demoStatus.profile.yt_subscribers.toLocaleString()} subs</span>
-                </div>
-                <div>
-                  <span className="text-secondary-dark">Instagram:</span>
-                  <span className="ml-2 font-medium">{demoStatus.profile.ig_followers.toLocaleString()} followers</span>
-                </div>
+                {demoStatus.profile.niche && (
+                  <div>
+                    <span className="text-secondary-dark">Niche:</span>
+                    <span className="ml-2 font-medium capitalize">
+                      {typeof demoStatus.profile.niche === 'string' 
+                        ? demoStatus.profile.niche.replace(/_/g, ' ') 
+                        : demoStatus.profile.niche}
+                    </span>
+                  </div>
+                )}
+                {demoStatus.profile.yt_subscribers !== undefined && (
+                  <div>
+                    <span className="text-secondary-dark">YouTube:</span>
+                    <span className="ml-2 font-medium">{demoStatus.profile.yt_subscribers.toLocaleString()} subs</span>
+                  </div>
+                )}
+                {demoStatus.profile.ig_followers !== undefined && (
+                  <div>
+                    <span className="text-secondary-dark">Instagram:</span>
+                    <span className="ml-2 font-medium">{demoStatus.profile.ig_followers.toLocaleString()} followers</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
