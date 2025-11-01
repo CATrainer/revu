@@ -19,11 +19,10 @@ engine = create_async_engine(
     DATABASE_URL,
     echo=settings.DB_ECHO,
     poolclass=QueuePool,
-    pool_size=20,  # Increased from default 5
-    max_overflow=40,  # Allow up to 60 total connections
+    pool_size=10,  # Reasonable for Railway
+    max_overflow=20,  # Allow up to 30 total connections
     pool_timeout=30,  # Wait up to 30s for a connection
     pool_recycle=3600,  # Recycle connections after 1 hour
-    pool_pre_ping=True,  # Test connections before using
     future=True,
 )
 

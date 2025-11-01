@@ -43,20 +43,19 @@ engine = create_async_engine(
 engine = create_async_engine(
     DATABASE_URL,
     poolclass=QueuePool,
-    pool_size=20,  # 20 persistent connections
-    max_overflow=40,  # Up to 60 total connections
+    pool_size=10,  # 10 persistent connections
+    max_overflow=20,  # Up to 30 total connections
     pool_timeout=30,  # Wait 30s for connection
     pool_recycle=3600,  # Recycle after 1 hour
-    pool_pre_ping=True,  # Test before using
     future=True,
 )
 ```
 
 **Benefits**:
 - ✅ Reuses connections instead of creating new ones
-- ✅ Handles connection failures gracefully with pre-ping
 - ✅ Prevents connection exhaustion with max_overflow
 - ✅ Recycles stale connections automatically
+- ✅ Sized appropriately for Railway's resource limits
 
 ---
 
