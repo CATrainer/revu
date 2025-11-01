@@ -155,10 +155,10 @@ export default function AgencyPartnersPage() {
             animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-dark mb-6">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-[var(--brand-primary)] mb-6">
               Agency Partner Program
             </h1>
-            <p className="text-xl md:text-2xl text-secondary-dark max-w-4xl mx-auto mb-8">
+            <p className="text-xl md:text-2xl text-[var(--success)] max-w-4xl mx-auto mb-8 font-bold">
               Build the Future of Creator Monetization With Us
             </p>
             <p className="text-lg text-secondary-dark max-w-3xl mx-auto">
@@ -172,12 +172,12 @@ export default function AgencyPartnersPage() {
             animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-white px-8 py-6 text-lg">
+            <Button asChild size="lg" className="bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-black px-8 py-6 text-lg font-bold">
               <Link href="mailto:partners@repruv.co.uk">
                 Apply for Partnership
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-2 border-holo-mint text-holo-mint hover:bg-muted px-8 py-6 text-lg">
+            <Button asChild size="lg" variant="outline" className="border-2 border-[var(--brand-primary)] text-[var(--success)] hover:bg-muted px-8 py-6 text-lg font-bold">
               <Link href="mailto:partners@repruv.co.uk">
                 Schedule Discovery Call
               </Link>
@@ -189,7 +189,7 @@ export default function AgencyPartnersPage() {
       {/* Why Partner With Repruv */}
       <section className="py-16 md:py-24 section-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-dark mb-12 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-[var(--brand-primary)] mb-12 text-center">
             Why Partner With Repruv?
           </h2>
           
@@ -204,10 +204,10 @@ export default function AgencyPartnersPage() {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
                 <benefit.icon className="w-12 h-12 text-holo-mint mb-4" />
-                <h3 className="text-xl font-bold text-primary-dark mb-4">{benefit.title}</h3>
+                <h3 className="text-2xl font-bold text-[var(--brand-primary)] mb-4">{benefit.title}</h3>
                 <ul className="space-y-2">
                   {benefit.points.map((point, i) => (
-                    <li key={i} className="flex items-start gap-2 text-secondary-dark">
+                    <li key={i} className="flex items-start gap-2 text-[var(--success)]">
                       <CheckCircle className="w-5 h-5 text-holo-mint flex-shrink-0 mt-0.5" />
                       <span className="text-sm">{point}</span>
                     </li>
@@ -219,36 +219,52 @@ export default function AgencyPartnersPage() {
 
           {/* Pricing Highlight */}
           <motion.div
-            className="glass-panel rounded-2xl p-8 max-w-4xl mx-auto"
+            className="glass-panel rounded-2xl p-6 md:p-8 max-w-7xl mx-auto border-2 border-holo-mint"
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
             <div className="text-center">
-              <DollarSign className="w-16 h-16 text-holo-mint mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-primary-dark mb-4">Partner Pricing Example</h3>
-              <div className="grid md:grid-cols-2 gap-6 text-left">
-                <div>
-                  <p className="text-secondary-dark mb-2">
-                    <strong className="text-primary-dark">Standard (after launch):</strong>
-                  </p>
-                  <p className="text-lg text-secondary-dark">
-                    £250/mo base + £35/creator = <strong className="text-red-600">£950/mo</strong> for 20 creators
-                  </p>
+              <h3 className="text-3xl md:text-4xl font-bold text-[var(--brand-primary)] mb-2">Partner Pricing Example</h3>
+              <p className="text-[var(--success)] mb-6">See how much you'll save with Repruv partnership</p>
+              
+              <div className="grid md:grid-cols-3 gap-6">
+                {/* Standard Pricing */}
+                <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-4 border border-red-200 dark:border-red-700">
+                  <h4 className="text-base font-bold text-[var(--brand-primary)] mb-3">Standard Pricing</h4>
+                  <p className="text-xs text-[var(--success)] mb-2">After Launch</p>
+                  <div className="space-y-1 text-left text-sm">
+                    <p className="text-secondary-dark">Base: <span className="font-bold">£250/mo</span></p>
+                    <p className="text-secondary-dark">Per creator: <span className="font-bold">£35</span></p>
+                    <div className="border-t border-red-300 dark:border-red-600 pt-2 mt-2">
+                      <p className="font-bold text-red-600">£950/mo</p>
+                      <p className="text-xs text-secondary-dark">for 20 creators</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-secondary-dark mb-2">
-                    <strong className="text-primary-dark">Partner rate (40% off):</strong>
-                  </p>
-                  <p className="text-lg text-secondary-dark">
-                    £150/mo base + £21/creator = <strong className="text-holo-mint">£570/mo</strong> for 20 creators
-                  </p>
+
+                {/* Savings */}
+                <div className="bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-primary)]/80 rounded-lg p-4 flex flex-col justify-center">
+                  <p className="text-white text-xs mb-1">Annual Savings</p>
+                  <p className="text-3xl font-bold text-[var(--success)]">£4,560</p>
+                  <p className="text-white text-xs mt-1">Lock in forever</p>
+                </div>
+
+                {/* Partner Pricing */}
+                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-lg p-4 border-2 border-[var(--success)]">
+                  <h4 className="text-base font-bold text-[var(--brand-primary)] mb-3">Partner Rate</h4>
+                  <p className="text-xs text-[var(--success)] mb-2 font-bold">🎉 40% Off!</p>
+                  <div className="space-y-1 text-left text-sm">
+                    <p className="text-secondary-dark">Base: <span className="font-bold">£150/mo</span></p>
+                    <p className="text-secondary-dark">Per creator: <span className="font-bold">£21</span></p>
+                    <div className="border-t border-emerald-300 dark:border-emerald-600 pt-2 mt-2">
+                      <p className="font-bold text-[var(--success)]">£570/mo</p>
+                      <p className="text-xs text-secondary-dark">for 20 creators</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <p className="text-xl font-bold text-holo-mint mt-6">
-                Annual savings: £4,560
-              </p>
             </div>
           </motion.div>
         </div>
@@ -257,7 +273,7 @@ export default function AgencyPartnersPage() {
       {/* What We're Building */}
       <section className="py-16 md:py-24 section-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-dark mb-12 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-[var(--brand-primary)] mb-12 text-center">
             What We're Building for Agencies
           </h2>
 
@@ -272,12 +288,12 @@ export default function AgencyPartnersPage() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <CheckCircle className="w-8 h-8 text-holo-mint" />
-                <h3 className="text-2xl font-bold text-primary-dark">Available Now</h3>
+                <h3 className="text-3xl font-bold text-[var(--brand-primary)]">Available Now</h3>
               </div>
-              <p className="text-secondary-dark mb-4 text-sm">Your creators can start using these features immediately.</p>
+              <p className="text-[var(--success)] mb-4 text-sm">Your creators can start using these features immediately.</p>
               <ul className="space-y-3">
                 {availableFeatures.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-2 text-secondary-dark">
+                  <li key={index} className="flex items-start gap-2 text-[var(--success)]">
                     <CheckCircle className="w-5 h-5 text-holo-mint flex-shrink-0 mt-0.5" />
                     <span className="text-sm">{feature}</span>
                   </li>
@@ -295,11 +311,11 @@ export default function AgencyPartnersPage() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <Rocket className="w-8 h-8 text-holo-teal" />
-                <h3 className="text-2xl font-bold text-primary-dark">In Development (December 2025)</h3>
+                <h3 className="text-3xl font-bold text-[var(--brand-primary)]">In Development (December 2025)</h3>
               </div>
               <ul className="space-y-3">
                 {q1Features.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-2 text-secondary-dark">
+                  <li key={index} className="flex items-start gap-2 text-[var(--success)]">
                     <span className="text-holo-teal">🚧</span>
                     <span className="text-sm">{feature}</span>
                   </li>
@@ -317,11 +333,11 @@ export default function AgencyPartnersPage() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <Target className="w-8 h-8 text-holo-purple" />
-                <h3 className="text-2xl font-bold text-primary-dark">Coming Q1 2026</h3>
+                <h3 className="text-3xl font-bold text-[var(--brand-primary)]">Coming Q1 2026</h3>
               </div>
               <ul className="space-y-3">
                 {q2Features.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-2 text-secondary-dark">
+                  <li key={index} className="flex items-start gap-2 text-[var(--success)]">
                     <span className="text-holo-purple">🚧</span>
                     <span className="text-sm">{feature}</span>
                   </li>
@@ -331,7 +347,7 @@ export default function AgencyPartnersPage() {
           </div>
 
           <motion.p
-            className="text-center mt-8 text-secondary-dark italic"
+            className="text-center mt-8 text-[var(--success)] italic"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -345,7 +361,7 @@ export default function AgencyPartnersPage() {
       {/* How It Works */}
       <section className="py-16 md:py-24 section-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-dark mb-12 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-[var(--brand-primary)] mb-12 text-center">
             How It Works
           </h2>
 
@@ -367,15 +383,15 @@ export default function AgencyPartnersPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-primary-dark">{step.title}</h3>
-                      <span className="text-sm text-secondary-dark bg-muted px-3 py-1 rounded-full">
+                      <h3 className="text-xl font-bold text-[var(--brand-primary)]">{step.title}</h3>
+                      <span className="text-sm text-[var(--success)] bg-muted px-3 py-1 rounded-full">
                         {step.duration}
                       </span>
                     </div>
-                    <p className="text-secondary-dark">{step.description}</p>
+                    <p className="text-[var(--success)]">{step.description}</p>
                   </div>
                   {step.action && (
-                    <Button asChild className="bg-holo-mint hover:bg-holo-mint-dark text-white">
+                    <Button asChild className="bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-black font-bold">
                       <Link href="mailto:partners@repruv.co.uk">
                         {step.action}
                       </Link>
@@ -390,8 +406,8 @@ export default function AgencyPartnersPage() {
 
       {/* FAQs */}
       <section className="py-16 md:py-24 section-background">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-dark mb-12 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-4xl md:text-5xl font-bold text-[var(--brand-primary)] mb-12 text-center">
             Frequently Asked Questions
           </h2>
 
@@ -405,8 +421,8 @@ export default function AgencyPartnersPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.05 }}
               >
-                <h3 className="text-lg font-bold text-primary-dark mb-3">{faq.question}</h3>
-                <p className="text-secondary-dark">{faq.answer}</p>
+                <h3 className="text-lg font-bold text-[var(--brand-primary)] mb-3">{faq.question}</h3>
+                <p className="text-[var(--success)]">{faq.answer}</p>
               </motion.div>
             ))}
           </div>
@@ -423,25 +439,25 @@ export default function AgencyPartnersPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-primary-dark mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-[var(--brand-primary)] mb-4">
               Ready to Partner?
             </h2>
-            <p className="text-lg text-secondary-dark mb-8 max-w-2xl mx-auto">
+            <p className="text-lg text-[var(--success)] mb-8 max-w-2xl mx-auto">
               We're having discovery calls with interested agencies now. Limited partner spots available - we're capping at 5 launch partners to ensure quality relationships.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-white px-8 py-6 text-lg">
+              <Button asChild size="lg" className="bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-black px-8 py-6 text-lg font-bold">
                 <Link href="mailto:partners@repruv.co.uk">
                   Schedule Discovery Call
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-2 border-holo-mint text-holo-mint hover:bg-muted px-8 py-6 text-lg">
+              <Button asChild size="lg" variant="outline" className="border-2 border-[var(--brand-primary)] text-[var(--success)] hover:bg-muted px-8 py-6 text-lg font-bold">
                 <Link href="mailto:partners@repruv.co.uk">
                   Email Us
                 </Link>
               </Button>
             </div>
-            <p className="text-sm text-secondary-dark mt-6">
+            <p className="text-sm text-[var(--success)] mt-6">
               <strong>Contact:</strong> partners@repruv.co.uk | Response Time: Within 24 hours
             </p>
           </motion.div>

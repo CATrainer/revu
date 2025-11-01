@@ -41,13 +41,13 @@ export default function FeaturesPage() {
             animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.6, delay: heroInView ? 0.2 : 0 }}
           >
-            <h1 className="text-4xl md:text-5xl font-bold brand-text mb-4">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold brand-text mb-4">
               Creator Tools Built for Revenue Growth
             </h1>
             <div className="flex items-center justify-center gap-3 mb-6">
               <span className="text-lg text-secondary-dark">EARLY ACCESS BETA</span>
               <span className="text-secondary-dark">•</span>
-              <span className="text-lg text-holo-mint font-semibold">Help us build the future of creator monetization</span>
+              <span className="text-2xl text-[var(--success)] font-semibold">Help us build the future of creator monetization</span>
             </div>
           </motion.div>
 
@@ -61,25 +61,25 @@ export default function FeaturesPage() {
             {[
               { 
                 icon: FaReply, 
-                color: "text-holo-teal", 
+                color: "text-cyan-500", 
                 title: "Smart Engagement Automation", 
                 id: "comment-automation" 
               },
               { 
                 icon: FaHashtag, 
-                color: "text-holo-pink", 
+                color: "text-amber-500", 
                 title: "Revenue Intelligence Monitoring", 
                 id: "social-monitoring" 
               },
               { 
                 icon: FaBrain, 
-                color: "text-holo-purple", 
+                color: "text-purple-500", 
                 title: "AI Creator Assistant", 
                 id: "ai-responses" 
               },
               { 
                 icon: FaChartBar, 
-                color: "text-holo-mint", 
+                color: "text-emerald-500", 
                 title: "Analytics & Revenue Intelligence", 
                 id: "analytics-and-reports" 
               }
@@ -140,7 +140,7 @@ export default function FeaturesPage() {
                   animate={responseInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
                   transition={{ duration: 0.6, delay: responseInView ? 0.4 : 0 }}
                 >
-                  <FaReply className="text-holo-teal h-12 w-12" />
+                  <FaReply className="text-cyan-500 h-12 w-12" />
                 </motion.div>
                 <motion.h2 
                   className="text-3xl font-bold brand-text flex items-center gap-3"
@@ -153,8 +153,7 @@ export default function FeaturesPage() {
                 </motion.h2>
               </motion.div>
               <motion.p 
-                className="text-lg font-bold mb-6"
-                style={{ color: '#17633A' }}
+                className="text-lg font-bold mb-6 text-[var(--success)]"
                 initial={{ opacity: 0, y: 20 }}
                 animate={responseInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.6, delay: responseInView ? 0.5 : 0 }}
@@ -181,7 +180,7 @@ export default function FeaturesPage() {
                       animate={responseInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                       transition={{ duration: 0.4, delay: responseInView ? 0.8 + (index * 0.1) : 0 }}
                     >
-                      <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
+                      <span className="text-purple-500 mr-3 mt-1">✓</span>
                       <span className="text-body-dark">{item}</span>
                     </motion.li>
                   ))}
@@ -536,14 +535,14 @@ export default function FeaturesPage() {
                     animate={socialInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
                     transition={{ duration: 0.6, delay: 0.6 }}
                   >
-                    <FaHashtag className="text-holo-pink h-12 w-12" />
+                    <FaHashtag className="text-amber-500 h-12 w-12" />
                   </motion.div>
                   <h2 className="text-3xl font-bold brand-text flex items-center gap-3">
                     Revenue Intelligence Monitoring
                     <BetaBadge variant="purple" />
                   </h2>
                 </div>
-                <p className="text-lg font-bold mb-6" style={{ color: '#17633A' }}>
+                <p className="text-lg font-bold mb-6 text-[var(--success)]">
                   Track what people are saying about you across all channels. Identify monetization opportunities, brand mentions, and trending topics that could drive revenue.
                 </p>
                 <motion.ul 
@@ -565,7 +564,7 @@ export default function FeaturesPage() {
                       animate={socialInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                       transition={{ duration: 0.4, delay: 1.0 + (index * 0.1) }}
                     >
-                      <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
+                      <span className="text-purple-500 mr-3 mt-1">✓</span>
                       <span className="text-body-dark">{item}</span>
                     </motion.li>
                   ))}
@@ -596,14 +595,14 @@ export default function FeaturesPage() {
                   animate={analyticsInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
                 >
-                  <FaChartBar className="text-holo-mint h-12 w-12" />
+                  <FaChartBar className="text-emerald-500 h-12 w-12" />
                 </motion.div>
                 <h2 className="text-3xl font-bold brand-text flex items-center gap-3">
                   Analytics & Revenue Intelligence
                   <BetaBadge variant="blue" />
                 </h2>
               </div>
-              <p className="text-lg font-bold mb-6" style={{ color: '#17633A' }}>
+              <p className="text-lg font-bold mb-6 text-[var(--success)]">
                 Understand what drives your revenue and how to increase it. Get actionable insights to grow your channel and earnings.
               </p>
               <motion.ul 
@@ -625,7 +624,7 @@ export default function FeaturesPage() {
                     animate={analyticsInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                     transition={{ duration: 0.4, delay: 0.8 + (index * 0.1) }}
                   >
-                    <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
+                    <span className="text-purple-500 mr-3 mt-1">✓</span>
                     <span className="text-body-dark">{item}</span>
                   </motion.li>
                 ))}
@@ -871,7 +870,7 @@ export default function FeaturesPage() {
         <motion.section 
           id="ai-responses" 
           ref={aiRef}
-          className="theme-ai max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 mb-16"
+          className="theme-social section-background-alt py-20 mb-16"
           initial={{ opacity: 0, y: 50 }}
           animate={aiInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
           transition={{ duration: 0.8 }}
@@ -1067,7 +1066,7 @@ export default function FeaturesPage() {
                   </motion.div>
                   <h2 className="text-3xl font-bold brand-text">AI Creator Sidekick</h2>
                 </div>
-                <p className="text-lg font-bold mb-6" style={{ color: '#17633A' }}>
+                <p className="text-lg font-bold mb-6 text-[var(--success)]">
                   Your custom AI chatbot that can give you insights about your content and your community.
                 </p>
                 <motion.ul 
@@ -1088,7 +1087,7 @@ export default function FeaturesPage() {
                       animate={aiInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                       transition={{ duration: 0.4, delay: 1.0 + (index * 0.1) }}
                     >
-                      <span className="text-[var(--feature-tick)] mr-3 mt-1">✓</span>
+                      <span className="text-purple-500 mr-3 mt-1">✓</span>
                       <span className={index === 4 ? "text-body-dark" : "text-body-dark"}>{item}</span>
                     </motion.li>
                   ))}
