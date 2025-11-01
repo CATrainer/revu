@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useInView } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Users, Briefcase, Target } from 'lucide-react';
+import { Target } from 'lucide-react';
 import { VideoModal } from '@/components/ui/VideoModal';
 import Image from 'next/image';
 
@@ -29,55 +29,12 @@ export function SocialProof() {
         quote: "Where authentic engagement meets strategic growth and enhanced monetization.",
         attribution: "— The Repruv Vision"
       }
-    },
-    {
-      id: 'creators',
-      title: 'For Creators',
-      icon: Users,
-      videoId: 'f8qaKONsEbU',
-      isShort: true,
-      content: {
-        bullets: [
-          "Reclaim 15+ hours weekly by automating comment & DM responses with your authentic voice.",
-          "Turn engagement into revenue with AI-powered audience insights and monetization opportunities.",
-          "Protect and enhance your brand reputation with intelligent response management across all platforms.",
-          "Build 3x stronger community connections through consistent, personalized interactions.",
-          "Scale your creator business with unified TikTok, YouTube, Instagram management from one dashboard."
-        ],
-        quote: "Transform your passion into profit while maintaining authentic connections.",
-        attribution: "— Your Creator Success Partner"
-      }
-    },
-    {
-      id: 'agencies',
-      title: 'For Agencies',
-      icon: Briefcase,
-      content: {
-        bullets: [
-          "Maximize creator portfolio ROI with unified management across all platforms and talent.",
-          "Drive measurable revenue growth for each creator using AI-powered engagement optimization.",
-          "Deliver comprehensive performance analytics showing engagement, growth, and monetization metrics.",
-          "Scale operations efficiently while reducing management overhead by 70% across your roster.",
-          "Enhance creator retention and satisfaction with personalized, authentic audience interactions."
-        ],
-        quote: "Transform creator management into profitable portfolio growth.",
-        attribution: "— Your Strategic Growth Partner"
-      }
     }
   ];
 
-  // Filter out "Our Vision" card
-  const visibleCards = avatarCards.filter(card => card.id !== 'default');
-
-  const nextCard = () => {
-    setCurrentCard((prev) => (prev + 1) % visibleCards.length);
-  };
-
-  const prevCard = () => {
-    setCurrentCard((prev) => (prev - 1 + visibleCards.length) % visibleCards.length);
-  };
-
-  const currentAvatar = visibleCards[currentCard];
+  // Use the first (and only) card
+  const visibleCards = avatarCards;
+  const currentAvatar = visibleCards[0];
 
   // Manage YouTube thumbnail fallback sequence per current avatar
   // Initialize thumbnail synchronously to prevent initial placeholder when a video exists
@@ -133,56 +90,10 @@ export function SocialProof() {
               </motion.h2>
             </AnimatePresence>
           </div>
-
-          {/* Avatar Navigation Dots */}
-          <div className="flex justify-center gap-2 mb-8">
-            {avatarCards.map((_, index) => (
-              <motion.button
-                key={index}
-                onClick={() => setCurrentCard(index)}
-                type="button"
-                aria-label={`Go to ${avatarCards[index].title}`}
-                className={`w-3 h-3 p-2 rounded-full transition-all duration-300 ${ // p-2 increases touch target to >= 44px with icon size
-                  currentCard === index 
-                    ? 'bg-[var(--brand-primary)] scale-125' 
-                    : 'bg-muted hover:bg-muted-foreground/30'
-                }`}
-                whileHover={{ scale: 1.2 }}
-                whileTap={{ scale: 0.9 }}
-              />
-            ))}
-          </div>
         </motion.div>
 
         {/* Main Content Card */}
-        <div ref={ref} className="relative overflow-hidden"> {/* Prevent horizontal overflow on small screens */}
-          {/* Navigation Arrows */}
-          <motion.button
-            onClick={prevCard}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 p-3 bg-card rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-border"
-            aria-label="Previous"
-            whileHover={{ scale: 1.1, x: -5 }}
-            whileTap={{ scale: 0.95 }}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1 }}
-          >
-            <ChevronLeft className="w-6 h-6 text-primary-dark" />
-          </motion.button>
-
-          <motion.button
-            onClick={nextCard}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 p-3 bg-card rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-border"
-            aria-label="Next"
-            whileHover={{ scale: 1.1, x: 5 }}
-            whileTap={{ scale: 0.95 }}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1 }}
-          >
-            <ChevronRight className="w-6 h-6 text-primary-dark" />
-          </motion.button>
-
+        <div ref={ref} className="relative overflow-hidden">
           {/* Card Content */}
           <AnimatePresence mode="wait">
             <motion.div
@@ -296,45 +207,17 @@ export function SocialProof() {
                 className="lg:pl-8"
               >
                 <div className="text-base text-primary-dark leading-relaxed space-y-4 font-['Poppins',sans-serif]">
-                  {currentAvatar.content.text ? (
-                    // Default card with paragraphs
-                    currentAvatar.content.text.map((paragraph, index) => (
-                      <motion.p
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.4 + (index * 0.1) }}
-                      >
-                        {paragraph}
-                      </motion.p>
-                    ))
-                  ) : (
-                    // Avatar cards with bullet points
-                    <motion.ul
-                      className="space-y-3"
+                  {currentAvatar.content.text.map((paragraph, index) => (
+                    <motion.p
+                      key={index}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 0.4 }}
+                      transition={{ duration: 0.5, delay: 0.4 + (index * 0.1) }}
                     >
-                      {currentAvatar.content.bullets?.map((bullet, index) => (
-                        <motion.li
-                          key={index}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.4, delay: 0.5 + (index * 0.1) }}
-                          className="flex items-start gap-3"
-                        >
-                          <motion.div
-                            className="w-2 h-2 bg-[var(--brand-primary)] rounded-full mt-2 flex-shrink-0"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ duration: 0.3, delay: 0.6 + (index * 0.1) }}
-                          />
-                          <span className="text-sm leading-relaxed">{bullet}</span>
-                        </motion.li>
-                      ))}
-                    </motion.ul>
-                  )}
+                      {paragraph}
+                    </motion.p>
+                  ))}
+                  
                   
                   <motion.div
                     initial={{ opacity: 0, y: 30, scale: 0.95 }}

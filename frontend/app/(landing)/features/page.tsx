@@ -17,14 +17,12 @@ export default function FeaturesPage() {
   const socialRef = React.useRef(null);
   const aiRef = React.useRef(null);
   const analyticsRef = React.useRef(null);
-  const ctaRef = React.useRef(null);
 
   const heroInView = useInView(heroRef, { once: false, amount: 0.2 });
   const responseInView = useInView(responseRef, { once: false, amount: 0.2 });
   const socialInView = useInView(socialRef, { once: false, amount: 0.2 });
   const aiInView = useInView(aiRef, { once: false, amount: 0.2 });
   const analyticsInView = useInView(analyticsRef, { once: false, amount: 0.2 });
-  const ctaInView = useInView(ctaRef, { once: false, amount: 0.2 });
 
   return (
     <LazyMotion features={domAnimation}>

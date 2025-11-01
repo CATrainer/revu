@@ -38,25 +38,25 @@ interface Feature {
 const features: Feature[] = [
   {
     icon: FaReply,
-    iconColor: 'text-holo-teal', // Teal for replies/communication
+    iconColor: 'text-cyan-500', // Cyan for direct messaging/communication
     title: 'DM & Comment Automation',
     description: 'Automate replies to DM\'s & Comments on your Posts, Reels and Videos on Instagram and Youtube.',
   },
   {
     icon: FaBrain,
-    iconColor: 'text-holo-purple', // Purple for AI intelligence
+    iconColor: 'text-purple-500', // Purple for AI/intelligence/brain
     title: 'AI Creator Sidekick',
     description: 'Your personalized AI chatbot that understands you and your community.',
   },
   {
     icon: FaHashtag,
-    iconColor: 'text-holo-pink', // Pink for social media
+    iconColor: 'text-amber-500', // Amber for visibility/attention/monitoring
     title: 'Social Monitoring',
     description: 'Keep on top of what people are saying about you on online across all of your channels.',
   },
   {
     icon: FaChartBar,
-    iconColor: 'text-holo-mint', // Mint for growth/analytics
+    iconColor: 'text-emerald-500', // Emerald/Green for growth/analytics/success
     title: 'Analytics & Reports',
     description: 'Get actionable insights with comprehensive reporting and analytics derived from your data',
   },
@@ -212,9 +212,7 @@ export function Features() {
                     />
                   </motion.div>
                   <motion.h3 
-                    className={`text-xl font-semibold mb-2 font-['Poppins',sans-serif] text-center ${
-                      feature.title === 'DM & Comment Automation' ? 'text-holo-pink' : 'text-brand-text'
-                    }`}
+                    className="text-xl font-semibold mb-2 font-['Poppins',sans-serif] text-center text-[var(--brand-primary)]"
                     initial={{ opacity: 0 }}
                     animate={isInView ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ delay: 0.8 + (index * 0.1), duration: 0.5 }}

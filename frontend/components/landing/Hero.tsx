@@ -5,9 +5,7 @@ import { useRef, useState } from 'react';
 import { useInView } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { AlertCircle, Loader2, Play, Zap, Award } from 'lucide-react';
-import { api } from '@/lib/api';
+import { Play, Zap, Award } from 'lucide-react';
 import SocialPlatformCarousel from '@/components/shared/SocialPlatformCarousel';
 import { useAuth } from '@/lib/auth';
 import { VideoModal } from '@/components/ui/VideoModal';
@@ -18,34 +16,7 @@ export function Hero() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { margin: "-100px" });
   
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [videoModalOpen, setVideoModalOpen] = useState(false);
-
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await api.post('/users/waitlist/join', {
-        email,
-      });
-      
-      router.push(`/waitlist-success?user_id=${response.data.user_id}&has_account=${response.data.has_account}&email=${encodeURIComponent(email)}`);
-    } catch (error: unknown) {
-      console.error('Failed to get early access:', error);
-      let errorMessage = 'Failed to get early access. Please try again.';
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: { detail?: string } } };
-        errorMessage = axiosError.response?.data?.detail || errorMessage;
-      }
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <>
