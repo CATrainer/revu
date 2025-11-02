@@ -107,7 +107,7 @@ class InsightsDashboardResponse(BaseModel):
     platform_comparison: List[PlatformComparisonResponse]
 
 
-@router.get("/insights/dashboard", response_model=InsightsDashboardResponse)
+@router.get("/dashboard", response_model=InsightsDashboardResponse)
 async def get_insights_dashboard(
     time_period: str = Query("30d", pattern="^(7d|30d|90d|custom)$"),
     platform_filter: Optional[str] = Query(None, pattern="^(youtube|instagram|tiktok|all)$"),
@@ -357,7 +357,7 @@ async def get_insights_dashboard(
     )
 
 
-@router.get("/insights/content/{content_id}", response_model=ContentPieceResponse)
+@router.get("/content/{content_id}", response_model=ContentPieceResponse)
 async def get_content_details(
     content_id: UUID,
     session: AsyncSession = Depends(get_async_session),
@@ -405,7 +405,7 @@ async def get_content_details(
     )
 
 
-@router.get("/insights/content", response_model=List[ContentPieceResponse])
+@router.get("/content", response_model=List[ContentPieceResponse])
 async def list_content(
     platform: Optional[str] = Query(None, pattern="^(youtube|instagram|tiktok)$"),
     theme: Optional[str] = None,
@@ -479,7 +479,7 @@ async def list_content(
     return responses
 
 
-@router.get("/insights/themes", response_model=List[ThemePerformanceResponse])
+@router.get("/themes", response_model=List[ThemePerformanceResponse])
 async def list_themes(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
