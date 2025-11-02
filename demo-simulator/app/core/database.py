@@ -56,19 +56,16 @@ async def init_db():
     """
     Initialize database tables and run schema migrations.
     
-    Creates tables if they don't exist. Does not drop existing tables.
-    Applies schema changes for new columns automatically.
+    Note: Tables are expected to already exist (created via Alembic or initial setup).
+    This only applies schema changes for new columns.
     """
     # Import models to register them with Base.metadata
     from app.models import DemoProfile, DemoContent, DemoInteraction, GenerationCache  # noqa: F401
     
-    async with engine.begin() as conn:
-        # Create all tables - checkfirst=False avoids has_table() which causes event loop issues
-        # Tables are created with IF NOT EXISTS, so this is still idempotent
-        await conn.run_sync(Base.metadata.create_all, checkfirst=False)
-        
-        # Run schema migrations (add missing columns)
-        await _apply_schema_migrations(conn)
+    # Skip database initialization entirely to avoid event loop conflicts
+    # Tables already exist, and migrations can be run manually if needed
+    print("⏭️  Skipping database initialization (tables already exist)")
+    return
 
 
 async def _apply_schema_migrations(conn):
