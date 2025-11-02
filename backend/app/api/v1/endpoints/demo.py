@@ -378,3 +378,30 @@ async def bulk_create_content(
         error_details = traceback.format_exc()
         logger.error(f"Error creating bulk content: {str(e)}\n{error_details}")
         raise HTTPException(500, f"Failed to create content: {str(e)}")
+
+
+@router.post("/demo/seed-content")
+async def seed_demo_content_endpoint(
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Manually trigger demo content seeding for current user."""
+    
+    if current_user.demo_mode_status != 'enabled':
+        raise HTTPException(400, "Demo mode must be enabled first")
+    
+    try:
+        from app.services.demo_content_seeder import seed_demo_content
+        
+        logger.info(f"Manually seeding demo content for user {current_user.id}")
+        result = await seed_demo_content(session, current_user.id)
+        
+        return {
+            "status": "success",
+            "message": "Demo content seeded successfully",
+            "result": result,
+        }
+    
+    except Exception as e:
+        logger.error(f"Failed to seed demo content: {str(e)}")
+        raise HTTPException(500, f"Failed to seed content: {str(e)}")
