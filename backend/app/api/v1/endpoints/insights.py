@@ -200,9 +200,9 @@ async def get_insights_dashboard(
         .where(and_(*prev_filters))
     )
     prev_result = await session.execute(prev_stmt)
-    prev_avg = prev_result.scalar() or 0
+    prev_avg = float(prev_result.scalar() or 0)
     
-    current_avg = summary_data.avg_engagement_rate or 0
+    current_avg = float(summary_data.avg_engagement_rate or 0)
     if prev_avg == 0:
         trend = "stable"
     elif current_avg > prev_avg * 1.05:
