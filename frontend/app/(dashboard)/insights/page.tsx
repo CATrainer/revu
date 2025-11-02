@@ -116,7 +116,7 @@ export default function InsightsDashboardPage() {
         platform_filter: platformFilter,
       })
 
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/insights/dashboard?${params}`
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/insights/dashboard?${params}`
       console.log('🔍 Fetching insights from:', url)
 
       const response = await fetch(url, {
