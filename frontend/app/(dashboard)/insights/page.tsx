@@ -116,16 +116,25 @@ export default function InsightsDashboardPage() {
         platform_filter: platformFilter,
       })
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/insights/dashboard?${params}`, {
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/insights/dashboard?${params}`
+      console.log('🔍 Fetching insights from:', url)
+
+      const response = await fetch(url, {
         credentials: 'include',
       })
 
+      console.log('📡 Response status:', response.status)
+
       if (response.ok) {
         const result = await response.json()
+        console.log('✅ Insights data received:', result)
         setData(result)
+      } else {
+        const errorText = await response.text()
+        console.error('❌ Insights API error:', response.status, errorText)
       }
     } catch (error) {
-      console.error('Failed to fetch insights:', error)
+      console.error('❌ Failed to fetch insights:', error)
     } finally {
       setLoading(false)
     }
