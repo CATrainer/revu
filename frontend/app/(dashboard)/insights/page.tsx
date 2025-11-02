@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
+import { api } from "@/lib/api"
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -116,25 +117,19 @@ export default function InsightsDashboardPage() {
         platform_filter: platformFilter,
       })
 
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/insights/dashboard?${params}`
-      console.log('🔍 Fetching insights from:', url)
+      console.log('🔍 Fetching insights...')
 
-      const response = await fetch(url, {
-        credentials: 'include',
-      })
-
-      console.log('📡 Response status:', response.status)
-
-      if (response.ok) {
-        const result = await response.json()
-        console.log('✅ Insights data received:', result)
-        setData(result)
-      } else {
-        const errorText = await response.text()
-        console.error('❌ Insights API error:', response.status, errorText)
-      }
-    } catch (error) {
+      const response = await api.get(`/insights/dashboard?${params}`)
+      
+      console.log('✅ Insights data received:', response.data)
+      setData(response.data)
+    } catch (error: any) {
       console.error('❌ Failed to fetch insights:', error)
+      // Axios interceptor will handle 401 and redirect to login automatically
+      if (error.response?.status !== 401) {
+        // Only log non-401 errors since 401 is handled by redirect
+        console.error('Insights API error:', error.response?.status, error.response?.data)
+      }
     } finally {
       setLoading(false)
     }
