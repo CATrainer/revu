@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 def cleanup_old_demo_data():
     """Clean up old demo data to save space."""
     import asyncio
+    import nest_asyncio
+    
+    nest_asyncio.apply()
     asyncio.run(_cleanup_async())
 
 

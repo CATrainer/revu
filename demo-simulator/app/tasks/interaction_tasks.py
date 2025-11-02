@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 def generate_comments_batch():
     """Generate comments for recent content."""
     import asyncio
+    import nest_asyncio
+    
+    nest_asyncio.apply()
     asyncio.run(_generate_comments_async())
 
 
@@ -98,6 +101,9 @@ async def _generate_comments_async():
 def generate_dms_batch():
     """Generate DMs for active profiles."""
     import asyncio
+    import nest_asyncio
+    
+    nest_asyncio.apply()
     asyncio.run(_generate_dms_async())
 
 
@@ -145,6 +151,11 @@ async def _generate_dms_async():
 def send_queued_interactions():
     """Send queued interactions to main app via webhooks."""
     import asyncio
+    import nest_asyncio
+    
+    # Allow nested event loops in Celery workers
+    nest_asyncio.apply()
+    
     asyncio.run(_send_interactions_async())
 
 

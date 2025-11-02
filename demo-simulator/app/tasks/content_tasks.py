@@ -14,6 +14,9 @@ logger = logging.getLogger(__name__)
 def upload_content_for_active_profiles():
     """Upload new content for all active demo profiles."""
     import asyncio
+    import nest_asyncio
+    
+    nest_asyncio.apply()
     asyncio.run(_upload_content_async())
 
 
