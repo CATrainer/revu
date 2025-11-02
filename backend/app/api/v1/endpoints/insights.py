@@ -137,6 +137,14 @@ async def get_insights_dashboard(
         ContentPiece.is_deleted == False,
     ]
     
+    # CRITICAL: Filter by demo status based on user's demo mode
+    # If user is in demo mode, show ONLY demo content (is_demo=True)
+    # If user is NOT in demo mode, show ONLY real content (is_demo=False)
+    if current_user.demo_mode_status == 'enabled':
+        filters.append(ContentPiece.is_demo == True)
+    else:
+        filters.append(ContentPiece.is_demo == False)
+    
     if platform_filter and platform_filter != "all":
         filters.append(ContentPiece.platform == platform_filter)
     
@@ -167,6 +175,13 @@ async def get_insights_dashboard(
         ContentPiece.published_at < date_from,
         ContentPiece.is_deleted == False,
     ]
+    
+    # Apply same demo filter to previous period
+    if current_user.demo_mode_status == 'enabled':
+        prev_filters.append(ContentPiece.is_demo == True)
+    else:
+        prev_filters.append(ContentPiece.is_demo == False)
+    
     if platform_filter and platform_filter != "all":
         prev_filters.append(ContentPiece.platform == platform_filter)
     
@@ -398,6 +413,12 @@ async def list_content(
         ContentPiece.user_id == current_user.id,
         ContentPiece.is_deleted == False,
     ]
+    
+    # Filter by demo status
+    if current_user.demo_mode_status == 'enabled':
+        filters.append(ContentPiece.is_demo == True)
+    else:
+        filters.append(ContentPiece.is_demo == False)
     
     if platform:
         filters.append(ContentPiece.platform == platform)
