@@ -140,10 +140,16 @@ async def get_insights_dashboard(
     # CRITICAL: Filter by demo status based on user's demo mode
     # If user is in demo mode, show ONLY demo content (is_demo=True)
     # If user is NOT in demo mode, show ONLY real content (is_demo=False)
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"🔍 Insights query - User {current_user.id}, demo_mode_status: {current_user.demo_mode_status}")
+    
     if current_user.demo_mode_status == 'enabled':
         filters.append(ContentPiece.is_demo == True)
+        logger.info(f"✅ Filtering for demo content (is_demo=True)")
     else:
         filters.append(ContentPiece.is_demo == False)
+        logger.info(f"✅ Filtering for real content (is_demo=False)")
     
     if platform_filter and platform_filter != "all":
         filters.append(ContentPiece.platform == platform_filter)
@@ -166,6 +172,8 @@ async def get_insights_dashboard(
     
     result = await session.execute(stmt)
     summary_data = result.first()
+    
+    logger.info(f"📊 Query results - total_content: {summary_data.total_content}, date_from: {date_from}, date_to: {date_to}")
     
     # Calculate engagement trend (compare to previous period)
     prev_date_from = date_from - (date_to - date_from)
