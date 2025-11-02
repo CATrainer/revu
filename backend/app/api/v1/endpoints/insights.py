@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_, desc
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from typing import Optional, List
 from datetime import datetime, timedelta
 from uuid import UUID
@@ -32,6 +32,10 @@ class ContentPerformanceResponse(BaseModel):
     percentile_rank: Optional[int]
     performance_category: Optional[str]
     
+    @field_serializer('id')
+    def serialize_id(self, value: UUID, _info) -> str:
+        return str(value) if isinstance(value, UUID) else value
+    
     class Config:
         from_attributes = True
 
@@ -45,6 +49,10 @@ class ContentInsightResponse(BaseModel):
     impact_level: Optional[str]
     is_positive: Optional[bool]
     supporting_data: Optional[dict]
+    
+    @field_serializer('id')
+    def serialize_id(self, value: UUID, _info) -> str:
+        return str(value) if isinstance(value, UUID) else value
     
     class Config:
         from_attributes = True
@@ -62,6 +70,10 @@ class ContentPieceResponse(BaseModel):
     summary: Optional[str]
     performance: Optional[ContentPerformanceResponse]
     insights: List[ContentInsightResponse] = []
+    
+    @field_serializer('id')
+    def serialize_id(self, value: UUID, _info) -> str:
+        return str(value) if isinstance(value, UUID) else value
     
     class Config:
         from_attributes = True
@@ -86,6 +98,10 @@ class ThemePerformanceResponse(BaseModel):
     avg_engagement_rate: Optional[float]
     avg_performance_score: Optional[float]
     total_views: int
+    
+    @field_serializer('id')
+    def serialize_id(self, value: UUID, _info) -> str:
+        return str(value) if isinstance(value, UUID) else value
     
     class Config:
         from_attributes = True
