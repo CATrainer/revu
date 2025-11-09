@@ -141,8 +141,11 @@ async def auto_detect_profile(
     Returns pre-filled profile data and list of missing required fields.
     """
     
-    # Check if user is in demo mode
-    is_demo = current_user.demo_mode if hasattr(current_user, 'demo_mode') else False
+    # Check if user is in demo mode (using demo_mode_status field)
+    is_demo = (
+        hasattr(current_user, 'demo_mode_status') and 
+        current_user.demo_mode_status == 'enabled'
+    )
     
     profile_data = {
         "primary_platform": None,

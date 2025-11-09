@@ -84,16 +84,18 @@ export default function ProfileSetupPage() {
     e.preventDefault();
     setError(null);
 
-    // Validation
-    if (formData.follower_count < 1000) {
+    // Only validate fields that are shown (missing fields)
+    const missingFields = autoDetect?.missing_fields || [];
+    
+    if (missingFields.includes('follower_count') && formData.follower_count < 1000) {
       setError('Follower count must be at least 1,000');
       return;
     }
-    if (formData.engagement_rate < 0.1 || formData.engagement_rate > 100) {
+    if (missingFields.includes('engagement_rate') && (formData.engagement_rate < 0.1 || formData.engagement_rate > 100)) {
       setError('Engagement rate must be between 0.1% and 100%');
       return;
     }
-    if (!formData.niche.trim()) {
+    if (missingFields.includes('niche') && !formData.niche.trim()) {
       setError('Please specify your niche');
       return;
     }
@@ -167,13 +169,13 @@ export default function ProfileSetupPage() {
         </div>
 
         {/* Data Source Alert */}
-        {hasData && (
+        {hasData && autoDetect?.data_source && (
           <Alert className="border-purple-200 bg-purple-50 dark:bg-purple-950/20">
             <Sparkles className="h-4 w-4 text-purple-600" />
             <AlertDescription className="text-purple-900 dark:text-purple-100">
-              {autoDetect?.is_demo 
+              {autoDetect.is_demo 
                 ? 'Using demo data. Disable demo mode to use your real platform data.'
-                : `Auto-filled from your ${autoDetect?.data_source} connection.`
+                : `Auto-filled from your ${autoDetect.data_source} connection.`
               }
             </AlertDescription>
           </Alert>
