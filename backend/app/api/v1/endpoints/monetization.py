@@ -162,18 +162,86 @@ async def auto_detect_profile(
     missing_fields = []
     
     if is_demo:
-        # Use demo data
-        profile_data = {
-            "primary_platform": "youtube",
-            "follower_count": 100000,
-            "engagement_rate": 6.5,
-            "niche": "Tech Reviews",
-            "platform_url": "https://youtube.com/@democreator",
-            "avg_content_views": 50000,
-            "content_frequency": 3,
-            "time_available_hours_per_week": 10
-        }
-        data_source = "demo"
+        # Fetch profile from demo service
+        from app.core.config import settings
+        import httpx
+        
+        demo_service_url = getattr(settings, 'DEMO_SERVICE_URL', None)
+        
+        if demo_service_url:
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    response = await client.get(
+                        f"{demo_service_url}/profiles/{current_user.id}",
+                    )
+                    
+                    if response.status_code == 200:
+                        demo_profile = response.json()
+                        
+                        # Extract YouTube data from demo profile
+                        # Structure: platforms.youtube.subscribers, platforms.youtube.avg_views
+                        platforms = demo_profile.get('platforms', {})
+                        youtube_data = platforms.get('youtube', {})
+                        
+                        # Calculate engagement rate (typically 5-10% for YouTube)
+                        subscribers = youtube_data.get('subscribers', 100000)
+                        avg_views = youtube_data.get('avg_views', 50000)
+                        engagement_rate = round((avg_views / subscribers) * 100, 2) if subscribers > 0 else 6.5
+                        
+                        # Format niche for display
+                        niche = demo_profile.get('niche', 'tech_reviews').replace('_', ' ').title()
+                        
+                        profile_data = {
+                            "primary_platform": "youtube",
+                            "follower_count": subscribers,
+                            "engagement_rate": engagement_rate,
+                            "niche": niche,
+                            "platform_url": f"https://youtube.com/@{demo_profile.get('channel_name', 'democreator').replace(' ', '')}",
+                            "avg_content_views": avg_views,
+                            "content_frequency": 3 if youtube_data.get('upload_frequency') == 'daily' else 1,
+                            "time_available_hours_per_week": 10
+                        }
+                        data_source = "demo"
+                    else:
+                        # Demo profile not found, use fallback values
+                        profile_data = {
+                            "primary_platform": "youtube",
+                            "follower_count": 100000,
+                            "engagement_rate": 6.5,
+                            "niche": "Tech Reviews",
+                            "platform_url": "https://youtube.com/@democreator",
+                            "avg_content_views": 50000,
+                            "content_frequency": 3,
+                            "time_available_hours_per_week": 10
+                        }
+                        data_source = "demo"
+            except Exception as e:
+                logger.error(f"Failed to fetch demo profile: {e}")
+                # Use fallback demo data
+                profile_data = {
+                    "primary_platform": "youtube",
+                    "follower_count": 100000,
+                    "engagement_rate": 6.5,
+                    "niche": "Tech Reviews",
+                    "platform_url": "https://youtube.com/@democreator",
+                    "avg_content_views": 50000,
+                    "content_frequency": 3,
+                    "time_available_hours_per_week": 10
+                }
+                data_source = "demo"
+        else:
+            # No demo service configured, use fallback
+            profile_data = {
+                "primary_platform": "youtube",
+                "follower_count": 100000,
+                "engagement_rate": 6.5,
+                "niche": "Tech Reviews",
+                "platform_url": "https://youtube.com/@democreator",
+                "avg_content_views": 50000,
+                "content_frequency": 3,
+                "time_available_hours_per_week": 10
+            }
+            data_source = "demo"
     else:
         # Check for real platform connections
         # Try YouTube first
