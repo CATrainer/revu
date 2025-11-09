@@ -1,0 +1,1010 @@
+[
+  {
+    "id": "premium-community-discord",
+    "category": "community",
+    "title": "Premium Discord Community",
+    "description": "Launch a paid Discord server with exclusive content, live sessions, and direct access to you.",
+    "ideal_for": {
+      "min_followers": 5000,
+      "engagement_rate_min": 3.0,
+      "content_types": ["gaming", "tech", "tutorial"],
+      "audience_signals": ["high_comment_volume", "repeat_engagers", "access_requests"]
+    },
+    "revenue_model": {
+      "pricing_range": [27, 67],
+      "avg_members_month_3": 50,
+      "avg_members_month_6": 120,
+      "typical_revenue_month_6": 4400
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Foundation",
+          "timeline": "Week 1",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Choose platform (Discord vs Circle)",
+              "time_estimate": "2 hours",
+              "cost_estimate": 0,
+              "details": "Evaluate platform options based on your audience and budget. Discord is free and familiar to gaming/tech audiences. Circle is $89/mo but more professional.",
+              "decision_type": "platform"
+            },
+            {
+              "id": "1.2",
+              "task": "Define pricing strategy and tiers",
+              "time_estimate": "3 hours",
+              "cost_estimate": 0,
+              "details": "Research competitor pricing. Recommend single tier for launch ($37-47/mo). Include founding member discount (30-40% off).",
+              "decision_type": "pricing"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Weekly live Q&A sessions create rhythm and accountability",
+        "Founding member pricing (discounted) builds initial momentum",
+        "Personal DMs to top 50 engaged followers converts at 15-20%"
+      ],
+      "common_failures": [
+        "Launching to empty server without founding members",
+        "Overcomplicating tier structure at launch",
+        "Under-pricing due to imposter syndrome"
+      ],
+      "key_metrics": [
+        "40%+ weekly active members",
+        "85%+ month-to-month retention",
+        "50-100 members by month 3"
+      ]
+    }
+  },
+
+  {
+    "id": "mini-course-series",
+    "category": "course",
+    "title": "Mini-Course Series",
+    "description": "Create 3-5 focused mini-courses on your most popular topics. Each course is short (1-2 hours) and actionable.",
+    "ideal_for": {
+      "min_followers": 10000,
+      "engagement_rate_min": 4.0,
+      "content_types": ["tutorial", "educational", "how-to"],
+      "audience_signals": ["how_to_questions", "tutorial_requests"]
+    },
+    "revenue_model": {
+      "pricing_range": [47, 197],
+      "avg_sales_month_3": 30,
+      "typical_revenue_month_6": 3500
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Course Design",
+          "timeline": "Week 1-2",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Identify top 3-5 course topics from content analysis",
+              "time_estimate": "3 hours",
+              "cost_estimate": 0,
+              "details": "Review your highest-engagement content. Look for topics where audience asks 'how do I' questions most.",
+              "decision_type": "content"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Repurposing existing tutorial content saves 50%+ time",
+        "Shorter courses (1-2 hours) have higher completion rates",
+        "Bundle pricing (buy 3, get 4th free) increases AOV"
+      ]
+    }
+  },
+
+  {
+    "id": "coaching-program-group",
+    "category": "coaching",
+    "title": "Group Coaching Program",
+    "description": "Run cohort-based group coaching with 8-12 clients. Mix of group calls and community support.",
+    "ideal_for": {
+      "min_followers": 15000,
+      "engagement_rate_min": 5.0,
+      "content_types": ["educational", "tutorial", "motivational"],
+      "audience_signals": ["access_requests", "advice_seeking", "transformation_stories"]
+    },
+    "revenue_model": {
+      "pricing_range": [497, 1997],
+      "avg_clients_per_cohort": 10,
+      "cohorts_per_year": 4,
+      "typical_revenue_year_1": 15000
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Program Design",
+          "timeline": "Week 1-2",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Define program structure and curriculum",
+              "time_estimate": "6 hours",
+              "cost_estimate": 0,
+              "details": "8-12 week program. Weekly group calls (90 min). Private community. Clear transformation promise.",
+              "decision_type": "content"
+            }
+          ]
+        }
+      ]
+    }
+  },
+
+  {
+    "id": "sponsorship-program",
+    "category": "sponsorship",
+    "title": "Brand Sponsorship Program",
+    "description": "Structured program for brand partnerships and sponsored content with clear packages and pricing.",
+    "ideal_for": {
+      "min_followers": 20000,
+      "engagement_rate_min": 4.0,
+      "content_types": ["any"],
+      "audience_signals": ["product_questions", "recommendation_requests"]
+    },
+    "revenue_model": {
+      "pricing_range": [500, 5000],
+      "avg_deals_per_month": 2,
+      "typical_revenue_month_6": 6000
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Package Creation",
+          "timeline": "Week 1",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Create media kit with stats and packages",
+              "time_estimate": "4 hours",
+              "cost_estimate": 50,
+              "details": "Professional PDF with audience demographics, engagement metrics, past successes, and 3-tier pricing.",
+              "decision_type": "pricing"
+            }
+          ]
+        }
+      ]
+    }
+  },
+
+  {
+    "id": "community-plus-course",
+    "category": "hybrid",
+    "title": "Community + Course Bundle",
+    "description": "Combine paid community with structured courses. Members get both for a bundled price.",
+    "ideal_for": {
+      "min_followers": 15000,
+      "engagement_rate_min": 5.0,
+      "content_types": ["tutorial", "educational"],
+      "audience_signals": ["high_comment_volume", "how_to_questions", "repeat_engagers"]
+    },
+    "revenue_model": {
+      "pricing_range": [47, 97],
+      "avg_members_month_6": 150,
+      "typical_revenue_month_6": 9000
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Foundation",
+          "timeline": "Week 1-2",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Design integrated community + course structure",
+              "time_estimate": "5 hours",
+              "cost_estimate": 0,
+              "details": "Community for ongoing support, courses for structured learning. Bundle pricing creates compelling value.",
+              "decision_type": "structure"
+            }
+          ]
+        }
+      ]
+    }
+  },
+
+  {
+    "id": "affiliate-program",
+    "category": "affiliate",
+    "title": "Strategic Affiliate Program",
+    "description": "Curate and promote products you genuinely use, earning commissions on sales.",
+    "ideal_for": {
+      "min_followers": 5000,
+      "engagement_rate_min": 3.5,
+      "content_types": ["review", "tutorial", "recommendation"],
+      "audience_signals": ["product_questions", "recommendation_requests", "buying_intent"]
+    },
+    "revenue_model": {
+      "pricing_range": [500, 3000],
+      "commission_rate": 0.15,
+      "typical_revenue_month_6": 2000
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Setup",
+          "timeline": "Week 1",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Join relevant affiliate networks",
+              "time_estimate": "3 hours",
+              "cost_estimate": 0,
+              "details": "Sign up for Amazon Associates, ShareASale, Impact, and niche-specific programs relevant to your content.",
+              "decision_type": "platform"
+            },
+            {
+              "id": "1.2",
+              "task": "Create resource page on website",
+              "time_estimate": "4 hours",
+              "cost_estimate": 0,
+              "details": "Build 'My Setup' or 'Recommended Tools' page with affiliate links and honest reviews.",
+              "decision_type": "content"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Only promote products you actually use builds trust",
+        "Resource page converts 5-10% of traffic",
+        "Tutorial content with affiliate links performs best"
+      ],
+      "common_failures": [
+        "Promoting too many products dilutes recommendations",
+        "Not disclosing affiliate relationships damages trust",
+        "Choosing high-ticket items with low conversion rates"
+      ]
+    }
+  },
+
+  {
+    "id": "paid-newsletter",
+    "category": "content",
+    "title": "Premium Newsletter Subscription",
+    "description": "Weekly or bi-weekly paid newsletter with exclusive insights, analysis, and resources.",
+    "ideal_for": {
+      "min_followers": 8000,
+      "engagement_rate_min": 4.0,
+      "content_types": ["educational", "analysis", "commentary"],
+      "audience_signals": ["high_comment_volume", "information_seeking", "expertise_recognition"]
+    },
+    "revenue_model": {
+      "pricing_range": [7, 20],
+      "avg_subscribers_month_6": 200,
+      "typical_revenue_month_6": 2400
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Launch Preparation",
+          "timeline": "Week 1-2",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Choose newsletter platform",
+              "time_estimate": "2 hours",
+              "cost_estimate": 10,
+              "details": "Substack is easiest (free, 10% fee). ConvertKit or Beehiiv offer more control. Ghost for full ownership.",
+              "decision_type": "platform"
+            },
+            {
+              "id": "1.2",
+              "task": "Define content format and schedule",
+              "time_estimate": "3 hours",
+              "cost_estimate": 0,
+              "details": "Decide on weekly vs bi-weekly. Define sections (e.g., main analysis, resources, community spotlight). Create template.",
+              "decision_type": "content"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Consistent schedule builds habit in readers",
+        "Annual pricing (2 months free) locks in revenue",
+        "Free preview issues convert 2-5% of audience"
+      ]
+    }
+  },
+
+  {
+    "id": "one-on-one-coaching",
+    "category": "coaching",
+    "title": "1-on-1 Coaching Program",
+    "description": "High-touch personal coaching with limited availability. Premium pricing for direct access.",
+    "ideal_for": {
+      "min_followers": 10000,
+      "engagement_rate_min": 5.0,
+      "content_types": ["educational", "motivational", "expertise"],
+      "audience_signals": ["access_requests", "success_stories", "expert_positioning"]
+    },
+    "revenue_model": {
+      "pricing_range": [200, 500],
+      "sessions_per_month": 16,
+      "typical_revenue_month_6": 6000
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Program Setup",
+          "timeline": "Week 1",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Define coaching packages and pricing",
+              "time_estimate": "3 hours",
+              "cost_estimate": 0,
+              "details": "Typical: Single session ($200-300), 4-session package ($700-1000), 12-session intensive ($2000-4000). Include email support.",
+              "decision_type": "pricing"
+            },
+            {
+              "id": "1.2",
+              "task": "Set up booking and payment system",
+              "time_estimate": "2 hours",
+              "cost_estimate": 20,
+              "details": "Use Calendly (free) + Stripe for payments, or TidyCal ($29 one-time). Block specific hours for coaching.",
+              "decision_type": "platform"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Limiting slots creates scarcity and urgency",
+        "Package pricing (4-6 sessions) increases commitment",
+        "Success stories from past clients drive referrals"
+      ]
+    }
+  },
+
+  {
+    "id": "digital-templates",
+    "category": "product",
+    "title": "Digital Templates & Resources",
+    "description": "Sell templates, presets, worksheets, or other digital downloads your audience needs.",
+    "ideal_for": {
+      "min_followers": 5000,
+      "engagement_rate_min": 3.0,
+      "content_types": ["design", "productivity", "creative", "business"],
+      "audience_signals": ["how_to_questions", "process_requests", "tool_questions"]
+    },
+    "revenue_model": {
+      "pricing_range": [15, 97],
+      "avg_sales_per_month": 40,
+      "typical_revenue_month_6": 1800
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Product Creation",
+          "timeline": "Week 1-2",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Identify your most-requested resources",
+              "time_estimate": "2 hours",
+              "cost_estimate": 0,
+              "details": "Review comments/DMs for 'how do you do X' or 'can you share your template for Y'. Start with 1-3 products.",
+              "decision_type": "content"
+            },
+            {
+              "id": "1.2",
+              "task": "Create professional templates",
+              "time_estimate": "8 hours",
+              "cost_estimate": 0,
+              "details": "Use Canva, Notion, Figma, or native tools. Make them easy to customize. Include instruction PDF.",
+              "decision_type": "content"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Bundles (3-5 templates) sell better than individual",
+        "Gumroad or Lemon Squeezy handle payments easily",
+        "Showing before/after results increases conversions"
+      ]
+    }
+  },
+
+  {
+    "id": "membership-site",
+    "category": "hybrid",
+    "title": "All-Access Membership Site",
+    "description": "Monthly membership with full library of courses, resources, and ongoing content.",
+    "ideal_for": {
+      "min_followers": 20000,
+      "engagement_rate_min": 4.5,
+      "content_types": ["educational", "tutorial", "multi-topic"],
+      "audience_signals": ["repeat_engagers", "content_consumption", "loyalty"]
+    },
+    "revenue_model": {
+      "pricing_range": [27, 97],
+      "avg_members_month_6": 200,
+      "typical_revenue_month_6": 8000
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Platform Setup",
+          "timeline": "Week 1-2",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Choose membership platform",
+              "time_estimate": "3 hours",
+              "cost_estimate": 39,
+              "details": "Kajabi ($149/mo) for all-in-one. Teachable ($39/mo) + Circle for courses+community. WordPress + MemberPress for control.",
+              "decision_type": "platform"
+            },
+            {
+              "id": "1.2",
+              "task": "Plan content release schedule",
+              "time_estimate": "4 hours",
+              "cost_estimate": 0,
+              "details": "Start with 5-10 pieces of existing content. Add 1-2 new resources per month. Balance library growth with sustainability.",
+              "decision_type": "content"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Netflix model: Access to everything for one price",
+        "Drip content keeps members engaged longer",
+        "Founder tier (locked pricing) rewards early adopters"
+      ]
+    }
+  },
+
+  {
+    "id": "physical-merchandise",
+    "category": "product",
+    "title": "Branded Merchandise Line",
+    "description": "Sell physical products (apparel, accessories, prints) with your branding or designs.",
+    "ideal_for": {
+      "min_followers": 15000,
+      "engagement_rate_min": 5.0,
+      "content_types": ["lifestyle", "gaming", "creative", "catchphrases"],
+      "audience_signals": ["brand_loyalty", "identity_alignment", "merch_requests"]
+    },
+    "revenue_model": {
+      "pricing_range": [25, 50],
+      "profit_margin": 0.30,
+      "typical_revenue_month_6": 2500
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Design & Production",
+          "timeline": "Week 1-3",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Create 3-5 designs",
+              "time_estimate": "6 hours",
+              "cost_estimate": 200,
+              "details": "Hire designer on Fiverr ($50-100/design) or use Canva. Simple, recognizable designs work best. Test with polls.",
+              "decision_type": "content"
+            },
+            {
+              "id": "1.2",
+              "task": "Set up print-on-demand store",
+              "time_estimate": "3 hours",
+              "cost_estimate": 0,
+              "details": "Printful or Printify integrate with Shopify. No inventory risk. 3-5 day fulfillment. 25-35% profit margins.",
+              "decision_type": "platform"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Limited drops create urgency and FOMO",
+        "Pre-orders validate demand before production",
+        "Quality over quantity - 3 great designs beats 20 mediocre ones"
+      ]
+    }
+  },
+
+  {
+    "id": "workshop-series",
+    "category": "service",
+    "title": "Live Workshop Series",
+    "description": "Host paid live workshops on specific topics. 2-4 hour intensive sessions with Q&A.",
+    "ideal_for": {
+      "min_followers": 8000,
+      "engagement_rate_min": 4.5,
+      "content_types": ["tutorial", "educational", "skill-based"],
+      "audience_signals": ["how_to_questions", "learning_intent", "skill_development"]
+    },
+    "revenue_model": {
+      "pricing_range": [47, 197],
+      "attendees_per_workshop": 30,
+      "workshops_per_month": 2,
+      "typical_revenue_month_6": 3500
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Workshop Planning",
+          "timeline": "Week 1-2",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Choose first 3 workshop topics",
+              "time_estimate": "3 hours",
+              "cost_estimate": 0,
+              "details": "Pick your most-asked 'how to' topics. Each workshop should deliver one clear skill or outcome.",
+              "decision_type": "content"
+            },
+            {
+              "id": "1.2",
+              "task": "Create workshop landing pages",
+              "time_estimate": "4 hours",
+              "cost_estimate": 29,
+              "details": "Use Eventbrite (free + fees) or Carrd ($19/year) + TidyCal. Clear outcome, agenda, pricing, date/time.",
+              "decision_type": "platform"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Weekend workshops (Saturday mornings) get best attendance",
+        "Recording included increases perceived value",
+        "Early bird pricing (30% off) drives initial sales"
+      ]
+    }
+  },
+
+  {
+    "id": "licensing-syndication",
+    "category": "content",
+    "title": "Content Licensing Program",
+    "description": "License your content, photos, videos, or courses to businesses and educators.",
+    "ideal_for": {
+      "min_followers": 25000,
+      "engagement_rate_min": 3.5,
+      "content_types": ["photography", "video", "educational", "professional"],
+      "audience_signals": ["professional_quality", "commercial_interest", "expertise_recognition"]
+    },
+    "revenue_model": {
+      "pricing_range": [500, 5000],
+      "deals_per_year": 8,
+      "typical_revenue_year_1": 12000
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Portfolio Setup",
+          "timeline": "Week 1-2",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Catalog your best licensable content",
+              "time_estimate": "5 hours",
+              "cost_estimate": 0,
+              "details": "Identify high-quality photos, videos, courses, or frameworks. Ensure you own all rights. Organize by category.",
+              "decision_type": "content"
+            },
+            {
+              "id": "1.2",
+              "task": "Create licensing packages and pricing",
+              "time_estimate": "3 hours",
+              "cost_estimate": 0,
+              "details": "Single-use ($500-1000), unlimited use ($2000-5000), custom courses ($5000+). Include usage rights clearly.",
+              "decision_type": "pricing"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Target specific industries (corporate training, agencies)",
+        "Case studies showing ROI increase deal size",
+        "White-label options command premium pricing"
+      ]
+    }
+  },
+
+  {
+    "id": "saas-tool",
+    "category": "tool",
+    "title": "Niche Software Tool",
+    "description": "Build a simple software tool that solves a specific problem for your audience.",
+    "ideal_for": {
+      "min_followers": 10000,
+      "engagement_rate_min": 4.0,
+      "content_types": ["tech", "productivity", "business"],
+      "audience_signals": ["tool_questions", "workflow_pain_points", "technical_audience"]
+    },
+    "revenue_model": {
+      "pricing_range": [10, 49],
+      "avg_subscribers_month_12": 200,
+      "typical_revenue_month_12": 4000
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "MVP Development",
+          "timeline": "Week 1-8",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Validate specific problem and solution",
+              "time_estimate": "4 hours",
+              "cost_estimate": 0,
+              "details": "Survey audience about their biggest workflow pain. Find the smallest valuable solution. Build one feature well.",
+              "decision_type": "content"
+            },
+            {
+              "id": "1.2",
+              "task": "Build or outsource MVP",
+              "time_estimate": "80 hours",
+              "cost_estimate": 2000,
+              "details": "Build yourself if technical. Or hire dev on Upwork ($25-50/hr, $2000-4000 for MVP). Use no-code tools when possible.",
+              "decision_type": "platform"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Solve your own problem first - best product market fit",
+        "Free tier with paid upgrades converts 2-5%",
+        "Lifetime deals for early adopters fund development"
+      ]
+    }
+  },
+
+  {
+    "id": "certification-program",
+    "category": "course",
+    "title": "Certification Program",
+    "description": "Comprehensive training program with certification. Premium pricing for professional credential.",
+    "ideal_for": {
+      "min_followers": 25000,
+      "engagement_rate_min": 5.0,
+      "content_types": ["professional", "skill-based", "expertise"],
+      "audience_signals": ["career_advancement", "expertise_recognition", "professional_audience"]
+    },
+    "revenue_model": {
+      "pricing_range": [497, 2997],
+      "students_per_cohort": 25,
+      "cohorts_per_year": 3,
+      "typical_revenue_year_1": 25000
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Program Design",
+          "timeline": "Week 1-4",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Design comprehensive curriculum",
+              "time_estimate": "20 hours",
+              "cost_estimate": 0,
+              "details": "6-12 week program. Mix of video lessons, projects, assessments. Clear learning outcomes. Professional certificate at end.",
+              "decision_type": "content"
+            },
+            {
+              "id": "1.2",
+              "task": "Create assessment and certification criteria",
+              "time_estimate": "8 hours",
+              "cost_estimate": 0,
+              "details": "Define what mastery looks like. Projects + quizzes + final exam. Passing score 80%+. Professional certificate design.",
+              "decision_type": "content"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Job placement support justifies premium pricing",
+        "Alumni network adds long-term value",
+        "Employer recognition increases certification value"
+      ]
+    }
+  },
+
+  {
+    "id": "done-for-you-service",
+    "category": "service",
+    "title": "Done-For-You Service",
+    "description": "Offer high-value service doing what you teach. Implementation for those who'd rather pay than DIY.",
+    "ideal_for": {
+      "min_followers": 15000,
+      "engagement_rate_min": 4.5,
+      "content_types": ["business", "marketing", "technical", "creative"],
+      "audience_signals": ["implementation_questions", "time_constraints", "budget_signals"]
+    },
+    "revenue_model": {
+      "pricing_range": [1500, 10000],
+      "clients_per_month": 3,
+      "typical_revenue_month_6": 12000
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Service Design",
+          "timeline": "Week 1-2",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Package your expertise as service",
+              "time_estimate": "5 hours",
+              "cost_estimate": 0,
+              "details": "What do you teach that people would pay to have done? Define scope, deliverables, timeline. 3 tiers: Essential, Premium, Elite.",
+              "decision_type": "content"
+            },
+            {
+              "id": "1.2",
+              "task": "Create project workflow and templates",
+              "time_estimate": "8 hours",
+              "cost_estimate": 0,
+              "details": "Standardize your process. Client onboarding form, project checklist, delivery templates. Makes service scalable.",
+              "decision_type": "structure"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Limited slots per month maintains quality",
+        "50% upfront payment qualifies serious clients",
+        "Case studies drive referrals and premium pricing"
+      ]
+    }
+  },
+
+  {
+    "id": "mastermind-group",
+    "category": "community",
+    "title": "Exclusive Mastermind",
+    "description": "High-ticket peer group program. Small cohort (6-12 people) with intense collaboration and accountability.",
+    "ideal_for": {
+      "min_followers": 30000,
+      "engagement_rate_min": 5.5,
+      "content_types": ["business", "entrepreneurship", "leadership"],
+      "audience_signals": ["peer_seeking", "advanced_stage", "high_investment_capacity"]
+    },
+    "revenue_model": {
+      "pricing_range": [5000, 25000],
+      "members_per_group": 10,
+      "groups_per_year": 2,
+      "typical_revenue_year_1": 100000
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Program Structure",
+          "timeline": "Week 1-3",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Define mastermind format and requirements",
+              "time_estimate": "6 hours",
+              "cost_estimate": 0,
+              "details": "6-12 months commitment. Monthly full-day sessions (virtual or in-person). Private Slack/community. Clear member criteria.",
+              "decision_type": "structure"
+            },
+            {
+              "id": "1.2",
+              "task": "Create application and vetting process",
+              "time_estimate": "4 hours",
+              "cost_estimate": 0,
+              "details": "Application form with goals, business stage, challenges. 30-min interview with each candidate. Select for peer fit and commitment.",
+              "decision_type": "structure"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Small size (6-12) enables deep relationships",
+        "Vetting process ensures committed, compatible members",
+        "In-person annual retreat justifies premium pricing"
+      ]
+    }
+  },
+
+  {
+    "id": "content-agency",
+    "category": "service",
+    "title": "Boutique Content Agency",
+    "description": "Build small agency creating content for brands in your niche. Leverage your expertise and style.",
+    "ideal_for": {
+      "min_followers": 50000,
+      "engagement_rate_min": 4.0,
+      "content_types": ["professional", "high-quality", "consistent-style"],
+      "audience_signals": ["brand_recognition", "commercial_interest", "style_consistency"]
+    },
+    "revenue_model": {
+      "pricing_range": [3000, 15000],
+      "clients_per_month": 5,
+      "typical_revenue_month_6": 30000
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Agency Setup",
+          "timeline": "Week 1-4",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Define service offerings and packages",
+              "time_estimate": "6 hours",
+              "cost_estimate": 0,
+              "details": "Monthly retainers: 4 posts ($3k), 8 posts ($5k), 12 posts + strategy ($8k). Include strategy, creation, posting.",
+              "decision_type": "pricing"
+            },
+            {
+              "id": "1.2",
+              "task": "Build small team or contractor network",
+              "time_estimate": "10 hours",
+              "cost_estimate": 0,
+              "details": "Start solo, add contractors as you scale. Editor ($25/hr), videographer ($50/hr), strategist ($40/hr). Pay per project initially.",
+              "decision_type": "structure"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Niche focus (e.g., fitness brands only) commands premium",
+        "Case studies with ROI metrics win enterprise clients",
+        "Minimum 3-month contracts ensure stability"
+      ]
+    }
+  },
+
+  {
+    "id": "book-or-ebook",
+    "category": "content",
+    "title": "Published Book or Comprehensive eBook",
+    "description": "Write and self-publish a book on your expertise. Digital and/or physical versions.",
+    "ideal_for": {
+      "min_followers": 10000,
+      "engagement_rate_min": 3.5,
+      "content_types": ["educational", "storytelling", "expertise"],
+      "audience_signals": ["deep_questions", "transformation_seeking", "content_consumers"]
+    },
+    "revenue_model": {
+      "pricing_range": [10, 30],
+      "sales_first_year": 500,
+      "typical_revenue_year_1": 7500
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Writing",
+          "timeline": "Week 1-12",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Outline book structure and chapters",
+              "time_estimate": "8 hours",
+              "cost_estimate": 0,
+              "details": "Repurpose your best content. 8-15 chapters. Each chapter solves one problem or teaches one concept. 30,000-50,000 words.",
+              "decision_type": "content"
+            },
+            {
+              "id": "1.2",
+              "task": "Write first draft",
+              "time_estimate": "100 hours",
+              "cost_estimate": 0,
+              "details": "Write 500-1000 words daily. 12 weeks to complete. Don't edit while writing - just get words down. AI can help with structure.",
+              "decision_type": "timeline"
+            }
+          ]
+        },
+        {
+          "phase": "Publishing",
+          "timeline": "Week 13-16",
+          "steps": [
+            {
+              "id": "2.1",
+              "task": "Edit and design book",
+              "time_estimate": "20 hours",
+              "cost_estimate": 500,
+              "details": "Hire editor on Reedsy ($500-1000). Use Canva for cover or hire designer ($100-300). Format for Kindle and print.",
+              "decision_type": "platform"
+            },
+            {
+              "id": "2.2",
+              "task": "Publish on Amazon KDP and Gumroad",
+              "time_estimate": "4 hours",
+              "cost_estimate": 0,
+              "details": "Amazon KDP for Kindle and paperback (70% royalty on Kindle). Gumroad for PDF version ($19-29). Launch to your audience.",
+              "decision_type": "platform"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Launch week push to your audience gets initial sales",
+        "Book establishes authority, drives other revenue streams",
+        "Price at $19-29 for perceived value (not $10)"
+      ]
+    }
+  },
+
+  {
+    "id": "youtube-membership",
+    "category": "content",
+    "title": "YouTube Channel Membership",
+    "description": "Enable YouTube memberships with exclusive perks for monthly supporters.",
+    "ideal_for": {
+      "min_followers": 10000,
+      "engagement_rate_min": 4.0,
+      "content_types": ["video", "youtube"],
+      "audience_signals": ["loyal_viewers", "platform_youtube", "content_consumption"]
+    },
+    "revenue_model": {
+      "pricing_range": [5, 20],
+      "avg_members_month_6": 150,
+      "typical_revenue_month_6": 1500
+    },
+    "implementation_template": {
+      "phases": [
+        {
+          "phase": "Setup",
+          "timeline": "Week 1",
+          "steps": [
+            {
+              "id": "1.1",
+              "task": "Design membership tiers and perks",
+              "time_estimate": "3 hours",
+              "cost_estimate": 0,
+              "details": "2-3 tiers ($4.99, $9.99, $24.99). Perks: custom badges, emojis, members-only posts, early access, BTS content, monthly livestream.",
+              "decision_type": "pricing"
+            },
+            {
+              "id": "1.2",
+              "task": "Create welcome video and perks content",
+              "time_estimate": "4 hours",
+              "cost_estimate": 0,
+              "details": "Record welcome video explaining membership. Create first batch of exclusive content. Set up members-only community posts schedule.",
+              "decision_type": "content"
+            }
+          ]
+        }
+      ]
+    },
+    "success_patterns": {
+      "what_works": [
+        "Shoutouts in videos drive membership signups",
+        "Monthly members-only livestreams create value",
+        "Custom badges make members feel special and visible"
+      ]
+    }
+  }
+]
