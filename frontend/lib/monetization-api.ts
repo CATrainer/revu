@@ -165,6 +165,38 @@ export async function createProject(): Promise<{ project_id: string; redirect_ur
   return response.json();
 }
 
+export async function getAllProjects(status?: 'active' | 'completed' | 'abandoned'): Promise<{ projects: ActiveProject[]; total: number }> {
+  const url = status
+    ? `${API_BASE}/monetization/projects?status=${status}`
+    : `${API_BASE}/monetization/projects`;
+
+  const response = await fetch(url, {
+    headers: await getAuthHeaders()
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch projects');
+  }
+
+  return response.json();
+}
+
+export async function getProjectById(projectId: string): Promise<ActiveProject | null> {
+  const response = await fetch(`${API_BASE}/monetization/projects/${projectId}`, {
+    headers: await getAuthHeaders()
+  });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch project');
+  }
+
+  return response.json();
+}
+
 export async function getActiveProject(): Promise<ActiveProject | null> {
   const response = await fetch(`${API_BASE}/monetization/projects/active`, {
     headers: await getAuthHeaders()
@@ -176,6 +208,20 @@ export async function getActiveProject(): Promise<ActiveProject | null> {
 
   if (!response.ok) {
     throw new Error('Failed to fetch project');
+  }
+
+  return response.json();
+}
+
+export async function deleteProject(projectId: string): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(`${API_BASE}/monetization/projects/${projectId}`, {
+    method: 'DELETE',
+    headers: await getAuthHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to delete project');
   }
 
   return response.json();

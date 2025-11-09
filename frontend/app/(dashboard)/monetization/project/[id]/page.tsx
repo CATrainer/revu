@@ -12,7 +12,7 @@ import { TaskList } from '@/components/monetization/TaskList';
 import { DecisionCards } from '@/components/monetization/DecisionCards';
 import { ProjectWorkspaceSkeleton } from '@/components/monetization/Skeletons';
 import {
-  getActiveProject,
+  getProjectById,
   getProjectMessages,
   sendMessage,
   parseSSEStream,
@@ -46,7 +46,7 @@ export default function ProjectWorkspacePage() {
       setError(null);
 
       const [projectData, messagesData] = await Promise.all([
-        getActiveProject(),
+        getProjectById(projectId),
         getProjectMessages(projectId)
       ]);
 

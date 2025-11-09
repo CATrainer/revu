@@ -158,7 +158,7 @@ class User(Base):
     background_jobs = relationship("BackgroundJob", back_populates="user", cascade="all, delete-orphan")
     sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
     creator_profile = relationship("CreatorProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    active_project = relationship("ActiveProject", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    active_projects = relationship("ActiveProject", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<User(email='{self.email}')>"

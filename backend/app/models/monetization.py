@@ -75,13 +75,12 @@ class ActiveProject(Base):
     customized_plan = Column(JSONB, nullable=False)  # copy of opportunity template
     
     # Relationships
-    user = relationship("User", back_populates="active_project")
+    user = relationship("User", back_populates="active_projects")
     chat_messages = relationship("ProjectChatMessage", back_populates="project", cascade="all, delete-orphan")
     task_completions = relationship("ProjectTaskCompletion", back_populates="project", cascade="all, delete-orphan")
     decisions = relationship("ProjectDecision", back_populates="project", cascade="all, delete-orphan")
-    
+
     __table_args__ = (
-        UniqueConstraint("user_id", name="one_project_per_user"),
         CheckConstraint("status IN ('active', 'completed', 'abandoned')", name="valid_status"),
         CheckConstraint("overall_progress >= 0 AND overall_progress <= 100", name="valid_overall_progress"),
         CheckConstraint("planning_progress >= 0 AND planning_progress <= 100", name="valid_planning_progress"),

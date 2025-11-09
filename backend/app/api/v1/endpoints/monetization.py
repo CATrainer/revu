@@ -375,20 +375,8 @@ async def create_project(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Create new monetization project (one per user)."""
-    
-    # Check if user already has an active project
-    result = await db.execute(
-        select(ActiveProject).where(ActiveProject.user_id == current_user.id)
-    )
-    existing_project = result.scalar_one_or_none()
-    
-    if existing_project:
-        raise HTTPException(
-            400,
-            f"You already have an active project. Complete or abandon it before starting a new one."
-        )
-    
+    """Create new monetization project. Users can have multiple projects."""
+
     # Load opportunity template
     template = _load_opportunity_template()
     
@@ -451,13 +439,56 @@ async def create_project(
     }
 
 
+@router.get("/projects")
+async def get_all_projects(
+    status: Optional[str] = Query(None, description="Filter by status: active, completed, abandoned"),
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get all projects for the current user."""
+
+    query = select(ActiveProject).where(ActiveProject.user_id == current_user.id)
+
+    if status:
+        query = query.where(ActiveProject.status == status)
+
+    query = query.order_by(ActiveProject.last_activity_at.desc())
+
+    result = await db.execute(query)
+    projects = result.scalars().all()
+
+    # Build lightweight project list
+    projects_list = []
+    for project in projects:
+        # Calculate progress for each project
+        progress = await _calculate_progress(project, db)
+
+        projects_list.append({
+            "id": str(project.id),
+            "opportunity_id": project.opportunity_id,
+            "opportunity_title": project.opportunity_title,
+            "status": project.status,
+            "overall_progress": progress['overall_progress'],
+            "planning_progress": progress['planning_progress'],
+            "execution_progress": progress['execution_progress'],
+            "started_at": project.started_at.isoformat(),
+            "last_activity_at": project.last_activity_at.isoformat(),
+            "target_launch_date": project.target_launch_date.isoformat() if project.target_launch_date else None
+        })
+
+    return {
+        "projects": projects_list,
+        "total": len(projects_list)
+    }
+
+
 @router.get("/projects/active")
 async def get_active_project(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Get user's active project with full details."""
-    
+    """Get user's most recent active project with full details. For backward compatibility."""
+
     result = await db.execute(
         select(ActiveProject)
         .options(
@@ -465,10 +496,17 @@ async def get_active_project(
             selectinload(ActiveProject.task_completions),
             selectinload(ActiveProject.decisions)
         )
-        .where(ActiveProject.user_id == current_user.id)
+        .where(
+            ActiveProject.user_id == current_user.id,
+            ActiveProject.status == "active"
+        )
+        .order_by(ActiveProject.last_activity_at.desc())
     )
-    project = result.scalar_one_or_none()
-    
+    project = result.first()
+
+    if project:
+        project = project[0]  # Extract from tuple
+
     if not project:
         raise HTTPException(404, "No active project found")
     
@@ -508,6 +546,87 @@ async def get_active_project(
         for t in project.task_completions
     ]
     
+    return {
+        "id": str(project.id),
+        "opportunity_id": project.opportunity_id,
+        "opportunity_title": project.opportunity_title,
+        "status": project.status,
+        "current_phase_index": project.current_phase_index,
+        "overall_progress": project.overall_progress,
+        "planning_progress": project.planning_progress,
+        "execution_progress": project.execution_progress,
+        "timeline_progress": project.timeline_progress,
+        "started_at": project.started_at.isoformat(),
+        "target_launch_date": project.target_launch_date.isoformat() if project.target_launch_date else None,
+        "last_activity_at": project.last_activity_at.isoformat(),
+        "customized_plan": project.customized_plan,
+        "decisions": decisions,
+        "completed_tasks": completed_tasks,
+        "message_count": len(project.chat_messages)
+    }
+
+
+@router.get("/projects/{project_id}")
+async def get_project_by_id(
+    project_id: UUID,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get a specific project by ID with full details."""
+
+    result = await db.execute(
+        select(ActiveProject)
+        .options(
+            selectinload(ActiveProject.chat_messages),
+            selectinload(ActiveProject.task_completions),
+            selectinload(ActiveProject.decisions)
+        )
+        .where(
+            ActiveProject.id == project_id,
+            ActiveProject.user_id == current_user.id
+        )
+    )
+    project = result.scalar_one_or_none()
+
+    if not project:
+        raise HTTPException(404, "Project not found")
+
+    # Calculate progress
+    progress = await _calculate_progress(project, db)
+
+    # Update project with calculated progress
+    project.overall_progress = progress['overall_progress']
+    project.planning_progress = progress['planning_progress']
+    project.execution_progress = progress['execution_progress']
+    project.timeline_progress = progress['timeline_progress']
+    await db.commit()
+
+    # Get current decisions
+    decisions = [
+        {
+            "id": str(d.id),
+            "category": d.decision_category,
+            "value": d.decision_value,
+            "rationale": d.rationale,
+            "confidence": d.confidence,
+            "decided_at": d.decided_at.isoformat()
+        }
+        for d in project.decisions if d.is_current
+    ]
+
+    # Get completed tasks
+    completed_tasks = [
+        {
+            "id": str(t.id),
+            "task_id": t.task_id,
+            "task_title": t.task_title,
+            "completed_at": t.completed_at.isoformat(),
+            "completed_via": t.completed_via,
+            "notes": t.notes
+        }
+        for t in project.task_completions
+    ]
+
     return {
         "id": str(project.id),
         "opportunity_id": project.opportunity_id,
@@ -884,10 +1003,10 @@ async def reset_monetization_profile(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Reset monetization setup - deletes profile and active project.
+    Reset monetization setup - deletes profile and all projects.
     Called when user disables demo mode or wants to start fresh.
     """
-    
+
     # Delete creator profile (cascades to nothing)
     profile_result = await db.execute(
         select(CreatorProfile).where(CreatorProfile.user_id == current_user.id)
@@ -895,20 +1014,49 @@ async def reset_monetization_profile(
     profile = profile_result.scalar_one_or_none()
     if profile:
         await db.delete(profile)
-    
-    # Delete active project (cascades to messages, tasks, decisions)
-    project_result = await db.execute(
+
+    # Delete all projects (cascades to messages, tasks, decisions)
+    projects_result = await db.execute(
         select(ActiveProject).where(ActiveProject.user_id == current_user.id)
     )
-    project = project_result.scalar_one_or_none()
-    if project:
+    projects = projects_result.scalars().all()
+    for project in projects:
         await db.delete(project)
-    
+
     await db.commit()
-    
+
     return {
         "success": True,
         "message": "Monetization setup has been reset"
+    }
+
+
+@router.delete("/projects/{project_id}")
+async def delete_project(
+    project_id: UUID,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Delete a specific project (cascades to messages, tasks, decisions)."""
+
+    # Verify project ownership
+    project_result = await db.execute(
+        select(ActiveProject).where(
+            ActiveProject.id == project_id,
+            ActiveProject.user_id == current_user.id
+        )
+    )
+    project = project_result.scalar_one_or_none()
+
+    if not project:
+        raise HTTPException(404, "Project not found")
+
+    await db.delete(project)
+    await db.commit()
+
+    return {
+        "success": True,
+        "message": "Project deleted successfully"
     }
 
 
