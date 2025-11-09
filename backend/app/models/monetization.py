@@ -182,26 +182,163 @@ class ProjectDecision(Base):
 
 class AIUsageLog(Base):
     """Log of AI API usage for cost tracking."""
-    
+
     __tablename__ = "ai_usage_logs"
-    
+
     user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     project_id = Column(PGUUID(as_uuid=True), ForeignKey("active_projects.id", ondelete="SET NULL"))
-    
+
     model = Column(String(100), nullable=False)
     input_tokens = Column(Integer, nullable=False)
     output_tokens = Column(Integer, nullable=False)
     estimated_cost = Column(Numeric(10, 6))  # in USD
-    
+
     endpoint = Column(String(100))  # 'chat', 'welcome', etc.
-    
+
     # Relationships
     user = relationship("User")
-    
+
     __table_args__ = (
         Index("idx_usage_user_date", "user_id", "created_at"),
         Index("idx_usage_project", "project_id"),
     )
-    
+
     def __repr__(self) -> str:
         return f"<AIUsageLog(id={self.id}, user_id={self.user_id}, cost={self.estimated_cost})>"
+
+
+# =============================================
+# AI DISCOVERY SYSTEM MODELS
+# =============================================
+
+
+class ContentAnalysis(Base):
+    """Cached analysis of creator's content and audience."""
+
+    __tablename__ = "content_analysis"
+
+    user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
+
+    # Topic analysis
+    top_topics = Column(JSONB, nullable=False)
+
+    # Content performance
+    content_type_performance = Column(JSONB, nullable=False)
+
+    # Audience signals
+    audience_questions = Column(JSONB, nullable=False)
+    question_volume_per_week = Column(Integer)
+    repeat_engagers_count = Column(Integer)
+    dm_volume_estimate = Column(String(20))  # 'low', 'medium', 'high'
+
+    # Growth metrics
+    growth_trajectory = Column(JSONB, nullable=False)
+
+    # Strengths identified
+    key_strengths = Column(JSONB)
+
+    # Cache metadata
+    analyzed_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+
+    # Relationships
+    user = relationship("User")
+
+    __table_args__ = (
+        CheckConstraint("dm_volume_estimate IN ('low', 'medium', 'high') OR dm_volume_estimate IS NULL", name="valid_dm_volume"),
+        Index("idx_content_analysis_user", "user_id"),
+        Index("idx_content_analysis_expires", "expires_at"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<ContentAnalysis(user_id={self.user_id}, analyzed_at={self.analyzed_at})>"
+
+
+class OpportunityTemplate(Base):
+    """Template library for monetization opportunities."""
+
+    __tablename__ = "opportunity_templates"
+
+    id = Column(String(100), primary_key=True)  # e.g., "premium-community-discord"
+
+    category = Column(String(50), nullable=False)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=False)
+
+    # Matching criteria
+    ideal_for = Column(JSONB, nullable=False)
+
+    # Revenue model
+    revenue_model = Column(JSONB, nullable=False)
+
+    # Implementation template
+    implementation_template = Column(JSONB, nullable=False)
+
+    # Success patterns
+    success_patterns = Column(JSONB)
+
+    __table_args__ = (
+        CheckConstraint("category IN ('community', 'course', 'coaching', 'sponsorship', 'product', 'hybrid', 'content', 'affiliate', 'service', 'tool')", name="valid_category"),
+        Index("idx_templates_category", "category"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<OpportunityTemplate(id={self.id}, title={self.title})>"
+
+
+class GeneratedOpportunities(Base):
+    """History of AI-generated opportunities for users."""
+
+    __tablename__ = "generated_opportunities"
+
+    user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+
+    # Generation context
+    generation_context = Column(JSONB, nullable=False)
+
+    # The opportunities
+    opportunities = Column(JSONB, nullable=False)
+
+    selected_opportunity_id = Column(String(100))
+
+    generated_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User")
+
+    __table_args__ = (
+        Index("idx_generated_opps_user", "user_id"),
+        Index("idx_generated_opps_generated_at", "generated_at", postgresql_using="btree", postgresql_ops={"generated_at": "DESC"}),
+    )
+
+    def __repr__(self) -> str:
+        return f"<GeneratedOpportunities(id={self.id}, user_id={self.user_id}, generated_at={self.generated_at})>"
+
+
+class PlanModification(Base):
+    """History of plan adaptations during execution."""
+
+    __tablename__ = "plan_modifications"
+
+    project_id = Column(PGUUID(as_uuid=True), ForeignKey("active_projects.id", ondelete="CASCADE"), nullable=False)
+
+    modification_type = Column(String(50), nullable=False)
+    trigger_type = Column(String(50), nullable=False)
+    trigger_content = Column(Text, nullable=False)
+
+    changes = Column(JSONB, nullable=False)
+    ai_rationale = Column(Text, nullable=False)
+
+    modified_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+
+    # Relationships
+    project = relationship("ActiveProject")
+
+    __table_args__ = (
+        CheckConstraint("modification_type IN ('add_task', 'remove_task', 'add_phase', 'reorder', 'adjust_timeline')", name="valid_modification_type"),
+        CheckConstraint("trigger_type IN ('user_request', 'progress_signal', 'market_feedback')", name="valid_trigger_type"),
+        Index("idx_plan_mods_project", "project_id"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<PlanModification(id={self.id}, project_id={self.project_id}, type={self.modification_type})>"
