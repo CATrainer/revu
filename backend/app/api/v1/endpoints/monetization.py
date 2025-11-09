@@ -24,6 +24,8 @@ from app.models.monetization import (
     ProjectTaskCompletion,
     ProjectDecision
 )
+from app.models.youtube import YouTubeConnection
+from app.models.instagram import InstagramConnection
 from app.services.monetization_ai import get_ai_service
 from app.services.action_detector import get_action_detector
 from app.services.rate_limiter import RateLimiter
@@ -128,6 +130,99 @@ async def _calculate_progress(project: ActiveProject, db: AsyncSession) -> Dict[
 
 
 # ==================== Endpoints ====================
+
+@router.get("/profile/auto-detect")
+async def auto_detect_profile(
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Auto-detect profile data from connected platforms or demo mode.
+    Returns pre-filled profile data and list of missing required fields.
+    """
+    
+    # Check if user is in demo mode
+    is_demo = current_user.demo_mode if hasattr(current_user, 'demo_mode') else False
+    
+    profile_data = {
+        "primary_platform": None,
+        "follower_count": None,
+        "engagement_rate": None,
+        "niche": None,
+        "platform_url": None,
+        "avg_content_views": None,
+        "content_frequency": None,
+        "time_available_hours_per_week": None
+    }
+    
+    data_source = None
+    missing_fields = []
+    
+    if is_demo:
+        # Use demo data
+        profile_data = {
+            "primary_platform": "youtube",
+            "follower_count": 100000,
+            "engagement_rate": 6.5,
+            "niche": "Tech Reviews",
+            "platform_url": "https://youtube.com/@democreator",
+            "avg_content_views": 50000,
+            "content_frequency": 3,
+            "time_available_hours_per_week": 10
+        }
+        data_source = "demo"
+    else:
+        # Check for real platform connections
+        # Try YouTube first
+        yt_result = await db.execute(
+            select(YouTubeConnection)
+            .where(
+                YouTubeConnection.user_id == current_user.id,
+                YouTubeConnection.connection_status == "active"
+            )
+            .order_by(YouTubeConnection.last_synced_at.desc())
+        )
+        yt_connection = yt_result.scalar_one_or_none()
+        
+        if yt_connection:
+            profile_data["primary_platform"] = "youtube"
+            profile_data["follower_count"] = yt_connection.subscriber_count
+            profile_data["engagement_rate"] = float(yt_connection.engagement_rate) if yt_connection.engagement_rate else None
+            profile_data["platform_url"] = f"https://youtube.com/channel/{yt_connection.channel_id}" if yt_connection.channel_id else None
+            profile_data["avg_content_views"] = yt_connection.average_views_per_video
+            data_source = "youtube"
+        else:
+            # Try Instagram
+            ig_result = await db.execute(
+                select(InstagramConnection)
+                .where(
+                    InstagramConnection.user_id == current_user.id,
+                    InstagramConnection.connection_status == "active"
+                )
+                .order_by(InstagramConnection.last_synced_at.desc())
+            )
+            ig_connection = ig_result.scalar_one_or_none()
+            
+            if ig_connection:
+                profile_data["primary_platform"] = "instagram"
+                profile_data["follower_count"] = ig_connection.follower_count
+                profile_data["platform_url"] = f"https://instagram.com/{ig_connection.username}" if ig_connection.username else None
+                data_source = "instagram"
+    
+    # Determine missing required fields
+    required_fields = ["primary_platform", "follower_count", "engagement_rate", "niche"]
+    for field in required_fields:
+        if profile_data.get(field) is None:
+            missing_fields.append(field)
+    
+    return {
+        "data_source": data_source,
+        "is_demo": is_demo,
+        "profile_data": profile_data,
+        "missing_fields": missing_fields,
+        "can_auto_create": len(missing_fields) == 0
+    }
+
 
 @router.post("/profile")
 async def create_or_update_profile(
@@ -710,6 +805,40 @@ async def update_project(
     await db.commit()
     
     return {"success": True}
+
+
+@router.delete("/profile/reset")
+async def reset_monetization_profile(
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Reset monetization setup - deletes profile and active project.
+    Called when user disables demo mode or wants to start fresh.
+    """
+    
+    # Delete creator profile (cascades to nothing)
+    profile_result = await db.execute(
+        select(CreatorProfile).where(CreatorProfile.user_id == current_user.id)
+    )
+    profile = profile_result.scalar_one_or_none()
+    if profile:
+        await db.delete(profile)
+    
+    # Delete active project (cascades to messages, tasks, decisions)
+    project_result = await db.execute(
+        select(ActiveProject).where(ActiveProject.user_id == current_user.id)
+    )
+    project = project_result.scalar_one_or_none()
+    if project:
+        await db.delete(project)
+    
+    await db.commit()
+    
+    return {
+        "success": True,
+        "message": "Monetization setup has been reset"
+    }
 
 
 @router.get("/admin/usage-stats")

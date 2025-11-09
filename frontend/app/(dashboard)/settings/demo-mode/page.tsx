@@ -172,7 +172,7 @@ export default function DemoModePage() {
   };
 
   const handleDisableDemo = async () => {
-    if (!confirm('Are you sure you want to disable demo mode? This will remove all simulated data.')) {
+    if (!confirm('Are you sure you want to disable demo mode? This will remove all simulated data and reset monetization setup.')) {
       return;
     }
     
@@ -193,7 +193,23 @@ export default function DemoModePage() {
       
       const result = await response.json();
       
-      alert('Demo Mode is being disabled. This will take a moment.');
+      // Reset monetization profile
+      try {
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        await fetch(`${API_BASE}/api/v1/monetization/profile/reset`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        });
+        console.log('Monetization profile reset');
+      } catch (err) {
+        console.error('Failed to reset monetization profile:', err);
+        // Non-fatal, continue
+      }
+      
+      alert('Demo Mode is being disabled. Monetization setup has been reset.');
       
       // Reload status immediately to show "disabling" state
       await loadDemoStatus();

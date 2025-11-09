@@ -83,6 +83,28 @@ async function getAuthHeaders(): Promise<HeadersInit> {
   };
 }
 
+export interface AutoDetectResult {
+  data_source: 'demo' | 'youtube' | 'instagram' | null;
+  is_demo: boolean;
+  profile_data: Partial<ProfileData>;
+  missing_fields: string[];
+  can_auto_create: boolean;
+}
+
+export async function autoDetectProfile(): Promise<AutoDetectResult> {
+  const response = await fetch(`${API_BASE}/api/v1/monetization/profile/auto-detect`, {
+    method: 'GET',
+    headers: await getAuthHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to auto-detect profile');
+  }
+
+  return response.json();
+}
+
 export async function createProfile(data: ProfileData): Promise<CreatorProfile> {
   const response = await fetch(`${API_BASE}/api/v1/monetization/profile`, {
     method: 'POST',
@@ -93,6 +115,20 @@ export async function createProfile(data: ProfileData): Promise<CreatorProfile> 
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.detail || 'Failed to create profile');
+  }
+
+  return response.json();
+}
+
+export async function resetMonetizationProfile(): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(`${API_BASE}/api/v1/monetization/profile/reset`, {
+    method: 'DELETE',
+    headers: await getAuthHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to reset profile');
   }
 
   return response.json();
