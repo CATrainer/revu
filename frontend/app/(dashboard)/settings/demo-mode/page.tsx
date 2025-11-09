@@ -195,8 +195,8 @@ export default function DemoModePage() {
       
       // Reset monetization profile
       try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        await fetch(`${API_BASE}/api/v1/monetization/profile/reset`, {
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+        await fetch(`${API_BASE}/monetization/profile/reset`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
