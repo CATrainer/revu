@@ -2,7 +2,7 @@
  * Monetization Engine API Client
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 export interface ProfileData {
   primary_platform: 'youtube' | 'instagram' | 'tiktok' | 'twitch';
@@ -92,7 +92,7 @@ export interface AutoDetectResult {
 }
 
 export async function autoDetectProfile(): Promise<AutoDetectResult> {
-  const response = await fetch(`${API_BASE}/api/v1/monetization/profile/auto-detect`, {
+  const response = await fetch(`${API_BASE}/monetization/profile/auto-detect`, {
     method: 'GET',
     headers: await getAuthHeaders()
   });
@@ -106,7 +106,7 @@ export async function autoDetectProfile(): Promise<AutoDetectResult> {
 }
 
 export async function createProfile(data: ProfileData): Promise<CreatorProfile> {
-  const response = await fetch(`${API_BASE}/api/v1/monetization/profile`, {
+  const response = await fetch(`${API_BASE}/monetization/profile`, {
     method: 'POST',
     headers: await getAuthHeaders(),
     body: JSON.stringify(data)
@@ -121,7 +121,7 @@ export async function createProfile(data: ProfileData): Promise<CreatorProfile> 
 }
 
 export async function resetMonetizationProfile(): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_BASE}/api/v1/monetization/profile/reset`, {
+  const response = await fetch(`${API_BASE}/monetization/profile/reset`, {
     method: 'DELETE',
     headers: await getAuthHeaders()
   });
@@ -135,7 +135,7 @@ export async function resetMonetizationProfile(): Promise<{ success: boolean; me
 }
 
 export async function getProfile(): Promise<CreatorProfile | null> {
-  const response = await fetch(`${API_BASE}/api/v1/monetization/profile`, {
+  const response = await fetch(`${API_BASE}/monetization/profile`, {
     headers: await getAuthHeaders()
   });
 
@@ -151,7 +151,7 @@ export async function getProfile(): Promise<CreatorProfile | null> {
 }
 
 export async function createProject(): Promise<{ project_id: string; redirect_url: string }> {
-  const response = await fetch(`${API_BASE}/api/v1/monetization/projects`, {
+  const response = await fetch(`${API_BASE}/monetization/projects`, {
     method: 'POST',
     headers: await getAuthHeaders(),
     body: JSON.stringify({ opportunity_id: 'premium-community' })
@@ -166,7 +166,7 @@ export async function createProject(): Promise<{ project_id: string; redirect_ur
 }
 
 export async function getActiveProject(): Promise<ActiveProject | null> {
-  const response = await fetch(`${API_BASE}/api/v1/monetization/projects/active`, {
+  const response = await fetch(`${API_BASE}/monetization/projects/active`, {
     headers: await getAuthHeaders()
   });
 
@@ -187,7 +187,7 @@ export async function getProjectMessages(
   offset: number = 0
 ): Promise<{ messages: ChatMessage[]; total: number; has_more: boolean }> {
   const response = await fetch(
-    `${API_BASE}/api/v1/monetization/projects/${projectId}/messages?limit=${limit}&offset=${offset}`,
+    `${API_BASE}/monetization/projects/${projectId}/messages?limit=${limit}&offset=${offset}`,
     { headers: await getAuthHeaders() }
   );
 
@@ -203,7 +203,7 @@ export async function sendMessage(
   message: string
 ): Promise<ReadableStream<Uint8Array>> {
   const response = await fetch(
-    `${API_BASE}/api/v1/monetization/projects/${projectId}/messages`,
+    `${API_BASE}/monetization/projects/${projectId}/messages`,
     {
       method: 'POST',
       headers: await getAuthHeaders(),
@@ -230,7 +230,7 @@ export async function toggleTask(
   notes?: string
 ): Promise<{ success: boolean; progress: ProgressUpdate }> {
   const response = await fetch(
-    `${API_BASE}/api/v1/monetization/projects/${projectId}/tasks/${taskId}/toggle`,
+    `${API_BASE}/monetization/projects/${projectId}/tasks/${taskId}/toggle`,
     {
       method: 'POST',
       headers: await getAuthHeaders(),
@@ -253,7 +253,7 @@ export async function updateProject(
   }
 ): Promise<{ success: boolean }> {
   const response = await fetch(
-    `${API_BASE}/api/v1/monetization/projects/${projectId}`,
+    `${API_BASE}/monetization/projects/${projectId}`,
     {
       method: 'PATCH',
       headers: await getAuthHeaders(),
