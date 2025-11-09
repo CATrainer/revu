@@ -17,37 +17,40 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Add updated_at column to all monetization tables that are missing it
+    # Add updated_at column to monetization tables that are missing it
+    # Using raw SQL with IF NOT EXISTS for idempotency
+    
+    conn = op.get_bind()
     
     # project_chat_messages
-    op.add_column(
-        'project_chat_messages',
-        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('NOW()'))
-    )
+    conn.execute(sa.text("""
+        ALTER TABLE project_chat_messages 
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+    """))
     
-    # creator_profiles (if missing)
-    op.add_column(
-        'creator_profiles',
-        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('NOW()'))
-    )
+    # creator_profiles
+    conn.execute(sa.text("""
+        ALTER TABLE creator_profiles 
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+    """))
     
-    # active_projects (if missing)
-    op.add_column(
-        'active_projects',
-        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('NOW()'))
-    )
+    # active_projects
+    conn.execute(sa.text("""
+        ALTER TABLE active_projects 
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+    """))
     
-    # project_task_completions (if missing)
-    op.add_column(
-        'project_task_completions',
-        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('NOW()'))
-    )
+    # project_task_completions
+    conn.execute(sa.text("""
+        ALTER TABLE project_task_completions 
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+    """))
     
-    # project_decisions (if missing)
-    op.add_column(
-        'project_decisions',
-        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('NOW()'))
-    )
+    # project_decisions
+    conn.execute(sa.text("""
+        ALTER TABLE project_decisions 
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+    """))
 
 
 def downgrade() -> None:
