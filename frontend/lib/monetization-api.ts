@@ -76,7 +76,7 @@ export interface ProgressUpdate {
 
 async function getAuthHeaders(): Promise<HeadersInit> {
   // Get token from your auth system
-  const token = localStorage.getItem('auth_token');
+  const token = localStorage.getItem('access_token');
   return {
     'Content-Type': 'application/json',
     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
