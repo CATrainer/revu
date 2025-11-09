@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import DeclarativeBase, declared_attr
+from sqlalchemy.orm import DeclarativeBase, declared_attr, sessionmaker, Session
 from sqlalchemy.pool import NullPool, QueuePool
 
 from app.core.config import settings
@@ -231,3 +231,58 @@ def get_sync_engine():
         settings.database_url_sync,
         echo=settings.DATABASE_ECHO,
     )
+
+
+# Synchronous database session for Celery tasks and scripts
+# Create sync engine for Celery tasks
+sync_database_url = settings.DATABASE_URL
+if sync_database_url.startswith("postgresql+asyncpg://"):
+    sync_database_url = sync_database_url.replace("postgresql+asyncpg://", "postgresql://", 1)
+elif not sync_database_url.startswith("postgresql://"):
+    # Ensure it's a proper postgres URL
+    if sync_database_url.startswith("postgres://"):
+        sync_database_url = sync_database_url.replace("postgres://", "postgresql://", 1)
+
+sync_engine = create_engine(
+    sync_database_url,
+    echo=settings.DATABASE_ECHO,
+    pool_pre_ping=True,
+)
+
+# Create sync session factory
+sync_session_maker = sessionmaker(
+    bind=sync_engine,
+    class_=Session,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
+)
+
+
+def get_db():
+    """
+    Synchronous database session generator for scripts.
+
+    Usage:
+        db = next(get_db())
+        try:
+            # Use db
+        finally:
+            db.close()
+    """
+    session = sync_session_maker()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+def get_db_context():
+    """
+    Synchronous database session context manager for Celery tasks.
+
+    Usage:
+        with get_db_context() as db:
+            # Use db
+    """
+    return sync_session_maker()

@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from loguru import logger
 
-from app.core.database import get_db
+from app.core.database import get_async_session
 from app.core.auth import get_current_user
 from app.models.user import User
 from app.models.monetization import (
@@ -60,7 +60,7 @@ analysis_status_cache: Dict[str, Dict] = {}
 async def start_analysis(
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_session)
 ):
     """
     Trigger background analysis of creator's content.
@@ -126,7 +126,7 @@ async def check_analysis_status(
 @router.get("/opportunities")
 async def get_opportunities(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_session)
 ):
     """
     Get generated opportunities for user.
@@ -172,7 +172,7 @@ async def get_opportunities(
 async def refine_opportunities(
     request: RefineRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_session)
 ):
     """
     User provides feedback, AI regenerates opportunities.
@@ -250,7 +250,7 @@ async def refine_opportunities(
 async def select_opportunity(
     request: SelectRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_session)
 ):
     """
     User selects an opportunity to work on.
@@ -352,7 +352,7 @@ async def request_adaptation(
     project_id: str,
     request: AdaptRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_session)
 ):
     """
     Request plan adaptation based on new signal.
