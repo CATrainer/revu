@@ -17,99 +17,122 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # Get database connection for raw SQL
+    conn = op.get_bind()
+
     # =============================================
     # CONTENT ANALYSIS TABLE
     # =============================================
-    op.create_table(
-        'content_analysis',
-        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text('gen_random_uuid()'), nullable=False),
-        sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('top_topics', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column('content_type_performance', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column('audience_questions', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column('question_volume_per_week', sa.Integer(), nullable=True),
-        sa.Column('repeat_engagers_count', sa.Integer(), nullable=True),
-        sa.Column('dm_volume_estimate', sa.String(length=20), nullable=True),
-        sa.Column('growth_trajectory', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column('key_strengths', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column('analyzed_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
-        sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('user_id'),
-        sa.CheckConstraint("dm_volume_estimate IN ('low', 'medium', 'high') OR dm_volume_estimate IS NULL", name='valid_dm_volume')
-    )
-    op.create_index('idx_content_analysis_user', 'content_analysis', ['user_id'])
-    op.create_index('idx_content_analysis_expires', 'content_analysis', ['expires_at'])
+    conn.execute(sa.text("""
+        CREATE TABLE IF NOT EXISTS content_analysis (
+            id UUID DEFAULT gen_random_uuid() NOT NULL,
+            user_id UUID NOT NULL,
+            top_topics JSONB NOT NULL,
+            content_type_performance JSONB NOT NULL,
+            audience_questions JSONB NOT NULL,
+            question_volume_per_week INTEGER,
+            repeat_engagers_count INTEGER,
+            dm_volume_estimate VARCHAR(20),
+            growth_trajectory JSONB NOT NULL,
+            key_strengths JSONB,
+            analyzed_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+            expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE (user_id),
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            CONSTRAINT valid_dm_volume CHECK (dm_volume_estimate IN ('low', 'medium', 'high') OR dm_volume_estimate IS NULL)
+        )
+    """))
+
+    conn.execute(sa.text("""
+        CREATE INDEX IF NOT EXISTS idx_content_analysis_user ON content_analysis (user_id)
+    """))
+
+    conn.execute(sa.text("""
+        CREATE INDEX IF NOT EXISTS idx_content_analysis_expires ON content_analysis (expires_at)
+    """))
 
     # =============================================
     # OPPORTUNITY TEMPLATES TABLE
     # =============================================
-    op.create_table(
-        'opportunity_templates',
-        sa.Column('id', sa.String(length=100), nullable=False),
-        sa.Column('category', sa.String(length=50), nullable=False),
-        sa.Column('title', sa.String(length=200), nullable=False),
-        sa.Column('description', sa.Text(), nullable=False),
-        sa.Column('ideal_for', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column('revenue_model', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column('implementation_template', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column('success_patterns', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.PrimaryKeyConstraint('id'),
-        sa.CheckConstraint("category IN ('community', 'course', 'coaching', 'sponsorship', 'product', 'hybrid', 'content', 'affiliate', 'service', 'tool')", name='valid_category')
-    )
-    op.create_index('idx_templates_category', 'opportunity_templates', ['category'])
+    conn.execute(sa.text("""
+        CREATE TABLE IF NOT EXISTS opportunity_templates (
+            id VARCHAR(100) NOT NULL,
+            category VARCHAR(50) NOT NULL,
+            title VARCHAR(200) NOT NULL,
+            description TEXT NOT NULL,
+            ideal_for JSONB NOT NULL,
+            revenue_model JSONB NOT NULL,
+            implementation_template JSONB NOT NULL,
+            success_patterns JSONB,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+            PRIMARY KEY (id),
+            CONSTRAINT valid_category CHECK (category IN ('community', 'course', 'coaching', 'sponsorship', 'product', 'hybrid', 'content', 'affiliate', 'service', 'tool'))
+        )
+    """))
+
+    conn.execute(sa.text("""
+        CREATE INDEX IF NOT EXISTS idx_templates_category ON opportunity_templates (category)
+    """))
 
     # =============================================
     # GENERATED OPPORTUNITIES TABLE
     # =============================================
-    op.create_table(
-        'generated_opportunities',
-        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text('gen_random_uuid()'), nullable=False),
-        sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('generation_context', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column('opportunities', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column('selected_opportunity_id', sa.String(length=100), nullable=True),
-        sa.Column('generated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index('idx_generated_opps_user', 'generated_opportunities', ['user_id'])
-    op.create_index('idx_generated_opps_generated_at', 'generated_opportunities', ['generated_at'], postgresql_using='btree', postgresql_ops={'generated_at': 'DESC'})
+    conn.execute(sa.text("""
+        CREATE TABLE IF NOT EXISTS generated_opportunities (
+            id UUID DEFAULT gen_random_uuid() NOT NULL,
+            user_id UUID NOT NULL,
+            generation_context JSONB NOT NULL,
+            opportunities JSONB NOT NULL,
+            selected_opportunity_id VARCHAR(100),
+            generated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+            PRIMARY KEY (id),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """))
+
+    conn.execute(sa.text("""
+        CREATE INDEX IF NOT EXISTS idx_generated_opps_user ON generated_opportunities (user_id)
+    """))
+
+    conn.execute(sa.text("""
+        CREATE INDEX IF NOT EXISTS idx_generated_opps_generated_at ON generated_opportunities (generated_at DESC)
+    """))
 
     # =============================================
     # PLAN MODIFICATIONS TABLE
     # =============================================
-    op.create_table(
-        'plan_modifications',
-        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text('gen_random_uuid()'), nullable=False),
-        sa.Column('project_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('modification_type', sa.String(length=50), nullable=False),
-        sa.Column('trigger_type', sa.String(length=50), nullable=False),
-        sa.Column('trigger_content', sa.Text(), nullable=False),
-        sa.Column('changes', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column('ai_rationale', sa.Text(), nullable=False),
-        sa.Column('modified_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.ForeignKeyConstraint(['project_id'], ['active_projects.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id'),
-        sa.CheckConstraint("modification_type IN ('add_task', 'remove_task', 'add_phase', 'reorder', 'adjust_timeline')", name='valid_modification_type'),
-        sa.CheckConstraint("trigger_type IN ('user_request', 'progress_signal', 'market_feedback')", name='valid_trigger_type')
-    )
-    op.create_index('idx_plan_mods_project', 'plan_modifications', ['project_id'])
+    conn.execute(sa.text("""
+        CREATE TABLE IF NOT EXISTS plan_modifications (
+            id UUID DEFAULT gen_random_uuid() NOT NULL,
+            project_id UUID NOT NULL,
+            modification_type VARCHAR(50) NOT NULL,
+            trigger_type VARCHAR(50) NOT NULL,
+            trigger_content TEXT NOT NULL,
+            changes JSONB NOT NULL,
+            ai_rationale TEXT NOT NULL,
+            modified_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+            PRIMARY KEY (id),
+            FOREIGN KEY (project_id) REFERENCES active_projects(id) ON DELETE CASCADE,
+            CONSTRAINT valid_modification_type CHECK (modification_type IN ('add_task', 'remove_task', 'add_phase', 'reorder', 'adjust_timeline')),
+            CONSTRAINT valid_trigger_type CHECK (trigger_type IN ('user_request', 'progress_signal', 'market_feedback'))
+        )
+    """))
+
+    conn.execute(sa.text("""
+        CREATE INDEX IF NOT EXISTS idx_plan_mods_project ON plan_modifications (project_id)
+    """))
 
     # =============================================
     # ENHANCE EXISTING TABLES
     # =============================================
 
     # Add columns to creator_profiles
-    conn = op.get_bind()
-
     conn.execute(sa.text("""
         ALTER TABLE creator_profiles
         ADD COLUMN IF NOT EXISTS goals JSONB
