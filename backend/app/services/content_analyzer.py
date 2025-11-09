@@ -11,8 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
 from loguru import logger
 
-from app.models.youtube import YouTubeVideo, YouTubeComment
-from app.models.instagram import InstagramPost, InstagramComment
+from app.models.youtube import YouTubeVideo, YouTubeComment, YouTubeConnection
+from app.models.instagram import InstagramMedia, InstagramComment, InstagramConnection
 from app.models.monetization import ContentAnalysis, CreatorProfile
 
 
@@ -490,7 +490,8 @@ class ContentAnalyzer:
         # Try YouTube first
         result = await self.db.execute(
             select(YouTubeVideo)
-            .where(YouTubeVideo.user_id == user_id)
+            .join(YouTubeConnection)
+            .where(YouTubeConnection.user_id == user_id)
             .order_by(desc(YouTubeVideo.published_at))
             .limit(limit)
         )
@@ -511,23 +512,24 @@ class ContentAnalyzer:
         # Try Instagram if no YouTube
         if not posts:
             result = await self.db.execute(
-                select(InstagramPost)
-                .where(InstagramPost.user_id == user_id)
-                .order_by(desc(InstagramPost.created_at))
+                select(InstagramMedia)
+                .join(InstagramConnection)
+                .where(InstagramConnection.user_id == user_id)
+                .order_by(desc(InstagramMedia.timestamp))
                 .limit(limit)
             )
-            instagram_posts = result.scalars().all()
+            instagram_media = result.scalars().all()
 
-            for post in instagram_posts:
+            for media in instagram_media:
                 posts.append({
-                    "id": str(post.id),
-                    "title": post.caption[:100] if post.caption else "",
-                    "description": post.caption or "",
-                    "view_count": post.view_count or post.play_count or 0,
-                    "like_count": post.like_count or 0,
-                    "comment_count": post.comment_count or 0,
-                    "published_at": post.created_at,
-                    "content_type": post.media_type or "unknown"
+                    "id": str(media.id),
+                    "title": media.caption[:100] if media.caption else "",
+                    "description": media.caption or "",
+                    "view_count": media.play_count or 0,
+                    "like_count": media.like_count or 0,
+                    "comment_count": media.comment_count or 0,
+                    "published_at": media.timestamp,
+                    "content_type": media.media_type or "unknown"
                 })
 
         return posts
@@ -539,8 +541,10 @@ class ContentAnalyzer:
         # Try YouTube
         result = await self.db.execute(
             select(YouTubeComment)
-            .where(YouTubeComment.user_id == user_id)
-            .order_by(desc(YouTubeComment.created_at))
+            .join(YouTubeVideo)
+            .join(YouTubeConnection)
+            .where(YouTubeConnection.user_id == user_id)
+            .order_by(desc(YouTubeComment.published_at))
             .limit(limit)
         )
         youtube_comments = result.scalars().all()
@@ -548,18 +552,20 @@ class ContentAnalyzer:
         for comment in youtube_comments:
             comments.append({
                 "id": str(comment.id),
-                "text": comment.text,
+                "text": comment.content,
                 "author_id": comment.author_channel_id,
-                "author_name": comment.author_display_name,
-                "created_at": comment.created_at
+                "author_name": comment.author_name,
+                "created_at": comment.published_at
             })
 
         # Try Instagram
         if not comments:
             result = await self.db.execute(
                 select(InstagramComment)
-                .where(InstagramComment.user_id == user_id)
-                .order_by(desc(InstagramComment.created_at))
+                .join(InstagramMedia)
+                .join(InstagramConnection)
+                .where(InstagramConnection.user_id == user_id)
+                .order_by(desc(InstagramComment.timestamp))
                 .limit(limit)
             )
             instagram_comments = result.scalars().all()
@@ -568,9 +574,9 @@ class ContentAnalyzer:
                 comments.append({
                     "id": str(comment.id),
                     "text": comment.text,
-                    "author_id": comment.from_user_id,
-                    "author_name": comment.from_username,
-                    "created_at": comment.created_at
+                    "author_id": comment.user_id,
+                    "author_name": comment.username,
+                    "created_at": comment.timestamp
                 })
 
         return comments
