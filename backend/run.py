@@ -10,23 +10,51 @@ import sys
 def run_migrations():
     """Run database migrations before starting the app."""
     print("Running database migrations...")
-    try:
-        # Run alembic upgrade
-        result = subprocess.run(
-            ["alembic", "upgrade", "head"],
-            capture_output=True,
-            text=True
-        )
-        if result.returncode == 0:
-            print("✅ Migrations completed successfully")
-            print(result.stdout)
-        else:
-            print("❌ Migration failed:")
-            print(result.stderr)
-            sys.exit(1)
-    except Exception as e:
-        print(f"❌ Failed to run migrations: {e}")
-        sys.exit(1)
+    max_retries = 3
+    retry_delay = 5  # seconds
+    
+    for attempt in range(1, max_retries + 1):
+        try:
+            print(f"Migration attempt {attempt}/{max_retries}...")
+            # Run alembic upgrade
+            result = subprocess.run(
+                ["alembic", "upgrade", "head"],
+                capture_output=True,
+                text=True,
+                timeout=60  # 60 second timeout per attempt
+            )
+            if result.returncode == 0:
+                print("✅ Migrations completed successfully")
+                print(result.stdout)
+                return
+            else:
+                print(f"❌ Migration attempt {attempt} failed:")
+                print(result.stderr)
+                if attempt < max_retries:
+                    print(f"Retrying in {retry_delay} seconds...")
+                    import time
+                    time.sleep(retry_delay)
+                else:
+                    print("❌ All migration attempts failed")
+                    sys.exit(1)
+        except subprocess.TimeoutExpired:
+            print(f"❌ Migration attempt {attempt} timed out after 60 seconds")
+            if attempt < max_retries:
+                print(f"Retrying in {retry_delay} seconds...")
+                import time
+                time.sleep(retry_delay)
+            else:
+                print("❌ All migration attempts timed out")
+                sys.exit(1)
+        except Exception as e:
+            print(f"❌ Migration attempt {attempt} failed with exception: {e}")
+            if attempt < max_retries:
+                print(f"Retrying in {retry_delay} seconds...")
+                import time
+                time.sleep(retry_delay)
+            else:
+                print("❌ All migration attempts failed")
+                sys.exit(1)
 
 if __name__ == "__main__":
     # Run migrations first
