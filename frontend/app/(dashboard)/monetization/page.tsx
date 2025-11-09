@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, Sparkles, ArrowRight, Plus, TrendingUp } from 'lucide-react';
 import { getProfile, getActiveProject, createProject, CreatorProfile, ActiveProject } from '@/lib/monetization-api';
+import { ErrorHandler } from '@/lib/error-handler';
 
 export default function MonetizationPage() {
   const router = useRouter();
@@ -20,29 +21,33 @@ export default function MonetizationPage() {
   }, []);
 
   const loadData = async () => {
-    try {
-      setIsLoading(true);
-      const [profileData, projectData] = await Promise.all([
-        getProfile(),
-        getActiveProject()
-      ]);
-      setProfile(profileData);
-      setProject(projectData);
-    } catch (error) {
-      console.error('Failed to load data:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    setIsLoading(true);
+    const result = await ErrorHandler.withErrorHandling(
+      async () => {
+        const [profileData, projectData] = await Promise.all([
+          getProfile(),
+          getActiveProject()
+        ]);
+        setProfile(profileData);
+        setProject(projectData);
+        return true;
+      },
+      'Loading monetization data'
+    );
+    setIsLoading(false);
   };
 
   const handleCreateProject = async () => {
-    try {
-      setIsCreatingProject(true);
-      const result = await createProject();
-      router.push(`/monetization/project/${result.project_id}`);
-    } catch (error: any) {
-      console.error('Failed to create project:', error);
-      alert(error.message || 'Failed to create project');
+    setIsCreatingProject(true);
+    const result = await ErrorHandler.withErrorHandling(
+      async () => {
+        const data = await createProject();
+        router.push(`/monetization/project/${data.project_id}`);
+        return data;
+      },
+      'Creating project'
+    );
+    if (!result) {
       setIsCreatingProject(false);
     }
   };

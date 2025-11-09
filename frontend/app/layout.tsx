@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/lib/theme';
 import { Toaster } from '@/components/ui/toast';
+import { Toaster as HotToaster } from 'react-hot-toast';
 import QueryProvider from '@/contexts/QueryProvider';
 import HelpProvider from '@/components/help/HelpProvider';
 
@@ -34,6 +35,30 @@ export default function RootLayout({
               {children}
             </HelpProvider>
             <Toaster />
+            <HotToaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: '#363636',
+                  color: '#fff',
+                  padding: '16px',
+                  borderRadius: '8px',
+                },
+                success: {
+                  iconTheme: {
+                    primary: '#10b981',
+                    secondary: '#fff',
+                  },
+                },
+                error: {
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
+                  },
+                },
+              }}
+            />
           </QueryProvider>
         </ThemeProvider>
       </body>

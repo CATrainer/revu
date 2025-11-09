@@ -12,3 +12,7 @@ export { ProjectChat } from './ProjectChat';
 export { ProgressDashboard } from './ProgressDashboard';
 export { TaskList } from './TaskList';
 export { DecisionCards } from './DecisionCards';
+export { default as ViewToggle } from './ViewToggle';
+
+// Utility components
+export * from './Skeletons';

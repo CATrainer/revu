@@ -10,6 +10,7 @@ import { ProjectChat } from '@/components/monetization/ProjectChat';
 import { ProgressDashboard } from '@/components/monetization/ProgressDashboard';
 import { TaskList } from '@/components/monetization/TaskList';
 import { DecisionCards } from '@/components/monetization/DecisionCards';
+import { ProjectWorkspaceSkeleton } from '@/components/monetization/Skeletons';
 import {
   getActiveProject,
   getProjectMessages,
@@ -20,6 +21,7 @@ import {
   ChatMessage,
   ProgressUpdate
 } from '@/lib/monetization-api';
+import { ErrorHandler } from '@/lib/error-handler';
 
 export default function ProjectWorkspacePage() {
   const params = useParams();
@@ -151,11 +153,7 @@ export default function ProjectWorkspacePage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
-      </div>
-    );
+    return <ProjectWorkspaceSkeleton />;
   }
 
   if (error || !project) {

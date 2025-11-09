@@ -1,7 +1,7 @@
 """add monetization tables
 
 Revision ID: 20251108_2046
-Revises: (check latest)
+Revises: 20251024_140000
 Create Date: 2025-11-08 20:46:00
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '20251108_2046'
-down_revision = None  # TODO: Update with actual latest revision
+down_revision = '20251024_140000'
 branch_labels = None
 depends_on = None
 

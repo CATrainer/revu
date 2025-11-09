@@ -15,6 +15,7 @@ import {
 import { Clock, DollarSign, CheckCircle2, Circle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TaskCompletion } from '@/lib/monetization-api';
+import { ErrorHandler } from '@/lib/error-handler';
 
 interface Task {
   id: string;
@@ -53,15 +54,23 @@ export function TaskList({ phases, completedTasks, onToggleTask, currentPhaseInd
 
   const handleToggle = async (taskId: string, completed: boolean) => {
     setIsSubmitting(true);
-    try {
-      await onToggleTask(taskId, completed, notes);
-      setSelectedTask(null);
-      setNotes('');
-    } catch (error) {
-      console.error('Failed to toggle task:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    const result = await ErrorHandler.withErrorHandling(
+      async () => {
+        await onToggleTask(taskId, completed, notes);
+        
+        // Show success toast
+        ErrorHandler.success(
+          completed ? 'Task completed ✓' : 'Task marked incomplete',
+          completed ? '✅' : '⭕'
+        );
+        
+        setSelectedTask(null);
+        setNotes('');
+        return true;
+      },
+      'Updating task'
+    );
+    setIsSubmitting(false);
   };
 
   return (
