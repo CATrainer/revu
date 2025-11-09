@@ -1,0 +1,199 @@
+{
+  "id": "premium-community",
+  "title": "Premium Community",
+  "category": "community",
+  "revenue_min": 1600,
+  "revenue_max": 8000,
+  "timeline": "3-5 weeks",
+  "why_this_works": [
+    "You have {repeat_commenters} regulars who comment on every post - they're already part of your community",
+    "Your {engagement_rate}% engagement rate is {engagement_comparison} - audiences this engaged will pay for access",
+    "Gaming/streaming audiences are already used to paying for memberships (Twitch subs, Patreon)",
+    "{platform} makes launching a community straightforward - you don't need technical skills",
+    "Your chat already feels like a community - monetizing this formalizes what already exists"
+  ],
+  "implementation_phases": [
+    {
+      "phase": "Foundation",
+      "timeline": "Week 1",
+      "steps": [
+        {
+          "id": "1.1",
+          "task": "Choose platform (Discord or Circle recommended)",
+          "time": "2 hours",
+          "cost": 0,
+          "details": "Discord: Free, great for real-time chat, familiar to gaming audiences. Circle: $89/mo, premium UX, better for structured content. Consider your audience and budget.",
+          "decision_type": "platform"
+        },
+        {
+          "id": "1.2",
+          "task": "Define pricing tiers and structure",
+          "time": "3 hours",
+          "cost": 0,
+          "details": "Recommended: Start with single tier ($27-47/month based on your positioning). Can add tiers later. Include founding member discount (30-40% off).",
+          "decision_type": "pricing"
+        },
+        {
+          "id": "1.3",
+          "task": "Create welcome content and value proposition",
+          "time": "5 hours",
+          "cost": 0,
+          "details": "What do members get? Be specific: 'Weekly Q&As, daily tips, exclusive gameplay sessions' not 'exclusive content'. This justifies your pricing.",
+          "decision_type": "content"
+        },
+        {
+          "id": "1.4",
+          "task": "Set up payment processing",
+          "time": "2 hours",
+          "cost": 0,
+          "details": "Stripe is recommended. Set up recurring billing. Test with a friend before launching."
+        }
+      ]
+    },
+    {
+      "phase": "Launch Preparation",
+      "timeline": "Week 2-3",
+      "steps": [
+        {
+          "id": "2.1",
+          "task": "Create launch announcement content",
+          "time": "4 hours",
+          "cost": 0,
+          "details": "Build hype 1 week before launch. Preview benefits, showcase founding member deal, create FOMO."
+        },
+        {
+          "id": "2.2",
+          "task": "Identify and DM top 50 engaged followers",
+          "time": "4 hours",
+          "cost": 0,
+          "details": "Personal invitations convert 10-15x better. Offer founding member discount. These become your launch champions."
+        },
+        {
+          "id": "2.3",
+          "task": "Set up Discord/Circle server structure",
+          "time": "3 hours",
+          "cost": 0,
+          "details": "Channels: Welcome, General, Game-specific, Off-topic, VIP. Roles based on tiers. Test flow with friends."
+        },
+        {
+          "id": "2.4",
+          "task": "Create onboarding sequence for new members",
+          "time": "3 hours",
+          "cost": 0,
+          "details": "Automated welcome message, intro post prompt, rules, how to get value. First 24 hours are critical."
+        },
+        {
+          "id": "2.5",
+          "task": "Launch publicly with founding member offer",
+          "time": "2 hours",
+          "cost": 0,
+          "details": "3-7 day open enrollment window. Announce across all platforms. Stories every 6 hours. Pin post."
+        },
+        {
+          "id": "2.6",
+          "task": "Go live with 20-30 founding members",
+          "time": "0 hours",
+          "cost": 0,
+          "details": "Critical mass needed for community to feel active. Don't launch to empty server.",
+          "decision_type": "timeline"
+        }
+      ]
+    },
+    {
+      "phase": "Growth & Engagement",
+      "timeline": "Week 4-8",
+      "steps": [
+        {
+          "id": "3.1",
+          "task": "Host weekly member gaming sessions",
+          "time": "3 hours per week",
+          "cost": 0,
+          "details": "Scheduled time to play with members. Rotate games. This is the main value prop."
+        },
+        {
+          "id": "3.2",
+          "task": "Daily presence in Discord (15-30 min)",
+          "time": "15 min daily",
+          "cost": 0,
+          "details": "Pop in, react to posts, answer questions. Your presence = value."
+        },
+        {
+          "id": "3.3",
+          "task": "Create exclusive content drops",
+          "time": "2 hours per week",
+          "cost": 0,
+          "details": "Early VOD access, exclusive gameplay, tips, deals. Content non-members can't get."
+        },
+        {
+          "id": "3.4",
+          "task": "Feature members in public streams",
+          "time": "During regular streams",
+          "cost": 0,
+          "details": "Shout out active members, play with them, share their clips. Social proof drives signups."
+        },
+        {
+          "id": "3.5",
+          "task": "Monthly tournaments or challenges",
+          "time": "4 hours per month",
+          "cost": 50,
+          "details": "Member-only brackets, prizes (merch, free months). Spikes engagement."
+        },
+        {
+          "id": "3.6",
+          "task": "Survey members for feedback",
+          "time": "2 hours per month",
+          "cost": 0,
+          "details": "What's working? What do they want more of? Act on feedback fast."
+        },
+        {
+          "id": "3.7",
+          "task": "Implement member spotlight program",
+          "time": "1 hour per week",
+          "cost": 0,
+          "details": "Feature active members, celebrate wins, build belonging. Retention tactic."
+        },
+        {
+          "id": "3.8",
+          "task": "Create content calendar for next month",
+          "time": "2 hours per month",
+          "cost": 0,
+          "details": "Plan ahead. Batch content. Consistency beats perfection."
+        }
+      ]
+    },
+    {
+      "phase": "Scale & Optimize",
+      "timeline": "Month 3+",
+      "steps": [
+        {
+          "id": "4.1",
+          "task": "Analyze retention data and identify churn patterns",
+          "time": "3 hours per quarter",
+          "cost": 0,
+          "details": "Who's staying? Who's leaving? Why? Fix the leaks."
+        },
+        {
+          "id": "4.2",
+          "task": "Launch referral program",
+          "time": "4 hours",
+          "cost": 0,
+          "details": "Member gets free month per referral. Unique codes. Track and reward."
+        },
+        {
+          "id": "4.3",
+          "task": "Add premium tier or expand offerings",
+          "time": "8 hours",
+          "cost": 0,
+          "details": "Once stable, consider higher tier with 1-on-1 coaching or exclusive events."
+        },
+        {
+          "id": "4.4",
+          "task": "Create quarterly member appreciation event",
+          "time": "6 hours per quarter",
+          "cost": 100,
+          "details": "Special event, tournament, or giveaway. Reward loyalty."
+        }
+      ]
+    }
+  ]
+}

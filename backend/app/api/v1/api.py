@@ -38,6 +38,7 @@ from app.api.v1.endpoints import (
     action_plans,
     onboarding,
     applications,
+    monetization,
 )
 from app.api.v1.endpoints import workflows as workflows_endpoints
 from app.api.v1.endpoints import marketing_admin
@@ -293,6 +294,12 @@ api_router.include_router(
 api_router.include_router(
     jobs.router,
     tags=["jobs"],
+)
+
+api_router.include_router(
+    monetization.router,
+    prefix="/monetization",
+    tags=["monetization"],
 )
 
 
