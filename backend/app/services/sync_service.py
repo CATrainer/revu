@@ -19,6 +19,8 @@ from app.repository.youtube_connection import YouTubeConnectionRepository
 from app.repository.youtube_video import YouTubeVideoRepository
 from app.repository.youtube_comment import YouTubeCommentRepository
 from app.services.youtube_api_wrapper import YouTubeAPIWrapper
+from app.services.youtube_content_mapper import get_youtube_content_mapper
+from app.services.youtube_interaction_mapper import get_youtube_interaction_mapper
 from app.utils.youtube_utils import parse_youtube_timestamp
 from typing import cast
 
@@ -175,6 +177,23 @@ class SyncService:
             saved = await self.video_repo.bulk_create_videos(channel_id=self.connection_id, videos=rows)
             total += len(saved)
 
+            # Map videos to ContentPiece + ContentPerformance
+            if saved:
+                try:
+                    mapper = get_youtube_content_mapper(self.session)
+                    for video in saved:
+                        try:
+                            await mapper.map_video_to_content(
+                                video=video,
+                                user_id=conn.user_id,
+                                is_demo=False
+                            )
+                        except Exception as e:
+                            logger.error(f"Failed to map video {video.video_id}: {e}")
+                    await self.session.commit()
+                except Exception as e:
+                    logger.error(f"Failed to initialize video mapper: {e}")
+
             page_token = resp.get("nextPageToken")
             if not page_token:
                 break
@@ -281,6 +300,23 @@ class SyncService:
             saved = await self.video_repo.bulk_create_videos(channel_id=self.connection_id, videos=rows)
             total += len(saved)
 
+            # Map videos to ContentPiece + ContentPerformance
+            if saved:
+                try:
+                    mapper = get_youtube_content_mapper(self.session)
+                    for video in saved:
+                        try:
+                            await mapper.map_video_to_content(
+                                video=video,
+                                user_id=conn.user_id,
+                                is_demo=False
+                            )
+                        except Exception as e:
+                            logger.error(f"Failed to map video {video.video_id}: {e}")
+                    await self.session.commit()
+                except Exception as e:
+                    logger.error(f"Failed to initialize video mapper: {e}")
+
             page_token = resp.get("nextPageToken")
             if not page_token:
                 break
@@ -340,6 +376,25 @@ class SyncService:
                 saved = await self.comment_repo.bulk_create_comments(video_id=video.id, comments=to_save)
                 count += len(saved)
 
+                # Map comments to Interaction + Fan
+                if saved:
+                    try:
+                        mapper = get_youtube_interaction_mapper(self.session)
+                        conn = await self._get_connection()
+                        if conn:
+                            for comment in saved:
+                                try:
+                                    await mapper.map_comment_to_interaction(
+                                        comment=comment,
+                                        user_id=conn.user_id,
+                                        is_demo=False
+                                    )
+                                except Exception as e:
+                                    logger.error(f"Failed to map comment {comment.comment_id}: {e}")
+                            await self.session.commit()
+                    except Exception as e:
+                        logger.error(f"Failed to initialize comment mapper: {e}")
+
             # Fetch replies per parent, paginating each
             for parent_id in parent_ids:
                 reply_token: Optional[str] = None
@@ -374,6 +429,25 @@ class SyncService:
                             video_id=video.id, comments=to_save_replies
                         )
                         count += len(saved)
+
+                        # Map reply comments to Interaction + Fan
+                        if saved:
+                            try:
+                                mapper = get_youtube_interaction_mapper(self.session)
+                                conn = await self._get_connection()
+                                if conn:
+                                    for comment in saved:
+                                        try:
+                                            await mapper.map_comment_to_interaction(
+                                                comment=comment,
+                                                user_id=conn.user_id,
+                                                is_demo=False
+                                            )
+                                        except Exception as e:
+                                            logger.error(f"Failed to map reply comment {comment.comment_id}: {e}")
+                                    await self.session.commit()
+                            except Exception as e:
+                                logger.error(f"Failed to initialize reply comment mapper: {e}")
 
                     reply_token = rresp.get("nextPageToken")
                     if not reply_token:

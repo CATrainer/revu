@@ -16,12 +16,13 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, relationship
 
 from app.core.database import Base
@@ -38,6 +39,18 @@ class YouTubeConnection(Base):
     token_expires_at: Mapped[DateTime | None] = Column(DateTime(timezone=True), nullable=True)
     connection_status: Mapped[str] = Column(String, nullable=False, default="active")
     last_synced_at: Mapped[DateTime | None] = Column(DateTime(timezone=True), nullable=True)
+    
+    # Channel metrics (from YouTube Data API)
+    subscriber_count: Mapped[int | None] = Column(Integer, nullable=True)
+    total_views: Mapped[int | None] = Column(BigInteger, nullable=True)
+    video_count: Mapped[int | None] = Column(Integer, nullable=True)
+    average_views_per_video: Mapped[int | None] = Column(Integer, nullable=True)
+    engagement_rate: Mapped[float | None] = Column(Numeric(5, 2), nullable=True)
+    
+    # Growth tracking
+    subscriber_growth_30d: Mapped[int | None] = Column(Integer, nullable=True)
+    views_growth_30d: Mapped[int | None] = Column(Integer, nullable=True)
+    last_metrics_update: Mapped[DateTime | None] = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     user = relationship("User", backref="youtube_connections")
@@ -65,6 +78,35 @@ class YouTubeVideo(Base):
     last_fetched_at: Mapped[DateTime] = Column(DateTime(timezone=True), nullable=False)
     # Tags for filtering/categorization (e.g., ["youtube", "shorts"|"long form"], future: "tiktok", "instagram")
     tags: Mapped[list[str]] = Column(ARRAY(String), nullable=False, default=list)
+    
+    # Additional metadata from YouTube Data API
+    category_id: Mapped[str | None] = Column(String, nullable=True)
+    video_tags: Mapped[list[str] | None] = Column(ARRAY(String), nullable=True)  # Actual YouTube tags
+    default_audio_language: Mapped[str | None] = Column(String, nullable=True)
+    default_language: Mapped[str | None] = Column(String, nullable=True)
+    
+    # Analytics data (from YouTube Analytics API)
+    impressions: Mapped[int | None] = Column(Integer, nullable=True)
+    click_through_rate: Mapped[float | None] = Column(Numeric(5, 2), nullable=True)
+    average_view_duration: Mapped[int | None] = Column(Integer, nullable=True)  # seconds
+    average_view_percentage: Mapped[float | None] = Column(Numeric(5, 2), nullable=True)
+    watch_time_minutes: Mapped[int | None] = Column(Integer, nullable=True)
+    subscribers_gained: Mapped[int | None] = Column(Integer, nullable=True)
+    subscribers_lost: Mapped[int | None] = Column(Integer, nullable=True)
+    
+    # Engagement metrics
+    engagement_rate: Mapped[float | None] = Column(Numeric(5, 2), nullable=True)
+    shares_count: Mapped[int | None] = Column(Integer, nullable=True)
+    
+    # Traffic and audience data (JSONB for flexibility)
+    traffic_sources: Mapped[dict | None] = Column(JSONB, nullable=True)  # {source: views}
+    device_types: Mapped[dict | None] = Column(JSONB, nullable=True)  # {device: views}
+    audience_demographics: Mapped[dict | None] = Column(JSONB, nullable=True)  # {age_gender: percentage}
+    
+    # Performance tracking
+    performance_score: Mapped[float | None] = Column(Numeric(5, 2), nullable=True)
+    percentile_rank: Mapped[int | None] = Column(Integer, nullable=True)
+    is_trending: Mapped[bool] = Column(Boolean, default=False)
 
     # Relationships
     connection = relationship("YouTubeConnection", back_populates="videos")
@@ -90,9 +132,32 @@ class YouTubeComment(Base):
     # Local-only flags (not propagated to YouTube):
     hearted_by_owner: Mapped[bool] = Column(Boolean, nullable=False, default=False)
     liked_by_owner: Mapped[bool] = Column(Boolean, nullable=False, default=False)
+    
+    # AI enrichment data
+    sentiment: Mapped[str | None] = Column(String(16), nullable=True)  # positive, negative, neutral
+    priority_score: Mapped[int] = Column(Integer, default=50)  # 1-100
+    categories: Mapped[list[str] | None] = Column(ARRAY(String), nullable=True)  # question, collab, spam
+    detected_keywords: Mapped[list[str] | None] = Column(ARRAY(String), nullable=True)
+    language: Mapped[str | None] = Column(String(10), nullable=True)
+    
+    # Management fields
+    status: Mapped[str] = Column(String(20), default='unread')  # unread, read, answered, ignored
+    tags: Mapped[list[str] | None] = Column(ARRAY(String), nullable=True)
+    assigned_to_user_id: Mapped[str | None] = Column(PGUUID(as_uuid=True), ForeignKey('users.id'), nullable=True)
+    internal_notes: Mapped[str | None] = Column(Text, nullable=True)
+    
+    # Workflow tracking
+    workflow_id: Mapped[str | None] = Column(PGUUID(as_uuid=True), ForeignKey('workflows.id'), nullable=True)
+    workflow_action: Mapped[str | None] = Column(String(50), nullable=True)
+    
+    # Response tracking
+    replied_at: Mapped[DateTime | None] = Column(DateTime(timezone=True), nullable=True)
+    response_text: Mapped[str | None] = Column(Text, nullable=True)
 
     # Relationships
     video = relationship("YouTubeVideo", back_populates="comments")
+    assigned_to = relationship("User", foreign_keys=[assigned_to_user_id])
+    workflow = relationship("Workflow", foreign_keys=[workflow_id])
 
 
 class OAuthStateToken(Base):
