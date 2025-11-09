@@ -11,8 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
 from loguru import logger
 
-from app.models.youtube_models import YouTubeVideo, YouTubeComment
-from app.models.instagram_models import InstagramPost, InstagramComment
+from app.models.youtube import YouTubeVideo, YouTubeComment
+from app.models.instagram import InstagramPost, InstagramComment
 from app.models.monetization import ContentAnalysis, CreatorProfile
 
 
