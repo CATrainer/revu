@@ -13,18 +13,44 @@ const tabs = ['Integrations','Demo Mode'] as const;
 
 export default function SettingsPage() {
   const [tab, setTab] = useState<typeof tabs[number]>('Integrations');
+  const [hasDemoAccess, setHasDemoAccess] = useState<boolean | null>(null);
   const sp = useSearchParams();
+
   useEffect(() => {
     const t = sp.get('tab');
     const found = tabs.find(x => x === t);
     if (found) setTab(found);
   }, [sp]);
+
+  // Check if user has demo access
+  useEffect(() => {
+    const checkDemoAccess = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch('/api/demo/status', {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setHasDemoAccess(data.has_access ?? true); // Default to true if not provided (backwards compat)
+        }
+      } catch (error) {
+        console.error('Failed to check demo access:', error);
+        setHasDemoAccess(true); // Default to true on error
+      }
+    };
+    checkDemoAccess();
+  }, []);
+
+  // Filter tabs based on demo access
+  const availableTabs = hasDemoAccess === false ? tabs.filter(t => t !== 'Demo Mode') : tabs;
+
   return (
     <div className="space-y-6 px-4 md:px-0">{/* Mobile padding */}
       <h1 className="text-2xl md:text-3xl font-bold text-primary-dark">Settings</h1>
 
       <div className="flex flex-wrap gap-2">
-        {tabs.map((t) => (
+        {availableTabs.map((t) => (
           <Button key={t} variant={tab === t ? 'default' : 'outline'} className={tab === t ? 'button-primary' : 'border-[var(--border)]'} onClick={() => setTab(t)}>
             {t}
           </Button>
@@ -37,7 +63,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
           {tab === 'Integrations' && <IntegrationsSection />}
-          {tab === 'Demo Mode' && <DemoModeSection />}
+          {tab === 'Demo Mode' && <DemoModeSection hasDemoAccess={hasDemoAccess} />}
         </CardContent>
       </Card>
     </div>
@@ -101,9 +127,24 @@ function IntegrationsSection() {
   );
 }
 
-function DemoModeSection() {
+function DemoModeSection({ hasDemoAccess }: { hasDemoAccess: boolean | null }) {
   const router = useRouter();
-  
+
+  // Show access denied if user doesn't have access
+  if (hasDemoAccess === false) {
+    return (
+      <div className="space-y-4">
+        <div className="p-4 rounded-md border border-yellow-500">
+          <div className="text-sm font-medium text-primary-dark mb-2">Access Restricted</div>
+          <div className="text-sm text-secondary-dark mt-2">
+            Demo mode is not currently available for your account.
+            Please contact support if you need access to demo functionality.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="p-4 rounded-md border border-[var(--border)]">
@@ -118,8 +159,8 @@ function DemoModeSection() {
           <li>• Switch between demo and real mode anytime</li>
         </ul>
       </div>
-      
-      <Button 
+
+      <Button
         className="button-primary"
         onClick={() => router.push('/settings/demo-mode')}
       >

@@ -19,6 +19,20 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+def check_demo_access(user: User) -> None:
+    """
+    Check if the user is allowed to access demo mode functionality.
+    Raises HTTPException if user is not authorized.
+    """
+    allowed_emails = settings.DEMO_ALLOWED_EMAILS
+    if user.email not in allowed_emails:
+        logger.warning(f"User {user.email} attempted to access demo mode without permission")
+        raise HTTPException(
+            status_code=403,
+            detail="Demo mode is not available for your account. Please contact support for access."
+        )
+
+
 class DemoConfigRequest(BaseModel):
     profile_type: str  # 'auto' or 'manual'
     niche: Optional[str] = 'tech_reviews'
@@ -49,7 +63,10 @@ async def enable_demo_mode(
     current_user: User = Depends(get_current_active_user),
 ):
     """Enable demo mode for the current user."""
-    
+
+    # Check if user has access to demo mode
+    check_demo_access(current_user)
+
     # Check current status
     if current_user.demo_mode_status in ('enabled', 'enabling'):
         raise HTTPException(400, f"Demo mode already {current_user.demo_mode_status}")
@@ -93,7 +110,10 @@ async def disable_demo_mode(
     current_user: User = Depends(get_current_active_user),
 ):
     """Disable demo mode for the current user."""
-    
+
+    # Check if user has access to demo mode
+    check_demo_access(current_user)
+
     if current_user.demo_mode_status not in ('enabled', 'failed'):
         raise HTTPException(400, f"Cannot disable demo mode with status: {current_user.demo_mode_status}")
     
@@ -139,7 +159,10 @@ async def get_demo_status(
     current_user: User = Depends(get_current_active_user),
 ):
     """Get demo mode status for current user."""
-    
+
+    # Check if user has access to demo mode
+    has_demo_access = current_user.email in settings.DEMO_ALLOWED_EMAILS
+
     # Check for stuck states (>5 minutes in enabling/disabling)
     if current_user.demo_mode_status in ('enabling', 'disabling'):
         from datetime import datetime, timedelta, timezone
@@ -179,6 +202,7 @@ async def get_demo_status(
         "status": current_user.demo_mode_status,
         "error": current_user.demo_mode_error,
         "user_id": str(current_user.id),
+        "has_access": has_demo_access,  # Flag indicating if user can use demo mode
     }
     
     # If enabling or disabling, get the latest job status
@@ -386,7 +410,10 @@ async def seed_demo_content_endpoint(
     current_user: User = Depends(get_current_active_user),
 ):
     """Manually trigger demo content seeding for current user."""
-    
+
+    # Check if user has access to demo mode
+    check_demo_access(current_user)
+
     if current_user.demo_mode_status != 'enabled':
         raise HTTPException(400, "Demo mode must be enabled first")
     

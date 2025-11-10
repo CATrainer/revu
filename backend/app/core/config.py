@@ -207,6 +207,13 @@ class Settings(BaseSettings):
     DEMO_SERVICE_URL: Optional[str] = None
     DEMO_WEBHOOK_SECRET: Optional[str] = None
 
+    # Demo Mode Access Control - emails allowed to use demo mode
+    DEMO_ALLOWED_EMAILS: List[str] = [
+        "caleb.a.trainer@gmail.com",
+        "caleb.trainer@thelaunchloop.com",
+        "petercollier100@gmail.com"
+    ]
+
     # Monitoring
     SENTRY_DSN: Optional[str] = None
 

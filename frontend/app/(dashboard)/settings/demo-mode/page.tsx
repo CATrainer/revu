@@ -259,6 +259,32 @@ export default function DemoModePage() {
     );
   }
 
+  // Check if user has access to demo mode
+  if (demoStatus.has_access === false) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-primary-dark">Demo Mode</h1>
+          <p className="text-secondary-dark mt-1">
+            Test Repruv with simulated platform connections and AI-generated interactions
+          </p>
+        </div>
+
+        <Card className="border-yellow-500">
+          <CardHeader>
+            <CardTitle>Access Restricted</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-secondary-dark">
+              Demo mode is not currently available for your account.
+              Please contact support if you need access to demo functionality.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div>
