@@ -19,6 +19,7 @@ import { TriggerStep } from './workflow-steps/TriggerStep';
 import { ConditionsStep } from './workflow-steps/ConditionsStep';
 import { ActionsStep } from './workflow-steps/ActionsStep';
 import { ReviewStep } from './workflow-steps/ReviewStep';
+import { WorkflowTemplates } from './WorkflowTemplates';
 
 interface WorkflowBuilderProps {
   viewId: string | null;
@@ -83,6 +84,19 @@ export function WorkflowBuilder({
 
   const updateWorkflowData = (updates: Partial<WorkflowData>) => {
     setWorkflowData(prev => ({ ...prev, ...updates }));
+  };
+
+  const handleTemplateSelect = (template: any) => {
+    setWorkflowData(prev => ({
+      ...prev,
+      name: template.name,
+      description: template.description,
+      trigger: template.trigger,
+      conditions: template.conditions,
+      actions: template.actions,
+    }));
+    // Advance to next step after template selection
+    setCurrentStep(1);
   };
 
   const handleNext = () => {
@@ -213,6 +227,7 @@ export function WorkflowBuilder({
               workflowData={workflowData}
               updateWorkflowData={updateWorkflowData}
               viewName={viewName}
+              onTemplateSelect={handleTemplateSelect}
             />
           )}
           {currentStep === 1 && (
@@ -282,16 +297,20 @@ interface BasicInfoStepProps {
   workflowData: WorkflowData;
   updateWorkflowData: (updates: Partial<WorkflowData>) => void;
   viewName?: string;
+  onTemplateSelect: (template: any) => void;
 }
 
-function BasicInfoStep({ workflowData, updateWorkflowData, viewName }: BasicInfoStepProps) {
+function BasicInfoStep({ workflowData, updateWorkflowData, viewName, onTemplateSelect }: BasicInfoStepProps) {
   return (
     <div className="space-y-6 max-w-2xl">
-      <div>
-        <h3 className="text-lg font-semibold text-primary-dark mb-4">Basic Information</h3>
-        <p className="text-sm text-secondary-dark">
-          Give your workflow a name and description to help you identify it later.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-primary-dark mb-2">Basic Information</h3>
+          <p className="text-sm text-secondary-dark">
+            Start from a template or build your own workflow from scratch.
+          </p>
+        </div>
+        <WorkflowTemplates onSelectTemplate={onTemplateSelect} />
       </div>
 
       <div className="space-y-4">

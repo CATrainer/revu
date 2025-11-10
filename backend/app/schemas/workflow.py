@@ -27,10 +27,20 @@ class WorkflowTrigger(BaseModel):
 
 
 class WorkflowCondition(BaseModel):
-    """Workflow condition for filtering."""
-    field: str  # platform, sentiment, priority_score, author_follower_count, etc.
-    op: Literal['is', 'is_not', 'contains', 'not_contains', 'gt', 'lt', 'gte', 'lte']
-    value: Any
+    """Workflow condition for filtering.
+
+    Supports two types:
+    1. Field-based: Uses field, operator, value (rigid conditions)
+    2. Natural language: Uses type='natural_language' and prompt (AI-powered)
+    """
+    # For natural language conditions
+    type: Optional[Literal['natural_language']] = None
+    prompt: Optional[str] = None  # Natural language condition (e.g., "interactions asking about pricing")
+
+    # For field-based conditions (traditional)
+    field: Optional[str] = None  # platform, sentiment, priority_score, author_follower_count, etc.
+    operator: Optional[Literal['is', 'is_not', 'contains', 'not_contains', 'equals', 'not_equals', 'greater_than', 'less_than', 'greater_or_equal', 'less_or_equal', 'gt', 'lt', 'gte', 'lte']] = None
+    value: Optional[Any] = None
 
 
 class WorkflowAction_Tag(BaseModel):

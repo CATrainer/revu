@@ -130,10 +130,27 @@ async def create_interaction(
     session.add(interaction)
     await session.commit()
     await session.refresh(interaction)
-    
-    # TODO: Trigger workflow evaluation in background
+
+    # Trigger workflow evaluation
+    from app.services.workflow_engine import WorkflowEngine
+    workflow_engine = WorkflowEngine()
+    try:
+        workflow_results = await workflow_engine.process_interaction(
+            db=session,
+            interaction=interaction,
+            user_id=current_user.id,
+            organization_id=getattr(current_user, 'organization_id', None),
+        )
+        # Store workflow results in interaction metadata if needed
+        if workflow_results:
+            interaction.triggered_workflows = [r.get("workflow_id") for r in workflow_results if "workflow_id" in r]
+            await session.commit()
+    except Exception as e:
+        # Log error but don't fail interaction creation
+        print(f"Workflow evaluation failed: {e}")
+
     # TODO: Update thread and fan records
-    
+
     return interaction
 
 
