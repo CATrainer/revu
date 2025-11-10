@@ -91,8 +91,7 @@ async def start_analysis(
     background_tasks.add_task(
         run_analysis_pipeline,
         user_id_str,
-        analysis_id,
-        db
+        analysis_id
     )
 
     return {"analysis_id": analysis_id, "status": "started"}
@@ -409,7 +408,7 @@ async def request_adaptation(
 
 # ===== HELPER FUNCTIONS =====
 
-async def run_analysis_pipeline(user_id: str, analysis_id: str, db: AsyncSession):
+async def run_analysis_pipeline(user_id: str, analysis_id: str):
     """
     Background task that runs the full analysis pipeline.
 
@@ -418,63 +417,68 @@ async def run_analysis_pipeline(user_id: str, analysis_id: str, db: AsyncSession
     3. Mark complete
     """
 
+    # Import the context manager for creating a new session
+    from app.core.database import get_async_session_context
+
     try:
-        # Update status: analyzing
-        analysis_status_cache[analysis_id] = {
-            "user_id": user_id,
-            "status": "analyzing",
-            "progress": 25,
-            "current_step": "Analyzing your content and audience..."
-        }
+        # Create a new database session for this background task
+        async with get_async_session_context() as db:
+            # Update status: analyzing
+            analysis_status_cache[analysis_id] = {
+                "user_id": user_id,
+                "status": "analyzing",
+                "progress": 25,
+                "current_step": "Analyzing your content and audience..."
+            }
 
-        # Analyze content
-        analyzer = ContentAnalyzer(db)
-        content_analysis = await analyzer.analyze_creator(user_id)
+            # Analyze content
+            analyzer = ContentAnalyzer(db)
+            content_analysis = await analyzer.analyze_creator(user_id)
 
-        # Update status: generating
-        analysis_status_cache[analysis_id] = {
-            "user_id": user_id,
-            "status": "generating",
-            "progress": 60,
-            "current_step": "Generating personalized opportunities..."
-        }
+            # Update status: generating
+            analysis_status_cache[analysis_id] = {
+                "user_id": user_id,
+                "status": "generating",
+                "progress": 60,
+                "current_step": "Generating personalized opportunities..."
+            }
 
-        # Get profile
-        result = await db.execute(
-            select(CreatorProfile).where(CreatorProfile.user_id == user_id)
-        )
-        profile = result.scalar_one_or_none()
+            # Get profile
+            result = await db.execute(
+                select(CreatorProfile).where(CreatorProfile.user_id == user_id)
+            )
+            profile = result.scalar_one_or_none()
 
-        if not profile:
-            raise ValueError("Creator profile not found")
+            if not profile:
+                raise ValueError("Creator profile not found")
 
-        profile_dict = {
-            "primary_platform": profile.primary_platform,
-            "follower_count": profile.follower_count,
-            "engagement_rate": float(profile.engagement_rate),
-            "niche": profile.niche,
-            "time_available_hours_per_week": profile.time_available_hours_per_week,
-            "content_frequency": profile.content_frequency
-        }
+            profile_dict = {
+                "primary_platform": profile.primary_platform,
+                "follower_count": profile.follower_count,
+                "engagement_rate": float(profile.engagement_rate),
+                "niche": profile.niche,
+                "time_available_hours_per_week": profile.time_available_hours_per_week,
+                "content_frequency": profile.content_frequency
+            }
 
-        # Generate opportunities
-        generator = OpportunityGenerator(db)
+            # Generate opportunities
+            generator = OpportunityGenerator(db)
 
-        opportunities = await generator.generate_opportunities(
-            user_id,
-            profile_dict,
-            content_analysis
-        )
+            opportunities = await generator.generate_opportunities(
+                user_id,
+                profile_dict,
+                content_analysis
+            )
 
-        # Update status: complete
-        analysis_status_cache[analysis_id] = {
-            "user_id": user_id,
-            "status": "complete",
-            "progress": 100,
-            "current_step": "Analysis complete!"
-        }
+            # Update status: complete
+            analysis_status_cache[analysis_id] = {
+                "user_id": user_id,
+                "status": "complete",
+                "progress": 100,
+                "current_step": "Analysis complete!"
+            }
 
-        logger.info(f"Analysis pipeline completed for user {user_id}")
+            logger.info(f"Analysis pipeline completed for user {user_id}")
 
     except Exception as e:
         logger.error(f"Error in analysis pipeline: {e}")

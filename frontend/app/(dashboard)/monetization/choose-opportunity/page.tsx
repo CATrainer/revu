@@ -47,49 +47,87 @@ export default function ChooseOpportunityPage() {
 
   const handleStartAIAnalysis = async () => {
     setIsLoadingAI(true);
-    await ErrorHandler.withErrorHandling(
-      async () => {
-        // Check if opportunities already exist
-        const existing = await getAIOpportunities();
+    let pollInterval: NodeJS.Timeout | null = null;
+    let timeoutId: NodeJS.Timeout | null = null;
 
-        if ('opportunities' in existing && existing.opportunities) {
-          setAiOpportunities(existing.opportunities);
+    try {
+      // Check if opportunities already exist
+      const existing = await getAIOpportunities();
+
+      if ('opportunities' in existing && existing.opportunities) {
+        setAiOpportunities(existing.opportunities);
+        setIsLoadingAI(false);
+        return;
+      }
+
+      // Start new analysis
+      const result = await startAIAnalysis();
+      setAiAnalysisId(result.analysis_id);
+
+      let attempts = 0;
+      const maxAttempts = 150; // 150 * 2s = 5 minutes
+
+      // Set timeout to prevent eternal loading (5 minutes)
+      timeoutId = setTimeout(() => {
+        if (pollInterval) clearInterval(pollInterval);
+        setIsLoadingAI(false);
+        ErrorHandler.handle(
+          new Error('Analysis is taking longer than expected. Please try again later.'),
+          'AI Analysis'
+        );
+      }, 300000); // 5 minutes
+
+      // Poll for status
+      pollInterval = setInterval(async () => {
+        attempts++;
+
+        // Stop after max attempts
+        if (attempts >= maxAttempts) {
+          if (pollInterval) clearInterval(pollInterval);
+          if (timeoutId) clearTimeout(timeoutId);
           setIsLoadingAI(false);
+          ErrorHandler.handle(
+            new Error('Analysis is taking longer than expected. Please try again later.'),
+            'AI Analysis'
+          );
           return;
         }
 
-        // Start new analysis
-        const result = await startAIAnalysis();
-        setAiAnalysisId(result.analysis_id);
+        try {
+          const status = await checkAnalysisStatus(result.analysis_id);
+          setAiProgress(status.progress);
+          setAiStatus(status.current_step || '');
 
-        // Poll for status
-        const pollInterval = setInterval(async () => {
-          try {
-            const status = await checkAnalysisStatus(result.analysis_id);
-            setAiProgress(status.progress);
-            setAiStatus(status.current_step || '');
-
-            if (status.status === 'complete') {
-              clearInterval(pollInterval);
-              const opps = await getAIOpportunities();
-              if ('opportunities' in opps) {
-                setAiOpportunities(opps.opportunities);
-              }
-              setIsLoadingAI(false);
-            } else if (status.status === 'error') {
-              clearInterval(pollInterval);
-              setIsLoadingAI(false);
-              throw new Error(status.error || 'Analysis failed');
+          if (status.status === 'complete') {
+            if (pollInterval) clearInterval(pollInterval);
+            if (timeoutId) clearTimeout(timeoutId);
+            const opps = await getAIOpportunities();
+            if ('opportunities' in opps) {
+              setAiOpportunities(opps.opportunities);
             }
-          } catch (error) {
-            clearInterval(pollInterval);
             setIsLoadingAI(false);
-            throw error;
+          } else if (status.status === 'error') {
+            if (pollInterval) clearInterval(pollInterval);
+            if (timeoutId) clearTimeout(timeoutId);
+            setIsLoadingAI(false);
+            ErrorHandler.handle(
+              new Error(status.error || 'Analysis failed'),
+              'AI Analysis'
+            );
           }
-        }, 2000);
-      },
-      'Analyzing your content'
-    );
+        } catch (error) {
+          if (pollInterval) clearInterval(pollInterval);
+          if (timeoutId) clearTimeout(timeoutId);
+          setIsLoadingAI(false);
+          ErrorHandler.handle(error, 'AI Analysis');
+        }
+      }, 2000);
+    } catch (error) {
+      if (pollInterval) clearInterval(pollInterval);
+      if (timeoutId) clearTimeout(timeoutId);
+      setIsLoadingAI(false);
+      ErrorHandler.handle(error, 'Analyzing your content');
+    }
   };
 
   const handleSelectTemplate = async (templateId: string) => {
