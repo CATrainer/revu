@@ -19,6 +19,14 @@ class PlatformInfo(BaseModel):
     enabled: bool
     email: Optional[EmailStr] = None
     username: Optional[str] = None
+    
+    @field_validator('email', 'username', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v):
+        """Convert empty strings to None for optional fields."""
+        if v == '' or v is None:
+            return None
+        return v
 
 
 class CreatorApplicationData(BaseModel):
@@ -47,6 +55,14 @@ class AgencyApplicationData(BaseModel):
     required_features: str = Field(..., min_length=1, max_length=500)
     creator_emails: List[EmailStr] = Field(default_factory=list, max_length=10)
     referral_source: str
+    
+    @field_validator('agency_website', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v):
+        """Convert empty strings to None for optional fields."""
+        if v == '' or v is None:
+            return None
+        return v
 
 
 class ApplicationCreate(BaseModel):
