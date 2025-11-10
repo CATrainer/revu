@@ -60,7 +60,7 @@ function InfoBox({
         <Icon className={`w-6 h-6 ${iconColors[variant]} flex-shrink-0 mt-1`} />
         <div className="flex-1">
           <h3 className="text-lg font-bold text-[var(--brand-primary)] mb-3">{title}</h3>
-          <div className="text-secondary-dark space-y-2">
+          <div className="text-[var(--text-secondary)] space-y-2">
             {children}
           </div>
         </div>
@@ -81,7 +81,7 @@ export default function PilotInfoPage() {
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[var(--brand-primary)] mb-6">
             Repruv Pilot Information
           </h1>
-          <p className="text-xl text-secondary-dark max-w-3xl mx-auto">
+          <p className="text-xl text-[var(--text-secondary)] max-w-3xl mx-auto">
             Welcome to the Repruv pilot program! This guide explains how our platform integrations work,
             what data we collect, how we keep it secure, and step-by-step instructions for connecting your accounts.
           </p>

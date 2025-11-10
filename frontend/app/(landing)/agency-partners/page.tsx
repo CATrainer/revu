@@ -159,10 +159,10 @@ export default function AgencyPartnersPage() {
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-[var(--brand-primary)] mb-6">
               Agency Partner Program
             </h1>
-            <p className="text-xl md:text-2xl text-[var(--success)] max-w-4xl mx-auto mb-8 font-bold">
+            <p className="text-xl md:text-2xl text-[var(--foreground)] max-w-4xl mx-auto mb-8 font-bold">
               Build the Future of Creator Monetization With Us
             </p>
-            <p className="text-lg text-secondary-dark max-w-3xl mx-auto mb-4">
+            <p className="text-lg text-[var(--text-secondary)] max-w-3xl mx-auto mb-4">
               We're developing Repruv's agency features in partnership with forward-thinking social media agencies. Instead of building in isolation, we're creating tools that solve real agency problems and help your creators make more money.
             </p>
             <p className="text-sm text-[var(--success)] font-semibold">
@@ -176,13 +176,13 @@ export default function AgencyPartnersPage() {
             animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <Button asChild size="lg" className="bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-black px-8 py-6 text-lg font-bold">
+            <Button asChild size="lg" className="bg-[var(--success)] hover:bg-emerald-600 text-[var(--success-foreground)] px-8 py-6 text-lg font-bold">
               <Link href="https://calendar.app.google/nq6qhPm1UYdZvHde8" target="_blank" rel="noopener noreferrer">
                 <Calendar className="w-5 h-5 mr-2" />
                 Schedule Partnership Call
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-2 border-[var(--brand-primary)] text-[var(--success)] hover:bg-muted px-8 py-6 text-lg font-bold">
+            <Button asChild size="lg" variant="outline" className="border-2 border-[var(--brand-primary)] text-[var(--brand-primary)] hover:bg-muted px-8 py-6 text-lg font-bold">
               <Link href="mailto:partners@repruv.co.uk">
                 Email Us
               </Link>
@@ -212,7 +212,7 @@ export default function AgencyPartnersPage() {
                 <h3 className="text-2xl font-bold text-[var(--brand-primary)] mb-4">{benefit.title}</h3>
                 <ul className="space-y-2">
                   {benefit.points.map((point, i) => (
-                    <li key={i} className="flex items-start gap-2 text-[var(--success)]">
+                    <li key={i} className="flex items-start gap-2 text-[var(--text-secondary)]">
                       <CheckCircle className="w-5 h-5 text-holo-mint flex-shrink-0 mt-0.5" />
                       <span className="text-sm">{point}</span>
                     </li>
@@ -232,14 +232,14 @@ export default function AgencyPartnersPage() {
           >
             <div className="text-center">
               <h3 className="text-3xl md:text-4xl font-bold text-[var(--brand-primary)] mb-2">Partner Pricing</h3>
-              <p className="text-[var(--success)] mb-6">Built for agencies, priced for partnerships</p>
+              <p className="text-[var(--text-secondary)] mb-6">Built for agencies, priced for partnerships</p>
 
               <div className="space-y-4 text-left max-w-3xl mx-auto">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-holo-mint flex-shrink-0 mt-1" />
                   <div>
                     <p className="text-lg font-bold text-[var(--brand-primary)]">30-40% off standard rates, locked in forever</p>
-                    <p className="text-sm text-[var(--success)]">Your discount never expires, even as we scale</p>
+                    <p className="text-sm text-[var(--text-secondary)]">Your discount never expires, even as we scale</p>
                   </div>
                 </div>
 
@@ -247,7 +247,7 @@ export default function AgencyPartnersPage() {
                   <CheckCircle className="w-6 h-6 text-holo-mint flex-shrink-0 mt-1" />
                   <div>
                     <p className="text-lg font-bold text-[var(--brand-primary)]">Typical agency with 20 creators saves $4,000+/year</p>
-                    <p className="text-sm text-[var(--success)]">ROI scales with your roster size</p>
+                    <p className="text-sm text-[var(--text-secondary)]">ROI scales with your roster size</p>
                   </div>
                 </div>
 
@@ -255,7 +255,7 @@ export default function AgencyPartnersPage() {
                   <CheckCircle className="w-6 h-6 text-holo-mint flex-shrink-0 mt-1" />
                   <div>
                     <p className="text-lg font-bold text-[var(--brand-primary)]">Exact pricing discussed on your discovery call</p>
-                    <p className="text-sm text-[var(--success)]">Based on roster size and your specific needs</p>
+                    <p className="text-sm text-[var(--text-secondary)]">Based on roster size and your specific needs</p>
                   </div>
                 </div>
 
@@ -263,7 +263,7 @@ export default function AgencyPartnersPage() {
                   <CheckCircle className="w-6 h-6 text-holo-mint flex-shrink-0 mt-1" />
                   <div>
                     <p className="text-lg font-bold text-[var(--brand-primary)]">No payment required during Early Access</p>
-                    <p className="text-sm text-[var(--success)]">Free unlimited access during development phase</p>
+                    <p className="text-sm text-[var(--text-secondary)]">Free unlimited access during development phase</p>
                   </div>
                 </div>
               </div>
@@ -292,10 +292,10 @@ export default function AgencyPartnersPage() {
                 <CheckCircle className="w-8 h-8 text-holo-mint" />
                 <h3 className="text-3xl font-bold text-[var(--brand-primary)]">Available Now</h3>
               </div>
-              <p className="text-[var(--success)] mb-4 text-sm">Your creators can start using these features immediately.</p>
+              <p className="text-[var(--text-secondary)] mb-4 text-sm">Your creators can start using these features immediately.</p>
               <ul className="space-y-3">
                 {availableFeatures.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-2 text-[var(--success)]">
+                  <li key={index} className="flex items-start gap-2 text-[var(--text-secondary)]">
                     <CheckCircle className="w-5 h-5 text-holo-mint flex-shrink-0 mt-0.5" />
                     <span className="text-sm">{feature}</span>
                   </li>
@@ -317,7 +317,7 @@ export default function AgencyPartnersPage() {
               </div>
               <ul className="space-y-3">
                 {q1Features.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-2 text-[var(--success)]">
+                  <li key={index} className="flex items-start gap-2 text-[var(--text-secondary)]">
                     <span className="text-holo-teal">🚧</span>
                     <span className="text-sm">{feature}</span>
                   </li>
@@ -339,7 +339,7 @@ export default function AgencyPartnersPage() {
               </div>
               <ul className="space-y-3">
                 {q2Features.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-2 text-[var(--success)]">
+                  <li key={index} className="flex items-start gap-2 text-[var(--text-secondary)]">
                     <span className="text-holo-purple">🚧</span>
                     <span className="text-sm">{feature}</span>
                   </li>
@@ -349,7 +349,7 @@ export default function AgencyPartnersPage() {
           </div>
 
           <motion.p
-            className="text-center mt-8 text-[var(--success)] italic"
+            className="text-center mt-8 text-[var(--text-secondary)] italic"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -377,7 +377,7 @@ export default function AgencyPartnersPage() {
             >
               <Headphones className="w-12 h-12 text-holo-mint mb-4" />
               <h3 className="text-2xl font-bold text-[var(--brand-primary)] mb-4">Direct Line to Founders - Shape the Product</h3>
-              <p className="text-[var(--success)]">
+              <p className="text-[var(--text-secondary)]">
                 No layers of product managers or bureaucracy. You talk directly to the founders building your features. Your feedback gets implemented in days, not quarters. We're building this for you, not at you.
               </p>
             </motion.div>
@@ -391,7 +391,7 @@ export default function AgencyPartnersPage() {
             >
               <DollarSign className="w-12 h-12 text-holo-mint mb-4" />
               <h3 className="text-2xl font-bold text-[var(--brand-primary)] mb-4">Lock in Pricing Before We Scale</h3>
-              <p className="text-[var(--success)]">
+              <p className="text-[var(--text-secondary)]">
                 40% savings locked in forever. Once we prove value and scale to hundreds of agencies, these partnership rates go away. Early partners get rewarded for taking the first step with us.
               </p>
             </motion.div>
@@ -405,7 +405,7 @@ export default function AgencyPartnersPage() {
             >
               <Rocket className="w-12 h-12 text-holo-mint mb-4" />
               <h3 className="text-2xl font-bold text-[var(--brand-primary)] mb-4">First-Mover Advantage in Your Market</h3>
-              <p className="text-[var(--success)]">
+              <p className="text-[var(--text-secondary)]">
                 Be the first agency in your niche offering AI-powered creator monetization. Build case studies and prove ROI before your competitors even hear about us. Position yourself as the innovation leader.
               </p>
             </motion.div>
@@ -419,7 +419,7 @@ export default function AgencyPartnersPage() {
             >
               <Shield className="w-12 h-12 text-holo-mint mb-4" />
               <h3 className="text-2xl font-bold text-[var(--brand-primary)] mb-4">Creator Data is Portable & Owned by Creators</h3>
-              <p className="text-[var(--success)]">
+              <p className="text-[var(--text-secondary)]">
                 No lock-in risk. Creators own their accounts and data. If they leave your agency, they disconnect from your org but keep their Repruv account. If you decide we're not a fit, your creators can continue independently or export their data.
               </p>
             </motion.div>
@@ -453,14 +453,14 @@ export default function AgencyPartnersPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-xl font-bold text-[var(--brand-primary)]">{step.title}</h3>
-                      <span className="text-sm text-[var(--success)] bg-muted px-3 py-1 rounded-full">
+                      <span className="text-sm text-[var(--text-secondary)] bg-muted px-3 py-1 rounded-full">
                         {step.duration}
                       </span>
                     </div>
-                    <p className="text-[var(--success)]">{step.description}</p>
+                    <p className="text-[var(--text-secondary)]">{step.description}</p>
                   </div>
                   {step.action && (
-                    <Button asChild className="bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-black font-bold">
+                    <Button asChild className="bg-[var(--success)] hover:bg-emerald-600 text-[var(--success-foreground)] font-bold">
                       <Link href="mailto:partners@repruv.co.uk">
                         {step.action}
                       </Link>
@@ -491,7 +491,7 @@ export default function AgencyPartnersPage() {
                 transition={{ duration: 0.4, delay: index * 0.05 }}
               >
                 <h3 className="text-lg font-bold text-[var(--brand-primary)] mb-3">{faq.question}</h3>
-                <p className="text-[var(--success)]">{faq.answer}</p>
+                <p className="text-[var(--text-secondary)]">{faq.answer}</p>
               </motion.div>
             ))}
           </div>
@@ -511,18 +511,18 @@ export default function AgencyPartnersPage() {
             <h2 className="text-4xl md:text-5xl font-bold text-[var(--brand-primary)] mb-4">
               Ready for Next Steps?
             </h2>
-            <p className="text-lg text-[var(--success)] mb-8 max-w-2xl mx-auto">
+            <p className="text-lg text-[var(--text-secondary)] mb-8 max-w-2xl mx-auto">
               We're onboarding our first 5 agency partners now.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-black px-8 py-6 text-lg font-bold">
+              <Button asChild size="lg" className="bg-[var(--success)] hover:bg-emerald-600 text-[var(--success-foreground)] px-8 py-6 text-lg font-bold">
                 <Link href="https://calendar.app.google/nq6qhPm1UYdZvHde8" target="_blank" rel="noopener noreferrer">
                   <Calendar className="w-5 h-5 mr-2" />
                   Schedule Partnership Call
                 </Link>
               </Button>
             </div>
-            <p className="text-sm text-[var(--success)] mt-6">
+            <p className="text-sm text-[var(--text-secondary)] mt-6">
               Or email: <a href="mailto:partners@repruv.co.uk" className="font-bold hover:text-holo-mint transition-colors">partners@repruv.co.uk</a>
             </p>
           </motion.div>
