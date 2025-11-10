@@ -561,7 +561,13 @@ Generate the plan now:"""
         profile: Dict,
         content_analysis: Dict
     ):
-        """Store generated opportunities in DB."""
+        """
+        Store generated opportunities in DB.
+
+        Uses a fresh database session to avoid connection timeout issues
+        after long-running AI operations.
+        """
+        from app.core.database import get_async_session_context
 
         generation = GeneratedOpportunities(
             user_id=user_id,
@@ -578,9 +584,11 @@ Generate the plan now:"""
             generated_at=datetime.utcnow()
         )
 
-        self.db.add(generation)
-        await self.db.commit()
-        await self.db.refresh(generation)
+        # Use a fresh database session to avoid connection timeout
+        async with get_async_session_context() as fresh_db:
+            fresh_db.add(generation)
+            await fresh_db.commit()
+            await fresh_db.refresh(generation)
 
         logger.info(f"Stored generation {generation.id} for user {user_id}")
 

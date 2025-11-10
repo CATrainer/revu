@@ -415,35 +415,31 @@ async def run_analysis_pipeline(user_id: str, analysis_id: str):
     1. Analyze content
     2. Generate opportunities
     3. Mark complete
+
+    Note: We use separate database sessions to avoid connection timeouts
+    during long-running AI operations.
     """
 
     # Import the context manager for creating a new session
     from app.core.database import get_async_session_context
 
     try:
-        # Create a new database session for this background task
-        async with get_async_session_context() as db:
-            # Update status: analyzing
-            analysis_status_cache[analysis_id] = {
-                "user_id": user_id,
-                "status": "analyzing",
-                "progress": 25,
-                "current_step": "Analyzing your content and audience..."
-            }
+        # Phase 1: Read data from database (short-lived session)
+        logger.info(f"Starting analysis pipeline for user {user_id}")
 
-            # Analyze content
+        analysis_status_cache[analysis_id] = {
+            "user_id": user_id,
+            "status": "analyzing",
+            "progress": 25,
+            "current_step": "Analyzing your content and audience..."
+        }
+
+        # Analyze content (this may take 10-30 seconds but includes DB operations)
+        async with get_async_session_context() as db:
             analyzer = ContentAnalyzer(db)
             content_analysis = await analyzer.analyze_creator(user_id)
 
-            # Update status: generating
-            analysis_status_cache[analysis_id] = {
-                "user_id": user_id,
-                "status": "generating",
-                "progress": 60,
-                "current_step": "Generating personalized opportunities..."
-            }
-
-            # Get profile
+            # Get profile while we have the session
             result = await db.execute(
                 select(CreatorProfile).where(CreatorProfile.user_id == user_id)
             )
@@ -461,24 +457,35 @@ async def run_analysis_pipeline(user_id: str, analysis_id: str):
                 "content_frequency": profile.content_frequency
             }
 
-            # Generate opportunities
-            generator = OpportunityGenerator(db)
+        # Session closed - now safe to do long-running AI operations
 
+        # Phase 2: Generate opportunities using AI (can take 60-120 seconds)
+        analysis_status_cache[analysis_id] = {
+            "user_id": user_id,
+            "status": "generating",
+            "progress": 60,
+            "current_step": "Generating personalized opportunities..."
+        }
+
+        # Use a fresh session for the generator (it stores results)
+        async with get_async_session_context() as db:
+            generator = OpportunityGenerator(db)
             opportunities = await generator.generate_opportunities(
                 user_id,
                 profile_dict,
                 content_analysis
             )
+            # This will commit the generated opportunities
 
-            # Update status: complete
-            analysis_status_cache[analysis_id] = {
-                "user_id": user_id,
-                "status": "complete",
-                "progress": 100,
-                "current_step": "Analysis complete!"
-            }
+        # Phase 3: Mark complete
+        analysis_status_cache[analysis_id] = {
+            "user_id": user_id,
+            "status": "complete",
+            "progress": 100,
+            "current_step": "Analysis complete!"
+        }
 
-            logger.info(f"Analysis pipeline completed for user {user_id}")
+        logger.info(f"Analysis pipeline completed for user {user_id}")
 
     except Exception as e:
         logger.error(f"Error in analysis pipeline: {e}")
