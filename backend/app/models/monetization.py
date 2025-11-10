@@ -45,35 +45,40 @@ class CreatorProfile(Base):
 
 class ActiveProject(Base):
     """Active monetization project for a creator."""
-    
+
     __tablename__ = "active_projects"
-    
+
     user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    
+
     # Opportunity details
     opportunity_id = Column(String(100), nullable=False, default="premium-community")
     opportunity_title = Column(String(200), nullable=False, default="Premium Community")
     opportunity_category = Column(String(50), nullable=False, default="community")
-    
+
     # Project state
     status = Column(String(20), nullable=False, default="active")  # 'active', 'completed', 'abandoned'
     current_phase_index = Column(Integer, nullable=False, default=0)
-    
+
     # Progress tracking (0-100 for each)
     overall_progress = Column(Integer, nullable=False, default=0)
     planning_progress = Column(Integer, nullable=False, default=0)  # 5 key decisions
     execution_progress = Column(Integer, nullable=False, default=0)  # 22 tasks
     timeline_progress = Column(Integer)  # nullable if no target date
-    
+
     # Timeline
     started_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     target_launch_date = Column(Date)
     last_activity_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     completed_at = Column(DateTime(timezone=True))
-    
+
     # The implementation plan (JSONB for flexibility)
     customized_plan = Column(JSONB, nullable=False)  # copy of opportunity template
-    
+
+    # AI-generated opportunity fields
+    opportunity_data = Column(JSONB)  # Full opportunity data from AI generation
+    is_custom_generated = Column(Boolean, nullable=False, default=False)  # True if from AI discovery
+    generation_id = Column(PGUUID(as_uuid=True), ForeignKey("generated_opportunities.id"))  # Link to generation
+
     # Relationships
     user = relationship("User", back_populates="active_projects")
     chat_messages = relationship("ProjectChatMessage", back_populates="project", cascade="all, delete-orphan")
@@ -289,9 +294,6 @@ class GeneratedOpportunities(Base):
     """History of AI-generated opportunities for users."""
 
     __tablename__ = "generated_opportunities"
-
-    # Override updated_at from Base since this is an immutable historical record
-    updated_at = None
 
     user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
