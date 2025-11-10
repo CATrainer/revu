@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Sparkles, BookOpen, TrendingUp, DollarSign, Clock, CheckCircle2, ArrowRight } from 'lucide-react';
-import ErrorHandler from '@/lib/error-handler';
+import { Loader2, Sparkles, BookOpen, TrendingUp, DollarSign, Clock, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { ErrorHandler } from '@/lib/error-handler';
 import {
   getOpportunityTemplates,
   createProject,
@@ -128,6 +128,13 @@ export default function ChooseOpportunityPage() {
     <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
       <div className="mb-8">
+        <button
+          onClick={() => router.push('/monetization')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to Monetization</span>
+        </button>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Choose Your Monetization Opportunity
         </h1>
