@@ -26,7 +26,7 @@ router = APIRouter()
 
 
 # ------------------------------ Workflows ------------------------------------
-@router.post("/workflows", response_model=WorkflowOut, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=WorkflowOut, status_code=status.HTTP_201_CREATED)
 async def create_workflow(
     payload: WorkflowCreate,
     session: AsyncSession = Depends(get_async_session),
@@ -60,7 +60,7 @@ async def create_workflow(
     return obj
 
 
-@router.get("/workflows", response_model=List[WorkflowOut])
+@router.get("", response_model=List[WorkflowOut])
 async def list_workflows(
     status_eq: Optional[str] = None,
     session: AsyncSession = Depends(get_async_session),
@@ -77,7 +77,7 @@ async def list_workflows(
     return list(res.scalars().all())
 
 
-@router.get("/workflows/{workflow_id}", response_model=WorkflowOut)
+@router.get("/{workflow_id}", response_model=WorkflowOut)
 async def get_workflow(
     workflow_id: UUID,
     session: AsyncSession = Depends(get_async_session),
@@ -91,7 +91,7 @@ async def get_workflow(
     return obj
 
 
-@router.patch("/workflows/{workflow_id}", response_model=WorkflowOut)
+@router.patch("/{workflow_id}", response_model=WorkflowOut)
 async def update_workflow(
     workflow_id: UUID,
     payload: WorkflowUpdate,
@@ -133,7 +133,7 @@ async def update_workflow(
     return obj
 
 
-@router.delete("/workflows/{workflow_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{workflow_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_workflow(
     workflow_id: UUID,
     session: AsyncSession = Depends(get_async_session),
@@ -149,7 +149,7 @@ async def delete_workflow(
 
 
 # ------------------------- Workflow state actions ----------------------------
-@router.post("/workflows/{workflow_id}/activate", response_model=WorkflowOut)
+@router.post("/{workflow_id}/activate", response_model=WorkflowOut)
 async def activate_workflow(
     workflow_id: UUID,
     session: AsyncSession = Depends(get_async_session),
@@ -166,7 +166,7 @@ async def activate_workflow(
     return obj
 
 
-@router.post("/workflows/{workflow_id}/pause", response_model=WorkflowOut)
+@router.post("/{workflow_id}/pause", response_model=WorkflowOut)
 async def pause_workflow(
     workflow_id: UUID,
     session: AsyncSession = Depends(get_async_session),
@@ -184,7 +184,7 @@ async def pause_workflow(
 
 
 # ----------------------------- Approvals -------------------------------------
-@router.post("/workflows/approvals", response_model=ApprovalOut, status_code=status.HTTP_201_CREATED)
+@router.post("/approvals", response_model=ApprovalOut, status_code=status.HTTP_201_CREATED)
 async def create_approval(
     payload: ApprovalCreate,
     session: AsyncSession = Depends(get_async_session),
@@ -210,7 +210,7 @@ async def create_approval(
     return obj
 
 
-@router.get("/workflows/approvals", response_model=List[ApprovalOut])
+@router.get("/approvals", response_model=List[ApprovalOut])
 async def list_approvals(
     status_eq: Optional[str] = "pending",
     session: AsyncSession = Depends(get_async_session),
@@ -227,7 +227,7 @@ async def list_approvals(
     return list(res.scalars().all())
 
 
-@router.get("/workflows/approvals/{approval_id}", response_model=ApprovalOut)
+@router.get("/approvals/{approval_id}", response_model=ApprovalOut)
 async def get_approval(
     approval_id: UUID,
     session: AsyncSession = Depends(get_async_session),
@@ -241,7 +241,7 @@ async def get_approval(
     return obj
 
 
-@router.patch("/workflows/approvals/{approval_id}", response_model=ApprovalOut)
+@router.patch("/approvals/{approval_id}", response_model=ApprovalOut)
 async def update_approval(
     approval_id: UUID,
     payload: ApprovalUpdate,
@@ -264,7 +264,7 @@ async def update_approval(
     return obj
 
 
-@router.post("/workflows/approvals/{approval_id}/send", response_model=ApprovalOut)
+@router.post("/approvals/{approval_id}/send", response_model=ApprovalOut)
 async def send_approval(
     approval_id: UUID,
     session: AsyncSession = Depends(get_async_session),
@@ -281,7 +281,7 @@ async def send_approval(
     return obj
 
 
-@router.post("/workflows/approvals/{approval_id}/reject", response_model=ApprovalOut)
+@router.post("/approvals/{approval_id}/reject", response_model=ApprovalOut)
 async def reject_approval(
     approval_id: UUID,
     reason: Optional[str] = None,
@@ -302,7 +302,7 @@ async def reject_approval(
 
 # ----------------------------- Executions ------------------------------------
 @router.post(
-    "/workflows/{workflow_id}/executions",
+    "/{workflow_id}/executions",
     response_model=WorkflowExecutionOut,
     status_code=status.HTTP_201_CREATED,
 )
@@ -331,7 +331,7 @@ async def log_execution(
 
 
 @router.get(
-    "/workflows/{workflow_id}/executions",
+    "/{workflow_id}/executions",
     response_model=List[WorkflowExecutionOut],
 )
 async def list_executions(
@@ -348,7 +348,7 @@ async def list_executions(
 
 
 # ----------------------------- Testing & Analytics ---------------------------
-@router.post("/workflows/{workflow_id}/test")
+@router.post("/{workflow_id}/test")
 async def test_workflow(
     workflow_id: UUID,
     limit: int = 10,
@@ -389,7 +389,7 @@ async def test_workflow(
     }
 
 
-@router.get("/workflows/{workflow_id}/analytics")
+@router.get("/{workflow_id}/analytics")
 async def get_workflow_analytics(
     workflow_id: UUID,
     session: AsyncSession = Depends(get_async_session),
@@ -447,7 +447,7 @@ async def get_workflow_analytics(
     }
 
 
-@router.get("/workflows/analytics/overview")
+@router.get("/analytics/overview")
 async def get_workflows_overview(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),

@@ -52,42 +52,42 @@ async function http<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
 
 // Workflows
 export async function createWorkflow(body: WorkflowCreateBody): Promise<WorkflowOut> {
-  return http<WorkflowOut>(base('/workflows'), { method: 'POST', body: JSON.stringify(body) });
+  return http<WorkflowOut>(base(''), { method: 'POST', body: JSON.stringify(body) });
 }
 
 export async function listWorkflows(status_eq?: WorkflowStatus): Promise<WorkflowOut[]> {
   const qs = status_eq ? `?status_eq=${encodeURIComponent(status_eq)}` : '';
-  return http<WorkflowOut[]>(base(`/workflows${qs}`));
+  return http<WorkflowOut[]>(base(`${qs}`));
 }
 
 export async function activateWorkflow(id: string): Promise<WorkflowOut> {
-  return http<WorkflowOut>(base(`/workflows/${id}/activate`), { method: 'POST' });
+  return http<WorkflowOut>(base(`/${id}/activate`), { method: 'POST' });
 }
 
 export async function pauseWorkflow(id: string): Promise<WorkflowOut> {
-  return http<WorkflowOut>(base(`/workflows/${id}/pause`), { method: 'POST' });
+  return http<WorkflowOut>(base(`/${id}/pause`), { method: 'POST' });
 }
 
 // Approvals
 export async function listApprovals(status_eq: 'pending'|'sent'|'rejected'|'saved' = 'pending'): Promise<ApprovalOut[]> {
-  return http<ApprovalOut[]>(base(`/workflows/approvals?status_eq=${status_eq}`));
+  return http<ApprovalOut[]>(base(`/approvals?status_eq=${status_eq}`));
 }
 
 export async function updateApproval(id: string, patch: Partial<Pick<ApprovalOut,'edited_response'|'status'|'rejected_reason'>>): Promise<ApprovalOut> {
-  return http<ApprovalOut>(base(`/workflows/approvals/${id}`), { method: 'PATCH', body: JSON.stringify(patch) });
+  return http<ApprovalOut>(base(`/approvals/${id}`), { method: 'PATCH', body: JSON.stringify(patch) });
 }
 
 export async function sendApproval(id: string): Promise<ApprovalOut> {
-  return http<ApprovalOut>(base(`/workflows/approvals/${id}/send`), { method: 'POST' });
+  return http<ApprovalOut>(base(`/approvals/${id}/send`), { method: 'POST' });
 }
 
 export async function rejectApproval(id: string, reason?: string): Promise<ApprovalOut> {
-  const url = reason ? base(`/workflows/approvals/${id}/reject?reason=${encodeURIComponent(reason)}`) : base(`/workflows/approvals/${id}/reject`);
+  const url = reason ? base(`/approvals/${id}/reject?reason=${encodeURIComponent(reason)}`) : base(`/approvals/${id}/reject`);
   return http<ApprovalOut>(url, { method: 'POST' });
 }
 
 // Executions (optional usage for logs)
 export interface WorkflowExecutionOut { id: string; workflow_id: string; status: 'completed'|'failed'|'skipped'; context?: Record<string, unknown> | null; result?: Record<string, unknown> | null; error?: string | null; created_at: string; updated_at: string }
 export async function listExecutions(workflowId: string): Promise<WorkflowExecutionOut[]> {
-  return http<WorkflowExecutionOut[]>(base(`/workflows/${workflowId}/executions`));
+  return http<WorkflowExecutionOut[]>(base(`/${workflowId}/executions`));
 }
