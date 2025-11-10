@@ -107,8 +107,19 @@ async def submit_creator_application(
     
     logger.info(f"Creator application submitted: {current_user.email}")
     
+    # Send acknowledgment email to user
+    from app.tasks.email import send_application_submitted_acknowledgment, send_new_application_notification_to_admins
+    try:
+        send_application_submitted_acknowledgment.delay(
+            user_email=current_user.email,
+            user_name=current_user.full_name or current_user.email.split('@')[0],
+            account_type='creator'
+        )
+        logger.info(f"Acknowledgment email queued for {current_user.email}")
+    except Exception as e:
+        logger.error(f"Failed to queue acknowledgment email: {e}")
+    
     # Send notification emails to admins
-    from app.tasks.email import send_new_application_notification_to_admins
     try:
         send_new_application_notification_to_admins.delay(
             applicant_email=current_user.email,
@@ -171,8 +182,19 @@ async def submit_agency_application(
     
     logger.info(f"Agency application submitted: {current_user.email} (HIGH PRIORITY)")
     
+    # Send acknowledgment email to user
+    from app.tasks.email import send_application_submitted_acknowledgment, send_new_application_notification_to_admins
+    try:
+        send_application_submitted_acknowledgment.delay(
+            user_email=current_user.email,
+            user_name=current_user.full_name or current_user.email.split('@')[0],
+            account_type='agency'
+        )
+        logger.info(f"Acknowledgment email queued for {current_user.email}")
+    except Exception as e:
+        logger.error(f"Failed to queue acknowledgment email: {e}")
+    
     # Send HIGH PRIORITY notification emails to admins
-    from app.tasks.email import send_new_application_notification_to_admins
     try:
         send_new_application_notification_to_admins.delay(
             applicant_email=current_user.email,

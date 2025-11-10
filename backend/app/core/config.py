@@ -157,6 +157,9 @@ class Settings(BaseSettings):
     # SendGrid (optional)
     SENDGRID_API_KEY: Optional[str] = None
     SENDGRID_WELCOME_TEMPLATE_ID: Optional[str] = None
+    SENDGRID_APPLICATION_ACKNOWLEDGMENT_TEMPLATE_ID: Optional[str] = None
+    SENDGRID_APPLICATION_APPROVED_TEMPLATE_ID: Optional[str] = None
+    SENDGRID_ADMIN_NOTIFICATION_TEMPLATE_ID: Optional[str] = None
     SENDGRID_MARKETING_LIST_ID: Optional[str] = None
     SENDGRID_WEBHOOK_PUBLIC_KEY: Optional[str] = None
     # Optional: Custom field IDs in SendGrid Marketing (e.g., e1_N, e2_T, etc.)

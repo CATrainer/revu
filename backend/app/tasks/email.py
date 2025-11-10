@@ -819,9 +819,36 @@ def send_application_approved_email(user_email: str, user_name: str, account_typ
         bool: Success status
     """
     try:
-        subject = "Welcome to Repruv — Your Application is Approved! 🎉"
-        
         account_label = "Creator" if account_type == "creator" else "Agency"
+        
+        # If SendGrid template is configured, use it
+        if settings.SENDGRID_API_KEY and settings.SENDGRID_APPLICATION_APPROVED_TEMPLATE_ID:
+            try:
+                from sendgrid import SendGridAPIClient
+                from sendgrid.helpers.mail import Mail, From, To
+                
+                message = Mail(
+                    from_email=From(str(settings.EMAIL_FROM_ADDRESS), settings.EMAIL_FROM_NAME),
+                    to_emails=[To(user_email)],
+                )
+                message.template_id = settings.SENDGRID_APPLICATION_APPROVED_TEMPLATE_ID
+                message.dynamic_template_data = {
+                    "user_name": user_name,
+                    "account_type": account_label,
+                    "frontend_url": settings.FRONTEND_URL,
+                    "year": datetime.utcnow().year,
+                }
+                
+                sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
+                resp = sg.send(message)
+                logger.info(f"SendGrid approval email sent to {user_email}, status={resp.status_code}")
+                return 200 <= int(resp.status_code) < 300
+            except Exception as e:
+                logger.error(f"SendGrid approval send failed for {user_email}: {e}")
+                # Fall through to inline HTML
+        
+        # Fallback to inline HTML
+        subject = "Welcome to Repruv — Your Application is Approved! 🎉"
         
         html_content = f"""
         <!doctype html>
