@@ -43,6 +43,7 @@ from app.models.content import (
     ActionItem,
 )
 from app.models.application import Application, AdminNotificationSettings
+from app.models.monetization import CreatorProfile
 from app.models.credit_usage import (
     CreditUsageEvent,
     UserCreditBalance,
@@ -92,6 +93,7 @@ __all__ = [
     "ActionItem",
     "Application",
     "AdminNotificationSettings",
+    "CreatorProfile",
     "CreditUsageEvent",
     "UserCreditBalance",
     "CreditActionCost",
