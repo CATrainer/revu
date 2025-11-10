@@ -18,32 +18,32 @@ export default function AgencyPartnersPage() {
   const whyPartnerBenefits = [
     {
       icon: TrendingUp,
-      title: 'Drive Creator Revenue Growth',
+      title: 'Reduce Creator Churn',
       points: [
-        'Capture more monetization opportunities',
-        'Grow channels faster with data insights',
-        'Save time with automation',
-        'Result: Creators earn more, stay longer, refer others'
+        'Automated engagement keeps creators active',
+        'Revenue growth makes your service more valuable',
+        'Data-driven insights show tangible ROI',
+        'Creators who earn more stay longer'
       ]
     },
     {
-      icon: MessageCircle,
-      title: 'Shape the Product',
+      icon: DollarSign,
+      title: 'Differentiated Service You Can Charge Premium For',
       points: [
-        'Monthly strategy calls with founding team',
-        'Feature prioritization input',
-        'Early access to new features',
-        'Co-design sessions for agency tools'
+        'Offer advanced monetization tools competitors don\'t have',
+        'Enterprise-level automation at agency scale',
+        'White-label reporting coming Q1 2026',
+        'Position as innovation leader in your market'
       ]
     },
     {
-      icon: Lock,
-      title: 'Lock In Preferential Pricing',
+      icon: Headphones,
+      title: 'Enterprise Tools Without Enterprise Complexity',
       points: [
-        'Free unlimited access during development',
-        '30-40% off launch pricing, locked in forever',
-        'No long-term contracts',
-        'Annual savings: £4,560 for 20 creators'
+        'Direct founder access during development',
+        'Custom solutions built for your workflows',
+        'No corporate bureaucracy or lengthy onboarding',
+        'Priority support as launch partner'
       ]
     }
   ];
@@ -75,34 +75,27 @@ export default function AgencyPartnersPage() {
   const howItWorks = [
     {
       step: '1',
-      title: 'Discovery Call',
-      duration: '30 minutes',
-      description: 'We discuss your agency structure, creator roster, biggest challenges, and whether Repruv is a good fit.',
-      action: 'Schedule Discovery Call'
-    },
-    {
-      step: '2',
       title: 'Partnership Agreement',
       duration: 'Week 1',
       description: 'Agree on pilot size, set expectations, schedule setup call, and finalize agency features for your needs.',
       action: null
     },
     {
-      step: '3',
+      step: '2',
       title: 'Setup & Onboarding',
       duration: 'Week 2-3',
       description: 'Build core agency features, setup call, create invite codes, onboard first pilot group (5-10 creators).',
       action: null
     },
     {
-      step: '4',
+      step: '3',
       title: 'Pilot Phase',
       duration: 'Month 1-2',
       description: 'Creators start using Repruv, we monitor usage, gather feedback, monthly check-ins, iterate on features.',
       action: null
     },
     {
-      step: '5',
+      step: '4',
       title: 'Scale Together',
       duration: 'Month 3+',
       description: 'Expand to more creators, advanced features roll out, prepare for launch with preferential pricing.',
@@ -112,16 +105,28 @@ export default function AgencyPartnersPage() {
 
   const faqs = [
     {
+      question: 'How does this integrate with our existing tools?',
+      answer: 'Repruv works alongside your existing tools. Creators connect their social platforms directly to Repruv. We\'re not replacing your project management or communication tools - we\'re adding monetization intelligence. API access for custom integrations comes in Q1 2026.'
+    },
+    {
+      question: 'What if a creator leaves our agency?',
+      answer: 'Creators own their accounts and data. If they leave your agency, they disconnect from your org and keep using Repruv independently. No lock-in for them or you. This actually reduces friction in creator relationships.'
+    },
+    {
+      question: 'What\'s the time commitment from our team?',
+      answer: 'Minimal ongoing time. Initial setup takes about 1 hour for onboarding call. Monthly feedback calls are 1-2 hours. The platform is designed to save your team time with automation - not create more work.'
+    },
+    {
+      question: 'How is our agency data protected?',
+      answer: 'Your data is isolated from other agencies. Creators you onboard are linked to your organization. We don\'t share performance data between agencies. Enterprise-grade security with encrypted data storage. SOC 2 compliance planned for Q2 2026.'
+    },
+    {
+      question: 'What\'s your tech infrastructure/uptime?',
+      answer: 'Built on Google Cloud Platform with 99.9% uptime SLA. Automated backups and redundancy. Real-time monitoring and incident response. We\'re building for scale from day one - not retrofitting later.'
+    },
+    {
       question: 'Do we have to pay anything during Early Access?',
-      answer: 'No. Everything is free during development. You only pay when we officially launch, and you\'ll get 30-40% off standard pricing locked in.'
-    },
-    {
-      question: 'What\'s the time commitment?',
-      answer: 'About 2 hours/month for structured feedback calls, plus time for your team and creators to actually use the platform. We want real usage, not just opinions.'
-    },
-    {
-      question: 'When will agency features be ready?',
-      answer: 'Core agency dashboard and multi-creator management targeting end of November 2025. Advanced features (white-label, API, advanced reporting) in Q1 2026.'
+      answer: 'No. Everything is free during development. You only pay when we officially launch, and you\'ll get 30-40% off standard pricing locked in forever.'
     },
     {
       question: 'Can we pilot with just a few creators first?',
@@ -129,11 +134,7 @@ export default function AgencyPartnersPage() {
     },
     {
       question: 'Do we get to keep the preferential pricing forever?',
-      answer: 'Yes. Whatever discount we agree on (30-40% off) is locked in for as long as you\'re a customer. No price increases.'
-    },
-    {
-      question: 'Can our creators use this if they leave our agency?',
-      answer: 'Yes. Creators own their accounts and data. If they leave your agency, they disconnect from your org and keep using Repruv independently.'
+      answer: 'Yes. Whatever discount we agree on (30-40% off) is locked in for as long as you\'re a customer. No price increases, even as we add features.'
     }
   ];
 
@@ -161,8 +162,11 @@ export default function AgencyPartnersPage() {
             <p className="text-xl md:text-2xl text-[var(--success)] max-w-4xl mx-auto mb-8 font-bold">
               Build the Future of Creator Monetization With Us
             </p>
-            <p className="text-lg text-secondary-dark max-w-3xl mx-auto">
+            <p className="text-lg text-secondary-dark max-w-3xl mx-auto mb-4">
               We're developing Repruv's agency features in partnership with forward-thinking social media agencies. Instead of building in isolation, we're creating tools that solve real agency problems and help your creators make more money.
+            </p>
+            <p className="text-sm text-[var(--success)] font-semibold">
+              Currently in pilot phase with select agency partners managing 50+ creators
             </p>
           </motion.div>
 
@@ -173,13 +177,14 @@ export default function AgencyPartnersPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <Button asChild size="lg" className="bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-black px-8 py-6 text-lg font-bold">
-              <Link href="mailto:partners@repruv.co.uk">
-                Apply for Partnership
+              <Link href="https://calendar.app.google/nq6qhPm1UYdZvHde8" target="_blank" rel="noopener noreferrer">
+                <Calendar className="w-5 h-5 mr-2" />
+                Schedule Partnership Call
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-2 border-[var(--brand-primary)] text-[var(--success)] hover:bg-muted px-8 py-6 text-lg font-bold">
               <Link href="mailto:partners@repruv.co.uk">
-                Schedule Discovery Call
+                Email Us
               </Link>
             </Button>
           </motion.div>
@@ -226,42 +231,39 @@ export default function AgencyPartnersPage() {
             transition={{ duration: 0.6 }}
           >
             <div className="text-center">
-              <h3 className="text-3xl md:text-4xl font-bold text-[var(--brand-primary)] mb-2">Partner Pricing Example</h3>
-              <p className="text-[var(--success)] mb-6">See how much you'll save with Repruv partnership</p>
-              
-              <div className="grid md:grid-cols-3 gap-6">
-                {/* Standard Pricing */}
-                <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-4 border border-red-200 dark:border-red-700">
-                  <h4 className="text-base font-bold text-[var(--brand-primary)] mb-3">Standard Pricing</h4>
-                  <p className="text-xs text-[var(--success)] mb-2">After Launch</p>
-                  <div className="space-y-1 text-left text-sm">
-                    <p className="text-secondary-dark">Base: <span className="font-bold">£250/mo</span></p>
-                    <p className="text-secondary-dark">Per creator: <span className="font-bold">£35</span></p>
-                    <div className="border-t border-red-300 dark:border-red-600 pt-2 mt-2">
-                      <p className="font-bold text-red-600">£950/mo</p>
-                      <p className="text-xs text-secondary-dark">for 20 creators</p>
-                    </div>
+              <h3 className="text-3xl md:text-4xl font-bold text-[var(--brand-primary)] mb-2">Partner Pricing</h3>
+              <p className="text-[var(--success)] mb-6">Built for agencies, priced for partnerships</p>
+
+              <div className="space-y-4 text-left max-w-3xl mx-auto">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-6 h-6 text-holo-mint flex-shrink-0 mt-1" />
+                  <div>
+                    <p className="text-lg font-bold text-[var(--brand-primary)]">30-40% off standard rates, locked in forever</p>
+                    <p className="text-sm text-[var(--success)]">Your discount never expires, even as we scale</p>
                   </div>
                 </div>
 
-                {/* Savings */}
-                <div className="bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-primary)]/80 rounded-lg p-4 flex flex-col justify-center">
-                  <p className="text-white text-xs mb-1">Annual Savings</p>
-                  <p className="text-3xl font-bold text-[var(--success)]">£4,560</p>
-                  <p className="text-white text-xs mt-1">Lock in forever</p>
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-6 h-6 text-holo-mint flex-shrink-0 mt-1" />
+                  <div>
+                    <p className="text-lg font-bold text-[var(--brand-primary)]">Typical agency with 20 creators saves $4,000+/year</p>
+                    <p className="text-sm text-[var(--success)]">ROI scales with your roster size</p>
+                  </div>
                 </div>
 
-                {/* Partner Pricing */}
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-lg p-4 border-2 border-[var(--success)]">
-                  <h4 className="text-base font-bold text-[var(--brand-primary)] mb-3">Partner Rate</h4>
-                  <p className="text-xs text-[var(--success)] mb-2 font-bold">🎉 40% Off!</p>
-                  <div className="space-y-1 text-left text-sm">
-                    <p className="text-secondary-dark">Base: <span className="font-bold">£150/mo</span></p>
-                    <p className="text-secondary-dark">Per creator: <span className="font-bold">£21</span></p>
-                    <div className="border-t border-emerald-300 dark:border-emerald-600 pt-2 mt-2">
-                      <p className="font-bold text-[var(--success)]">£570/mo</p>
-                      <p className="text-xs text-secondary-dark">for 20 creators</p>
-                    </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-6 h-6 text-holo-mint flex-shrink-0 mt-1" />
+                  <div>
+                    <p className="text-lg font-bold text-[var(--brand-primary)]">Exact pricing discussed on your discovery call</p>
+                    <p className="text-sm text-[var(--success)]">Based on roster size and your specific needs</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-6 h-6 text-holo-mint flex-shrink-0 mt-1" />
+                  <div>
+                    <p className="text-lg font-bold text-[var(--brand-primary)]">No payment required during Early Access</p>
+                    <p className="text-sm text-[var(--success)]">Free unlimited access during development phase</p>
                   </div>
                 </div>
               </div>
@@ -358,11 +360,78 @@ export default function AgencyPartnersPage() {
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* Why Partner With an Early-Stage Startup? */}
       <section className="py-16 md:py-24 section-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl md:text-5xl font-bold text-[var(--brand-primary)] mb-12 text-center">
-            How It Works
+            Why Partner With an Early-Stage Startup?
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            <motion.div
+              className="glass-panel rounded-2xl p-8"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <Headphones className="w-12 h-12 text-holo-mint mb-4" />
+              <h3 className="text-2xl font-bold text-[var(--brand-primary)] mb-4">Direct Line to Founders - Shape the Product</h3>
+              <p className="text-[var(--success)]">
+                No layers of product managers or bureaucracy. You talk directly to the founders building your features. Your feedback gets implemented in days, not quarters. We're building this for you, not at you.
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="glass-panel rounded-2xl p-8"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              <DollarSign className="w-12 h-12 text-holo-mint mb-4" />
+              <h3 className="text-2xl font-bold text-[var(--brand-primary)] mb-4">Lock in Pricing Before We Scale</h3>
+              <p className="text-[var(--success)]">
+                40% savings locked in forever. Once we prove value and scale to hundreds of agencies, these partnership rates go away. Early partners get rewarded for taking the first step with us.
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="glass-panel rounded-2xl p-8"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <Rocket className="w-12 h-12 text-holo-mint mb-4" />
+              <h3 className="text-2xl font-bold text-[var(--brand-primary)] mb-4">First-Mover Advantage in Your Market</h3>
+              <p className="text-[var(--success)]">
+                Be the first agency in your niche offering AI-powered creator monetization. Build case studies and prove ROI before your competitors even hear about us. Position yourself as the innovation leader.
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="glass-panel rounded-2xl p-8"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <Shield className="w-12 h-12 text-holo-mint mb-4" />
+              <h3 className="text-2xl font-bold text-[var(--brand-primary)] mb-4">Creator Data is Portable & Owned by Creators</h3>
+              <p className="text-[var(--success)]">
+                No lock-in risk. Creators own their accounts and data. If they leave your agency, they disconnect from your org but keep their Repruv account. If you decide we're not a fit, your creators can continue independently or export their data.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Next Steps After Our Call */}
+      <section className="py-16 md:py-24 section-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-4xl md:text-5xl font-bold text-[var(--brand-primary)] mb-12 text-center">
+            Next Steps After Our Call
           </h2>
 
           <div className="space-y-6">
@@ -408,7 +477,7 @@ export default function AgencyPartnersPage() {
       <section className="py-16 md:py-24 section-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl md:text-5xl font-bold text-[var(--brand-primary)] mb-12 text-center">
-            Frequently Asked Questions
+            What Agencies Ask Us
           </h2>
 
           <div className="space-y-6">
@@ -440,25 +509,21 @@ export default function AgencyPartnersPage() {
             transition={{ duration: 0.6 }}
           >
             <h2 className="text-4xl md:text-5xl font-bold text-[var(--brand-primary)] mb-4">
-              Ready to Partner?
+              Ready for Next Steps?
             </h2>
             <p className="text-lg text-[var(--success)] mb-8 max-w-2xl mx-auto">
-              We're having discovery calls with interested agencies now. Limited partner spots available - we're capping at 5 launch partners to ensure quality relationships.
+              We're onboarding our first 5 agency partners now.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-black px-8 py-6 text-lg font-bold">
-                <Link href="mailto:partners@repruv.co.uk">
-                  Schedule Discovery Call
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="border-2 border-[var(--brand-primary)] text-[var(--success)] hover:bg-muted px-8 py-6 text-lg font-bold">
-                <Link href="mailto:partners@repruv.co.uk">
-                  Email Us
+                <Link href="https://calendar.app.google/nq6qhPm1UYdZvHde8" target="_blank" rel="noopener noreferrer">
+                  <Calendar className="w-5 h-5 mr-2" />
+                  Schedule Partnership Call
                 </Link>
               </Button>
             </div>
             <p className="text-sm text-[var(--success)] mt-6">
-              <strong>Contact:</strong> partners@repruv.co.uk | Response Time: Within 24 hours
+              Or email: <a href="mailto:partners@repruv.co.uk" className="font-bold hover:text-holo-mint transition-colors">partners@repruv.co.uk</a>
             </p>
           </motion.div>
         </div>
