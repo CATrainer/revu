@@ -805,6 +805,83 @@ async def _send_trial_expiration_email(email: str, name: str, days_left: int) ->
         return False
 
 
+@celery_app.task(name="app.tasks.email.send_application_submitted_acknowledgment")
+def send_application_submitted_acknowledgment(user_email: str, user_name: str, account_type: str) -> bool:
+    """
+    Send acknowledgment email when user submits their application.
+    
+    Args:
+        user_email: Recipient email address
+        user_name: Recipient name
+        account_type: Type of account (creator or agency)
+    
+    Returns:
+        bool: Success status
+    """
+    try:
+        account_label = "Creator" if account_type == "creator" else "Agency"
+        
+        # If SendGrid template is configured, use it
+        if settings.SENDGRID_API_KEY and settings.SENDGRID_APPLICATION_ACKNOWLEDGMENT_TEMPLATE_ID:
+            try:
+                from sendgrid import SendGridAPIClient
+                from sendgrid.helpers.mail import Mail, From, To
+                
+                message = Mail(
+                    from_email=From(str(settings.EMAIL_FROM_ADDRESS), settings.EMAIL_FROM_NAME),
+                    to_emails=[To(user_email)],
+                )
+                message.template_id = settings.SENDGRID_APPLICATION_ACKNOWLEDGMENT_TEMPLATE_ID
+                message.dynamic_template_data = {
+                    "user_name": user_name,
+                    "account_type": account_label,
+                    "frontend_url": settings.FRONTEND_URL,
+                    "year": datetime.utcnow().year,
+                }
+                
+                sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
+                resp = sg.send(message)
+                logger.info(f"SendGrid acknowledgment email sent to {user_email}, status={resp.status_code}")
+                return 200 <= int(resp.status_code) < 300
+            except Exception as e:
+                logger.error(f"SendGrid acknowledgment send failed for {user_email}: {e}")
+                # Fall through to inline HTML
+        
+        # Fallback to inline HTML
+        subject = "We've Received Your Repruv Application"
+        html_content = f"""<!doctype html>
+<html>
+<body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:24px;margin:0;">
+    <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+        <div style="text-align:center;margin-bottom:24px;">
+            <h1 style="margin:0;color:#0f172a;font-weight:800;font-size:28px;">Application Received</h1>
+        </div>
+        <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">Hi {user_name},</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">Thank you for applying to join Repruv! We've successfully received your <strong>{account_label}</strong> application and our team is reviewing it.</p>
+        <div style="background:#f0f9ff;border-left:4px solid #3b82f6;padding:20px;margin:24px 0;border-radius:8px;">
+            <h3 style="margin:0 0 12px;color:#1e40af;font-size:18px;font-weight:700;">What Happens Next?</h3>
+            <ul style="margin:0;padding-left:20px;color:#1e3a8a;font-size:14px;line-height:22px;">
+                <li style="margin-bottom:8px;">Our team will review your application within 24-48 hours</li>
+                <li style="margin-bottom:8px;">We'll verify your social media accounts and audience metrics</li>
+                <li style="margin-bottom:8px;">You'll receive an email once we've made a decision</li>
+                <li style="margin-bottom:0;">If approved, you'll get immediate access to the platform</li>
+            </ul>
+        </div>
+        <div style="background:#f8fafc;padding:16px;border-radius:8px;margin-top:24px;">
+            <p style="margin:0;color:#64748b;font-size:14px;line-height:20px;"><strong style="color:#334155;">Questions about your application?</strong><br>Feel free to reply to this email.</p>
+        </div>
+        <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;text-align:center;line-height:18px;">You're receiving this email because you submitted an application to Repruv.<br>&copy; {datetime.utcnow().year} Repruv. All rights reserved.</p>
+    </div>
+</body>
+</html>"""
+        
+        return send_email(user_email, subject, html_content)
+        
+    except Exception as e:
+        logger.error(f"Failed to send application acknowledgment email to {user_email}: {e}")
+        return False
+
+
 @celery_app.task(name="app.tasks.email.send_application_approved_email")
 def send_application_approved_email(user_email: str, user_name: str, account_type: str) -> bool:
     """
