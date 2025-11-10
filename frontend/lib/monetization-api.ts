@@ -150,11 +150,46 @@ export async function getProfile(): Promise<CreatorProfile | null> {
   return response.json();
 }
 
-export async function createProject(): Promise<{ project_id: string; redirect_url: string }> {
+export interface OpportunityTemplate {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  ideal_for: {
+    min_followers?: number;
+    engagement_rate_min?: number;
+    content_types?: string[];
+    audience_signals?: string[];
+  };
+  revenue_model: {
+    pricing_range?: number[];
+    typical_revenue_month_6?: number;
+    typical_revenue_year_1?: number;
+  };
+  success_patterns?: {
+    what_works?: string[];
+    common_failures?: string[];
+    key_metrics?: string[];
+  };
+}
+
+export async function getOpportunityTemplates(): Promise<{ templates: OpportunityTemplate[]; total: number }> {
+  const response = await fetch(`${API_BASE}/monetization/templates`, {
+    headers: await getAuthHeaders()
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch templates');
+  }
+
+  return response.json();
+}
+
+export async function createProject(opportunityId: string): Promise<{ project_id: string; redirect_url: string }> {
   const response = await fetch(`${API_BASE}/monetization/projects`, {
     method: 'POST',
     headers: await getAuthHeaders(),
-    body: JSON.stringify({ opportunity_id: 'premium-community' })
+    body: JSON.stringify({ opportunity_id: opportunityId })
   });
 
   if (!response.ok) {
@@ -333,7 +368,7 @@ export async function* parseSSEStream(
   try {
     while (true) {
       const { done, value } = await reader.read();
-      
+
       if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
@@ -355,4 +390,96 @@ export async function* parseSSEStream(
   } finally {
     reader.releaseLock();
   }
+}
+
+// ==================== AI Discovery System ====================
+
+export interface AIOpportunity {
+  id: string;
+  title: string;
+  description: string;
+  fit_score: number;
+  fit_explanation: string;
+  estimated_monthly_revenue: number;
+  time_investment_hours_per_week: number;
+  template_basis: string[];
+  implementation_plan: any;
+}
+
+export interface AnalysisStatus {
+  analysis_id: string;
+  status: 'analyzing' | 'generating' | 'complete' | 'error';
+  progress: number;
+  current_step?: string;
+  error?: string;
+}
+
+export async function startAIAnalysis(): Promise<{ analysis_id: string; status: string }> {
+  const response = await fetch(`${API_BASE}/monetization/discover/analyze`, {
+    method: 'POST',
+    headers: await getAuthHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to start analysis');
+  }
+
+  return response.json();
+}
+
+export async function checkAnalysisStatus(analysisId: string): Promise<AnalysisStatus> {
+  const response = await fetch(`${API_BASE}/monetization/discover/analyze/status/${analysisId}`, {
+    headers: await getAuthHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to check analysis status');
+  }
+
+  return response.json();
+}
+
+export async function getAIOpportunities(): Promise<{ opportunities: AIOpportunity[]; generated_at: string } | { status: string; redirect: string }> {
+  const response = await fetch(`${API_BASE}/monetization/discover/opportunities`, {
+    headers: await getAuthHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to fetch AI opportunities');
+  }
+
+  return response.json();
+}
+
+export async function refineAIOpportunities(feedback: string): Promise<{ opportunities: AIOpportunity[]; message: string }> {
+  const response = await fetch(`${API_BASE}/monetization/discover/refine`, {
+    method: 'POST',
+    headers: await getAuthHeaders(),
+    body: JSON.stringify({ message: feedback })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to refine opportunities');
+  }
+
+  return response.json();
+}
+
+export async function selectAIOpportunity(opportunityId: string): Promise<{ project_id: string; redirect_url: string }> {
+  const response = await fetch(`${API_BASE}/monetization/discover/select`, {
+    method: 'POST',
+    headers: await getAuthHeaders(),
+    body: JSON.stringify({ opportunity_id: opportunityId })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to select opportunity');
+  }
+
+  return response.json();
 }

@@ -14,7 +14,6 @@ export default function MonetizationPage() {
   const [profile, setProfile] = useState<CreatorProfile | null>(null);
   const [projects, setProjects] = useState<ActiveProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreatingProject, setIsCreatingProject] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -37,19 +36,9 @@ export default function MonetizationPage() {
     setIsLoading(false);
   };
 
-  const handleCreateProject = async () => {
-    setIsCreatingProject(true);
-    const result = await ErrorHandler.withErrorHandling(
-      async () => {
-        const data = await createProject();
-        router.push(`/monetization/project/${data.project_id}`);
-        return data;
-      },
-      'Creating project'
-    );
-    if (!result) {
-      setIsCreatingProject(false);
-    }
+  const handleCreateProject = () => {
+    // Navigate to opportunity selection page
+    router.push('/monetization/choose-opportunity');
   };
 
   if (isLoading) {
@@ -73,7 +62,7 @@ export default function MonetizationPage() {
               Welcome to Monetization Engine
             </h1>
             <p className="text-lg text-secondary-dark max-w-2xl mx-auto">
-              Launch your Premium Community in 30 minutes with AI-powered guidance. 
+              Choose from 20 proven monetization templates or get AI-powered custom recommendations.
               Let's start by setting up your creator profile.
             </p>
           </div>
@@ -101,26 +90,16 @@ export default function MonetizationPage() {
           </h1>
           <p className="text-secondary-dark mt-2">
             {projects.length === 0
-              ? 'Launch your Premium Community with AI-powered guidance'
+              ? 'Choose from 20 proven templates or get AI-powered custom recommendations'
               : `Managing ${projects.length} ${projects.length === 1 ? 'project' : 'projects'}`}
           </p>
         </div>
         <Button
           onClick={handleCreateProject}
-          disabled={isCreatingProject}
           size="lg"
         >
-          {isCreatingProject ? (
-            <>
-              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-              Creating...
-            </>
-          ) : (
-            <>
-              <Plus className="h-5 w-5 mr-2" />
-              New Project
-            </>
-          )}
+          <Plus className="h-5 w-5 mr-2" />
+          New Project
         </Button>
       </div>
 
@@ -162,31 +141,31 @@ export default function MonetizationPage() {
             <div className="text-6xl">💎</div>
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-primary-dark mb-2">
-                Premium Community Launch
+                Ready to Monetize Your Audience?
               </h2>
               <p className="text-secondary-dark mb-4">
-                Turn your engaged audience into a thriving paid community. Launch a Discord or Circle
-                membership in 3-5 weeks with personalized AI guidance.
+                Choose from 20 proven monetization strategies or get AI-powered custom recommendations
+                tailored to your unique audience and content.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
                   <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">
-                    $1.6K - $8K
+                    20+ Templates
                   </div>
-                  <div className="text-sm text-secondary-dark">Monthly Revenue Potential</div>
+                  <div className="text-sm text-secondary-dark">Proven Monetization Models</div>
                 </div>
                 <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
                   <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-                    3-5 Weeks
+                    AI-Powered
                   </div>
-                  <div className="text-sm text-secondary-dark">Time to Launch</div>
+                  <div className="text-sm text-secondary-dark">Custom Recommendations</div>
                 </div>
                 <div className="p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
                   <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
                     30 Minutes
                   </div>
-                  <div className="text-sm text-secondary-dark">Planning Session</div>
+                  <div className="text-sm text-secondary-dark">To Get Started</div>
                 </div>
               </div>
 
@@ -195,19 +174,19 @@ export default function MonetizationPage() {
                 <ul className="space-y-2 text-sm text-secondary-dark">
                   <li className="flex items-start gap-2">
                     <span className="text-emerald-600 mt-0.5">✓</span>
-                    <span>AI-guided planning session to make 5 key decisions</span>
+                    <span>20 proven monetization templates across communities, courses, coaching, and more</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-emerald-600 mt-0.5">✓</span>
-                    <span>Personalized 22-task implementation roadmap</span>
+                    <span>AI-powered custom recommendations based on your audience and content</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-emerald-600 mt-0.5">✓</span>
-                    <span>Real-time progress tracking and milestone celebrations</span>
+                    <span>Personalized implementation roadmap with real-time progress tracking</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-emerald-600 mt-0.5">✓</span>
-                    <span>Data-backed recommendations based on your metrics</span>
+                    <span>Revenue estimates and time investment guidance for each opportunity</span>
                   </li>
                 </ul>
               </div>
@@ -215,20 +194,10 @@ export default function MonetizationPage() {
               <Button
                 size="lg"
                 onClick={handleCreateProject}
-                disabled={isCreatingProject}
                 className="px-8"
               >
-                {isCreatingProject ? (
-                  <>
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Creating Project...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-5 w-5 mr-2" />
-                    Start Your First Project
-                  </>
-                )}
+                <Sparkles className="h-5 w-5 mr-2" />
+                Explore Monetization Options
               </Button>
             </div>
           </div>
