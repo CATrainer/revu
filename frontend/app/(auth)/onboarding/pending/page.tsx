@@ -22,7 +22,7 @@ interface OnboardingStatus {
 
 export default function PendingPage() {
   const router = useRouter();
-  const { user, logout, checkAuth } = useAuth();
+  const { user, logout } = useAuth();
   const [status, setStatus] = useState<OnboardingStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -34,7 +34,8 @@ export default function PendingPage() {
 
         // If approved, redirect to dashboard
         if (response.data.approval_status === 'approved') {
-          await checkAuth();
+          // Note: No need to call checkAuth() here - the dashboard will handle auth check on mount.
+          // Calling checkAuth() was causing potential loading delays during navigation.
           router.push('/dashboard');
         }
         // If rejected, redirect to rejected page
@@ -53,7 +54,7 @@ export default function PendingPage() {
     // Poll every 30 seconds to check for status updates
     const interval = setInterval(fetchStatus, 30000);
     return () => clearInterval(interval);
-  }, [router, checkAuth]);
+  }, [router]);
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
