@@ -221,7 +221,7 @@ export function PricingNew() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-4 gap-8">
           {/* Free Plan */}
           <motion.div
             className="glass-panel rounded-2xl p-8"
@@ -229,25 +229,25 @@ export function PricingNew() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h3 className="text-2xl font-bold text-primary-dark mb-2">Free</h3>
-            <div className="text-4xl font-bold text-primary-dark mb-6">£0<span className="text-lg text-secondary-dark">/mo</span></div>
-            
+            <h3 className="text-xl font-bold text-primary-dark mb-2">Free Plan</h3>
+            <div className="text-3xl font-bold text-primary-dark mb-6">$0<span className="text-lg text-secondary-dark">/mo</span></div>
+            <p className="text-sm text-secondary-dark mb-6">Perfect for trying Repruv</p>
+
             <div className="space-y-3 mb-6">
               {[
-                { included: true, text: '2 platform connections' },
-                { included: true, text: '500 AI responses/month' },
-                { included: true, text: 'Basic analytics' },
-                { included: false, text: 'Priority support' }
+                { included: true, text: 'Up to 2 platform connections' },
+                { included: true, text: 'Limited automation usage' },
+                { included: true, text: 'Community support' }
               ].map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
-                  {feature.included ? <Check className="w-5 h-5 text-holo-mint flex-shrink-0" /> : <X className="w-5 h-5 text-gray-400 flex-shrink-0" />}
-                  <span className={feature.included ? 'text-secondary-dark' : 'text-gray-400'}>{feature.text}</span>
+                  <Check className="w-5 h-5 text-holo-mint flex-shrink-0" />
+                  <span className="text-secondary-dark text-sm">{feature.text}</span>
                 </div>
               ))}
             </div>
 
             <Button asChild variant="outline" className="w-full">
-              <Link href="/signup">Start Free</Link>
+              <Link href="/signup">Join Early Access for Free</Link>
             </Button>
           </motion.div>
 
@@ -262,29 +262,64 @@ export function PricingNew() {
             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-holo-mint text-white px-4 py-1 rounded-full text-sm font-bold">
               MOST POPULAR
             </div>
-            
-            <h3 className="text-2xl font-bold text-primary-dark mb-2">Pro</h3>
-            <div className="text-4xl font-bold text-holo-mint mb-2">£19.99<span className="text-lg text-secondary-dark">/mo</span></div>
-            <p className="text-sm text-secondary-dark mb-6">£199/year (save 17%)</p>
-            
+
+            <h3 className="text-xl font-bold text-primary-dark mb-2">Pro Plan</h3>
+            <div className="text-3xl font-bold text-holo-mint mb-2">$34.99<span className="text-lg text-secondary-dark">/mo</span></div>
+            <p className="text-xs text-secondary-dark mb-6">Annual: $349/year (save 17%)</p>
+            <p className="text-sm text-secondary-dark mb-6">For creators serious about growth</p>
+
             <div className="space-y-3 mb-6">
               {[
-                'Unlimited platforms',
-                'Unlimited AI responses',
-                'Revenue intelligence',
-                'Priority support',
-                'Custom workflows'
+                'Up to 3 platform connections',
+                'Standard automation usage',
+                'Priority support'
               ].map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-holo-mint flex-shrink-0" />
-                  <span className="text-secondary-dark">{feature}</span>
+                  <span className="text-secondary-dark text-sm">{feature}</span>
                 </div>
               ))}
             </div>
 
+            <p className="text-xs text-secondary-dark mb-4 italic">Need more? Additional usage available - contact us for pricing</p>
+
             <Button asChild className="w-full bg-holo-mint hover:bg-holo-mint-dark text-white">
-              <Link href="/signup">Start Free</Link>
+              <Link href="/signup">Join Early Access for Free</Link>
             </Button>
+            <p className="text-xs text-center text-secondary-dark mt-2">Start free, upgrade at launch</p>
+          </motion.div>
+
+          {/* Max Plan */}
+          <motion.div
+            className="glass-panel rounded-2xl p-8"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.15 }}
+          >
+            <h3 className="text-xl font-bold text-primary-dark mb-2">Max Plan</h3>
+            <div className="text-3xl font-bold text-primary-dark mb-6">$84.99<span className="text-lg text-secondary-dark">/mo</span></div>
+            <p className="text-sm text-secondary-dark mb-6">For power users and growing channels</p>
+
+            <div className="space-y-3 mb-6">
+              {[
+                'Unlimited platform connections',
+                'High-volume automation usage',
+                'Priority support'
+              ].map((feature, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-holo-mint flex-shrink-0" />
+                  <span className="text-secondary-dark text-sm">{feature}</span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-xs text-secondary-dark mb-4 italic">Need more? Additional usage available - contact us for pricing</p>
+
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/signup">Join Early Access for Free</Link>
+            </Button>
+            <p className="text-xs text-center text-secondary-dark mt-2">Start free, upgrade at launch</p>
           </motion.div>
 
           {/* Agency Plan */}
@@ -295,28 +330,27 @@ export function PricingNew() {
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
           >
-            <h3 className="text-2xl font-bold text-primary-dark mb-2">Agency</h3>
-            <div className="text-4xl font-bold text-primary-dark mb-6">Custom</div>
-            
+            <h3 className="text-xl font-bold text-primary-dark mb-2">Agency Plan</h3>
+            <div className="text-3xl font-bold text-primary-dark mb-6">Custom</div>
+            <p className="text-sm text-secondary-dark mb-6">For agencies managing multiple creators</p>
+
             <div className="space-y-3 mb-6">
               {[
                 'Multi-creator dashboard',
-                'Team collaboration',
-                'White-label reports',
-                'Dedicated manager',
-                'Custom integrations'
+                'Team collaboration tools',
+                'Client reporting (white-label)',
+                'Dedicated account manager',
+                'Bulk creator onboarding'
               ].map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-holo-mint flex-shrink-0" />
-                  <span className="text-secondary-dark">{feature}</span>
+                  <span className="text-secondary-dark text-sm">{feature}</span>
                 </div>
               ))}
             </div>
 
-            <p className="text-sm text-secondary-dark mb-4">£250/mo + £35/creator</p>
-
             <Button asChild variant="outline" className="w-full border-2 border-holo-mint text-holo-mint">
-              <Link href="/agency-partners">Learn More</Link>
+              <Link href="/agency-partners">Apply for Agency Partnership</Link>
             </Button>
           </motion.div>
         </div>
