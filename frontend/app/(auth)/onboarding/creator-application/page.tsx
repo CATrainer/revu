@@ -63,7 +63,7 @@ const REFERRAL_SOURCES = [
 
 export default function CreatorApplicationPage() {
   const router = useRouter();
-  const { user, checkAuth } = useAuth();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -146,8 +146,9 @@ export default function CreatorApplicationPage() {
       // Send formData directly - backend expects CreatorApplicationData schema
       await api.post('/onboarding/creator-application', formData);
 
-      // Refresh user state to get updated application_submitted_at
-      await checkAuth();
+      // Note: No need to call checkAuth() here - the backend updates the user state,
+      // and the pending page will fetch the latest status when it mounts.
+      // Calling checkAuth() here was causing loading issues during navigation.
 
       pushToast('Application submitted successfully!', 'success');
       router.push('/onboarding/pending');
