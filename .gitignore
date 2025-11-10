@@ -70,3 +70,9 @@ rebuild/frontend/.next
 # Adhoc
 package-lock.json
 yarn.lock
+
+# Development/Setup Documentation (keep only README.md)
+*_SETUP_GUIDE.md
+*_SETUP_WALKTHROUGH.md
+*_QUICK_REFERENCE.md
+PRODUCTION_READINESS_CHECKLIST.md
