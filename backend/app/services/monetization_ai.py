@@ -173,15 +173,26 @@ Your message should:
 
 Keep it under 150 words. Be energetic but professional."""
         
-        user_prompt = f"""Creator Profile:
-- Platform: {creator_profile.get('primary_platform')}
-- Followers: {creator_profile.get('follower_count'):,}
-- Engagement: {creator_profile.get('engagement_rate')}%
-- Niche: {creator_profile.get('niche')}
+        # Extract values with defaults to handle None
+        platform = creator_profile.get('primary_platform') or 'your platform'
+        follower_count = creator_profile.get('follower_count') or 0
+        engagement_rate = creator_profile.get('engagement_rate') or 0
+        niche = creator_profile.get('niche') or 'your niche'
 
-Opportunity: {opportunity_data.get('title')}
-Revenue Range: ${opportunity_data.get('revenue_min'):,} - ${opportunity_data.get('revenue_max'):,}/month
-Timeline: {opportunity_data.get('timeline')}
+        title = opportunity_data.get('title') or 'this opportunity'
+        revenue_min = opportunity_data.get('revenue_min') or 0
+        revenue_max = opportunity_data.get('revenue_max') or 0
+        timeline = opportunity_data.get('timeline') or 'TBD'
+
+        user_prompt = f"""Creator Profile:
+- Platform: {platform}
+- Followers: {follower_count:,}
+- Engagement: {engagement_rate}%
+- Niche: {niche}
+
+Opportunity: {title}
+Revenue Range: ${revenue_min:,} - ${revenue_max:,}/month
+Timeline: {timeline}
 
 Write the welcome message and first question."""
         
@@ -204,9 +215,9 @@ Write the welcome message and first question."""
         
         except Exception as e:
             logger.error(f"Error generating welcome message: {e}")
-            # Fallback message
+            # Fallback message using already extracted values
             return {
-                "content": f"Welcome! Let's launch your Premium Community. With {creator_profile.get('follower_count'):,} followers and {creator_profile.get('engagement_rate')}% engagement, you're in a great position. First question: Have you thought about which platform you'd prefer - Discord (free, gaming-friendly) or Circle ($89/mo, premium UX)?",
+                "content": f"Welcome! Let's launch your Premium Community. With {follower_count:,} followers and {engagement_rate}% engagement, you're in a great position. First question: Have you thought about which platform you'd prefer - Discord (free, gaming-friendly) or Circle ($89/mo, premium UX)?",
                 "input_tokens": 0,
                 "output_tokens": 0
             }

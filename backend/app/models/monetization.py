@@ -290,6 +290,9 @@ class GeneratedOpportunities(Base):
 
     __tablename__ = "generated_opportunities"
 
+    # Override updated_at from Base since this is an immutable historical record
+    updated_at = None
+
     user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
     # Generation context
