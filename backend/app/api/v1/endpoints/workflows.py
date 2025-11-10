@@ -33,9 +33,14 @@ async def create_workflow(
     current_user: User = Depends(get_current_active_user),
 ):
     svc = WorkflowService()
-    # Validate actions config (minimal)
+    # Comprehensive validation
     try:
-        svc.validate_actions_config([a.model_dump() for a in (payload.actions or [])])
+        svc.validate_workflow(
+            name=payload.name,
+            trigger=payload.trigger.model_dump() if payload.trigger else None,
+            conditions=[c.model_dump() for c in (payload.conditions or [])],
+            actions=[a.model_dump() for a in (payload.actions or [])]
+        )
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
 
@@ -108,12 +113,20 @@ async def update_workflow(
         obj.trigger = payload.trigger.model_dump() if payload.trigger else None
     if payload.conditions is not None:
         obj.conditions = [c.model_dump() for c in (payload.conditions or [])]
-    if payload.actions is not None:
+    # Validate updated workflow
+    if any([payload.name, payload.trigger, payload.conditions, payload.actions]):
         svc = WorkflowService()
         try:
-            svc.validate_actions_config([a.model_dump() for a in (payload.actions or [])])
+            svc.validate_workflow(
+                name=payload.name if payload.name is not None else obj.name,
+                trigger=(payload.trigger.model_dump() if payload.trigger else None) if payload.trigger is not None else obj.trigger,
+                conditions=[c.model_dump() for c in payload.conditions] if payload.conditions is not None else obj.conditions,
+                actions=[a.model_dump() for a in payload.actions] if payload.actions is not None else obj.actions
+            )
         except ValueError as ve:
             raise HTTPException(status_code=400, detail=str(ve))
+
+    if payload.actions is not None:
         obj.actions = [a.model_dump() for a in (payload.actions or [])]
     await session.flush()
     await session.refresh(obj)
@@ -332,3 +345,156 @@ async def list_executions(
     stmt = stmt.order_by(WorkflowExecution.created_at.desc())
     res = await session.execute(stmt)
     return list(res.scalars().all())
+
+
+# ----------------------------- Testing & Analytics ---------------------------
+@router.post("/workflows/{workflow_id}/test")
+async def test_workflow(
+    workflow_id: UUID,
+    limit: int = 10,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Test a workflow against recent interactions without executing actions."""
+    from app.services.workflow_engine import WorkflowEngine
+    from app.models.interaction import Interaction
+
+    workflow = await session.get(Workflow, workflow_id)
+    if not workflow:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+    if getattr(current_user, "organization_id", None) is not None and workflow.organization_id != current_user.organization_id:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+
+    # Fetch recent interactions for testing
+    stmt = select(Interaction).where(
+        Interaction.user_id == current_user.id
+    ).order_by(Interaction.created_at.desc()).limit(limit)
+    result = await session.execute(stmt)
+    test_interactions = list(result.scalars().all())
+
+    # Test workflow
+    engine = WorkflowEngine()
+    test_results = await engine.test_workflow(
+        db=session,
+        workflow=workflow,
+        test_interactions=test_interactions,
+        user_id=current_user.id,
+    )
+
+    return {
+        "workflow_id": str(workflow_id),
+        "workflow_name": workflow.name,
+        "test_count": len(test_interactions),
+        "results": test_results,
+    }
+
+
+@router.get("/workflows/{workflow_id}/analytics")
+async def get_workflow_analytics(
+    workflow_id: UUID,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get analytics for a specific workflow."""
+    from sqlalchemy import func
+
+    workflow = await session.get(Workflow, workflow_id)
+    if not workflow:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+    if getattr(current_user, "organization_id", None) is not None and workflow.organization_id != current_user.organization_id:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+
+    # Get execution stats
+    stmt = select(
+        func.count(WorkflowExecution.id).label("total"),
+        func.count().filter(WorkflowExecution.status == "completed").label("completed"),
+        func.count().filter(WorkflowExecution.status == "failed").label("failed"),
+        func.count().filter(WorkflowExecution.status == "skipped").label("skipped"),
+    ).where(WorkflowExecution.workflow_id == workflow_id)
+
+    result = await session.execute(stmt)
+    row = result.one()
+
+    # Get recent executions
+    recent_stmt = select(WorkflowExecution).where(
+        WorkflowExecution.workflow_id == workflow_id
+    ).order_by(WorkflowExecution.created_at.desc()).limit(10)
+    recent_result = await session.execute(recent_stmt)
+    recent_executions = list(recent_result.scalars().all())
+
+    return {
+        "workflow_id": str(workflow_id),
+        "workflow_name": workflow.name,
+        "status": workflow.status,
+        "stats": {
+            "total_executions": row.total,
+            "completed": row.completed,
+            "failed": row.failed,
+            "skipped": row.skipped,
+            "success_rate": round(row.completed / row.total * 100, 2) if row.total > 0 else 0,
+        },
+        "recent_executions": [
+            {
+                "id": str(e.id),
+                "status": e.status,
+                "created_at": e.created_at.isoformat(),
+                "context": e.context,
+                "result": e.result,
+                "error": e.error,
+            }
+            for e in recent_executions
+        ],
+    }
+
+
+@router.get("/workflows/analytics/overview")
+async def get_workflows_overview(
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get overview analytics for all workflows."""
+    from sqlalchemy import func
+
+    # Get workflow counts by status
+    stmt = select(
+        Workflow.status,
+        func.count(Workflow.id).label("count"),
+    ).where(
+        Workflow.created_by_id == current_user.id
+    ).group_by(Workflow.status)
+
+    result = await session.execute(stmt)
+    status_counts = {row.status: row.count for row in result}
+
+    # Get total execution stats
+    exec_stmt = select(
+        func.count(WorkflowExecution.id).label("total"),
+        func.count().filter(WorkflowExecution.status == "completed").label("completed"),
+        func.count().filter(WorkflowExecution.status == "failed").label("failed"),
+    ).select_from(Workflow).join(
+        WorkflowExecution, Workflow.id == WorkflowExecution.workflow_id
+    ).where(
+        Workflow.created_by_id == current_user.id
+    )
+
+    exec_result = await session.execute(exec_stmt)
+    exec_row = exec_result.one_or_none()
+
+    total_execs = exec_row.total if exec_row else 0
+    completed_execs = exec_row.completed if exec_row else 0
+    failed_execs = exec_row.failed if exec_row else 0
+
+    return {
+        "workflows": {
+            "active": status_counts.get("active", 0),
+            "paused": status_counts.get("paused", 0),
+            "draft": status_counts.get("draft", 0),
+            "total": sum(status_counts.values()),
+        },
+        "executions": {
+            "total": total_execs,
+            "completed": completed_execs,
+            "failed": failed_execs,
+            "success_rate": round(completed_execs / total_execs * 100, 2) if total_execs > 0 else 0,
+        },
+    }
