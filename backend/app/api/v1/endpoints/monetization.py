@@ -48,7 +48,7 @@ class CreateProfileRequest(BaseModel):
 
 
 class CreateProjectRequest(BaseModel):
-    opportunity_id: str = "premium-community"
+    opportunity_id: str
 
 
 class SendMessageRequest(BaseModel):
@@ -67,19 +67,62 @@ class UpdateProjectRequest(BaseModel):
 
 # ==================== Helper Functions ====================
 
-def _load_opportunity_template() -> Dict[str, Any]:
-    """Load premium community template."""
-    template_path = os.path.join(
+def _load_opportunity_template(opportunity_id: str = "premium-community") -> Dict[str, Any]:
+    """
+    Load opportunity template based on opportunity_id.
+
+    Args:
+        opportunity_id: The template ID to load (e.g., 'premium-community-discord', 'mini-course-series')
+
+    Returns:
+        Template dictionary with title, category, implementation_phases
+    """
+
+    # First check if it's the original premium-community (backward compatibility)
+    if opportunity_id == "premium-community":
+        template_path = os.path.join(
+            os.path.dirname(__file__),
+            "../../../data/premium_community_template.json"
+        )
+
+        try:
+            with open(template_path, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load premium community template: {e}")
+            raise HTTPException(500, "Failed to load premium community template")
+
+    # Load from the 20 templates collection
+    templates_path = os.path.join(
         os.path.dirname(__file__),
-        "../../../data/premium_community_template.json"
+        "../../../../data/opportunity_templates.json"
     )
-    
+
     try:
-        with open(template_path, 'r') as f:
-            return json.load(f)
+        with open(templates_path, 'r') as f:
+            all_templates = json.load(f)
+
+        # Find the requested template
+        template = next((t for t in all_templates if t['id'] == opportunity_id), None)
+
+        if not template:
+            logger.warning(f"Template not found: {opportunity_id}, falling back to premium-community")
+            # Fallback to premium community
+            return _load_opportunity_template("premium-community")
+
+        # Transform template format to match expected structure
+        return {
+            "title": template.get("title", "Unknown Opportunity"),
+            "category": template.get("category", "other"),
+            "description": template.get("description", ""),
+            "implementation_phases": template.get("implementation_template", {}).get("phases", []),
+            "revenue_model": template.get("revenue_model", {}),
+            "success_patterns": template.get("success_patterns", {})
+        }
+
     except Exception as e:
-        logger.error(f"Failed to load opportunity template: {e}")
-        raise HTTPException(500, "Failed to load opportunity template")
+        logger.error(f"Failed to load opportunity templates: {e}")
+        raise HTTPException(500, "Failed to load opportunity templates")
 
 
 async def _calculate_progress(project: ActiveProject, db: AsyncSession) -> Dict[str, int]:
@@ -344,15 +387,15 @@ async def get_profile(
     current_user: User = Depends(get_current_active_user)
 ):
     """Get creator profile."""
-    
+
     result = await db.execute(
         select(CreatorProfile).where(CreatorProfile.user_id == current_user.id)
     )
     profile = result.scalar_one_or_none()
-    
+
     if not profile:
         raise HTTPException(404, "Profile not found")
-    
+
     return {
         "id": str(profile.id),
         "user_id": str(profile.user_id),
@@ -369,6 +412,49 @@ async def get_profile(
     }
 
 
+@router.get("/templates")
+async def get_opportunity_templates(
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get all 20 opportunity templates.
+
+    Returns the full list of monetization opportunities to choose from.
+    Each template includes description, ideal creator profile, revenue model, and implementation phases.
+    """
+
+    templates_path = os.path.join(
+        os.path.dirname(__file__),
+        "../../../../data/opportunity_templates.json"
+    )
+
+    try:
+        with open(templates_path, 'r') as f:
+            all_templates = json.load(f)
+
+        # Return simplified version for selection UI
+        simplified_templates = []
+        for template in all_templates:
+            simplified_templates.append({
+                "id": template["id"],
+                "title": template["title"],
+                "category": template["category"],
+                "description": template["description"],
+                "ideal_for": template.get("ideal_for", {}),
+                "revenue_model": template.get("revenue_model", {}),
+                "success_patterns": template.get("success_patterns", {})
+            })
+
+        return {
+            "templates": simplified_templates,
+            "total": len(simplified_templates)
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to load opportunity templates: {e}")
+        raise HTTPException(500, "Failed to load opportunity templates")
+
+
 @router.post("/projects")
 async def create_project(
     data: CreateProjectRequest,
@@ -377,9 +463,9 @@ async def create_project(
 ):
     """Create new monetization project. Users can have multiple projects."""
 
-    # Load opportunity template
-    template = _load_opportunity_template()
-    
+    # Load opportunity template based on requested opportunity_id
+    template = _load_opportunity_template(data.opportunity_id)
+
     # Create project
     project = ActiveProject(
         user_id=current_user.id,
