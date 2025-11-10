@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [demoMode, setDemoMode] = useState<boolean>(false);
   const [demoProfile, setDemoProfile] = useState<any>(null);
+  const [hasDemoAccess, setHasDemoAccess] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -49,6 +50,7 @@ export default function DashboardPage() {
           const data = await response.json();
           setDemoMode(data.status === 'enabled');
           setDemoProfile(data.profile || null);
+          setHasDemoAccess(data.has_access ?? true); // Default to true if not provided
         }
       } catch (error) {
         console.error('Failed to fetch demo status:', error);
@@ -70,7 +72,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-10 animate-slide-up px-4 md:px-0"> {/* Add horizontal padding on mobile */}
       {/* Demo Mode Banner - Retro Styled */}
-      {demoMode && (
+      {hasDemoAccess && demoMode && (
         <div className="glass-panel rounded-2xl border border-holo-purple/30 p-6 shadow-glow-purple backdrop-blur-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -96,7 +98,7 @@ export default function DashboardPage() {
       )}
 
       {/* Demo Mode Enabling Banner */}
-      {!demoMode && demoProfile?.status === 'enabling' && (
+      {hasDemoAccess && !demoMode && demoProfile?.status === 'enabling' && (
         <div className="glass-panel rounded-2xl border border-yellow-500/30 p-6 shadow-glow-yellow backdrop-blur-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -122,7 +124,7 @@ export default function DashboardPage() {
       )}
 
       {/* Onboarding: Enable Demo Mode - Retro Styled */}
-      {!demoMode && !loading && (metrics?.interactions_today || 0) === 0 && (
+      {hasDemoAccess && !demoMode && !loading && (metrics?.interactions_today || 0) === 0 && (
         <div className="glass-panel rounded-2xl border border-holo-teal/30 p-6 shadow-glow-teal backdrop-blur-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">

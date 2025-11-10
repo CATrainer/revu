@@ -17,9 +17,15 @@ interface DemoBannerProps {
     ig_followers: number;
   };
   error?: string;
+  hasAccess?: boolean;
 }
 
-export function DemoBanner({ status, profile, error }: DemoBannerProps) {
+export function DemoBanner({ status, profile, error, hasAccess }: DemoBannerProps) {
+  // Don't show banner if user doesn't have access to demo mode
+  if (hasAccess === false) {
+    return null;
+  }
+
   // Enabled state
   if (status === 'enabled') {
     return (
