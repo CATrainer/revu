@@ -39,7 +39,14 @@ def send_email(
     if getattr(settings, "SENDGRID_API_KEY", None):
         try:
             from sendgrid import SendGridAPIClient
-            from sendgrid.helpers.mail import Mail, From, To, Content, ASM
+            from sendgrid.helpers.mail import Mail, From, To, Content
+            
+            # Try to import ASM if available (for unsubscribe groups)
+            try:
+                from sendgrid.helpers.mail import ASM
+                has_asm = True
+            except ImportError:
+                has_asm = False
 
             message = Mail(
                 from_email=From(from_email or str(settings.EMAIL_FROM_ADDRESS), settings.EMAIL_FROM_NAME),
@@ -48,7 +55,7 @@ def send_email(
                 html_content=Content("text/html", html_content),
             )
             # Attach ASM group for one-click unsubscribe if provided (marketing only)
-            if asm_group_id is not None:
+            if asm_group_id is not None and has_asm:
                 try:
                     message.asm = ASM(group_id=int(asm_group_id))
                 except Exception:
