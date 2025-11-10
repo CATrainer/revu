@@ -1103,7 +1103,7 @@ def send_new_application_notification_to_admins(
         dict: Summary of notifications sent
     """
     try:
-        from app.models.admin_notification_settings import AdminNotificationSettings
+        from app.models.application import AdminNotificationSettings
         
         async def _send_notifications():
             sent = 0
