@@ -1,7 +1,7 @@
 """add updated_at to generated_opportunities and plan_modifications
 
 Revision ID: 20251117_1800
-Revises: 20251109_2200
+Revises: 20251109_2340
 Create Date: 2025-11-17 18:00:00
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '20251117_1800'
-down_revision = '20251109_2200'
+down_revision = '20251109_2340'
 branch_labels = None
 depends_on = None
 
