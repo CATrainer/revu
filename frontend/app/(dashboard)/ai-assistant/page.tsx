@@ -226,9 +226,19 @@ export default function AIAssistantPage() {
           reconnectToStream(sessionId, generatingMsg.id);
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('[AI Chat] Failed to load messages:', err);
-      setError('Failed to load chat history');
+      
+      // If session doesn't exist (404), remove it from localStorage and sessions list
+      if (err.response?.status === 404) {
+        console.log('[AI Chat] Session not found, removing from list');
+        setSessions(prev => prev.filter(s => s.id !== sessionId));
+        localStorage.removeItem('ai_chat_last_session_id');
+        setCurrentSessionId(null);
+        setError('This conversation no longer exists. Please start a new chat.');
+      } else {
+        setError('Failed to load chat history. Please try again.');
+      }
     } finally {
       setIsLoadingMessages(false);
     }
