@@ -27,7 +27,7 @@ export default function PricingPage() {
           <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-[var(--brand-primary)] mb-4">
             Pricing That Grows With Your Revenue
           </h1>
-          <p className="text-2xl text-[var(--success)] mb-2 font-semibold">
+          <p className="text-2xl text-[var(--foreground)] mb-2 font-semibold">
             Invest in tools that increase your revenue
           </p>
         </motion.div>
@@ -57,7 +57,7 @@ export default function PricingPage() {
                   <div className="text-3xl font-bold text-[var(--success)] mb-2">FREE</div>
                 </div>
 
-                <p className="text-center text-[var(--success)] mb-6 text-sm font-bold">
+                <p className="text-center text-[var(--foreground)] mb-6 text-sm font-semibold">
                   During Early Access, all users get unlimited access to all features completely free.
                 </p>
               </div>
@@ -75,13 +75,13 @@ export default function PricingPage() {
                   ].map((feature, index) => (
                     <div key={index} className="flex items-start gap-3">
                       <Check className="w-5 h-5 text-[var(--success)] flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-secondary-dark font-bold">{feature}</span>
+                      <span className="text-sm text-[var(--text-secondary)]">{feature}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <Button asChild size="lg" className="bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-black px-12 py-6 text-lg w-full mt-8 font-bold">
+              <Button asChild size="lg" className="bg-[var(--success)] hover:bg-emerald-600 text-[var(--success-foreground)] px-12 py-6 text-lg w-full mt-8 font-bold">
                 <Link href="/signup">
                   Join Early Access - Free
                 </Link>
@@ -98,7 +98,7 @@ export default function PricingPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <div className="absolute top-0 left-0 bg-gradient-to-r from-yellow-400 to-yellow-500 px-6 py-2 rounded-br-2xl">
-              <span className="text-gray-900 dark:text-gray-900 font-bold flex items-center gap-2 text-sm">
+              <span className="text-gray-900 font-bold flex items-center gap-2 text-sm">
                 <Star className="w-4 h-4" />
                 LIMITED TIME
               </span>
@@ -116,7 +116,7 @@ export default function PricingPage() {
                   <p className="text-lg text-[var(--brand-primary)] font-bold">One-time Payment • Lifetime access</p>
                 </div>
 
-                <p className="text-center text-[var(--success)] mb-6 text-sm font-bold">
+                <p className="text-center text-[var(--foreground)] mb-6 text-sm font-semibold">
                   Support our development and secure exclusive lifetime pricing before launch.
                 </p>
               </div>
@@ -135,13 +135,13 @@ export default function PricingPage() {
                   ].map((benefit, index) => (
                     <div key={index} className="flex items-start gap-3">
                       <Check className="w-5 h-5 text-[var(--success)] flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-secondary-dark font-bold">{benefit}</span>
+                      <span className="text-sm text-[var(--text-secondary)]">{benefit}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <Button asChild size="lg" className="bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-black px-12 py-6 text-lg w-full mt-8 font-bold">
+              <Button asChild size="lg" className="bg-[var(--success)] hover:bg-emerald-600 text-[var(--success-foreground)] px-12 py-6 text-lg w-full mt-8 font-bold">
                 <Link href="/signup">
                   Secure Founder Pricing - £99
                 </Link>
@@ -157,7 +157,7 @@ export default function PricingPage() {
           <h2 className="text-3xl md:text-4xl font-bold text-[var(--brand-primary)] mb-4">
             Planned Launch Pricing (Q2 2025)
           </h2>
-          <p className="text-lg text-[var(--success)] font-bold">
+          <p className="text-lg text-[var(--text-secondary)] font-semibold">
             These prices go live when we officially launch. Lock in Founder Pricing now to get lifetime Pro Plan.
           </p>
         </div>
@@ -173,7 +173,7 @@ export default function PricingPage() {
           >
             <h3 className="text-3xl md:text-4xl font-bold text-[var(--brand-primary)] mb-2">Free Plan</h3>
             <div className="text-3xl font-bold text-[var(--success)] mb-6">$0<span className="text-lg text-[var(--success)]">/month</span></div>
-            <p className="text-[var(--brand-primary)] mb-6 font-bold">Perfect for trying Repruv</p>
+            <p className="text-[var(--foreground)] mb-6 font-semibold">Perfect for trying Repruv</p>
 
             <div className="space-y-3 mb-8">
               {[
@@ -183,12 +183,12 @@ export default function PricingPage() {
               ].map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-[var(--success)] flex-shrink-0 mt-0.5" />
-                  <span className="text-secondary-dark font-bold text-sm">{feature.text}</span>
+                  <span className="text-[var(--text-secondary)] text-sm">{feature.text}</span>
                 </div>
               ))}
             </div>
 
-            <Button asChild className="w-full bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-black font-bold">
+            <Button asChild className="w-full bg-[var(--success)] hover:bg-emerald-600 text-[var(--success-foreground)] font-bold">
               <Link href="/signup">
                 Join Early Access for Free
               </Link>
@@ -203,14 +203,14 @@ export default function PricingPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-gray-900 dark:text-gray-900 px-4 py-1 rounded-full text-sm font-bold">
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-gray-900 px-4 py-1 rounded-full text-sm font-bold">
               MOST POPULAR
             </div>
 
             <h3 className="text-3xl md:text-4xl font-bold text-[var(--brand-primary)] mb-2">Pro Plan</h3>
             <div className="text-3xl font-bold text-[var(--success)] mb-2">$34.99<span className="text-lg text-[var(--success)]">/month</span></div>
-            <p className="text-sm text-[var(--success)] mb-6">Annual: $349/year (save 17%)</p>
-            <p className="text-[var(--brand-primary)] mb-6 font-bold">For creators serious about growth</p>
+            <p className="text-sm text-[var(--text-secondary)] mb-6">Annual: $349/year (save 17%)</p>
+            <p className="text-[var(--foreground)] mb-6 font-semibold">For creators serious about growth</p>
 
             <div className="space-y-3 mb-8">
               {[
@@ -220,19 +220,19 @@ export default function PricingPage() {
               ].map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-[var(--success)] flex-shrink-0 mt-0.5" />
-                  <span className="text-secondary-dark font-bold text-sm">{feature}</span>
+                  <span className="text-[var(--text-secondary)] text-sm">{feature}</span>
                 </div>
               ))}
             </div>
 
-            <p className="text-xs text-secondary-dark mb-4 italic">Need more? Additional usage available - contact us for pricing</p>
+            <p className="text-xs text-[var(--text-muted)] mb-4 italic">Need more? Additional usage available - contact us for pricing</p>
 
-            <Button asChild className="w-full bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-black font-bold">
+            <Button asChild className="w-full bg-[var(--success)] hover:bg-emerald-600 text-[var(--success-foreground)] font-bold">
               <Link href="/signup">
                 Join Early Access for Free
               </Link>
             </Button>
-            <p className="text-xs text-center text-secondary-dark mt-2">Start free, upgrade at launch</p>
+            <p className="text-xs text-center text-[var(--text-muted)] mt-2">Start free, upgrade at launch</p>
           </motion.div>
 
           {/* Max Plan */}
@@ -245,7 +245,7 @@ export default function PricingPage() {
           >
             <h3 className="text-3xl md:text-4xl font-bold text-[var(--brand-primary)] mb-2">Max Plan</h3>
             <div className="text-3xl font-bold text-[var(--success)] mb-6">$84.99<span className="text-lg text-[var(--success)]">/month</span></div>
-            <p className="text-[var(--brand-primary)] mb-6 font-bold">For power users and growing channels</p>
+            <p className="text-[var(--foreground)] mb-6 font-semibold">For power users and growing channels</p>
 
             <div className="space-y-3 mb-8">
               {[
@@ -255,19 +255,19 @@ export default function PricingPage() {
               ].map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-[var(--success)] flex-shrink-0 mt-0.5" />
-                  <span className="text-secondary-dark font-bold text-sm">{feature}</span>
+                  <span className="text-[var(--text-secondary)] text-sm">{feature}</span>
                 </div>
               ))}
             </div>
 
-            <p className="text-xs text-secondary-dark mb-4 italic">Need more? Additional usage available - contact us for pricing</p>
+            <p className="text-xs text-[var(--text-muted)] mb-4 italic">Need more? Additional usage available - contact us for pricing</p>
 
-            <Button asChild className="w-full bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-black font-bold">
+            <Button asChild className="w-full bg-[var(--success)] hover:bg-emerald-600 text-[var(--success-foreground)] font-bold">
               <Link href="/signup">
                 Join Early Access for Free
               </Link>
             </Button>
-            <p className="text-xs text-center text-secondary-dark mt-2">Start free, upgrade at launch</p>
+            <p className="text-xs text-center text-[var(--text-muted)] mt-2">Start free, upgrade at launch</p>
           </motion.div>
 
           {/* Agency Plan */}
@@ -280,7 +280,7 @@ export default function PricingPage() {
           >
             <h3 className="text-3xl md:text-4xl font-bold text-[var(--brand-primary)] mb-2">Agency Plan</h3>
             <div className="text-3xl font-bold text-[var(--success)] mb-6">Custom</div>
-            <p className="text-[var(--brand-primary)] mb-6 font-bold">For agencies managing multiple creators</p>
+            <p className="text-[var(--foreground)] mb-6 font-semibold">For agencies managing multiple creators</p>
 
             <div className="space-y-3 mb-8">
               {[
@@ -292,12 +292,12 @@ export default function PricingPage() {
               ].map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-[var(--success)] flex-shrink-0 mt-0.5" />
-                  <span className="text-secondary-dark font-bold text-sm">{feature}</span>
+                  <span className="text-[var(--text-secondary)] text-sm">{feature}</span>
                 </div>
               ))}
             </div>
 
-            <Button asChild className="w-full bg-[var(--success)] hover:bg-emerald-600 text-gray-900 dark:text-black font-bold">
+            <Button asChild className="w-full bg-[var(--success)] hover:bg-emerald-600 text-[var(--success-foreground)] font-bold">
               <Link href="/agency-partners">
                 Apply for Agency Partnership
               </Link>

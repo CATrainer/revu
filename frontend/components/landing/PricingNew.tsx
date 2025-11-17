@@ -78,10 +78,10 @@ export function PricingNew() {
           animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-primary-dark mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-[var(--brand-primary)] mb-4">
             Pricing That Grows With Your Revenue
           </h1>
-          <p className="text-xl text-secondary-dark">
+          <p className="text-xl text-[var(--text-secondary)]">
             Invest in tools that increase your revenue
           </p>
         </motion.div>
@@ -101,10 +101,10 @@ export function PricingNew() {
           <div className="relative z-10">
             <div className="flex items-center justify-center gap-3 mb-6">
               <Rocket className="w-8 h-8 text-holo-mint" />
-              <h2 className="text-3xl md:text-4xl font-bold text-primary-dark">Early Access - Unlimited Free</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-[var(--brand-primary)]">Early Access - Unlimited Free</h2>
             </div>
-            
-            <p className="text-xl text-center text-secondary-dark mb-8 max-w-3xl mx-auto">
+
+            <p className="text-xl text-center text-[var(--text-secondary)] mb-8 max-w-3xl mx-auto">
               During Early Access, <strong className="text-holo-mint">all users get unlimited access to all available features</strong> completely free.
             </p>
 
@@ -120,15 +120,15 @@ export function PricingNew() {
                 ].map((feature, index) => (
                   <div key={index} className="flex items-start gap-3">
                     <Check className="w-5 h-5 text-holo-mint flex-shrink-0 mt-0.5" />
-                    <span className="text-secondary-dark">{feature}</span>
+                    <span className="text-[var(--text-secondary)]">{feature}</span>
                   </div>
                 ))}
               </div>
               <div className="flex items-center justify-center">
                 <div className="text-center">
                   <div className="text-6xl font-bold text-holo-mint mb-4">FREE</div>
-                  <p className="text-lg text-secondary-dark mb-6">Everything unlimited</p>
-                  <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-gray-900 dark:text-white px-12 py-6 text-lg">
+                  <p className="text-lg text-[var(--text-secondary)] mb-6">Everything unlimited</p>
+                  <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-white px-12 py-6 text-lg">
                     <Link href="/signup">Join Early Access</Link>
                   </Button>
                 </div>
@@ -157,12 +157,12 @@ export function PricingNew() {
           <div className="relative z-10 mt-8">
             <div className="flex items-center justify-center gap-3 mb-6">
               <Lock className="w-8 h-8 text-holo-mint" />
-              <h2 className="text-3xl md:text-4xl font-bold text-primary-dark">Lock In Founder Pricing</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-[var(--brand-primary)]">Lock In Founder Pricing</h2>
             </div>
-            
+
             <div className="text-center mb-8">
               <div className="text-5xl md:text-6xl font-bold text-holo-mint mb-2">£99</div>
-              <p className="text-lg text-secondary-dark">One-time • Lifetime Pro Access</p>
+              <p className="text-lg text-[var(--text-secondary)]">One-time • Lifetime Pro Access</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
@@ -177,19 +177,19 @@ export function PricingNew() {
                 ].map((benefit, index) => (
                   <div key={index} className="flex items-start gap-3">
                     <Check className="w-5 h-5 text-holo-mint flex-shrink-0 mt-0.5" />
-                    <span className="text-secondary-dark font-medium">{benefit}</span>
+                    <span className="text-[var(--text-secondary)] font-medium">{benefit}</span>
                   </div>
                 ))}
               </div>
               <div className="bg-muted rounded-2xl p-6">
-                <h3 className="font-bold text-primary-dark mb-3">Value Breakdown:</h3>
+                <h3 className="font-bold text-[var(--foreground)] mb-3">Value Breakdown:</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-secondary-dark">Pro at launch:</span>
+                    <span className="text-[var(--text-secondary)]">Pro at launch:</span>
                     <span className="font-bold">£19.99/mo</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-secondary-dark">Annual value:</span>
+                    <span className="text-[var(--text-secondary)]">Annual value:</span>
                     <span className="font-bold">£240/year</span>
                   </div>
                   <div className="flex justify-between text-holo-mint">
@@ -204,7 +204,7 @@ export function PricingNew() {
               <Button asChild size="lg" className="bg-holo-mint hover:bg-holo-mint-dark text-white px-12 py-6 text-lg mb-3">
                 <Link href="/signup">Secure Founder Pricing - £99</Link>
               </Button>
-              <p className="text-sm text-secondary-dark">Full refund if we shut down • No recurring fees ever</p>
+              <p className="text-sm text-[var(--text-muted)]">Full refund if we shut down • No recurring fees ever</p>
             </div>
           </div>
         </motion.div>
@@ -213,10 +213,10 @@ export function PricingNew() {
       {/* Planned Launch Pricing */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-dark mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-[var(--brand-primary)] mb-4">
             Planned Launch Pricing (Q2 2025)
           </h2>
-          <p className="text-lg text-secondary-dark">
+          <p className="text-lg text-[var(--text-secondary)]">
             Lock in Founder Pricing now to save up to 50%
           </p>
         </div>
@@ -229,9 +229,9 @@ export function PricingNew() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h3 className="text-xl font-bold text-primary-dark mb-2">Free Plan</h3>
-            <div className="text-3xl font-bold text-primary-dark mb-6">$0<span className="text-lg text-secondary-dark">/mo</span></div>
-            <p className="text-sm text-secondary-dark mb-6">Perfect for trying Repruv</p>
+            <h3 className="text-xl font-bold text-[var(--brand-primary)] mb-2">Free Plan</h3>
+            <div className="text-3xl font-bold text-[var(--brand-primary)] mb-6">$0<span className="text-lg text-[var(--text-secondary)]">/mo</span></div>
+            <p className="text-sm text-[var(--text-secondary)] mb-6">Perfect for trying Repruv</p>
 
             <div className="space-y-3 mb-6">
               {[
@@ -241,7 +241,7 @@ export function PricingNew() {
               ].map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-holo-mint flex-shrink-0" />
-                  <span className="text-secondary-dark text-sm">{feature.text}</span>
+                  <span className="text-[var(--text-secondary)] text-sm">{feature.text}</span>
                 </div>
               ))}
             </div>

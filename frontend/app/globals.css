@@ -23,9 +23,9 @@
   --background: #f5f7fa;
   --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #e8ecf5 100%);
   --foreground: #1a1f2e;
-  
+
   /* Glassmorphic Surfaces */
-  --card: rgba(255, 255, 255, 0.85);
+  --card: rgba(255, 255, 255, 0.70);
   --card-foreground: #1a1f2e;
   --card-border: rgba(167, 139, 250, 0.15);
   --card-glow: rgba(167, 139, 250, 0.2);
@@ -35,8 +35,8 @@
   
   /* Text Colors */
   --text-primary: #1a1f2e;
-  --text-secondary: #5a6780;
-  --text-muted: #a0a8bf;
+  --text-secondary: #4a5568;
+  --text-muted: #6b7280;
 
   /* Holographic Accent Colors */
   --holo-purple-from: #a78bfa;
@@ -66,8 +66,10 @@
   --ring: #a78bfa;
   
   /* Status Colors with Glow */
-  --success: #34d399;
+  --success: #10b981;
+  --success-foreground: #ffffff;
   --warning: #fbbf24;
+  --warning-foreground: #1a1f2e;
   --danger: #f87171;
   --destructive: #f87171;
   --destructive-foreground: #ffffff;
@@ -147,8 +149,10 @@
   --ring: #c084fc;
   
   /* Status Colors */
-  --success: #6ee7b7;
+  --success: #10b981;
+  --success-foreground: #ffffff;
   --warning: #fbbf24;
+  --warning-foreground: #1a1f2e;
   --danger: #f87171;
   --destructive: #f87171;
   --destructive-foreground: #ffffff;
