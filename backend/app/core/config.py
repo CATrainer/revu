@@ -211,7 +211,8 @@ class Settings(BaseSettings):
     DEMO_ALLOWED_EMAILS: List[str] = [
         "caleb.a.trainer@gmail.com",
         "caleb.trainer@thelaunchloop.com",
-        "petercollier100@gmail.com"
+        "petercollier100@gmail.com",
+        "demo@repruv.co.uk"
     ]
 
     # Monitoring
