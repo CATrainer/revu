@@ -440,6 +440,9 @@ export default function AIAssistantPage() {
         console.log('[AI Chat] New session created:', sessionId);
         setCurrentSessionId(sessionId);
         
+        // Small delay to ensure session is committed to database
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         // Add new session to the list immediately for better UX
         const newSession: ChatSession = {
           id: sessionId as string,
@@ -472,6 +475,10 @@ export default function AIAssistantPage() {
         content: userMessage.content,
       });
 
+      if (!response.data || !response.data.message_id) {
+        throw new Error('Invalid response from server: missing message_id');
+      }
+
       const { message_id: assistantMessageId } = response.data;
       console.log('[AI Chat] Message sent, assistant message ID:', assistantMessageId);
 
@@ -499,7 +506,23 @@ export default function AIAssistantPage() {
       }
     } catch (err: any) {
       console.error('Error sending message:', err);
-      setError(err.message || 'Failed to send message');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to send message';
+      if (err.response?.status === 404) {
+        errorMessage = 'Session not found. Please start a new chat.';
+        // Clear the invalid session
+        setCurrentSessionId(null);
+        localStorage.removeItem('ai_chat_last_session_id');
+      } else if (err.response?.status === 429) {
+        errorMessage = 'Rate limit exceeded. Please wait a moment and try again.';
+      } else if (err.response?.data?.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
       setIsStreaming(false);
     }
   };
