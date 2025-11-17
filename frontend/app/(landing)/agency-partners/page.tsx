@@ -139,7 +139,7 @@ export default function AgencyPartnersPage() {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen section-background">
       {/* Hero Section */}
       <section ref={heroRef} className="relative py-20 md:py-32 section-background overflow-hidden">
         <div className="absolute inset-0 opacity-5">
@@ -176,7 +176,7 @@ export default function AgencyPartnersPage() {
             animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <Button asChild size="lg" className="bg-[var(--success)] hover:bg-emerald-600 text-[var(--success-foreground)] px-8 py-6 text-lg font-bold">
+            <Button asChild size="lg" className="bg-[var(--brand-primary-solid)] hover:bg-[var(--brand-primary-solid-hover)] text-white px-8 py-6 text-lg font-bold">
               <Link href="https://calendar.app.google/nq6qhPm1UYdZvHde8" target="_blank" rel="noopener noreferrer">
                 <Calendar className="w-5 h-5 mr-2" />
                 Schedule Partnership Call
@@ -313,7 +313,7 @@ export default function AgencyPartnersPage() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <Rocket className="w-8 h-8 text-holo-teal" />
-                <h3 className="text-3xl font-bold text-[var(--brand-primary)]">In Development (December 2025)</h3>
+                <h3 className="text-3xl font-bold text-primary-dark">In Development (December 2025)</h3>
               </div>
               <ul className="space-y-3">
                 {q1Features.map((feature, index) => (
@@ -335,7 +335,7 @@ export default function AgencyPartnersPage() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <Target className="w-8 h-8 text-holo-purple" />
-                <h3 className="text-3xl font-bold text-[var(--brand-primary)]">Coming Q1 2026</h3>
+                <h3 className="text-3xl font-bold text-primary-dark">Coming Q1 2026</h3>
               </div>
               <ul className="space-y-3">
                 {q2Features.map((feature, index) => (
@@ -515,7 +515,7 @@ export default function AgencyPartnersPage() {
               We're onboarding our first 5 agency partners now.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="bg-[var(--success)] hover:bg-emerald-600 text-[var(--success-foreground)] px-8 py-6 text-lg font-bold">
+              <Button asChild size="lg" className="bg-[var(--brand-primary-solid)] hover:bg-[var(--brand-primary-solid-hover)] text-white px-8 py-6 text-lg font-bold">
                 <Link href="https://calendar.app.google/nq6qhPm1UYdZvHde8" target="_blank" rel="noopener noreferrer">
                   <Calendar className="w-5 h-5 mr-2" />
                   Schedule Partnership Call

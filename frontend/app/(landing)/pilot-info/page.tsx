@@ -12,6 +12,7 @@ import {
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import type { Metadata } from 'next';
+import { cn } from '@/lib/utils';
 
 // Helper component for section animations
 function Section({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
@@ -42,25 +43,27 @@ function InfoBox({
   children: React.ReactNode;
   variant?: 'default' | 'warning' | 'success';
 }) {
-  const colors = {
-    default: 'border-holo-mint/30 bg-holo-mint/5',
-    warning: 'border-yellow-500/30 bg-yellow-500/5',
-    success: 'border-emerald-500/30 bg-emerald-500/5'
+  const containerStyles = {
+    default: 'card-background border border-[var(--border)]',
+    warning: 'border border-amber-200 bg-amber-50 dark:border-amber-800/60 dark:bg-amber-900/10',
+    success: 'border border-emerald-200 bg-emerald-50 dark:border-emerald-800/60 dark:bg-emerald-900/10'
   };
 
-  const iconColors = {
-    default: 'text-holo-mint',
-    warning: 'text-yellow-500',
-    success: 'text-emerald-500'
+  const iconWrapperStyles = {
+    default: 'bg-[var(--muted)] text-[var(--brand-primary)]',
+    warning: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300',
+    success: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300'
   };
 
   return (
-    <div className={`glass-panel rounded-xl p-6 border-2 ${colors[variant]}`}>
+    <div className={cn('rounded-2xl p-6', containerStyles[variant])}>
       <div className="flex items-start gap-4">
-        <Icon className={`w-6 h-6 ${iconColors[variant]} flex-shrink-0 mt-1`} />
+        <div className={cn('w-11 h-11 rounded-2xl flex items-center justify-center', iconWrapperStyles[variant])}>
+          <Icon className="w-5 h-5" />
+        </div>
         <div className="flex-1">
-          <h3 className="text-lg font-bold text-[var(--brand-primary)] mb-3">{title}</h3>
-          <div className="text-[var(--text-secondary)] space-y-2">
+          <h3 className="text-lg font-bold text-primary-dark mb-3">{title}</h3>
+          <div className="text-secondary-dark space-y-2">
             {children}
           </div>
         </div>
@@ -71,7 +74,7 @@ function InfoBox({
 
 export default function PilotInfoPage() {
   return (
-    <div className="min-h-screen py-16">
+    <div className="min-h-screen section-background py-16">
       {/* Hero */}
       <Section>
         <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16">

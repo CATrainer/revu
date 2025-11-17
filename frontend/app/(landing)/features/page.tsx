@@ -187,136 +187,148 @@ export default function FeaturesPage() {
               </motion.ul>
             </motion.div>
             <motion.div 
-              className="card-background-light rounded-lg p-8 h-96 flex items-center justify-center transition-transform duration-300 hover:scale-105"
+              className="rounded-2xl p-0 h-96 flex items-center justify-center transition-transform duration-300 hover:scale-105"
               initial={{ opacity: 0, x: 50, scale: 0.9 }}
               animate={responseInView ? { opacity: 1, x: 0, scale: 1 } : { opacity: 0, x: 50, scale: 0.9 }}
               transition={{ duration: 0.8, delay: responseInView ? 0.4 : 0 }}
             >
               {/* DM & Comment Automation Enhanced UI Mockup */}
-              <div className="w-full h-full bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-4 relative overflow-hidden border border-blue-200 shadow-lg">
+              <div className="w-full h-full rounded-2xl p-4 relative overflow-hidden card-background border border-[var(--border)] shadow-lg">
+                <div className="absolute inset-0 bg-gradient-to-br from-teal-200/30 via-blue-200/30 to-purple-200/30 dark:from-emerald-500/10 dark:via-blue-500/10 dark:to-purple-500/10"></div>
+                <div className="relative z-10 h-full flex flex-col">
                 {/* Header with logo and controls */}
-                <div className="flex items-center justify-between mb-3 border-b border-blue-100 pb-2">
+                <div className="flex items-center justify-between mb-3 border-b border-blue-200/40 dark:border-blue-800/40 pb-2">
                   <div className="flex items-center gap-2">
-                    <div className="bg-blue-600 rounded-md w-6 h-6 flex items-center justify-center text-white font-bold text-xs">R</div>
-                    <h4 className="text-sm font-semibold text-gray-800">Repruv Comment Manager</h4>
+                    <div className="bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md w-6 h-6 flex items-center justify-center text-white font-bold text-xs">R</div>
+                    <h4 className="text-sm font-semibold text-primary-dark">Repruv Comment Manager</h4>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded-full border border-blue-200">
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full border border-blue-200/50 dark:border-blue-800/60 bg-blue-50/70 dark:bg-blue-900/30">
                       <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                      <span className="text-xs font-medium text-blue-700">Auto Mode</span>
+                      <span className="text-xs font-medium text-blue-700 dark:text-blue-200">Auto Mode</span>
                     </div>
-                    <div className="bg-blue-500 hover:bg-blue-600 transition-colors rounded-full w-5 h-5 flex items-center justify-center cursor-pointer">
-                      <span className="text-white text-xs">⚙️</span>
+                    <div className="bg-blue-500/90 hover:bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center cursor-pointer transition-colors">
+                      ⚙️
                     </div>
                   </div>
                 </div>
                 
                 {/* Platform tabs with better visuals */}
-                <div className="flex gap-1 mb-3">
-                  <div className="px-3 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-medium rounded-md flex items-center gap-1 shadow-sm">
-                    <span className="text-xs">▶️</span> YouTube
-                  </div>
-                  <div className="px-3 py-1.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-medium rounded-md flex items-center gap-1 shadow-sm">
-                    <span className="text-xs">📷</span> Instagram
-                  </div>
-                  <div className="px-3 py-1.5 bg-gradient-to-r from-black to-gray-800 text-white text-xs font-medium rounded-md flex items-center gap-1 shadow-sm">
-                    <span className="text-xs">🎵</span> TikTok
-                  </div>
+                <div className="flex gap-2 mb-3 flex-wrap">
+                  {[
+                    { label: 'YouTube', emoji: '▶️', classes: 'from-red-500 to-red-600' },
+                    { label: 'Instagram', emoji: '📷', classes: 'from-pink-500 to-purple-600' },
+                    { label: 'TikTok', emoji: '🎵', classes: 'from-gray-900 to-gray-700' },
+                  ].map(({ label, emoji, classes }) => (
+                    <div
+                      key={label}
+                      className={`px-3 py-1.5 bg-gradient-to-r ${classes} text-white text-xs font-medium rounded-md flex items-center gap-1 shadow-sm`}
+                    >
+                      <span className="text-xs">{emoji}</span> {label}
+                    </div>
+                  ))}
                 </div>
                 
                 {/* Dashboard stats */}
-                <div className="grid grid-cols-3 gap-1 mb-2">
-                  <div className="bg-white rounded-md p-1.5 border border-blue-100 shadow-sm">
-                    <div className="text-xs text-gray-500">Unread</div>
-                    <div className="font-semibold text-blue-700">18</div>
-                  </div>
-                  <div className="bg-white rounded-md p-1.5 border border-blue-100 shadow-sm">
-                    <div className="text-xs text-gray-500">Auto-replied</div>
-                    <div className="font-semibold text-holo-mint">42</div>
-                  </div>
-                  <div className="bg-white rounded-md p-1.5 border border-blue-100 shadow-sm">
-                    <div className="text-xs text-gray-500">Pending</div>
-                    <div className="font-semibold text-orange-500">7</div>
-                  </div>
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  {[
+                    { label: 'Unread', value: '18', accent: 'text-blue-600' },
+                    { label: 'Auto-replied', value: '42', accent: 'text-emerald-500' },
+                    { label: 'Pending', value: '7', accent: 'text-amber-500' },
+                  ].map(({ label, value, accent }) => (
+                    <div
+                      key={label}
+                      className="rounded-md border border-blue-200/50 dark:border-blue-800/60 bg-blue-50/70 dark:bg-blue-950/30 p-1.5 shadow-sm"
+                    >
+                      <div className="text-[0.65rem] text-secondary-dark">{label}</div>
+                      <div className={`font-semibold ${accent}`}>{value}</div>
+                    </div>
+                  ))}
                 </div>
                 
                 {/* Comment responses with better styling */}
-                <div className="space-y-2 overflow-auto max-h-[calc(100%-130px)]">
-                  <div className="bg-white rounded-lg p-2 shadow-sm border-l-4 border-red-500 relative">
-                    <div className="absolute -left-1 top-2 w-2 h-2 bg-red-500 rounded-full"></div>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs">YT</div>
-                        <span className="text-xs font-medium text-gray-700">@johndoe</span>
-                        <div className="px-1.5 py-0.5 bg-holo-mint/10 text-holo-mint text-xs rounded-sm">Auto</div>
-                      </div>
-                      <span className="text-xs text-gray-500">2m</span>
-                    </div>
-                    <p className="text-xs text-gray-700 mb-1 border-l-2 border-gray-200 pl-2">&quot;I love your content! When is your next tutorial coming out?&quot;</p>
-                    <div className="bg-blue-50 rounded p-1.5 border-l-2 border-blue-300">
-                      <div className="flex items-center gap-1 mb-1">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <span className="text-xs font-medium text-blue-700">AI Response</span>
-                      </div>
-                      <p className="text-xs text-gray-700">&quot;Thanks for your support! 🙏 My next tutorial drops this Friday at 3pm EST. Turn on notifications so you don&apos;t miss it! 🔔&quot;</p>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-white rounded-lg p-2 shadow-sm border-l-4 border-pink-500 relative">
-                    <div className="absolute -left-1 top-2 w-2 h-2 bg-pink-500 rounded-full"></div>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs">IG</div>
-                        <span className="text-xs font-medium text-gray-700">@travel_addict</span>
-                        <div className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-sm">Needs Review</div>
-                      </div>
-                      <span className="text-xs text-gray-500">8m</span>
-                    </div>
-                    <p className="text-xs text-gray-700 mb-1 border-l-2 border-gray-200 pl-2">&quot;What camera do you use for your stunning photos?&quot;</p>
-                    <div className="bg-yellow-50 rounded p-1.5 border-l-2 border-yellow-300">
+                <div className="space-y-2 overflow-auto flex-1 pr-1">
+                  {[
+                    {
+                      platform: 'YT',
+                      color: 'red',
+                      handle: '@johndoe',
+                      timestamp: '2m',
+                      status: 'Auto',
+                      message: '"I love your content! When is your next tutorial coming out?"',
+                      response:
+                        '"Thanks for your support! 🙏 My next tutorial drops this Friday at 3pm EST. Turn on notifications so you don\'t miss it! 🔔"',
+                    },
+                    {
+                      platform: 'IG',
+                      color: 'pink',
+                      handle: '@travel_addict',
+                      timestamp: '8m',
+                      status: 'Needs Review',
+                      message: '"What camera do you use for your stunning photos?"',
+                      response:
+                        '"I use a Sony Alpha a7III for most of my shots. I\'ve listed all my gear in my profile link! 📸 #Photography"',
+                    },
+                    {
+                      platform: 'TT',
+                      color: 'gray',
+                      handle: '@dance_queen',
+                      timestamp: '12m',
+                      status: 'Auto',
+                      message: '"This routine is amazing! Can you do a tutorial?"',
+                      response: '"Thank you! 💃 I\'ll be posting a step-by-step tutorial next week! Make sure to follow so you don\'t miss it!"',
+                    },
+                  ].map((card) => (
+                    <div
+                      key={card.handle}
+                      className="rounded-lg border border-[var(--border)] bg-[var(--card)]/80 shadow-sm p-2"
+                    >
                       <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-1">
-                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                          <span className="text-xs font-medium text-yellow-700">Draft Response</span>
+                        <div className="flex items-center gap-1.5 text-primary-dark">
+                          <div
+                            className="w-5 h-5 rounded-full text-[0.6rem] font-semibold text-white flex items-center justify-center"
+                            style={{
+                              background:
+                                card.color === 'red'
+                                  ? '#ef4444'
+                                  : card.color === 'pink'
+                                    ? 'linear-gradient(135deg,#ec4899,#8b5cf6)'
+                                    : '#111827',
+                            }}
+                          >
+                            {card.platform}
+                          </div>
+                          <span className="text-xs font-medium text-secondary-dark">{card.handle}</span>
+                          <div className="px-1.5 py-0.5 rounded-sm text-[0.6rem] text-secondary-dark bg-muted">
+                            {card.status}
+                          </div>
                         </div>
-                        <div className="flex gap-1">
-                          <button className="bg-holo-mint/10 hover:bg-holo-mint/20 text-holo-mint text-xs px-1.5 rounded">✓</button>
-                          <button className="bg-red-100 hover:bg-red-200 text-red-700 text-xs px-1.5 rounded">✕</button>
-                          <button className="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs px-1.5 rounded">✎</button>
+                        <span className="text-xs text-secondary-dark">{card.timestamp}</span>
+                      </div>
+                      <p className="text-xs text-secondary-dark mb-1 border-l border-[var(--border)] pl-2">
+                        {card.message}
+                      </p>
+                      <div className="rounded-md border border-blue-200/50 dark:border-blue-800/50 bg-blue-50/60 dark:bg-blue-950/30 p-1.5">
+                        <div className="flex items-center gap-1 mb-1">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-[0.65rem] font-semibold text-blue-700 dark:text-blue-200">AI Response</span>
                         </div>
+                        <p className="text-xs text-primary-dark">{card.response}</p>
                       </div>
-                      <p className="text-xs text-gray-700">&quot;I use a Sony Alpha a7III for most of my shots. I&apos;ve listed all my gear in my profile link! 📸 #Photography&quot;</p>
                     </div>
-                  </div>
-                  
-                  <div className="bg-white rounded-lg p-2 shadow-sm border-l-4 border-black relative">
-                    <div className="absolute -left-1 top-2 w-2 h-2 bg-black rounded-full"></div>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center text-white text-xs">TT</div>
-                        <span className="text-xs font-medium text-gray-700">@dance_queen</span>
-                        <div className="px-1.5 py-0.5 bg-holo-mint/10 text-holo-mint text-xs rounded-sm">Auto</div>
-                      </div>
-                      <span className="text-xs text-gray-500">12m</span>
-                    </div>
-                    <p className="text-xs text-gray-700 mb-1 border-l-2 border-gray-200 pl-2">&quot;This routine is amazing! Can you do a tutorial?&quot;</p>
-                    <div className="bg-blue-50 rounded p-1.5 border-l-2 border-blue-300">
-                      <div className="flex items-center gap-1 mb-1">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <span className="text-xs font-medium text-blue-700">AI Response</span>
-                      </div>
-                      <p className="text-xs text-gray-700">&quot;Thank you! 💃 I&apos;ll be posting a step-by-step tutorial next week! Make sure to follow so you don&apos;t miss it!&quot;</p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
                 
                 {/* Controls and status bar */}
-                <div className="absolute bottom-2 left-2 right-2 bg-white rounded-md p-1.5 shadow-sm border border-blue-100 flex items-center justify-between">
+                <div className="mt-3 rounded-md border border-blue-200/40 dark:border-blue-800/40 bg-blue-50/60 dark:bg-blue-950/30 p-2 flex items-center justify-between text-xs text-secondary-dark shadow-sm">
                   <div className="flex items-center gap-2">
-                    <button className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded transition-colors">Refresh</button>
-                    <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded transition-colors">Rules</button>
+                    <button className="px-3 py-1 rounded-md bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors text-xs">Refresh</button>
+                    <button className="px-3 py-1 rounded-md border border-[var(--border)] hover:bg-muted transition-colors text-xs text-primary-dark">
+                      Rules
+                    </button>
                   </div>
-                  <div className="text-xs text-blue-600 font-medium">24 replies today • 98% auto-handled</div>
+                  <div className="text-blue-700 dark:text-blue-200 font-medium">24 replies today • 98% auto-handled</div>
+                </div>
                 </div>
               </div>
             </motion.div>

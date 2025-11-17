@@ -49,9 +49,9 @@ export default function JoinWaitlistPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] dark:bg-gray-900 py-12">
+    <div className="min-h-screen section-background py-12">
       <div className="max-w-2xl mx-auto px-4">
-        <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 shadow-xl overflow-visible">
+        <Card className="card-background shadow-xl overflow-visible">
           <CardHeader className="text-center px-8">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -59,10 +59,10 @@ export default function JoinWaitlistPage() {
               transition={{ duration: 0.7, ease: 'easeOut' }}
               className="flex flex-col items-center w-full"
             >
-                <CardTitle className="text-3xl md:text-4xl font-extrabold text-green-500 dark:text-green-400 leading-tight text-center mx-auto">
+                <CardTitle className="text-3xl md:text-4xl font-extrabold text-primary-dark leading-tight text-center mx-auto">
                   Get Early Access
                 </CardTitle>
-                <CardDescription className="text-sm font-medium text-green-800 dark:text-green-300 mt-2 text-center w-full mx-auto px-4">
+                <CardDescription className="text-sm font-medium text-secondary-dark mt-2 text-center w-full mx-auto px-4">
                   We’re in prelaunch. Share your email and we’ll notify you early when access opens.
                 </CardDescription>
             </motion.div>
@@ -80,7 +80,7 @@ export default function JoinWaitlistPage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.15 }}
               >
-                <Label htmlFor="email" className="text-gray-700 dark:text-gray-200 font-medium">Email *</Label>
+                <Label htmlFor="email" className="text-primary-dark font-medium">Email *</Label>
                 <Input
                   id="email"
                   name="email"
@@ -89,14 +89,14 @@ export default function JoinWaitlistPage() {
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="john@example.com"
-                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[var(--brand-primary-solid)] dark:focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 dark:focus:ring-[var(--brand-primary-solid)]/30 transition-all duration-200 focus:scale-[1.03]"
+                  className="mt-1 bg-[var(--card)] border-[var(--border)] text-primary-dark placeholder:text-secondary-dark focus:border-[var(--brand-primary-solid)] focus:ring-[var(--brand-primary-solid)]/20 transition-all duration-200"
                 />
               </motion.div>
 
               <AnimatePresence>
                 {error && (
                   <motion.div
-                    className="flex items-center space-x-2 text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-200 dark:border-red-800"
+                    className="flex items-center space-x-2 text-red-600 text-sm bg-red-50 p-3 rounded-xl border border-red-200"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
@@ -116,7 +116,7 @@ export default function JoinWaitlistPage() {
                 <Button 
                   type="submit" 
                   disabled={loading} 
-                  className="w-full bg-gradient-to-r from-[var(--brand-primary-solid)] to-[var(--brand-secondary-solid)] hover:from-[var(--brand-primary-solid-hover)] hover:to-[var(--brand-secondary-solid-hover)] text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 border-0 focus:ring-4 focus:ring-[var(--brand-primary-solid)]/30"
+                  className="w-full bg-[var(--brand-primary-solid)] hover:bg-[var(--brand-primary-solid-hover)] text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   {loading ? (
                     <>

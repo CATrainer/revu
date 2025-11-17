@@ -63,14 +63,21 @@ export function PlatformSupport() {
               {availablePlatforms.map((platform, index) => (
                 <motion.div
                   key={platform.name}
-                  className="flex items-center gap-4 p-4 bg-muted rounded-xl"
+                  className="flex items-center gap-4 p-4 rounded-2xl card-background border border-[var(--border)]"
                   initial={{ opacity: 0, y: 20 }}
                   animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                   transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
                 >
-                  <platform.icon className={`w-8 h-8 ${platform.color}`} />
-                  <span className="text-lg font-semibold brand-text">{platform.name}</span>
-                  <Check className="w-5 h-5 text-holo-mint ml-auto" />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[var(--muted)] to-transparent">
+                    <platform.icon className={`w-6 h-6 ${platform.color}`} />
+                  </div>
+                  <div>
+                    <span className="text-lg font-semibold text-primary-dark block">{platform.name}</span>
+                    <span className="text-sm text-secondary-dark">Live today</span>
+                  </div>
+                  <div className="ml-auto text-[var(--success)]">
+                    <Check className="w-5 h-5" />
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -91,15 +98,23 @@ export function PlatformSupport() {
               {comingSoonPlatforms.map((platform, index) => (
                 <motion.div
                   key={platform.name}
-                  className="flex items-center gap-4 p-4 bg-muted/50 rounded-xl opacity-70"
+                  className="flex items-center gap-4 p-4 rounded-2xl border border-dashed border-[var(--border)]/60 bg-[var(--card)]/40"
                   initial={{ opacity: 0, y: 20 }}
                   animate={isInView ? { opacity: 0.7, y: 0 } : { opacity: 0, y: 20 }}
                   transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
                 >
-                  <platform.icon className={`w-8 h-8 ${platform.color}`} />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[var(--secondary)] to-transparent">
+                    <platform.icon className={`w-6 h-6 ${platform.color}`} />
+                  </div>
                   <div className="flex-1">
-                    <span className="text-lg font-semibold brand-text block">{platform.name}</span>
-                    <span className="text-sm text-secondary-dark">{platform.timeline}</span>
+                    <span className="text-lg font-semibold text-primary-dark block">{platform.name}</span>
+                    <span className="text-sm text-secondary-dark">Arriving {platform.timeline}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-secondary-dark flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      In progress
+                    </span>
                   </div>
                 </motion.div>
               ))}

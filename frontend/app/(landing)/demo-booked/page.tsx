@@ -85,22 +85,22 @@ export default function DemoBookedPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-12">
+    <div className="min-h-screen section-background py-12">
       <div className="max-w-md mx-auto px-4">
-        <Card>
+        <Card className="card-background shadow-xl">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4">
-              <CheckCircle className="h-16 w-16 text-green-500" />
+              <CheckCircle className="h-16 w-16 text-[var(--success)]" />
             </div>
-            <CardTitle className="text-2xl font-bold">Demo Booked Successfully!</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl font-bold text-primary-dark">Demo Booked Successfully!</CardTitle>
+            <CardDescription className="text-secondary-dark">
               Great! We&apos;ve scheduled your demo. Check your email for the meeting details.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="rounded-lg p-4 border border-blue-200/60 dark:border-blue-800/60 bg-blue-50/70 dark:bg-blue-950/30">
               <div className="flex items-center space-x-2">
-                <Calendar className="h-5 w-5 text-blue-600" />
+                <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-300" />
                 <span className="text-sm font-medium text-primary-dark">
                   Demo scheduled - Check your email for details
                 </span>
@@ -134,7 +134,7 @@ export default function DemoBookedPage() {
               <form onSubmit={handleCreateAccount} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="full_name">Full Name *</Label>
+                    <Label htmlFor="full_name" className="text-primary-dark">Full Name *</Label>
                     <Input
                       id="full_name"
                       name="full_name"
@@ -146,7 +146,7 @@ export default function DemoBookedPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email">Email *</Label>
+                    <Label htmlFor="email" className="text-primary-dark">Email *</Label>
                     <Input
                       id="email"
                       name="email"
@@ -161,7 +161,7 @@ export default function DemoBookedPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone" className="text-primary-dark">Phone</Label>
                     <Input
                       id="phone"
                       name="phone"
@@ -172,7 +172,7 @@ export default function DemoBookedPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="company_name">Company</Label>
+                    <Label htmlFor="company_name" className="text-primary-dark">Company</Label>
                     <Input
                       id="company_name"
                       name="company_name"
@@ -185,7 +185,7 @@ export default function DemoBookedPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="industry">Industry</Label>
+                  <Label htmlFor="industry" className="text-primary-dark">Industry</Label>
                   <Input
                     id="industry"
                     name="industry"
@@ -198,7 +198,7 @@ export default function DemoBookedPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="password">Password *</Label>
+                    <Label htmlFor="password" className="text-primary-dark">Password *</Label>
                     <Input
                       id="password"
                       name="password"
@@ -210,7 +210,7 @@ export default function DemoBookedPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                    <Label htmlFor="confirmPassword" className="text-primary-dark">Confirm Password *</Label>
                     <Input
                       id="confirmPassword"
                       name="confirmPassword"

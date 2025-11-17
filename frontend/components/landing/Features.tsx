@@ -212,7 +212,7 @@ export function Features() {
                     />
                   </motion.div>
                   <motion.h3 
-                    className="text-xl font-semibold mb-2 font-['Poppins',sans-serif] text-center text-[var(--brand-primary)]"
+                    className="text-xl font-semibold mb-2 font-['Poppins',sans-serif] text-center text-primary-dark"
                     initial={{ opacity: 0 }}
                     animate={isInView ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ delay: 0.8 + (index * 0.1), duration: 0.5 }}
@@ -220,7 +220,7 @@ export function Features() {
                     {feature.title}
                   </motion.h3>
                   <motion.p 
-                    className="text-[var(--success)] font-['Poppins',sans-serif]"
+                    className="text-secondary-dark font-['Poppins',sans-serif]"
                     initial={{ opacity: 0 }}
                     animate={isInView ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ delay: 1.0 + (index * 0.1), duration: 0.5 }}
