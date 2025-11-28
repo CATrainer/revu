@@ -1187,17 +1187,512 @@ def send_new_application_notification_to_admins(
         return {"sent": 0, "failed": 0, "error": str(e)}
 
 
-# DEPRECATED: Review feature removed - this task is no longer used
-# @celery_app.task(name="app.tasks.email.send_review_alert")
-# def send_review_alert(
-#     user_email: str,
-#     location_name: str,
-#     review_summary: dict,
-# ) -> bool:
-#     """
-#     Send alert about new review requiring attention.
-#     
-#     DEPRECATED: Review system removed for social media focus.
-#     Kept for reference only - can be deleted.
-#     """
-#     pass
+# ============================================
+# Agency Email Tasks
+# ============================================
+
+
+@celery_app.task(name="app.tasks.email.send_agency_signup_admin_notification")
+def send_agency_signup_admin_notification(
+    agency_name: str,
+    owner_email: str,
+    owner_name: str,
+) -> dict:
+    """
+    Notify admins about a new agency signup.
+
+    Agencies are auto-approved, but we still want admins to know
+    when new agencies join the platform.
+
+    Args:
+        agency_name: Name of the new agency
+        owner_email: Email of the agency owner
+        owner_name: Name of the agency owner
+
+    Returns:
+        dict: Summary of notifications sent
+    """
+    try:
+        from app.models.application import AdminNotificationSettings
+
+        async def _send_notifications():
+            sent = 0
+            failed = 0
+
+            async with async_session_maker() as session:
+                # Get active admins who want agency notifications
+                stmt = select(AdminNotificationSettings).where(
+                    AdminNotificationSettings.is_active == True  # noqa: E712
+                )
+                result = await session.execute(stmt)
+                admin_settings = result.scalars().all()
+
+                for admin in admin_settings:
+                    # Check if they want agency notifications
+                    if not admin.notification_types.get("agency_applications", False):
+                        continue
+
+                    try:
+                        subject = f"🏢 New Agency Signup — {agency_name}"
+
+                        html_content = f"""
+                        <!doctype html>
+                        <html>
+                        <body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:20px;margin:0;">
+                            <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;padding:24px;">
+                                <h2 style="margin:0 0 16px;color:#0f172a;font-size:20px;">New Agency Joined Repruv</h2>
+
+                                <div style="background:#f0fdf4;border-left:4px solid #22c55e;padding:16px;border-radius:0 6px 6px 0;margin-bottom:20px;">
+                                    <p style="margin:0;color:#166534;font-size:14px;font-weight:600;">
+                                        Auto-approved and ready to use
+                                    </p>
+                                </div>
+
+                                <div style="background:#f8fafc;padding:16px;border-radius:6px;margin-bottom:20px;">
+                                    <p style="margin:0 0 8px;color:#64748b;font-size:14px;"><strong>Agency:</strong> {agency_name}</p>
+                                    <p style="margin:0 0 8px;color:#64748b;font-size:14px;"><strong>Owner:</strong> {owner_name}</p>
+                                    <p style="margin:0;color:#64748b;font-size:14px;"><strong>Email:</strong> {owner_email}</p>
+                                </div>
+
+                                <p style="margin:20px 0 0;color:#94a3b8;font-size:12px;text-align:center;">
+                                    Repruv Admin Notifications
+                                </p>
+                            </div>
+                        </body>
+                        </html>
+                        """
+
+                        if send_email(admin.email, subject, html_content):
+                            sent += 1
+                        else:
+                            failed += 1
+
+                    except Exception as e:  # noqa: BLE001
+                        logger.error(f"Failed to notify admin {admin.email}: {e}")
+                        failed += 1
+
+            return {"sent": sent, "failed": failed}
+
+        # Run async function
+        try:
+            result = asyncio.get_event_loop().run_until_complete(_send_notifications())
+        except RuntimeError:
+            result = asyncio.run(_send_notifications())
+
+        logger.info(f"Agency signup admin notifications: agency={agency_name}, sent={result['sent']}, failed={result['failed']}")
+        return result
+
+    except Exception as e:
+        logger.error(f"Failed to send agency signup admin notifications: {e}")
+        return {"sent": 0, "failed": 0, "error": str(e)}
+
+
+@celery_app.task(name="app.tasks.email.send_creator_invitation_email")
+def send_creator_invitation_email(
+    email: str,
+    agency_name: str,
+    invitation_token: str,
+    inviter_name: str,
+    is_team_invite: bool = False,
+) -> bool:
+    """
+    Send invitation email to a creator or team member to join an agency.
+
+    Args:
+        email: Recipient email address
+        agency_name: Name of the agency sending the invite
+        invitation_token: Unique token for accepting the invitation
+        inviter_name: Name of the person who sent the invite
+        is_team_invite: Whether this is a team member invite (vs creator)
+
+    Returns:
+        bool: Success status
+    """
+    try:
+        invite_type = "team member" if is_team_invite else "creator"
+        accept_url = f"{settings.FRONTEND_URL}/invite/accept?token={invitation_token}"
+
+        subject = f"You're invited to join {agency_name} on Repruv"
+
+        html_content = f"""
+        <!doctype html>
+        <html>
+        <body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:24px;margin:0;">
+            <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                <div style="text-align:center;margin-bottom:24px;">
+                    <h1 style="margin:0;color:#0f172a;font-weight:800;font-size:28px;">You're Invited!</h1>
+                </div>
+
+                <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
+                    Hi there,
+                </p>
+
+                <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
+                    <strong>{inviter_name}</strong> has invited you to join <strong>{agency_name}</strong> as a {invite_type} on Repruv.
+                </p>
+
+                <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:20px;margin:24px 0;border-radius:8px;">
+                    <h3 style="margin:0 0 12px;color:#15803d;font-size:18px;font-weight:700;">What is Repruv?</h3>
+                    <p style="margin:0;color:#166534;font-size:14px;line-height:22px;">
+                        Repruv is an AI-powered platform that helps creators and agencies manage their social media presence,
+                        engage with their audience, and discover monetization opportunities.
+                    </p>
+                </div>
+
+                <div style="text-align:center;margin:32px 0;">
+                    <a href="{accept_url}"
+                       style="background:linear-gradient(to right,#16a34a,#15803d);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;display:inline-block;font-weight:600;font-size:16px;">
+                        Accept Invitation
+                    </a>
+                </div>
+
+                <p style="margin:16px 0;color:#64748b;font-size:14px;text-align:center;">
+                    This invitation expires in 7 days.
+                </p>
+
+                <div style="background:#f8fafc;padding:16px;border-radius:8px;margin-top:24px;">
+                    <p style="margin:0;color:#64748b;font-size:14px;line-height:20px;">
+                        <strong style="color:#334155;">Didn't expect this email?</strong><br>
+                        If you don't know {inviter_name} or {agency_name}, you can safely ignore this email.
+                    </p>
+                </div>
+
+                <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;text-align:center;line-height:18px;">
+                    © {datetime.utcnow().year} Repruv. All rights reserved.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+
+        success = send_email(email, subject, html_content)
+        if success:
+            logger.info(f"Creator invitation email sent to {email} for agency {agency_name}")
+        return success
+
+    except Exception as e:
+        logger.error(f"Failed to send creator invitation email to {email}: {e}")
+        return False
+
+
+@celery_app.task(name="app.tasks.email.send_join_request_notification")
+def send_join_request_notification(
+    agency_admin_email: str,
+    agency_admin_name: str,
+    agency_name: str,
+    creator_name: str,
+    creator_email: str,
+) -> bool:
+    """
+    Notify agency admin about a new join request from a creator.
+
+    Args:
+        agency_admin_email: Email of the agency admin to notify
+        agency_admin_name: Name of the agency admin
+        agency_name: Name of the agency
+        creator_name: Name of the creator requesting to join
+        creator_email: Email of the creator
+
+    Returns:
+        bool: Success status
+    """
+    try:
+        review_url = f"{settings.FRONTEND_URL}/agency/creators"
+
+        subject = f"New join request for {agency_name}"
+
+        html_content = f"""
+        <!doctype html>
+        <html>
+        <body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:24px;margin:0;">
+            <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                <div style="text-align:center;margin-bottom:24px;">
+                    <h1 style="margin:0;color:#0f172a;font-weight:800;font-size:24px;">New Join Request</h1>
+                </div>
+
+                <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
+                    Hi {agency_admin_name},
+                </p>
+
+                <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
+                    A creator has requested to join <strong>{agency_name}</strong>.
+                </p>
+
+                <div style="background:#f8fafc;padding:16px;border-radius:8px;margin:24px 0;">
+                    <p style="margin:0 0 8px;color:#64748b;font-size:14px;"><strong>Creator:</strong> {creator_name}</p>
+                    <p style="margin:0;color:#64748b;font-size:14px;"><strong>Email:</strong> {creator_email}</p>
+                </div>
+
+                <div style="text-align:center;margin:32px 0;">
+                    <a href="{review_url}"
+                       style="background:linear-gradient(to right,#16a34a,#15803d);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;display:inline-block;font-weight:600;font-size:16px;">
+                        Review Request
+                    </a>
+                </div>
+
+                <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;text-align:center;line-height:18px;">
+                    © {datetime.utcnow().year} Repruv. All rights reserved.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+
+        success = send_email(agency_admin_email, subject, html_content)
+        if success:
+            logger.info(f"Join request notification sent to {agency_admin_email} for creator {creator_email}")
+        return success
+
+    except Exception as e:
+        logger.error(f"Failed to send join request notification to {agency_admin_email}: {e}")
+        return False
+
+
+@celery_app.task(name="app.tasks.email.send_join_request_accepted_email")
+def send_join_request_accepted_email(
+    creator_email: str,
+    creator_name: str,
+    agency_name: str,
+) -> bool:
+    """
+    Notify creator that their join request was accepted.
+
+    Args:
+        creator_email: Email of the creator
+        creator_name: Name of the creator
+        agency_name: Name of the agency
+
+    Returns:
+        bool: Success status
+    """
+    try:
+        dashboard_url = f"{settings.FRONTEND_URL}/dashboard"
+
+        subject = f"Welcome to {agency_name}!"
+
+        html_content = f"""
+        <!doctype html>
+        <html>
+        <body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:24px;margin:0;">
+            <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                <div style="text-align:center;margin-bottom:24px;">
+                    <h1 style="margin:0;color:#0f172a;font-weight:800;font-size:28px;">You're In!</h1>
+                </div>
+
+                <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
+                    Hi {creator_name},
+                </p>
+
+                <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
+                    Great news! <strong>{agency_name}</strong> has accepted your request to join their roster.
+                </p>
+
+                <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:20px;margin:24px 0;border-radius:8px;">
+                    <h3 style="margin:0 0 12px;color:#15803d;font-size:18px;font-weight:700;">What's Next?</h3>
+                    <ul style="margin:0;padding-left:20px;color:#166534;font-size:14px;line-height:22px;">
+                        <li style="margin-bottom:8px;">Your agency can now send you sponsorship opportunities</li>
+                        <li style="margin-bottom:8px;">Access agency-exclusive resources and support</li>
+                        <li style="margin-bottom:0;">Collaborate with your agency on brand deals</li>
+                    </ul>
+                </div>
+
+                <div style="text-align:center;margin:32px 0;">
+                    <a href="{dashboard_url}"
+                       style="background:linear-gradient(to right,#16a34a,#15803d);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;display:inline-block;font-weight:600;font-size:16px;">
+                        Go to Dashboard
+                    </a>
+                </div>
+
+                <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;text-align:center;line-height:18px;">
+                    © {datetime.utcnow().year} Repruv. All rights reserved.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+
+        success = send_email(creator_email, subject, html_content)
+        if success:
+            logger.info(f"Join request accepted email sent to {creator_email} for agency {agency_name}")
+        return success
+
+    except Exception as e:
+        logger.error(f"Failed to send join request accepted email to {creator_email}: {e}")
+        return False
+
+
+@celery_app.task(name="app.tasks.email.send_opportunity_notification")
+def send_opportunity_notification(
+    creator_email: str,
+    creator_name: str,
+    agency_name: str,
+    opportunity_title: str,
+    brand_name: str,
+) -> bool:
+    """
+    Notify creator about a new sponsorship opportunity from their agency.
+
+    Args:
+        creator_email: Email of the creator
+        creator_name: Name of the creator
+        agency_name: Name of the agency
+        opportunity_title: Title of the opportunity
+        brand_name: Name of the brand/sponsor
+
+    Returns:
+        bool: Success status
+    """
+    try:
+        dashboard_url = f"{settings.FRONTEND_URL}/dashboard/opportunities"
+
+        subject = f"New Opportunity: {brand_name} via {agency_name}"
+
+        html_content = f"""
+        <!doctype html>
+        <html>
+        <body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:24px;margin:0;">
+            <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                <div style="text-align:center;margin-bottom:24px;">
+                    <h1 style="margin:0;color:#0f172a;font-weight:800;font-size:28px;">New Opportunity!</h1>
+                </div>
+
+                <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
+                    Hi {creator_name},
+                </p>
+
+                <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
+                    <strong>{agency_name}</strong> has sent you a new sponsorship opportunity with <strong>{brand_name}</strong>.
+                </p>
+
+                <div style="background:#f8fafc;padding:20px;border-radius:8px;margin:24px 0;">
+                    <h3 style="margin:0 0 8px;color:#0f172a;font-size:18px;font-weight:700;">{opportunity_title}</h3>
+                    <p style="margin:0;color:#64748b;font-size:14px;">Brand: {brand_name}</p>
+                </div>
+
+                <div style="text-align:center;margin:32px 0;">
+                    <a href="{dashboard_url}"
+                       style="background:linear-gradient(to right,#16a34a,#15803d);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;display:inline-block;font-weight:600;font-size:16px;">
+                        View Opportunity
+                    </a>
+                </div>
+
+                <p style="margin:16px 0;color:#64748b;font-size:14px;text-align:center;">
+                    Review the details and respond to let your agency know if you're interested.
+                </p>
+
+                <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;text-align:center;line-height:18px;">
+                    © {datetime.utcnow().year} Repruv. All rights reserved.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+
+        success = send_email(creator_email, subject, html_content)
+        if success:
+            logger.info(f"Opportunity notification sent to {creator_email} for opportunity: {opportunity_title}")
+        return success
+
+    except Exception as e:
+        logger.error(f"Failed to send opportunity notification to {creator_email}: {e}")
+        return False
+
+
+@celery_app.task(name="app.tasks.email.send_opportunity_response_notification")
+def send_opportunity_response_notification(
+    agency_email: str,
+    agency_name: str,
+    creator_name: str,
+    opportunity_title: str,
+    brand_name: str,
+    response: str,  # "accepted" or "declined"
+    notes: str = None,
+) -> bool:
+    """
+    Notify agency about creator's response to an opportunity.
+
+    Args:
+        agency_email: Email of the agency admin to notify
+        agency_name: Name of the agency
+        creator_name: Name of the creator
+        opportunity_title: Title of the opportunity
+        brand_name: Name of the brand/sponsor
+        response: Creator's response ("accepted" or "declined")
+        notes: Optional notes from creator
+
+    Returns:
+        bool: Success status
+    """
+    try:
+        dashboard_url = f"{settings.FRONTEND_URL}/agency/opportunities"
+
+        if response == "accepted":
+            subject = f"{creator_name} accepted the {brand_name} opportunity!"
+            status_color = "#16a34a"
+            status_text = "Accepted"
+            emoji = "🎉"
+        else:
+            subject = f"{creator_name} declined the {brand_name} opportunity"
+            status_color = "#ef4444"
+            status_text = "Declined"
+            emoji = "😔"
+
+        notes_html = ""
+        if notes:
+            notes_html = f"""
+            <div style="background:#f8fafc;padding:16px;border-radius:8px;margin:16px 0;">
+                <p style="margin:0 0 4px;color:#64748b;font-size:12px;font-weight:600;">Creator's Notes:</p>
+                <p style="margin:0;color:#334155;font-size:14px;">{notes}</p>
+            </div>
+            """
+
+        html_content = f"""
+        <!doctype html>
+        <html>
+        <body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:24px;margin:0;">
+            <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                <div style="text-align:center;margin-bottom:24px;">
+                    <h1 style="margin:0;color:#0f172a;font-weight:800;font-size:28px;">{emoji} Opportunity Response</h1>
+                </div>
+
+                <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
+                    Hi,
+                </p>
+
+                <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
+                    <strong>{creator_name}</strong> has responded to the <strong>{brand_name}</strong> opportunity.
+                </p>
+
+                <div style="background:#f8fafc;padding:20px;border-radius:8px;margin:24px 0;">
+                    <h3 style="margin:0 0 8px;color:#0f172a;font-size:18px;font-weight:700;">{opportunity_title}</h3>
+                    <p style="margin:0 0 12px;color:#64748b;font-size:14px;">Brand: {brand_name}</p>
+                    <div style="display:inline-block;background:{status_color};color:#ffffff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:600;">
+                        {status_text}
+                    </div>
+                </div>
+
+                {notes_html}
+
+                <div style="text-align:center;margin:32px 0;">
+                    <a href="{dashboard_url}"
+                       style="background:linear-gradient(to right,#16a34a,#15803d);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;display:inline-block;font-weight:600;font-size:16px;">
+                        View in Dashboard
+                    </a>
+                </div>
+
+                <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;text-align:center;line-height:18px;">
+                    © {datetime.utcnow().year} Repruv. All rights reserved.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+
+        success = send_email(agency_email, subject, html_content)
+        if success:
+            logger.info(f"Opportunity response notification sent to {agency_email}: {response}")
+        return success
+
+    except Exception as e:
+        logger.error(f"Failed to send opportunity response notification to {agency_email}: {e}")
+        return False

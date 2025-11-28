@@ -8,6 +8,8 @@ import Link from 'next/link';
 import AutomationImpactWidget from '@/components/intelligence/AutomationImpactWidget';
 import { features } from '@/lib/features';
 import { PlatformConnectionButton } from '@/components/integrations/PlatformConnectionButton';
+import { AgencyBadge } from '@/components/agency/AgencyBadge';
+import { AgencyInvitationsBanner } from '@/components/agency/AgencyInvitationsBanner';
 import { Youtube, Instagram, Music, TrendingUp, Users, MessageCircle, Zap, Sparkles, Settings2 } from 'lucide-react';
 
 interface DashboardMetrics {
@@ -145,6 +147,12 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Agency Invitations Banner - Show pending invitations */}
+      <AgencyInvitationsBanner />
+
+      {/* Agency Badge - Show if creator is part of an agency */}
+      <AgencyBadge />
 
       {/* Header Section - Gradient Text */}
       <div className="space-y-3">

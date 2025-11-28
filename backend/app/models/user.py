@@ -136,9 +136,16 @@ class User(Base):
 
     # Foreign keys
     organization_id = Column(PGUUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
+    agency_id = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("agencies.id"),
+        nullable=True,
+        comment="Agency the creator belongs to (for creators only)"
+    )
 
     # Relationships
     organization = relationship("Organization", back_populates="users")
+    agency = relationship("Agency", foreign_keys=[agency_id], backref="creators")
     response_templates = relationship("ResponseTemplate", back_populates="created_by")
     automation_rules = relationship("AutomationRule", back_populates="created_by")
     audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan")

@@ -281,6 +281,10 @@ export const useAuth = create<AuthState>((set, get) => ({
       }
       
       if (user.approval_status === 'approved') {
+        // Agency users go to agency dashboard
+        if (user.account_type === 'agency') {
+          return '/agency';
+        }
         return '/dashboard';
       }
     }

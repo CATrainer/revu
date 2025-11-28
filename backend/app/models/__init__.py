@@ -44,6 +44,8 @@ from app.models.content import (
 )
 from app.models.application import Application, AdminNotificationSettings
 from app.models.monetization import CreatorProfile
+from app.models.agency import Agency, AgencyMember, AgencyInvitation
+from app.models.agency_opportunity import AgencyOpportunity
 from app.models.credit_usage import (
     CreditUsageEvent,
     UserCreditBalance,
@@ -94,6 +96,10 @@ __all__ = [
     "Application",
     "AdminNotificationSettings",
     "CreatorProfile",
+    "Agency",
+    "AgencyMember",
+    "AgencyInvitation",
+    "AgencyOpportunity",
     "CreditUsageEvent",
     "UserCreditBalance",
     "CreditActionCost",
