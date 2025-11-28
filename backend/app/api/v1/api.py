@@ -47,6 +47,8 @@ from app.api.v1.endpoints import marketing_admin
 from app.api.v1.endpoints import interactions, views, fans
 # Demo mode endpoints
 from app.api.v1.endpoints import demo, demo_webhooks, analytics, jobs
+# Agency endpoints
+from app.api.v1.endpoints import agency_auth, agency, creator_agency, agency_opportunities, creator_opportunities
 
 # Create the main API router
 api_router = APIRouter()
@@ -306,6 +308,37 @@ api_router.include_router(
 api_router.include_router(
     monetization_discovery.router,
     tags=["monetization", "discovery"],
+)
+
+# Agency endpoints
+api_router.include_router(
+    agency_auth.router,
+    prefix="/agency",
+    tags=["agency", "authentication"],
+)
+
+api_router.include_router(
+    agency.router,
+    prefix="/agency",
+    tags=["agency"],
+)
+
+api_router.include_router(
+    creator_agency.router,
+    prefix="/creator/agency",
+    tags=["creator", "agency"],
+)
+
+api_router.include_router(
+    agency_opportunities.router,
+    prefix="/agency/opportunities",
+    tags=["agency", "opportunities"],
+)
+
+api_router.include_router(
+    creator_opportunities.router,
+    prefix="/creator/opportunities",
+    tags=["creator", "opportunities"],
 )
 
 

@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, BarChart3, Brain, ChartPie, Settings as SettingsIcon, MessageSquare, Zap, Radio, Sparkles, DollarSign } from 'lucide-react';
+import { Menu, BarChart3, Brain, ChartPie, Settings as SettingsIcon, MessageSquare, Zap, Radio, Sparkles, DollarSign, Briefcase } from 'lucide-react';
 import { PauseCircle, PlayCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useStore } from '@/lib/store';
 import { features } from '@/lib/features';
+import { AgencyBadge } from './AgencyBadge';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -33,6 +34,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
   { name: 'Interactions', href: '/interactions', icon: MessageSquare },
   { name: 'Insights', href: '/insights', icon: Sparkles },
+  { name: 'Opportunities', href: '/dashboard/opportunities', icon: Briefcase },
   { name: 'Monetization', href: '/monetization', icon: DollarSign },
   { name: 'AI Assistant', href: '/ai-assistant', icon: Brain },
   { name: 'Settings', href: '/settings', icon: SettingsIcon },
@@ -240,6 +242,9 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Agency badge for creators */}
+            <AgencyBadge />
+
             {/* Emergency controls & global toggles (conditional) */}
             {features.showEmergencyControls && (
               <div className="hidden md:flex items-center gap-3 mr-3">
