@@ -1,0 +1,336 @@
+'use client';
+
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import {
+  Calendar,
+  ArrowRight,
+  Video,
+  FileCheck,
+  DollarSign,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
+import type { UpcomingDeadline } from '@/lib/agency-dashboard-api';
+
+interface UpcomingDeadlinesWidgetProps {
+  deadlines?: UpcomingDeadline[];
+  isLoading?: boolean;
+}
+
+// Generate dates for the next 7 days
+const generateDates = () => {
+  const dates = [];
+  const today = new Date();
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() + i);
+    dates.push(date);
+  }
+  return dates;
+};
+
+// Mock deadlines for demonstration
+const mockDeadlines: UpcomingDeadline[] = [
+  {
+    id: '1',
+    date: new Date().toISOString(),
+    type: 'content_posting',
+    title: 'YouTube Video Post',
+    campaign_name: 'Brand X Review',
+    creator_name: '@creator1',
+    brand_name: 'Brand X',
+    is_overdue: false,
+  },
+  {
+    id: '2',
+    date: new Date().toISOString(),
+    type: 'deliverable',
+    title: 'Script Due',
+    campaign_name: 'Brand Y Post',
+    creator_name: '@creator2',
+    brand_name: 'Brand Y',
+    is_overdue: false,
+  },
+  {
+    id: '3',
+    date: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+    type: 'approval',
+    title: 'Brand Approval',
+    campaign_name: 'Brand Z Campaign',
+    creator_name: '@creator1',
+    brand_name: 'Brand Z',
+    is_overdue: false,
+  },
+  {
+    id: '4',
+    date: new Date(Date.now() + 86400000 * 2).toISOString(), // 2 days
+    type: 'payment',
+    title: 'Payment Due',
+    campaign_name: 'Brand A Campaign',
+    brand_name: 'Brand A',
+    amount: 5000,
+    is_overdue: false,
+  },
+  {
+    id: '5',
+    date: new Date(Date.now() + 86400000 * 3).toISOString(), // 3 days
+    type: 'content_posting',
+    title: 'Instagram Post',
+    campaign_name: 'Brand B Campaign',
+    creator_name: '@creator3',
+    brand_name: 'Brand B',
+    is_overdue: false,
+  },
+  {
+    id: '6',
+    date: new Date(Date.now() - 86400000).toISOString(), // Yesterday - overdue
+    type: 'deliverable',
+    title: 'Draft Review',
+    campaign_name: 'Brand C Campaign',
+    creator_name: '@creator2',
+    brand_name: 'Brand C',
+    is_overdue: true,
+  },
+];
+
+export function UpcomingDeadlinesWidget({ deadlines = mockDeadlines, isLoading = false }: UpcomingDeadlinesWidgetProps) {
+  const [startIndex, setStartIndex] = useState(0);
+  const dates = generateDates();
+  const visibleDays = 5;
+
+  // Get icon for deadline type
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'content_posting':
+        return Video;
+      case 'deliverable':
+        return FileCheck;
+      case 'payment':
+        return DollarSign;
+      case 'approval':
+        return Clock;
+      default:
+        return Calendar;
+    }
+  };
+
+  // Get color for deadline type
+  const getColor = (type: string, isOverdue: boolean) => {
+    if (isOverdue) return 'text-red-600 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+    switch (type) {
+      case 'content_posting':
+        return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
+      case 'deliverable':
+        return 'text-purple-600 bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800';
+      case 'payment':
+        return 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+      case 'approval':
+        return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800';
+      default:
+        return 'text-gray-600 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
+    }
+  };
+
+  // Get deadlines for a specific date
+  const getDeadlinesForDate = (date: Date) => {
+    return deadlines.filter(d => {
+      const deadlineDate = new Date(d.date);
+      return deadlineDate.toDateString() === date.toDateString();
+    });
+  };
+
+  // Format currency
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency: 'GBP',
+      minimumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const canScrollLeft = startIndex > 0;
+  const canScrollRight = startIndex + visibleDays < dates.length;
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-blue-500" />
+            Upcoming Deadlines
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 animate-pulse">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="flex-1 space-y-2">
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded" />
+                <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-blue-500" />
+            Upcoming Deadlines
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setStartIndex(Math.max(0, startIndex - 1))}
+              disabled={!canScrollLeft}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setStartIndex(Math.min(dates.length - visibleDays, startIndex + 1))}
+              disabled={!canScrollRight}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {/* Overdue section */}
+        {deadlines.some(d => d.is_overdue) && (
+          <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800">
+            <div className="flex items-center gap-2 text-red-700 dark:text-red-300 mb-2">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm font-medium">Overdue</span>
+            </div>
+            <div className="space-y-2">
+              {deadlines.filter(d => d.is_overdue).map(deadline => {
+                const Icon = getIcon(deadline.type);
+                return (
+                  <Link
+                    key={deadline.id}
+                    href={`/agency/campaigns/${deadline.id}`}
+                    className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 hover:underline"
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{deadline.title}</span>
+                    <span className="text-red-400">- {deadline.campaign_name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Timeline */}
+        <div className="relative">
+          {/* Today indicator line */}
+          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-green-500 z-10" style={{ left: 'calc((100% / 5) / 2 - 1px)' }} />
+
+          <div className="grid grid-cols-5 gap-3">
+            {dates.slice(startIndex, startIndex + visibleDays).map((date, index) => {
+              const isToday = date.toDateString() === new Date().toDateString();
+              const dayDeadlines = getDeadlinesForDate(date).filter(d => !d.is_overdue);
+              const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+              const dayNumber = date.getDate();
+              const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+
+              return (
+                <div key={date.toISOString()} className="space-y-2">
+                  {/* Date header */}
+                  <div className={cn(
+                    'text-center p-2 rounded-lg',
+                    isToday
+                      ? 'bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-800'
+                      : 'bg-gray-50 dark:bg-gray-800/50'
+                  )}>
+                    <p className={cn(
+                      'text-xs font-medium',
+                      isToday ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'
+                    )}>
+                      {isToday ? 'Today' : dayName}
+                    </p>
+                    <p className={cn(
+                      'text-lg font-bold',
+                      isToday ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-gray-100'
+                    )}>
+                      {dayNumber}
+                    </p>
+                    <p className={cn(
+                      'text-xs',
+                      isToday ? 'text-green-600 dark:text-green-400' : 'text-gray-400'
+                    )}>
+                      {monthName}
+                    </p>
+                  </div>
+
+                  {/* Deadlines */}
+                  <div className="space-y-2 min-h-[120px]">
+                    {dayDeadlines.length === 0 ? (
+                      <div className="h-full flex items-center justify-center">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">No deadlines</p>
+                      </div>
+                    ) : (
+                      dayDeadlines.slice(0, 3).map(deadline => {
+                        const Icon = getIcon(deadline.type);
+                        const colorClass = getColor(deadline.type, deadline.is_overdue);
+
+                        return (
+                          <Link
+                            key={deadline.id}
+                            href={`/agency/campaigns/${deadline.id}`}
+                            className={cn(
+                              'block p-2 rounded-lg border text-xs transition-colors hover:opacity-80',
+                              colorClass
+                            )}
+                          >
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <Icon className="h-3 w-3" />
+                              <span className="font-medium truncate">{deadline.title}</span>
+                            </div>
+                            <p className="text-[10px] opacity-75 truncate">
+                              {deadline.brand_name}
+                              {deadline.creator_name && ` x ${deadline.creator_name}`}
+                            </p>
+                            {deadline.amount && (
+                              <p className="text-[10px] font-medium mt-1">
+                                {formatCurrency(deadline.amount)}
+                              </p>
+                            )}
+                          </Link>
+                        );
+                      })
+                    )}
+                    {dayDeadlines.length > 3 && (
+                      <Link
+                        href={`/agency/calendar?date=${date.toISOString()}`}
+                        className="block text-xs text-center text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                      >
+                        +{dayDeadlines.length - 3} more
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
