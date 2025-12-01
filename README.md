@@ -138,10 +138,18 @@ These demo users are created by `backend/scripts/seed_demo_accounts.py` for test
    - Password: `Demo2025!`
    - Access: Brand-focused dashboard with engagement analytics
 
+- Agency Account (Test)
+   - Email: `testagency@repruv.com`
+   - Password: `TestAgency123!`
+   - Access: Full agency dashboard with creator management features
+   - Agency Name: Test Agency
+   - Agency Slug: `test-agency`
+
 Notes:
 - Demo data simulates real social media interactions without affecting external platforms
 - Frontend defaults to the production API unless `NEXT_PUBLIC_API_URL` is set
 - Override API URL in `frontend/.env.local` for local development
+- Agency test account must be created manually in Supabase using the SQL script in `scripts/create_test_agency.sql`
 
 ## 🧪 Testing
 
