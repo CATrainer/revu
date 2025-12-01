@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Brain, Send, Loader2, AlertCircle, Plus, MessageSquare, Trash2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -87,6 +88,9 @@ const TypingIndicator = () => (
 );
 
 export default function AIAssistantPage() {
+  const searchParams = useSearchParams();
+  const initialPrompt = searchParams.get('prompt');
+
   // Core state - simplified
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -97,6 +101,7 @@ export default function AIAssistantPage() {
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [messageCount, setMessageCount] = useState(0);
+  const [promptHandled, setPromptHandled] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const activeStreamRef = useRef<EventSource | null>(null);
@@ -151,6 +156,24 @@ export default function AIAssistantPage() {
       stopPolling();
     };
   }, []);
+
+  // Handle initial prompt from query parameter (e.g., from Insights page)
+  useEffect(() => {
+    if (initialPrompt && !promptHandled && !isLoadingSessions && !isStreaming) {
+      setPromptHandled(true);
+      // Set the input and auto-send after a short delay
+      setInput(decodeURIComponent(initialPrompt));
+      // Use a timeout to ensure the UI is ready
+      const timer = setTimeout(() => {
+        // Auto-submit the prompt
+        const form = document.querySelector('form');
+        if (form) {
+          form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [initialPrompt, promptHandled, isLoadingSessions, isStreaming]);
 
   const cleanupStreams = () => {
     if (activeStreamRef.current) {
