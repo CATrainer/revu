@@ -14,7 +14,7 @@ import { AlertCircle, Eye, EyeOff, CheckCircle, Building2, Users } from 'lucide-
 import { AxiosError } from 'axios';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import api from '@/lib/api';
+import { api } from '@/lib/api';
 
 // Agency signup schema
 const agencySignupSchema = z.object({
