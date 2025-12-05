@@ -52,6 +52,27 @@ from app.models.credit_usage import (
     CreditActionCost,
     ActionType,
 )
+from app.models.agency_campaign import (
+    AgencyCampaign,
+    CampaignCreator,
+    CampaignDeliverable,
+    AgencyDeal,
+    DealCreator,
+)
+from app.models.agency_finance import (
+    AgencyInvoice,
+    CreatorPayout,
+    AgencyCreatorProfile,
+    CreatorGroup,
+    CreatorGroupMember,
+    CreatorAvailability,
+)
+from app.models.agency_notification import (
+    AgencyNotification,
+    AgencyActivity,
+    AgencyReport,
+    AgencyTask,
+)
 
 __all__ = [
     "Organization",
@@ -104,4 +125,20 @@ __all__ = [
     "UserCreditBalance",
     "CreditActionCost",
     "ActionType",
+    # Agency Dashboard Models
+    "AgencyCampaign",
+    "CampaignCreator",
+    "CampaignDeliverable",
+    "AgencyDeal",
+    "DealCreator",
+    "AgencyInvoice",
+    "CreatorPayout",
+    "AgencyCreatorProfile",
+    "CreatorGroup",
+    "CreatorGroupMember",
+    "CreatorAvailability",
+    "AgencyNotification",
+    "AgencyActivity",
+    "AgencyReport",
+    "AgencyTask",
 ]
