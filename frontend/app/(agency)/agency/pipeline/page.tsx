@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -46,7 +47,8 @@ import {
   X,
   ChevronRight,
 } from 'lucide-react';
-import type { Deal, DealStage, DealStatus, PipelineStats } from '@/lib/agency-dashboard-api';
+import { pipelineApi, type Deal, type DealStage, type DealStatus, type PipelineStats } from '@/lib/agency-dashboard-api';
+import { toast } from 'sonner';
 
 // Stage configuration
 const stageConfig: Record<DealStage, { label: string; color: string; bgColor: string; borderColor: string }> = {
@@ -219,8 +221,7 @@ const activeStages: DealStage[] = ['prospecting', 'pitch_sent', 'negotiating', '
 const allStages: DealStage[] = [...activeStages, 'completed', 'lost'];
 
 export default function PipelinePage() {
-  const [deals, setDeals] = useState<Deal[]>(mockDeals);
-  const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [view, setView] = useState<'board' | 'list' | 'analytics'>('board');
   const [searchQuery, setSearchQuery] = useState('');
   const [isNewDealOpen, setIsNewDealOpen] = useState(false);
@@ -229,6 +230,76 @@ export default function PipelinePage() {
   const [showCompletedStages, setShowCompletedStages] = useState(false);
   const [draggedDeal, setDraggedDeal] = useState<Deal | null>(null);
   const [dragOverStage, setDragOverStage] = useState<DealStage | null>(null);
+
+  // Form state for new deal
+  const [newDealForm, setNewDealForm] = useState({
+    brandName: '',
+    value: '',
+    creatorHandle: '',
+    stage: 'prospecting' as DealStage,
+  });
+
+  // Fetch deals from API
+  const { data: apiDeals, isLoading } = useQuery({
+    queryKey: ['agency-pipeline-deals'],
+    queryFn: () => pipelineApi.getDeals(),
+  });
+
+  // Use API data or fall back to mock data for demo
+  const deals = apiDeals && apiDeals.length > 0 ? apiDeals : mockDeals;
+
+  // Create deal mutation
+  const createDealMutation = useMutation({
+    mutationFn: (data: { brand_name: string; value: number; stage: DealStage }) =>
+      pipelineApi.createDeal(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agency-pipeline-deals'] });
+      setIsNewDealOpen(false);
+      setNewDealForm({ brandName: '', value: '', creatorHandle: '', stage: 'prospecting' });
+      toast.success('Deal created successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Failed to create deal');
+    },
+  });
+
+  // Move deal mutation
+  const moveDealMutation = useMutation({
+    mutationFn: ({ dealId, stage }: { dealId: string; stage: DealStage }) =>
+      pipelineApi.moveDeal(dealId, stage),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agency-pipeline-deals'] });
+      toast.success('Deal moved');
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Failed to move deal');
+    },
+  });
+
+  // Delete deal mutation
+  const deleteDealMutation = useMutation({
+    mutationFn: (dealId: string) => pipelineApi.deleteDeal(dealId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agency-pipeline-deals'] });
+      toast.success('Deal deleted');
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Failed to delete deal');
+    },
+  });
+
+  // Handle create deal
+  const handleCreateDeal = () => {
+    if (!newDealForm.brandName || !newDealForm.value) {
+      toast.error('Please fill in required fields');
+      return;
+    }
+    createDealMutation.mutate({
+      brand_name: newDealForm.brandName,
+      value: parseFloat(newDealForm.value),
+      stage: newDealForm.stage,
+    });
+  };
 
   // Calculate pipeline value
   const pipelineValue = deals
@@ -282,13 +353,7 @@ export default function PipelinePage() {
   const handleDrop = (e: React.DragEvent, targetStage: DealStage) => {
     e.preventDefault();
     if (draggedDeal && draggedDeal.stage !== targetStage) {
-      setDeals(prev =>
-        prev.map(d =>
-          d.id === draggedDeal.id
-            ? { ...d, stage: targetStage, days_in_stage: 0 }
-            : d
-        )
-      );
+      moveDealMutation.mutate({ dealId: draggedDeal.id, stage: targetStage });
     }
     setDraggedDeal(null);
     setDragOverStage(null);
@@ -664,10 +729,22 @@ export default function PipelinePage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setSelectedDeal(deal); setIsDealPanelOpen(true); }}>
+                              Edit
+                            </DropdownMenuItem>
                             <DropdownMenuItem>Duplicate</DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm('Are you sure you want to delete this deal?')) {
+                                  deleteDealMutation.mutate(deal.id);
+                                }
+                              }}
+                            >
+                              Delete
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
@@ -760,20 +837,41 @@ export default function PipelinePage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="brand">Brand Name</Label>
-              <Input id="brand" placeholder="Enter brand name" />
+              <Label htmlFor="brand">Brand Name *</Label>
+              <Input
+                id="brand"
+                placeholder="Enter brand name"
+                value={newDealForm.brandName}
+                onChange={(e) => setNewDealForm(f => ({ ...f, brandName: e.target.value }))}
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="value">Deal Value (GBP)</Label>
-              <Input id="value" type="number" placeholder="15000" />
+              <Label htmlFor="value">Deal Value (GBP) *</Label>
+              <Input
+                id="value"
+                type="number"
+                placeholder="15000"
+                value={newDealForm.value}
+                onChange={(e) => setNewDealForm(f => ({ ...f, value: e.target.value }))}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="creator">Creator</Label>
-              <Input id="creator" placeholder="Select or search creators" />
+              <Input
+                id="creator"
+                placeholder="Select or search creators"
+                value={newDealForm.creatorHandle}
+                onChange={(e) => setNewDealForm(f => ({ ...f, creatorHandle: e.target.value }))}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="stage">Initial Stage</Label>
-              <select id="stage" className="w-full h-10 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-transparent">
+              <select
+                id="stage"
+                className="w-full h-10 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-transparent"
+                value={newDealForm.stage}
+                onChange={(e) => setNewDealForm(f => ({ ...f, stage: e.target.value as DealStage }))}
+              >
                 {activeStages.map(stage => (
                   <option key={stage} value={stage}>{stageConfig[stage].label}</option>
                 ))}
@@ -784,8 +882,19 @@ export default function PipelinePage() {
             <Button variant="outline" onClick={() => setIsNewDealOpen(false)}>
               Cancel
             </Button>
-            <Button className="bg-green-600 hover:bg-green-700">
-              Create Deal
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              onClick={handleCreateDeal}
+              disabled={createDealMutation.isPending}
+            >
+              {createDealMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Deal'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
