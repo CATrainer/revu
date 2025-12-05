@@ -104,11 +104,11 @@ const quickActions = [
 
 // Help menu items
 const helpMenuItems = [
-  { name: 'Documentation', icon: BookOpen, href: '/docs' },
-  { name: 'Video Tutorials', icon: Video, href: '/tutorials' },
+  { name: 'Documentation', icon: BookOpen, href: '/agency/help/documentation' },
+  { name: 'Video Tutorials', icon: Video, href: '/agency/help/tutorials' },
   { name: 'Keyboard Shortcuts', icon: Keyboard, action: 'shortcuts' },
-  { name: 'Contact Support', icon: MessageSquare, href: '/support' },
-  { name: "What's New", icon: Sparkles, href: '/changelog' },
+  { name: 'Contact Support', icon: MessageSquare, href: '/agency/help/support' },
+  { name: "What's New", icon: Sparkles, href: '/agency/help/changelog' },
 ];
 
 export function AgencyLayoutNew({ children }: AgencyLayoutNewProps) {
