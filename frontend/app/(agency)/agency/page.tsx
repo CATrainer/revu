@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import {
@@ -13,7 +14,16 @@ import {
   CreatorAvailabilityWidget,
   CampaignPerformanceWidget,
 } from '@/components/agency/dashboard';
-import { agencyApi, type AgencyStats } from '@/lib/agency-api';
+import { agencyApi } from '@/lib/agency-api';
+import {
+  dashboardApi,
+  type DashboardStats,
+  type ActionRequiredItem,
+  type UpcomingDeadline,
+  type ActivityItem,
+  type PipelineStats,
+  type FinancialStats,
+} from '@/lib/agency-dashboard-api';
 import { Button } from '@/components/ui/button';
 import { Settings, LayoutGrid, Grip } from 'lucide-react';
 import {
@@ -27,26 +37,51 @@ import {
 
 export default function AgencyDashboardPage() {
   const { user } = useAuth();
-  const [stats, setStats] = useState<AgencyStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [layoutPreset, setLayoutPreset] = useState<'default' | 'financial' | 'operations'>('default');
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      setIsLoading(true);
-      try {
-        const data = await agencyApi.getStats();
-        setStats(data);
-      } catch (error) {
-        console.error('Failed to fetch agency stats:', error);
-        // Use mock data in case of error for demo purposes
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Fetch dashboard stats
+  const { data: dashboardStats, isLoading: statsLoading } = useQuery({
+    queryKey: ['agency-dashboard-stats'],
+    queryFn: () => dashboardApi.getStats(),
+    staleTime: 30000, // 30 seconds
+  });
 
-    fetchStats();
-  }, []);
+  // Fetch action required items
+  const { data: actionItems, isLoading: actionsLoading } = useQuery({
+    queryKey: ['agency-action-required'],
+    queryFn: () => dashboardApi.getActionRequired(),
+    staleTime: 30000,
+  });
+
+  // Fetch upcoming deadlines
+  const { data: deadlines, isLoading: deadlinesLoading } = useQuery({
+    queryKey: ['agency-deadlines'],
+    queryFn: () => dashboardApi.getUpcomingDeadlines(14),
+    staleTime: 30000,
+  });
+
+  // Fetch recent activity
+  const { data: activity, isLoading: activityLoading } = useQuery({
+    queryKey: ['agency-activity'],
+    queryFn: () => dashboardApi.getRecentActivity(20),
+    staleTime: 30000,
+  });
+
+  // Fetch pipeline summary
+  const { data: pipelineStats, isLoading: pipelineLoading } = useQuery({
+    queryKey: ['agency-pipeline-summary'],
+    queryFn: () => dashboardApi.getPipelineSummary(),
+    staleTime: 30000,
+  });
+
+  // Fetch financial overview
+  const { data: financialStats, isLoading: financialLoading } = useQuery({
+    queryKey: ['agency-financial-overview'],
+    queryFn: () => dashboardApi.getFinancialOverview(),
+    staleTime: 30000,
+  });
+
+  const isLoading = statsLoading;
 
   if (isLoading) {
     return (
@@ -107,27 +142,27 @@ export default function AgencyDashboardPage() {
       </div>
 
       {/* Quick Stats Bar */}
-      <QuickStatsBar />
+      <QuickStatsBar stats={dashboardStats} isLoading={statsLoading} />
 
       {/* Main Dashboard Grid */}
       {layoutPreset === 'default' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {/* Left Column */}
           <div className="space-y-6">
-            <ActionRequiredWidget />
-            <PipelineSummaryWidget />
+            <ActionRequiredWidget items={actionItems} isLoading={actionsLoading} />
+            <PipelineSummaryWidget stats={pipelineStats} isLoading={pipelineLoading} />
           </div>
 
           {/* Center Column */}
           <div className="space-y-6">
-            <UpcomingDeadlinesWidget />
+            <UpcomingDeadlinesWidget deadlines={deadlines} isLoading={deadlinesLoading} />
             <CreatorAvailabilityWidget />
           </div>
 
           {/* Right Column */}
           <div className="space-y-6 lg:col-span-2 xl:col-span-1">
-            <RecentActivityWidget />
-            <FinancialOverviewWidget />
+            <RecentActivityWidget activities={activity} isLoading={activityLoading} />
+            <FinancialOverviewWidget stats={financialStats} isLoading={financialLoading} />
           </div>
         </div>
       )}
@@ -136,14 +171,14 @@ export default function AgencyDashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column */}
           <div className="space-y-6">
-            <FinancialOverviewWidget />
-            <PipelineSummaryWidget />
+            <FinancialOverviewWidget stats={financialStats} isLoading={financialLoading} />
+            <PipelineSummaryWidget stats={pipelineStats} isLoading={pipelineLoading} />
           </div>
 
           {/* Right Column */}
           <div className="space-y-6">
-            <ActionRequiredWidget />
-            <RecentActivityWidget />
+            <ActionRequiredWidget items={actionItems} isLoading={actionsLoading} />
+            <RecentActivityWidget activities={activity} isLoading={activityLoading} />
           </div>
         </div>
       )}
@@ -152,16 +187,16 @@ export default function AgencyDashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column */}
           <div className="space-y-6">
-            <ActionRequiredWidget />
-            <UpcomingDeadlinesWidget />
+            <ActionRequiredWidget items={actionItems} isLoading={actionsLoading} />
+            <UpcomingDeadlinesWidget deadlines={deadlines} isLoading={deadlinesLoading} />
             <CampaignPerformanceWidget />
           </div>
 
           {/* Right Column */}
           <div className="space-y-6">
             <CreatorAvailabilityWidget />
-            <PipelineSummaryWidget />
-            <RecentActivityWidget />
+            <PipelineSummaryWidget stats={pipelineStats} isLoading={pipelineLoading} />
+            <RecentActivityWidget activities={activity} isLoading={activityLoading} />
           </div>
         </div>
       )}

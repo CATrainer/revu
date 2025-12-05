@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,33 +70,18 @@ import {
   DollarSign,
   CalendarDays,
   X,
+  Loader2,
 } from 'lucide-react';
+import { campaignApi, type Campaign as APICampaign, type Deliverable as APIDeliverable, type CampaignStatus as APICampaignStatus, type DeliverableStatus as APIDeliverableStatus, type DeliverableType as APIDeliverableType } from '@/lib/agency-dashboard-api';
+import { toast } from 'sonner';
 
-// Types
-type CampaignStatus = 'active' | 'completed' | 'draft' | 'paused';
-type DeliverableStatus = 'pending' | 'in_progress' | 'submitted' | 'revision_requested' | 'approved' | 'published';
-type DeliverableType = 'script' | 'video_draft' | 'final_video' | 'thumbnail' | 'caption' | 'story' | 'reel' | 'post';
+// Use API types and adapt for display
+type CampaignStatus = APICampaignStatus | 'active' | 'draft' | 'paused';
+type DeliverableStatus = APIDeliverableStatus | 'submitted' | 'revision_requested' | 'approved' | 'published';
+type DeliverableType = APIDeliverableType | 'script' | 'video_draft' | 'final_video' | 'thumbnail' | 'caption' | 'story' | 'reel' | 'post';
 
-interface Deliverable {
-  id: string;
-  campaign_id: string;
-  creator_id: string;
-  creator_name: string;
-  creator_avatar: string | null;
-  type: DeliverableType;
-  title: string;
-  description: string | null;
-  status: DeliverableStatus;
-  due_date: string;
-  submitted_at: string | null;
-  approved_at: string | null;
-  published_at: string | null;
-  file_url: string | null;
-  revision_count: number;
-  feedback: string | null;
-}
-
-interface Campaign {
+// Transform API campaign to display format
+interface DisplayCampaign {
   id: string;
   title: string;
   brand_name: string;
@@ -114,202 +100,94 @@ interface Campaign {
     name: string;
     avatar: string | null;
   }[];
-  deliverables: Deliverable[];
+  deliverables: DisplayDeliverable[];
 }
 
-// Mock data
-const mockCampaigns: Campaign[] = [
-  {
-    id: '1',
-    title: 'Summer Launch 2024',
-    brand_name: 'TechBrand',
-    brand_logo: null,
-    status: 'active',
-    start_date: '2024-06-01',
-    end_date: '2024-07-31',
-    budget: 50000,
-    spent: 32500,
-    creator_count: 5,
-    deliverable_count: 15,
-    completed_deliverables: 8,
-    description: 'Summer product launch campaign featuring our new tech lineup',
-    creators: [
-      { id: '1', name: 'Alex Johnson', avatar: null },
-      { id: '2', name: 'Sarah Miller', avatar: null },
-      { id: '3', name: 'Mike Chen', avatar: null },
-      { id: '4', name: 'Emma Davis', avatar: null },
-      { id: '5', name: 'Chris Wilson', avatar: null },
-    ],
-    deliverables: [
-      {
-        id: 'd1',
-        campaign_id: '1',
-        creator_id: '1',
-        creator_name: 'Alex Johnson',
-        creator_avatar: null,
-        type: 'script',
-        title: 'Product Review Script',
-        description: 'Main talking points for the review video',
-        status: 'approved',
-        due_date: '2024-06-10',
-        submitted_at: '2024-06-08',
-        approved_at: '2024-06-09',
-        published_at: null,
-        file_url: null,
-        revision_count: 1,
-        feedback: null,
-      },
-      {
-        id: 'd2',
-        campaign_id: '1',
-        creator_id: '1',
-        creator_name: 'Alex Johnson',
-        creator_avatar: null,
-        type: 'video_draft',
-        title: 'Review Video Draft',
-        description: 'First cut of the product review',
-        status: 'revision_requested',
-        due_date: '2024-06-20',
-        submitted_at: '2024-06-18',
-        approved_at: null,
-        published_at: null,
-        file_url: null,
-        revision_count: 2,
-        feedback: 'Please add more B-roll footage of the product features',
-      },
-      {
-        id: 'd3',
-        campaign_id: '1',
-        creator_id: '1',
-        creator_name: 'Alex Johnson',
-        creator_avatar: null,
-        type: 'final_video',
-        title: 'Final Review Video',
-        description: 'Final approved video ready for publishing',
-        status: 'pending',
-        due_date: '2024-06-30',
-        submitted_at: null,
-        approved_at: null,
-        published_at: null,
-        file_url: null,
-        revision_count: 0,
-        feedback: null,
-      },
-      {
-        id: 'd4',
-        campaign_id: '1',
-        creator_id: '2',
-        creator_name: 'Sarah Miller',
-        creator_avatar: null,
-        type: 'script',
-        title: 'Unboxing Script',
-        description: 'Script for unboxing video',
-        status: 'approved',
-        due_date: '2024-06-12',
-        submitted_at: '2024-06-11',
-        approved_at: '2024-06-12',
-        published_at: null,
-        file_url: null,
-        revision_count: 0,
-        feedback: null,
-      },
-      {
-        id: 'd5',
-        campaign_id: '1',
-        creator_id: '2',
-        creator_name: 'Sarah Miller',
-        creator_avatar: null,
-        type: 'video_draft',
-        title: 'Unboxing Video Draft',
-        description: 'First cut of unboxing',
-        status: 'submitted',
-        due_date: '2024-06-22',
-        submitted_at: '2024-06-21',
-        approved_at: null,
-        published_at: null,
-        file_url: null,
-        revision_count: 0,
-        feedback: null,
-      },
-      {
-        id: 'd6',
-        campaign_id: '1',
-        creator_id: '3',
-        creator_name: 'Mike Chen',
-        creator_avatar: null,
-        type: 'script',
-        title: 'Tutorial Script',
-        description: 'How-to guide script',
-        status: 'in_progress',
-        due_date: '2024-06-15',
-        submitted_at: null,
-        approved_at: null,
-        published_at: null,
-        file_url: null,
-        revision_count: 0,
-        feedback: null,
-      },
-    ],
-  },
-  {
-    id: '2',
-    title: 'Holiday Gift Guide',
-    brand_name: 'GiftCo',
-    brand_logo: null,
-    status: 'active',
-    start_date: '2024-11-01',
-    end_date: '2024-12-20',
-    budget: 75000,
-    spent: 45000,
-    creator_count: 8,
-    deliverable_count: 24,
-    completed_deliverables: 12,
-    description: 'Holiday season gift guide featuring our top products',
-    creators: [
-      { id: '1', name: 'Alex Johnson', avatar: null },
-      { id: '2', name: 'Sarah Miller', avatar: null },
-      { id: '6', name: 'Lisa Park', avatar: null },
-    ],
-    deliverables: [],
-  },
-  {
-    id: '3',
-    title: 'Q1 Brand Awareness',
-    brand_name: 'StyleBrand',
-    brand_logo: null,
-    status: 'draft',
-    start_date: '2025-01-15',
-    end_date: '2025-03-31',
-    budget: 100000,
-    spent: 0,
-    creator_count: 0,
-    deliverable_count: 0,
-    completed_deliverables: 0,
-    description: 'Brand awareness campaign for Q1 2025',
-    creators: [],
-    deliverables: [],
-  },
-  {
-    id: '4',
-    title: 'Spring Collection',
-    brand_name: 'FashionX',
-    brand_logo: null,
-    status: 'completed',
-    start_date: '2024-03-01',
-    end_date: '2024-05-31',
-    budget: 60000,
-    spent: 58500,
-    creator_count: 6,
-    deliverable_count: 18,
-    completed_deliverables: 18,
-    description: 'Spring fashion collection launch campaign',
-    creators: [
-      { id: '4', name: 'Emma Davis', avatar: null },
-      { id: '5', name: 'Chris Wilson', avatar: null },
-    ],
-    deliverables: [],
-  },
-];
+interface DisplayDeliverable {
+  id: string;
+  campaign_id: string;
+  creator_id: string;
+  creator_name: string;
+  creator_avatar: string | null;
+  type: DeliverableType;
+  title: string;
+  description: string | null;
+  status: DeliverableStatus;
+  due_date: string;
+  submitted_at: string | null;
+  approved_at: string | null;
+  published_at: string | null;
+  file_url: string | null;
+  revision_count: number;
+  feedback: string | null;
+}
+
+// Transform API campaign to display format
+function transformCampaign(campaign: APICampaign): DisplayCampaign {
+  const statusMap: Record<string, CampaignStatus> = {
+    'scheduled': 'draft',
+    'in_progress': 'active',
+    'posted': 'active',
+    'completed': 'completed',
+    'archived': 'completed',
+  };
+
+  const deliverableStatusMap: Record<string, DeliverableStatus> = {
+    'pending': 'pending',
+    'in_progress': 'in_progress',
+    'completed': 'approved',
+    'overdue': 'pending',
+  };
+
+  const deliverableTypeMap: Record<string, DeliverableType> = {
+    'brief_sent': 'script',
+    'product_shipped': 'script',
+    'script_draft': 'script',
+    'brand_approval': 'script',
+    'content_production': 'video_draft',
+    'content_posted': 'final_video',
+    'performance_report': 'post',
+  };
+
+  return {
+    id: campaign.id,
+    title: campaign.brand_name + ' Campaign',
+    brand_name: campaign.brand_name,
+    brand_logo: campaign.brand_logo_url || null,
+    status: statusMap[campaign.status] || 'active',
+    start_date: campaign.posting_date || campaign.created_at,
+    end_date: campaign.posting_date || campaign.created_at,
+    budget: campaign.value,
+    spent: (campaign.deliverables_completed / Math.max(campaign.deliverables_total, 1)) * campaign.value,
+    creator_count: campaign.creators.length,
+    deliverable_count: campaign.deliverables_total,
+    completed_deliverables: campaign.deliverables_completed,
+    description: campaign.campaign_type || null,
+    creators: campaign.creators.map(c => ({
+      id: c.id,
+      name: c.name,
+      avatar: c.avatar_url || null,
+    })),
+    deliverables: campaign.deliverables.map(d => ({
+      id: d.id,
+      campaign_id: d.campaign_id,
+      creator_id: d.owner_id || '',
+      creator_name: d.owner_name || 'Unassigned',
+      creator_avatar: null,
+      type: deliverableTypeMap[d.type] || 'script',
+      title: d.title,
+      description: d.description || null,
+      status: deliverableStatusMap[d.status] || 'pending',
+      due_date: d.due_date || '',
+      submitted_at: null,
+      approved_at: d.completed_at || null,
+      published_at: d.completed_at || null,
+      file_url: d.files[0]?.url || null,
+      revision_count: 0,
+      feedback: d.notes || null,
+    })),
+  };
+}
 
 // Status badge config
 const statusConfig: Record<CampaignStatus, { label: string; color: string }> = {
@@ -340,13 +218,86 @@ const deliverableTypeIcons: Record<DeliverableType, React.ElementType> = {
 };
 
 export default function CampaignsPage() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>(mockCampaigns);
+  const queryClient = useQueryClient();
   const [view, setView] = useState<'board' | 'list' | 'timeline'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState<DisplayCampaign | null>(null);
   const [showNewCampaignDialog, setShowNewCampaignDialog] = useState(false);
-  const [expandedCampaigns, setExpandedCampaigns] = useState<Set<string>>(new Set(['1']));
+  const [expandedCampaigns, setExpandedCampaigns] = useState<Set<string>>(new Set());
+
+  // Form state for new campaign
+  const [newCampaignForm, setNewCampaignForm] = useState({
+    title: '',
+    brandName: '',
+    budget: '',
+    startDate: '',
+    endDate: '',
+    description: '',
+  });
+
+  // Fetch campaigns from API
+  const { data: apiCampaigns, isLoading, error } = useQuery({
+    queryKey: ['agency-campaigns'],
+    queryFn: () => campaignApi.getCampaigns(),
+  });
+
+  // Transform API campaigns to display format
+  const campaigns: DisplayCampaign[] = (apiCampaigns || []).map(transformCampaign);
+
+  // Create campaign mutation
+  const createCampaignMutation = useMutation({
+    mutationFn: (data: { brand_name: string; value: number; campaign_type?: string; posting_date?: string }) =>
+      campaignApi.createCampaign(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agency-campaigns'] });
+      setShowNewCampaignDialog(false);
+      setNewCampaignForm({ title: '', brandName: '', budget: '', startDate: '', endDate: '', description: '' });
+      toast.success('Campaign created successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Failed to create campaign');
+    },
+  });
+
+  // Delete campaign mutation
+  const deleteCampaignMutation = useMutation({
+    mutationFn: (id: string) => campaignApi.deleteCampaign(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agency-campaigns'] });
+      toast.success('Campaign deleted');
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Failed to delete campaign');
+    },
+  });
+
+  // Complete deliverable mutation
+  const completeDeliverableMutation = useMutation({
+    mutationFn: ({ campaignId, deliverableId }: { campaignId: string; deliverableId: string }) =>
+      campaignApi.completeDeliverable(campaignId, deliverableId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agency-campaigns'] });
+      toast.success('Deliverable marked as complete');
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Failed to complete deliverable');
+    },
+  });
+
+  // Handle create campaign
+  const handleCreateCampaign = () => {
+    if (!newCampaignForm.brandName || !newCampaignForm.budget) {
+      toast.error('Please fill in required fields');
+      return;
+    }
+    createCampaignMutation.mutate({
+      brand_name: newCampaignForm.brandName,
+      value: parseFloat(newCampaignForm.budget),
+      campaign_type: newCampaignForm.description || undefined,
+      posting_date: newCampaignForm.startDate || undefined,
+    });
+  };
 
   // Filter campaigns
   const filteredCampaigns = campaigns.filter(campaign => {
@@ -410,6 +361,18 @@ export default function CampaignsPage() {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+          <p className="text-gray-500 dark:text-gray-400">Loading campaigns...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -437,26 +400,52 @@ export default function CampaignsPage() {
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="campaign-title">Campaign Title</Label>
-                <Input id="campaign-title" placeholder="e.g., Summer Product Launch" />
+                <Input
+                  id="campaign-title"
+                  placeholder="e.g., Summer Product Launch"
+                  value={newCampaignForm.title}
+                  onChange={(e) => setNewCampaignForm(f => ({ ...f, title: e.target.value }))}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="brand-name">Brand Name</Label>
-                  <Input id="brand-name" placeholder="e.g., TechBrand" />
+                  <Label htmlFor="brand-name">Brand Name *</Label>
+                  <Input
+                    id="brand-name"
+                    placeholder="e.g., TechBrand"
+                    value={newCampaignForm.brandName}
+                    onChange={(e) => setNewCampaignForm(f => ({ ...f, brandName: e.target.value }))}
+                  />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="budget">Budget</Label>
-                  <Input id="budget" type="number" placeholder="50000" />
+                  <Label htmlFor="budget">Budget *</Label>
+                  <Input
+                    id="budget"
+                    type="number"
+                    placeholder="50000"
+                    value={newCampaignForm.budget}
+                    onChange={(e) => setNewCampaignForm(f => ({ ...f, budget: e.target.value }))}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="start-date">Start Date</Label>
-                  <Input id="start-date" type="date" />
+                  <Input
+                    id="start-date"
+                    type="date"
+                    value={newCampaignForm.startDate}
+                    onChange={(e) => setNewCampaignForm(f => ({ ...f, startDate: e.target.value }))}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="end-date">End Date</Label>
-                  <Input id="end-date" type="date" />
+                  <Input
+                    id="end-date"
+                    type="date"
+                    value={newCampaignForm.endDate}
+                    onChange={(e) => setNewCampaignForm(f => ({ ...f, endDate: e.target.value }))}
+                  />
                 </div>
               </div>
               <div className="grid gap-2">
@@ -465,6 +454,8 @@ export default function CampaignsPage() {
                   id="description"
                   placeholder="Describe the campaign goals and requirements..."
                   rows={3}
+                  value={newCampaignForm.description}
+                  onChange={(e) => setNewCampaignForm(f => ({ ...f, description: e.target.value }))}
                 />
               </div>
             </div>
@@ -472,8 +463,19 @@ export default function CampaignsPage() {
               <Button variant="outline" onClick={() => setShowNewCampaignDialog(false)}>
                 Cancel
               </Button>
-              <Button className="bg-green-600 hover:bg-green-700">
-                Create Campaign
+              <Button
+                className="bg-green-600 hover:bg-green-700"
+                onClick={handleCreateCampaign}
+                disabled={createCampaignMutation.isPending}
+              >
+                {createCampaignMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Campaign'
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -694,7 +696,14 @@ export default function CampaignsPage() {
                             Add Deliverable
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => {
+                              if (confirm('Are you sure you want to delete this campaign?')) {
+                                deleteCampaignMutation.mutate(campaign.id);
+                              }
+                            }}
+                          >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete
                           </DropdownMenuItem>
@@ -782,11 +791,17 @@ export default function CampaignsPage() {
                                     <Eye className="mr-2 h-4 w-4" />
                                     View Details
                                   </DropdownMenuItem>
-                                  {deliverable.status === 'submitted' && (
+                                  {(deliverable.status === 'submitted' || deliverable.status === 'pending' || deliverable.status === 'in_progress') && (
                                     <>
-                                      <DropdownMenuItem className="text-green-600">
+                                      <DropdownMenuItem
+                                        className="text-green-600"
+                                        onClick={() => completeDeliverableMutation.mutate({
+                                          campaignId: campaign.id,
+                                          deliverableId: deliverable.id,
+                                        })}
+                                      >
                                         <CheckCircle2 className="mr-2 h-4 w-4" />
-                                        Approve
+                                        {deliverable.status === 'submitted' ? 'Approve' : 'Mark Complete'}
                                       </DropdownMenuItem>
                                       <DropdownMenuItem className="text-orange-600">
                                         <AlertTriangle className="mr-2 h-4 w-4" />
