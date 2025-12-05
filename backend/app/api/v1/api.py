@@ -49,6 +49,8 @@ from app.api.v1.endpoints import interactions, views, fans
 from app.api.v1.endpoints import demo, demo_webhooks, analytics, jobs
 # Agency endpoints
 from app.api.v1.endpoints import agency_auth, agency, creator_agency, agency_opportunities, creator_opportunities
+# New Agency Dashboard endpoints
+from app.api.v1.endpoints import agency_dashboard, agency_campaigns, agency_finance, agency_tasks
 # Creator tools (notifications, deals, calendar, insights, media kit, rates)
 from app.api.v1.endpoints import creator_tools
 
@@ -343,6 +345,29 @@ api_router.include_router(
     tags=["creator", "opportunities"],
 )
 
+# Agency Dashboard endpoints
+api_router.include_router(
+    agency_dashboard.router,
+    prefix="/agency/dashboard",
+    tags=["agency", "dashboard"],
+)
+
+api_router.include_router(
+    agency_campaigns.router,
+    prefix="/agency/campaigns",
+    tags=["agency", "campaigns"],
+)
+
+api_router.include_router(
+    agency_finance.router,
+    prefix="/agency/finance",
+    tags=["agency", "finance"],
+)
+
+api_router.include_router(
+    agency_tasks.router,
+    prefix="/agency",
+    tags=["agency", "tasks"],
 # Creator tools (notifications, deals, calendar, insights, media kit, rates)
 api_router.include_router(
     creator_tools.router,

@@ -33,6 +33,8 @@ import {
   BarChart3,
   Menu,
   X,
+  Bot,
+  ListTodo,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -59,8 +61,10 @@ const mainNavigation = [
   { name: 'Pipeline', href: '/agency/pipeline', icon: GitBranch },
   { name: 'Campaigns', href: '/agency/campaigns', icon: Megaphone },
   { name: 'Creators', href: '/agency/creators', icon: Users },
-  { name: 'Reports', href: '/agency/reports', icon: FileText },
+  { name: 'Tasks', href: '/agency/tasks', icon: ListTodo },
   { name: 'Finance', href: '/agency/finance', icon: DollarSign },
+  { name: 'Reports', href: '/agency/reports', icon: FileText },
+  { name: 'Assistant', href: '/agency/assistant', icon: Bot },
 ];
 
 // Secondary navigation by route
@@ -100,11 +104,11 @@ const quickActions = [
 
 // Help menu items
 const helpMenuItems = [
-  { name: 'Documentation', icon: BookOpen, href: '/docs' },
-  { name: 'Video Tutorials', icon: Video, href: '/tutorials' },
+  { name: 'Documentation', icon: BookOpen, href: '/agency/help/documentation' },
+  { name: 'Video Tutorials', icon: Video, href: '/agency/help/tutorials' },
   { name: 'Keyboard Shortcuts', icon: Keyboard, action: 'shortcuts' },
-  { name: 'Contact Support', icon: MessageSquare, href: '/support' },
-  { name: "What's New", icon: Sparkles, href: '/changelog' },
+  { name: 'Contact Support', icon: MessageSquare, href: '/agency/help/support' },
+  { name: "What's New", icon: Sparkles, href: '/agency/help/changelog' },
 ];
 
 export function AgencyLayoutNew({ children }: AgencyLayoutNewProps) {

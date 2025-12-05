@@ -35,6 +35,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import {
   Search,
   Plus,
@@ -295,6 +296,99 @@ export default function ReportsPage() {
     });
   };
 
+  // Download report
+  const handleDownload = (report: Report, format: 'pdf' | 'csv' | 'excel' = 'pdf') => {
+    toast.success(`Downloading ${report.name} as ${format.toUpperCase()}...`);
+    // Simulate download
+    setTimeout(() => {
+      toast.success(`${report.name}.${format} downloaded successfully`);
+    }, 1500);
+  };
+
+  // Duplicate report
+  const handleDuplicate = (report: Report) => {
+    const duplicatedReport: Report = {
+      ...report,
+      id: `${Date.now()}`,
+      name: `${report.name} (Copy)`,
+      status: 'draft',
+      created_at: new Date().toISOString().split('T')[0],
+      last_generated: null,
+      is_favorite: false,
+    };
+    setReports(prev => [duplicatedReport, ...prev]);
+    toast.success(`Report duplicated: ${duplicatedReport.name}`);
+  };
+
+  // Share report
+  const handleShare = (report: Report) => {
+    // Copy shareable link to clipboard
+    const shareUrl = `${window.location.origin}/agency/reports/${report.id}`;
+    navigator.clipboard.writeText(shareUrl);
+    toast.success('Share link copied to clipboard!');
+  };
+
+  // Delete report
+  const handleDelete = (report: Report) => {
+    if (confirm(`Are you sure you want to delete "${report.name}"? This action cannot be undone.`)) {
+      setReports(prev => prev.filter(r => r.id !== report.id));
+      toast.success(`Report "${report.name}" deleted`);
+      if (selectedReport?.id === report.id) {
+        setSelectedReport(null);
+      }
+    }
+  };
+
+  // Generate report now
+  const handleGenerateNow = (report: Report) => {
+    toast.info(`Generating ${report.name}...`);
+    // Simulate generation
+    setTimeout(() => {
+      setReports(prev =>
+        prev.map(r =>
+          r.id === report.id
+            ? { ...r, status: 'generated' as ReportStatus, last_generated: new Date().toISOString().split('T')[0] }
+            : r
+        )
+      );
+      toast.success(`${report.name} generated successfully!`);
+    }, 2000);
+  };
+
+  // Edit report
+  const handleEdit = (report: Report) => {
+    setNewReport({
+      name: report.name,
+      description: report.description || '',
+      type: report.type,
+      sections: report.sections,
+      dateRange: report.date_range || { start: '', end: '' },
+      schedule: report.schedule || '',
+      format: 'pdf',
+    });
+    setSelectedReport(null);
+    setShowReportBuilder(true);
+    setBuilderStep(1);
+    toast.info(`Editing "${report.name}"`);
+  };
+
+  // Edit schedule
+  const handleEditSchedule = (report: Report) => {
+    const scheduleOptions = ['daily', 'weekly', 'monthly', 'quarterly'];
+    const currentIndex = report.schedule ? scheduleOptions.indexOf(report.schedule) : -1;
+    const nextIndex = (currentIndex + 1) % scheduleOptions.length;
+    const newSchedule = scheduleOptions[nextIndex];
+
+    setReports(prev =>
+      prev.map(r =>
+        r.id === report.id
+          ? { ...r, schedule: newSchedule, status: 'scheduled' as ReportStatus }
+          : r
+      )
+    );
+    toast.success(`Schedule updated to: ${newSchedule}`);
+  };
+
   // Start building report from template
   const startFromTemplate = (template: ReportTemplate) => {
     setSelectedTemplate(template);
@@ -497,20 +591,20 @@ export default function ReportsPage() {
                                   <Eye className="mr-2 h-4 w-4" />
                                   View
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDownload(report)}>
                                   <Download className="mr-2 h-4 w-4" />
                                   Download
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDuplicate(report)}>
                                   <Copy className="mr-2 h-4 w-4" />
                                   Duplicate
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleShare(report)}>
                                   <Share2 className="mr-2 h-4 w-4" />
                                   Share
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-red-600">
+                                <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(report)}>
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Delete
                                 </DropdownMenuItem>
@@ -614,25 +708,25 @@ export default function ReportsPage() {
                                 View
                               </DropdownMenuItem>
                               {report.status === 'generated' && (
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDownload(report)}>
                                   <Download className="mr-2 h-4 w-4" />
                                   Download
                                 </DropdownMenuItem>
                               )}
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleGenerateNow(report)}>
                                 <PlayCircle className="mr-2 h-4 w-4" />
                                 Generate Now
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEdit(report)}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDuplicate(report)}>
                                 <Copy className="mr-2 h-4 w-4" />
                                 Duplicate
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-red-600">
+                              <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(report)}>
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
                               </DropdownMenuItem>
@@ -773,7 +867,7 @@ export default function ReportsPage() {
                           <Clock className="h-3 w-3" />
                           {report.schedule}
                         </Badge>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => handleEditSchedule(report)}>
                           Edit Schedule
                         </Button>
                       </div>
@@ -1119,12 +1213,12 @@ export default function ReportsPage() {
               {/* Actions */}
               <div className="flex gap-3">
                 {selectedReport.status === 'generated' && (
-                  <Button className="flex-1 bg-green-600 hover:bg-green-700">
+                  <Button className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => handleDownload(selectedReport)}>
                     <Download className="h-4 w-4 mr-2" />
                     Download PDF
                   </Button>
                 )}
-                <Button variant="outline" className="flex-1">
+                <Button variant="outline" className="flex-1" onClick={() => handleGenerateNow(selectedReport)}>
                   <PlayCircle className="h-4 w-4 mr-2" />
                   {selectedReport.status === 'generated' ? 'Regenerate' : 'Generate Now'}
                 </Button>

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -23,16 +24,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import {
   Plus,
   Search,
-  Filter,
   Download,
   MoreVertical,
   Receipt,
   Users,
-  DollarSign,
   TrendingUp,
   AlertTriangle,
   Send,
@@ -43,13 +43,17 @@ import {
   Eye,
   Mail,
   Printer,
+  Loader2,
 } from 'lucide-react';
+import { financeApi } from '@/lib/agency-dashboard-api';
 import type { Invoice, InvoiceStatus, CreatorPayout, PaymentStatus, FinancialStats } from '@/lib/agency-dashboard-api';
+import { toast } from 'sonner';
 
 // Status configuration
 const invoiceStatusConfig: Record<InvoiceStatus, { label: string; color: string; icon: React.ElementType }> = {
   draft: { label: 'Draft', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300', icon: Clock },
   sent: { label: 'Sent', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', icon: Send },
+  viewed: { label: 'Viewed', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', icon: Eye },
   paid: { label: 'Paid', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', icon: CheckCircle },
   overdue: { label: 'Overdue', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', icon: AlertTriangle },
   cancelled: { label: 'Cancelled', color: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400', icon: Clock },
@@ -62,156 +66,119 @@ const payoutStatusConfig: Record<PaymentStatus, { label: string; color: string }
   overdue: { label: 'Overdue', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' },
 };
 
-// Mock data
-const mockStats: FinancialStats = {
-  outstanding_receivables: 25000,
-  overdue_receivables: 5000,
-  overdue_count: 2,
-  oldest_overdue_days: 12,
-  creator_payouts_due: 18000,
-  creator_payouts_count: 7,
-  revenue_this_month: 50000,
-  revenue_last_month: 40000,
-  revenue_trend_percent: 25,
+// Default stats for when API is loading
+const defaultStats: FinancialStats = {
+  outstanding_receivables: 0,
+  overdue_receivables: 0,
+  overdue_count: 0,
+  oldest_overdue_days: 0,
+  creator_payouts_due: 0,
+  creator_payouts_count: 0,
+  revenue_this_month: 0,
+  revenue_last_month: 0,
+  revenue_trend_percent: 0,
 };
 
-const mockInvoices: Invoice[] = [
-  {
-    id: '1',
-    invoice_number: '2024-045',
-    agency_id: '1',
-    deal_id: '1',
-    brand_name: 'Brand X',
-    brand_contact_email: 'billing@brandx.com',
-    amount: 7500,
-    currency: 'GBP',
-    tax_rate: 20,
-    tax_amount: 1500,
-    total_amount: 9000,
-    status: 'sent',
-    due_date: '2025-01-25',
-    sent_at: '2025-01-15T10:00:00Z',
-    line_items: [{ id: '1', description: 'Campaign Fee', quantity: 1, rate: 7500, amount: 7500 }],
-    created_at: '2025-01-15T09:00:00Z',
-  },
-  {
-    id: '2',
-    invoice_number: '2024-044',
-    agency_id: '1',
-    deal_id: '2',
-    brand_name: 'Brand Y',
-    brand_contact_email: 'accounts@brandy.com',
-    amount: 5000,
-    currency: 'GBP',
-    tax_rate: 20,
-    tax_amount: 1000,
-    total_amount: 6000,
-    status: 'overdue',
-    due_date: '2025-01-10',
-    sent_at: '2025-01-03T10:00:00Z',
-    line_items: [{ id: '1', description: 'Sponsored Post Fee', quantity: 1, rate: 5000, amount: 5000 }],
-    created_at: '2025-01-03T09:00:00Z',
-  },
-  {
-    id: '3',
-    invoice_number: '2024-043',
-    agency_id: '1',
-    deal_id: '3',
-    brand_name: 'Brand Z',
-    brand_contact_email: 'finance@brandz.com',
-    amount: 12500,
-    currency: 'GBP',
-    tax_rate: 20,
-    tax_amount: 2500,
-    total_amount: 15000,
-    status: 'paid',
-    due_date: '2025-01-08',
-    paid_date: '2025-01-07',
-    paid_amount: 15000,
-    line_items: [{ id: '1', description: 'Product Review Campaign', quantity: 1, rate: 12500, amount: 12500 }],
-    created_at: '2024-12-25T09:00:00Z',
-  },
-  {
-    id: '4',
-    invoice_number: '2024-046',
-    agency_id: '1',
-    brand_name: 'Brand A',
-    amount: 8000,
-    currency: 'GBP',
-    total_amount: 8000,
-    status: 'draft',
-    due_date: '2025-02-01',
-    line_items: [{ id: '1', description: 'Content Package', quantity: 1, rate: 8000, amount: 8000 }],
-    created_at: '2025-01-20T09:00:00Z',
-  },
-];
-
-const mockPayouts: CreatorPayout[] = [
-  {
-    id: '1',
-    agency_id: '1',
-    creator_id: '1',
-    creator_name: 'John Smith',
-    campaign_id: '1',
-    campaign_name: 'Brand X Review',
-    brand_name: 'Brand X',
-    amount: 6000,
-    currency: 'GBP',
-    status: 'pending',
-    due_date: '2025-01-28',
-    created_at: '2025-01-15T10:00:00Z',
-  },
-  {
-    id: '2',
-    agency_id: '1',
-    creator_id: '2',
-    creator_name: 'Jane Doe',
-    campaign_id: '2',
-    campaign_name: 'Brand Y Sponsored Post',
-    brand_name: 'Brand Y',
-    amount: 4000,
-    currency: 'GBP',
-    status: 'pending',
-    due_date: '2025-01-22',
-    created_at: '2025-01-10T10:00:00Z',
-  },
-  {
-    id: '3',
-    agency_id: '1',
-    creator_id: '1',
-    creator_name: 'John Smith',
-    campaign_id: '3',
-    campaign_name: 'Brand Z Product Review',
-    brand_name: 'Brand Z',
-    amount: 10000,
-    currency: 'GBP',
-    status: 'paid',
-    due_date: '2025-01-14',
-    paid_date: '2025-01-14',
-    payment_method: 'Bank Transfer',
-    transaction_reference: 'TXN-2025-001',
-    created_at: '2024-12-28T10:00:00Z',
-  },
-];
-
 export default function FinancePage() {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isNewInvoiceOpen, setIsNewInvoiceOpen] = useState(false);
+  const [newInvoice, setNewInvoice] = useState({
+    brand_name: '',
+    amount: '',
+    due_date: '',
+    description: '',
+  });
+
+  // Fetch financial stats
+  const { data: stats = defaultStats, isLoading: statsLoading } = useQuery({
+    queryKey: ['agency', 'finance', 'stats'],
+    queryFn: financeApi.getStats,
+    staleTime: 30000,
+  });
+
+  // Fetch invoices
+  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
+    queryKey: ['agency', 'finance', 'invoices'],
+    queryFn: () => financeApi.getInvoices(),
+    staleTime: 30000,
+  });
+
+  // Fetch payouts
+  const { data: payouts = [], isLoading: payoutsLoading } = useQuery({
+    queryKey: ['agency', 'finance', 'payouts'],
+    queryFn: () => financeApi.getPayouts(),
+    staleTime: 30000,
+  });
+
+  // Create invoice mutation
+  const createInvoiceMutation = useMutation({
+    mutationFn: (data: Parameters<typeof financeApi.createInvoice>[0]) =>
+      financeApi.createInvoice(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agency', 'finance'] });
+      setIsNewInvoiceOpen(false);
+      setNewInvoice({ brand_name: '', amount: '', due_date: '', description: '' });
+      toast.success('Invoice created successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || 'Failed to create invoice');
+    },
+  });
+
+  // Send invoice mutation
+  const sendInvoiceMutation = useMutation({
+    mutationFn: ({ id, email }: { id: string; email: string }) =>
+      financeApi.sendInvoice(id, email),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agency', 'finance'] });
+      toast.success('Invoice sent successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || 'Failed to send invoice');
+    },
+  });
+
+  // Mark invoice paid mutation
+  const markPaidMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof financeApi.markInvoicePaid>[1] }) =>
+      financeApi.markInvoicePaid(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agency', 'finance'] });
+      toast.success('Invoice marked as paid');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || 'Failed to update invoice');
+    },
+  });
+
+  // Mark payout paid mutation
+  const markPayoutPaidMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof financeApi.markPayoutPaid>[1] }) =>
+      financeApi.markPayoutPaid(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agency', 'finance'] });
+      toast.success('Payout marked as paid');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || 'Failed to update payout');
+    },
+  });
 
   // Format currency
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number, currency: string = 'GBP') => {
     return new Intl.NumberFormat('en-GB', {
       style: 'currency',
-      currency: 'GBP',
+      currency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
   };
 
   // Filter invoices
-  const filteredInvoices = mockInvoices.filter(inv => {
+  const filteredInvoices = invoices.filter((inv: Invoice) => {
     const matchesSearch =
       inv.invoice_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inv.brand_name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -220,15 +187,61 @@ export default function FinancePage() {
   });
 
   // Filter payouts
-  const filteredPayouts = mockPayouts.filter(payout => {
+  const filteredPayouts = payouts.filter((payout: CreatorPayout) => {
     const matchesSearch =
       payout.creator_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payout.brand_name.toLowerCase().includes(searchQuery.toLowerCase());
+      (payout.brand_name || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || payout.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const trendUp = mockStats.revenue_trend_percent >= 0;
+  const trendUp = stats.revenue_trend_percent >= 0;
+
+  const handleCreateInvoice = () => {
+    if (!newInvoice.brand_name || !newInvoice.amount || !newInvoice.due_date) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const amount = parseFloat(newInvoice.amount);
+    createInvoiceMutation.mutate({
+      brand_name: newInvoice.brand_name,
+      subtotal: amount,
+      total_amount: amount,
+      due_date: new Date(newInvoice.due_date).toISOString(),
+      line_items: [
+        {
+          id: '1',
+          description: newInvoice.description || 'Campaign Fee',
+          quantity: 1,
+          rate: amount,
+          amount: amount,
+        },
+      ],
+    });
+  };
+
+  const handleMarkInvoicePaid = (invoice: Invoice) => {
+    markPaidMutation.mutate({
+      id: invoice.id,
+      data: {
+        paid_date: new Date().toISOString(),
+        paid_amount: invoice.total_amount,
+      },
+    });
+  };
+
+  const handleMarkPayoutPaid = (payout: CreatorPayout) => {
+    markPayoutPaidMutation.mutate({
+      id: payout.id,
+      data: {
+        paid_date: new Date().toISOString(),
+        payment_method: 'Bank Transfer',
+      },
+    });
+  };
+
+  const isLoading = statsLoading || invoicesLoading || payoutsLoading;
 
   return (
     <div className="space-y-6">
@@ -263,25 +276,25 @@ export default function FinancePage() {
               Outstanding
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {formatCurrency(mockStats.outstanding_receivables)}
+              {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : formatCurrency(Number(stats.outstanding_receivables))}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              {mockInvoices.filter(i => i.status === 'sent').length} invoices pending
+              {invoices.filter((i: Invoice) => i.status === 'sent').length} invoices pending
             </p>
           </CardContent>
         </Card>
 
-        <Card className={mockStats.overdue_receivables > 0 ? 'border-red-200 dark:border-red-800' : ''}>
+        <Card className={Number(stats.overdue_receivables) > 0 ? 'border-red-200 dark:border-red-800' : ''}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm mb-2">
               <AlertTriangle className="h-4 w-4" />
               Overdue
             </div>
             <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-              {formatCurrency(mockStats.overdue_receivables)}
+              {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : formatCurrency(Number(stats.overdue_receivables))}
             </p>
             <p className="text-xs text-red-500 mt-1">
-              {mockStats.overdue_count} invoices overdue
+              {stats.overdue_count} invoices overdue
             </p>
           </CardContent>
         </Card>
@@ -293,10 +306,10 @@ export default function FinancePage() {
               Payouts Due
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {formatCurrency(mockStats.creator_payouts_due)}
+              {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : formatCurrency(Number(stats.creator_payouts_due))}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              {mockStats.creator_payouts_count} creators pending
+              {stats.creator_payouts_count} creators pending
             </p>
           </CardContent>
         </Card>
@@ -308,7 +321,7 @@ export default function FinancePage() {
               Revenue This Month
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {formatCurrency(mockStats.revenue_this_month)}
+              {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : formatCurrency(Number(stats.revenue_this_month))}
             </p>
             <div className="flex items-center gap-1 mt-1">
               {trendUp ? (
@@ -317,7 +330,7 @@ export default function FinancePage() {
                 <ArrowDownRight className="h-3 w-3 text-red-600" />
               )}
               <span className={cn('text-xs font-medium', trendUp ? 'text-green-600' : 'text-red-600')}>
-                {trendUp ? '+' : ''}{mockStats.revenue_trend_percent}%
+                {trendUp ? '+' : ''}{stats.revenue_trend_percent}%
               </span>
               <span className="text-xs text-gray-500">vs last month</span>
             </div>
@@ -330,10 +343,10 @@ export default function FinancePage() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="invoices">
-            Invoices ({mockInvoices.length})
+            Invoices ({invoices.length})
           </TabsTrigger>
           <TabsTrigger value="payouts">
-            Payouts ({mockPayouts.length})
+            Payouts ({payouts.length})
           </TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
@@ -345,41 +358,49 @@ export default function FinancePage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">Recent Invoices</CardTitle>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/agency/finance?tab=invoices">View All</Link>
+                <Button variant="ghost" size="sm" onClick={() => setActiveTab('invoices')}>
+                  View All
                 </Button>
               </CardHeader>
               <CardContent className="space-y-3">
-                {mockInvoices.slice(0, 4).map(invoice => {
-                  const config = invoiceStatusConfig[invoice.status];
-                  const StatusIcon = config.icon;
+                {invoicesLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : invoices.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No invoices yet</p>
+                ) : (
+                  invoices.slice(0, 4).map((invoice: Invoice) => {
+                    const config = invoiceStatusConfig[invoice.status as InvoiceStatus] || invoiceStatusConfig.draft;
+                    const StatusIcon = config.icon;
 
-                  return (
-                    <div
-                      key={invoice.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                          <Receipt className="h-5 w-5 text-gray-500" />
+                    return (
+                      <div
+                        key={invoice.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                            <Receipt className="h-5 w-5 text-gray-500" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-gray-100">
+                              #{invoice.invoice_number}
+                            </p>
+                            <p className="text-sm text-gray-500">{invoice.brand_name}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">
-                            #{invoice.invoice_number}
-                          </p>
-                          <p className="text-sm text-gray-500">{invoice.brand_name}</p>
+                        <div className="text-right">
+                          <p className="font-medium">{formatCurrency(Number(invoice.total_amount), invoice.currency)}</p>
+                          <Badge className={cn('text-xs', config.color)}>
+                            <StatusIcon className="h-3 w-3 mr-1" />
+                            {config.label}
+                          </Badge>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium">{formatCurrency(invoice.total_amount)}</p>
-                        <Badge className={cn('text-xs', config.color)}>
-                          <StatusIcon className="h-3 w-3 mr-1" />
-                          {config.label}
-                        </Badge>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </CardContent>
             </Card>
 
@@ -387,39 +408,47 @@ export default function FinancePage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">Pending Payouts</CardTitle>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/agency/finance?tab=payouts">View All</Link>
+                <Button variant="ghost" size="sm" onClick={() => setActiveTab('payouts')}>
+                  View All
                 </Button>
               </CardHeader>
               <CardContent className="space-y-3">
-                {mockPayouts.filter(p => p.status === 'pending').slice(0, 4).map(payout => {
-                  const config = payoutStatusConfig[payout.status];
+                {payoutsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : payouts.filter((p: CreatorPayout) => p.status === 'pending').length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No pending payouts</p>
+                ) : (
+                  payouts.filter((p: CreatorPayout) => p.status === 'pending').slice(0, 4).map((payout: CreatorPayout) => {
+                    const config = payoutStatusConfig[payout.status as PaymentStatus] || payoutStatusConfig.pending;
 
-                  return (
-                    <div
-                      key={payout.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-medium">
-                          {payout.creator_name.charAt(0)}
+                    return (
+                      <div
+                        key={payout.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-medium">
+                            {payout.creator_name.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-gray-100">
+                              {payout.creator_name}
+                            </p>
+                            <p className="text-sm text-gray-500">{payout.brand_name}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">
-                            {payout.creator_name}
+                        <div className="text-right">
+                          <p className="font-medium">{formatCurrency(Number(payout.amount), payout.currency)}</p>
+                          <p className="text-xs text-gray-500">
+                            Due {new Date(payout.due_date).toLocaleDateString()}
                           </p>
-                          <p className="text-sm text-gray-500">{payout.brand_name}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium">{formatCurrency(payout.amount)}</p>
-                        <p className="text-xs text-gray-500">
-                          Due {new Date(payout.due_date).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </CardContent>
             </Card>
           </div>
@@ -454,100 +483,122 @@ export default function FinancePage() {
           {/* Invoices Table */}
           <Card>
             <CardContent className="p-0">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-800/50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredInvoices.map(invoice => {
-                    const config = invoiceStatusConfig[invoice.status];
-                    const StatusIcon = config.icon;
+              {invoicesLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : filteredInvoices.length === 0 ? (
+                <div className="text-center py-16">
+                  <Receipt className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                  <p className="text-gray-500">No invoices found</p>
+                  <Button className="mt-4" onClick={() => setIsNewInvoiceOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create First Invoice
+                  </Button>
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-800/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {filteredInvoices.map((invoice: Invoice) => {
+                      const config = invoiceStatusConfig[invoice.status as InvoiceStatus] || invoiceStatusConfig.draft;
+                      const StatusIcon = config.icon;
 
-                    return (
-                      <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                        <td className="px-4 py-4">
-                          <p className="font-medium">#{invoice.invoice_number}</p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(invoice.created_at).toLocaleDateString()}
-                          </p>
-                        </td>
-                        <td className="px-4 py-4">
-                          <p className="font-medium">{invoice.brand_name}</p>
-                          {invoice.brand_contact_email && (
-                            <p className="text-xs text-gray-500">{invoice.brand_contact_email}</p>
-                          )}
-                        </td>
-                        <td className="px-4 py-4">
-                          <p className="font-medium">{formatCurrency(invoice.total_amount)}</p>
-                          {invoice.tax_amount && (
+                      return (
+                        <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                          <td className="px-4 py-4">
+                            <p className="font-medium">#{invoice.invoice_number}</p>
                             <p className="text-xs text-gray-500">
-                              incl. {formatCurrency(invoice.tax_amount)} VAT
+                              {new Date(invoice.created_at).toLocaleDateString()}
                             </p>
-                          )}
-                        </td>
-                        <td className="px-4 py-4">
-                          <Badge className={cn('text-xs', config.color)}>
-                            <StatusIcon className="h-3 w-3 mr-1" />
-                            {config.label}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-4 text-sm">
-                          {new Date(invoice.due_date).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-4 text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View PDF
-                              </DropdownMenuItem>
-                              {invoice.status === 'draft' && (
+                          </td>
+                          <td className="px-4 py-4">
+                            <p className="font-medium">{invoice.brand_name}</p>
+                            {invoice.brand_contact_email && (
+                              <p className="text-xs text-gray-500">{invoice.brand_contact_email}</p>
+                            )}
+                          </td>
+                          <td className="px-4 py-4">
+                            <p className="font-medium">{formatCurrency(Number(invoice.total_amount), invoice.currency)}</p>
+                            {invoice.tax_amount && (
+                              <p className="text-xs text-gray-500">
+                                incl. {formatCurrency(Number(invoice.tax_amount), invoice.currency)} VAT
+                              </p>
+                            )}
+                          </td>
+                          <td className="px-4 py-4">
+                            <Badge className={cn('text-xs', config.color)}>
+                              <StatusIcon className="h-3 w-3 mr-1" />
+                              {config.label}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-4 text-sm">
+                            {new Date(invoice.due_date).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-4 text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
                                 <DropdownMenuItem>
-                                  <Send className="h-4 w-4 mr-2" />
-                                  Send Invoice
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View PDF
                                 </DropdownMenuItem>
-                              )}
-                              {invoice.status === 'sent' && (
+                                {invoice.status === 'draft' && (
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      const email = prompt('Enter email to send invoice:');
+                                      if (email) {
+                                        sendInvoiceMutation.mutate({ id: invoice.id, email });
+                                      }
+                                    }}
+                                  >
+                                    <Send className="h-4 w-4 mr-2" />
+                                    Send Invoice
+                                  </DropdownMenuItem>
+                                )}
+                                {(invoice.status === 'sent' || invoice.status === 'viewed' || invoice.status === 'overdue') && (
+                                  <DropdownMenuItem onClick={() => handleMarkInvoicePaid(invoice)}>
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Mark as Paid
+                                  </DropdownMenuItem>
+                                )}
+                                {invoice.status === 'overdue' && (
+                                  <DropdownMenuItem>
+                                    <Mail className="h-4 w-4 mr-2" />
+                                    Send Reminder
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem>
-                                  <CheckCircle className="h-4 w-4 mr-2" />
-                                  Mark as Paid
+                                  <Printer className="h-4 w-4 mr-2" />
+                                  Print
                                 </DropdownMenuItem>
-                              )}
-                              {invoice.status === 'overdue' && (
                                 <DropdownMenuItem>
-                                  <Mail className="h-4 w-4 mr-2" />
-                                  Send Reminder
+                                  <Download className="h-4 w-4 mr-2" />
+                                  Download
                                 </DropdownMenuItem>
-                              )}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem>
-                                <Printer className="h-4 w-4 mr-2" />
-                                Print
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Download className="h-4 w-4 mr-2" />
-                                Download
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -580,64 +631,86 @@ export default function FinancePage() {
           {/* Payouts Table */}
           <Card>
             <CardContent className="p-0">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-800/50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Creator</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Campaign</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredPayouts.map(payout => {
-                    const config = payoutStatusConfig[payout.status];
+              {payoutsLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : filteredPayouts.length === 0 ? (
+                <div className="text-center py-16">
+                  <Users className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                  <p className="text-gray-500">No payouts found</p>
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-800/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Creator</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Campaign</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {filteredPayouts.map((payout: CreatorPayout) => {
+                      const config = payoutStatusConfig[payout.status as PaymentStatus] || payoutStatusConfig.pending;
 
-                    return (
-                      <tr key={payout.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-medium">
-                              {payout.creator_name.charAt(0)}
+                      return (
+                        <tr key={payout.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-medium">
+                                {payout.creator_name.charAt(0)}
+                              </div>
+                              <p className="font-medium">{payout.creator_name}</p>
                             </div>
-                            <p className="font-medium">{payout.creator_name}</p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <p className="font-medium">{payout.campaign_name}</p>
-                          <p className="text-xs text-gray-500">{payout.brand_name}</p>
-                        </td>
-                        <td className="px-4 py-4 font-medium">
-                          {formatCurrency(payout.amount)}
-                        </td>
-                        <td className="px-4 py-4">
-                          <Badge className={cn('text-xs', config.color)}>
-                            {config.label}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-4 text-sm">
-                          {new Date(payout.due_date).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-4 text-right">
-                          {payout.status === 'pending' && (
-                            <Button size="sm" variant="outline">
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Mark Paid
-                            </Button>
-                          )}
-                          {payout.status === 'paid' && (
-                            <span className="text-xs text-gray-500">
-                              Paid {payout.paid_date && new Date(payout.paid_date).toLocaleDateString()}
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          </td>
+                          <td className="px-4 py-4">
+                            <p className="font-medium">{payout.campaign_name}</p>
+                            <p className="text-xs text-gray-500">{payout.brand_name}</p>
+                          </td>
+                          <td className="px-4 py-4 font-medium">
+                            {formatCurrency(Number(payout.amount), payout.currency)}
+                          </td>
+                          <td className="px-4 py-4">
+                            <Badge className={cn('text-xs', config.color)}>
+                              {config.label}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-4 text-sm">
+                            {new Date(payout.due_date).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-4 text-right">
+                            {payout.status === 'pending' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleMarkPayoutPaid(payout)}
+                                disabled={markPayoutPaidMutation.isPending}
+                              >
+                                {markPayoutPaidMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <CheckCircle className="h-4 w-4 mr-1" />
+                                    Mark Paid
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                            {payout.status === 'paid' && (
+                              <span className="text-xs text-gray-500">
+                                Paid {payout.paid_date && new Date(payout.paid_date).toLocaleDateString()}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -705,29 +778,53 @@ export default function FinancePage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Brand</Label>
-              <Input placeholder="Select or enter brand name" />
+              <Label>Brand Name *</Label>
+              <Input
+                placeholder="Enter brand name"
+                value={newInvoice.brand_name}
+                onChange={(e) => setNewInvoice({ ...newInvoice, brand_name: e.target.value })}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Amount (GBP)</Label>
-                <Input type="number" placeholder="0.00" />
+                <Label>Amount (GBP) *</Label>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={newInvoice.amount}
+                  onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
-                <Label>Due Date</Label>
-                <Input type="date" />
+                <Label>Due Date *</Label>
+                <Input
+                  type="date"
+                  value={newInvoice.due_date}
+                  onChange={(e) => setNewInvoice({ ...newInvoice, due_date: e.target.value })}
+                />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Description</Label>
-              <Input placeholder="Campaign fee, sponsorship, etc." />
+              <Input
+                placeholder="Campaign fee, sponsorship, etc."
+                value={newInvoice.description}
+                onChange={(e) => setNewInvoice({ ...newInvoice, description: e.target.value })}
+              />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsNewInvoiceOpen(false)}>
               Cancel
             </Button>
-            <Button className="bg-green-600 hover:bg-green-700">
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              onClick={handleCreateInvoice}
+              disabled={createInvoiceMutation.isPending}
+            >
+              {createInvoiceMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
               Create Invoice
             </Button>
           </DialogFooter>

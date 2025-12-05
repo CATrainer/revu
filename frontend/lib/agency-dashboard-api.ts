@@ -800,3 +800,92 @@ export const searchApi = {
     await api.delete('/agency/search/recent');
   },
 };
+
+// ============================================
+// TYPES - Tasks
+// ============================================
+
+export type TaskStatus = 'todo' | 'in_progress' | 'blocked' | 'completed' | 'cancelled';
+export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  assignee_id?: string;
+  assignee_name?: string;
+  created_by?: string;
+  due_date?: string;
+  completed_at?: string;
+  related_type?: string;
+  related_id?: string;
+  is_auto_generated: boolean;
+  source?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ============================================
+// API - Tasks
+// ============================================
+
+export const taskApi = {
+  getTasks: async (params?: {
+    status?: TaskStatus;
+    assignee_id?: string;
+    priority?: TaskPriority;
+    include_completed?: boolean;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ tasks: Task[]; total: number }> => {
+    const response = await api.get('/agency/tasks', { params });
+    return response.data;
+  },
+
+  createTask: async (data: {
+    title: string;
+    description?: string;
+    priority?: TaskPriority;
+    assignee_id?: string;
+    due_date?: string;
+    related_type?: string;
+    related_id?: string;
+  }): Promise<Task> => {
+    const response = await api.post('/agency/tasks', data);
+    return response.data;
+  },
+
+  updateTask: async (id: string, data: Partial<Task>): Promise<Task> => {
+    const response = await api.patch(`/agency/tasks/${id}`, data);
+    return response.data;
+  },
+
+  deleteTask: async (id: string): Promise<void> => {
+    await api.delete(`/agency/tasks/${id}`);
+  },
+
+  completeTask: async (id: string): Promise<Task> => {
+    const response = await api.post(`/agency/tasks/${id}/complete`);
+    return response.data;
+  },
+
+  // Notifications
+  getNotifications: async (params?: {
+    unread_only?: boolean;
+    limit?: number;
+  }): Promise<{ notifications: Notification[]; unread_count: number }> => {
+    const response = await api.get('/agency/notifications', { params });
+    return response.data;
+  },
+
+  markNotificationRead: async (id: string): Promise<void> => {
+    await api.post(`/agency/notifications/${id}/read`);
+  },
+
+  markAllNotificationsRead: async (): Promise<void> => {
+    await api.post('/agency/notifications/read-all');
+  },
+};
