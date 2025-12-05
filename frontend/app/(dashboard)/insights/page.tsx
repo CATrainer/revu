@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,9 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { api } from "@/lib/api"
-import { 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  TrendingUp,
+  TrendingDown,
   Minus,
   Calendar,
   Eye,
@@ -100,6 +101,7 @@ interface InsightsDashboardData {
 }
 
 export default function InsightsDashboardPage() {
+  const router = useRouter()
   const [data, setData] = useState<InsightsDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [timePeriod, setTimePeriod] = useState("30d")
@@ -117,11 +119,7 @@ export default function InsightsDashboardPage() {
         platform_filter: platformFilter,
       })
 
-      console.log('🔍 Fetching insights...')
-
       const response = await api.get(`/insights/dashboard?${params}`)
-      
-      console.log('✅ Insights data received:', response.data)
       setData(response.data)
     } catch (error: any) {
       console.error('❌ Failed to fetch insights:', error)
@@ -179,6 +177,28 @@ export default function InsightsDashboardPage() {
       default:
         return 'text-blue-500'
     }
+  }
+
+  // Navigate to AI assistant with context about successful content
+  const handleMakeMoreLikeThis = (content: ContentPiece) => {
+    const insights = content.insights.map(i => i.description).join('. ')
+    const prompt = encodeURIComponent(
+      `I want to create more content like my successful "${content.title}" which got ${content.performance.views.toLocaleString()} views and ${content.performance.engagement_rate.toFixed(1)}% engagement. ` +
+      `Key success factors were: ${insights}. ` +
+      `Give me 3-5 specific content ideas that would replicate this success for my ${content.platform} channel.`
+    )
+    router.push(`/ai-assistant?prompt=${prompt}`)
+  }
+
+  // Navigate to AI assistant with context about underperforming content
+  const handleDiagnoseWithAI = (content: ContentPiece) => {
+    const insights = content.insights.map(i => i.description).join('. ')
+    const prompt = encodeURIComponent(
+      `Help me understand why my "${content.title}" underperformed with only ${content.performance.views.toLocaleString()} views and ${content.performance.engagement_rate.toFixed(1)}% engagement. ` +
+      `Issues identified: ${insights}. ` +
+      `What specific changes could I make to improve similar content in the future?`
+    )
+    router.push(`/ai-assistant?prompt=${prompt}`)
   }
 
   if (loading) {
@@ -417,11 +437,11 @@ export default function InsightsDashboardPage() {
 
                         <div className="flex gap-2">
                           <Button variant="outline" size="sm" asChild>
-                            <Link href={`/dashboard/insights/content/${content.id}`}>
+                            <Link href={`/insights/content/${content.id}`}>
                               View Full Details
                             </Link>
                           </Button>
-                          <Button size="sm">
+                          <Button size="sm" onClick={() => handleMakeMoreLikeThis(content)}>
                             <Sparkles className="h-4 w-4 mr-1" />
                             Make More Like This
                           </Button>
@@ -480,11 +500,11 @@ export default function InsightsDashboardPage() {
 
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" asChild>
-                        <Link href={`/dashboard/insights/content/${content.id}`}>
+                        <Link href={`/insights/content/${content.id}`}>
                           View Details
                         </Link>
                       </Button>
-                      <Button size="sm" variant="secondary">
+                      <Button size="sm" variant="secondary" onClick={() => handleDiagnoseWithAI(content)}>
                         <Sparkles className="h-4 w-4 mr-1" />
                         Diagnose with AI
                       </Button>

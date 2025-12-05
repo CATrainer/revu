@@ -49,6 +49,8 @@ from app.api.v1.endpoints import interactions, views, fans
 from app.api.v1.endpoints import demo, demo_webhooks, analytics, jobs
 # Agency endpoints
 from app.api.v1.endpoints import agency_auth, agency, creator_agency, agency_opportunities, creator_opportunities
+# Creator tools (notifications, deals, calendar, insights, media kit, rates)
+from app.api.v1.endpoints import creator_tools
 
 # Create the main API router
 api_router = APIRouter()
@@ -339,6 +341,13 @@ api_router.include_router(
     creator_opportunities.router,
     prefix="/creator/opportunities",
     tags=["creator", "opportunities"],
+)
+
+# Creator tools (notifications, deals, calendar, insights, media kit, rates)
+api_router.include_router(
+    creator_tools.router,
+    prefix="/creator",
+    tags=["creator", "tools"],
 )
 
 

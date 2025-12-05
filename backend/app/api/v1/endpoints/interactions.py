@@ -1,4 +1,5 @@
 """API endpoints for interactions (comments, DMs, mentions)."""
+import logging
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
@@ -27,6 +28,7 @@ from app.schemas.interaction import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def build_filter_query(
@@ -147,7 +149,7 @@ async def create_interaction(
             await session.commit()
     except Exception as e:
         # Log error but don't fail interaction creation
-        print(f"Workflow evaluation failed: {e}")
+        logger.error(f"Workflow evaluation failed: {e}")
 
     # TODO: Update thread and fan records
 

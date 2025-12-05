@@ -52,6 +52,16 @@ from app.models.credit_usage import (
     CreditActionCost,
     ActionType,
 )
+from app.models.creator_tools import (
+    Notification,
+    NotificationPreference,
+    BrandDeal,
+    ContentCalendarEntry,
+    CreatorInsight,
+    MediaKit,
+    CreatorRateCard,
+    PostingTimeAnalysis,
+)
 
 __all__ = [
     "Organization",
@@ -104,4 +114,12 @@ __all__ = [
     "UserCreditBalance",
     "CreditActionCost",
     "ActionType",
+    "Notification",
+    "NotificationPreference",
+    "BrandDeal",
+    "ContentCalendarEntry",
+    "CreatorInsight",
+    "MediaKit",
+    "CreatorRateCard",
+    "PostingTimeAnalysis",
 ]
