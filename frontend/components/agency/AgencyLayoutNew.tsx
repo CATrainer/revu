@@ -34,6 +34,7 @@ import {
   Menu,
   X,
   Bot,
+  ListTodo,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -60,8 +61,9 @@ const mainNavigation = [
   { name: 'Pipeline', href: '/agency/pipeline', icon: GitBranch },
   { name: 'Campaigns', href: '/agency/campaigns', icon: Megaphone },
   { name: 'Creators', href: '/agency/creators', icon: Users },
-  { name: 'Reports', href: '/agency/reports', icon: FileText },
+  { name: 'Tasks', href: '/agency/tasks', icon: ListTodo },
   { name: 'Finance', href: '/agency/finance', icon: DollarSign },
+  { name: 'Reports', href: '/agency/reports', icon: FileText },
   { name: 'Assistant', href: '/agency/assistant', icon: Bot },
 ];
 

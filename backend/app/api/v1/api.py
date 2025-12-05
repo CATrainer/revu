@@ -50,7 +50,7 @@ from app.api.v1.endpoints import demo, demo_webhooks, analytics, jobs
 # Agency endpoints
 from app.api.v1.endpoints import agency_auth, agency, creator_agency, agency_opportunities, creator_opportunities
 # New Agency Dashboard endpoints
-from app.api.v1.endpoints import agency_dashboard, agency_campaigns, agency_finance
+from app.api.v1.endpoints import agency_dashboard, agency_campaigns, agency_finance, agency_tasks
 
 # Create the main API router
 api_router = APIRouter()
@@ -360,6 +360,12 @@ api_router.include_router(
     agency_finance.router,
     prefix="/agency/finance",
     tags=["agency", "finance"],
+)
+
+api_router.include_router(
+    agency_tasks.router,
+    prefix="/agency",
+    tags=["agency", "tasks"],
 )
 
 
