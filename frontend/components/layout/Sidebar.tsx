@@ -4,18 +4,28 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Brain, ChartPie, Settings, ChevronLeft, ChevronRight, MessageSquare, Zap, Radio, DollarSign } from 'lucide-react';
+import { BarChart3, Brain, ChartPie, Settings, ChevronLeft, ChevronRight, MessageSquare, Zap, Radio, DollarSign, Bell, Calendar, FileText, Calculator, TrendingUp, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { features } from '@/lib/features';
 import { useState, useMemo } from 'react';
 
-// Streamlined nav: only current surfaces + new explicit routes for Comments & Automation & Social Monitoring
+// Streamlined nav: organized into main features and creator tools
 const baseNav = [
+  // Core Features
   { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
   { name: 'Interactions', href: '/comments', icon: MessageSquare },
-  { name: 'Automation', href: '/automation', icon: Zap },
+  { name: 'Notifications', href: '/notifications', icon: Bell },
+  { name: 'Calendar', href: '/calendar', icon: Calendar },
+  // Analytics & Insights
+  { name: "What's Working", href: '/whats-working', icon: TrendingUp },
   { name: 'Analytics', href: '/analytics', icon: ChartPie },
+  // Business Tools
+  { name: 'Deal Tracker', href: '/deals', icon: Briefcase },
+  { name: 'Rate Calculator', href: '/rates', icon: Calculator },
+  { name: 'Media Kit', href: '/media-kit', icon: FileText },
   { name: 'Monetization', href: '/monetization', icon: DollarSign },
+  // Advanced Features
+  { name: 'Automation', href: '/automation', icon: Zap },
   { name: 'Social Monitoring', href: '/social-monitoring', icon: Radio },
   { name: 'AI Assistant', href: '/ai-assistant', icon: Brain },
   { name: 'Settings', href: '/settings', icon: Settings },
