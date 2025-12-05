@@ -10,7 +10,17 @@ import { features } from '@/lib/features';
 import { PlatformConnectionButton } from '@/components/integrations/PlatformConnectionButton';
 import { AgencyBadge } from '@/components/agency/AgencyBadge';
 import { AgencyInvitationsBanner } from '@/components/agency/AgencyInvitationsBanner';
-import { Youtube, Instagram, Music, TrendingUp, Users, MessageCircle, Zap, Sparkles, Settings2 } from 'lucide-react';
+import { Youtube, Instagram, Music, TrendingUp, Users, MessageCircle, Zap, Sparkles, Settings2, CheckCircle2, XCircle, Clock } from 'lucide-react';
+
+interface PlatformStatus {
+  connected: boolean;
+  subscribers?: number;
+  followers?: number;
+  channel_name?: string;
+  username?: string;
+  message?: string;
+  error?: string;
+}
 
 interface DashboardMetrics {
   total_followers: number;
@@ -21,6 +31,12 @@ interface DashboardMetrics {
   follower_change: number;
   engagement_change: number;
   interactions_change: number;
+  connected_platforms?: {
+    youtube: PlatformStatus;
+    instagram: PlatformStatus;
+    tiktok: PlatformStatus;
+  };
+  is_demo?: boolean;
 }
 
 export default function DashboardPage() {
@@ -227,63 +243,184 @@ export default function DashboardPage() {
 
       {/* Platform Connections */}
       <div className="space-y-6">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground">Connect Your Platforms</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6"> {/* Tighter gaps on mobile */}
-          <div className="glass-panel rounded-2xl border border-card-border shadow-glass backdrop-blur-md retro-hover group overflow-hidden">
+        <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+          {metrics?.is_demo ? 'Connected Platforms (Demo)' : 'Connect Your Platforms'}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* YouTube Card */}
+          <div className={`glass-panel rounded-2xl border shadow-glass backdrop-blur-md retro-hover group overflow-hidden ${
+            metrics?.connected_platforms?.youtube?.connected
+              ? 'border-emerald-500/30'
+              : 'border-card-border'
+          }`}>
             <div className="p-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl gradient-pink shadow-glow-pink">
-                  <Youtube className="h-6 w-6 text-white" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl gradient-pink shadow-glow-pink">
+                    <Youtube className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold">YouTube</h3>
                 </div>
-                <h3 className="text-xl font-bold">YouTube</h3>
+                {metrics?.connected_platforms?.youtube?.connected && (
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                )}
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Connect your YouTube channel to manage comments and engage with your audience.
-              </p>
+
+              {metrics?.connected_platforms?.youtube?.connected ? (
+                <div className="space-y-2">
+                  {metrics.connected_platforms.youtube.channel_name && (
+                    <p className="text-sm font-medium text-foreground">
+                      {metrics.connected_platforms.youtube.channel_name}
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    {formatNumber(metrics.connected_platforms.youtube.subscribers || 0)} subscribers
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Connect your YouTube channel to manage comments and engage with your audience.
+                </p>
+              )}
+
               <div className="flex items-center gap-3 flex-wrap pt-2">
-                <PlatformConnectionButton platform="youtube" />
-                <Link href="/comments" className="text-sm text-holo-purple hover:text-holo-purple-light font-semibold hover:underline transition-colors">
-                  View interactions →
-                </Link>
+                {!metrics?.is_demo && <PlatformConnectionButton platform="youtube" />}
+                {metrics?.connected_platforms?.youtube?.connected && (
+                  <Link href="/interactions" className="text-sm text-holo-purple hover:text-holo-purple-light font-semibold hover:underline transition-colors">
+                    View interactions →
+                  </Link>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="glass-panel rounded-2xl border border-card-border shadow-glass backdrop-blur-md retro-hover group overflow-hidden">
+          {/* Instagram Card */}
+          <div className={`glass-panel rounded-2xl border shadow-glass backdrop-blur-md retro-hover group overflow-hidden ${
+            metrics?.connected_platforms?.instagram?.connected
+              ? 'border-emerald-500/30'
+              : 'border-card-border'
+          }`}>
             <div className="p-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-glow-pink">
-                  <Instagram className="h-6 w-6 text-white" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-glow-pink">
+                    <Instagram className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold">Instagram</h3>
                 </div>
-                <h3 className="text-xl font-bold">Instagram</h3>
+                {metrics?.connected_platforms?.instagram?.connected && (
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                )}
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Connect Instagram to monitor posts, stories, and direct messages.
-              </p>
-              <div className="pt-2">
-                <PlatformConnectionButton platform="instagram" />
+
+              {metrics?.connected_platforms?.instagram?.connected ? (
+                <div className="space-y-2">
+                  {metrics.connected_platforms.instagram.username && (
+                    <p className="text-sm font-medium text-foreground">
+                      @{metrics.connected_platforms.instagram.username}
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    {formatNumber(metrics.connected_platforms.instagram.followers || 0)} followers
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Connect Instagram to monitor posts, stories, and direct messages.
+                </p>
+              )}
+
+              <div className="flex items-center gap-3 flex-wrap pt-2">
+                {!metrics?.is_demo && <PlatformConnectionButton platform="instagram" />}
+                {metrics?.connected_platforms?.instagram?.connected && (
+                  <Link href="/interactions" className="text-sm text-holo-purple hover:text-holo-purple-light font-semibold hover:underline transition-colors">
+                    View interactions →
+                  </Link>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="glass-panel rounded-2xl border border-card-border shadow-glass backdrop-blur-md retro-hover group overflow-hidden">
+          {/* TikTok Card */}
+          <div className={`glass-panel rounded-2xl border shadow-glass backdrop-blur-md retro-hover group overflow-hidden ${
+            metrics?.connected_platforms?.tiktok?.connected
+              ? 'border-emerald-500/30'
+              : 'border-card-border'
+          }`}>
             <div className="p-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-black dark:bg-white shadow-lg">
-                  <Music className="h-6 w-6 text-white dark:text-black" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-black dark:bg-white shadow-lg">
+                    <Music className="h-6 w-6 text-white dark:text-black" />
+                  </div>
+                  <h3 className="text-xl font-bold">TikTok</h3>
                 </div>
-                <h3 className="text-xl font-bold">TikTok</h3>
+                {metrics?.connected_platforms?.tiktok?.connected ? (
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                ) : metrics?.connected_platforms?.tiktok?.message && (
+                  <Clock className="h-5 w-5 text-amber-500" />
+                )}
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Connect TikTok to track viral content and engage with trending topics.
-              </p>
-              <div className="pt-2">
-                <PlatformConnectionButton platform="tiktok" />
+
+              {metrics?.connected_platforms?.tiktok?.connected ? (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {formatNumber(metrics.connected_platforms.tiktok.followers || 0)} followers
+                  </p>
+                </div>
+              ) : metrics?.connected_platforms?.tiktok?.message ? (
+                <p className="text-sm text-amber-500/80 leading-relaxed">
+                  {metrics.connected_platforms.tiktok.message}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Connect TikTok to track viral content and engage with trending topics.
+                </p>
+              )}
+
+              <div className="flex items-center gap-3 flex-wrap pt-2">
+                {!metrics?.is_demo && !metrics?.connected_platforms?.tiktok?.message && (
+                  <PlatformConnectionButton platform="tiktok" />
+                )}
+                {metrics?.connected_platforms?.tiktok?.connected && (
+                  <Link href="/interactions" className="text-sm text-holo-purple hover:text-holo-purple-light font-semibold hover:underline transition-colors">
+                    View interactions →
+                  </Link>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* No Platforms Connected - Real Mode Only */}
+      {!loading && !metrics?.is_demo && !metrics?.connected_platforms?.youtube?.connected &&
+       !metrics?.connected_platforms?.instagram?.connected && !metrics?.connected_platforms?.tiktok?.connected && (
+        <div className="glass-panel rounded-2xl border border-amber-500/30 p-6 shadow-glass backdrop-blur-md">
+          <div className="text-center space-y-4">
+            <div className="inline-flex p-4 rounded-full bg-amber-500/10 border border-amber-500/30">
+              <XCircle className="h-8 w-8 text-amber-500" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold mb-2">No Platforms Connected</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                Connect at least one social media platform above to start managing your creator presence.
+                Your metrics will appear once you&apos;ve connected and synced your accounts.
+              </p>
+            </div>
+            {hasDemoAccess && (
+              <div className="pt-2">
+                <Link href="/settings/demo-mode">
+                  <ModernButton variant="outline" size="sm">
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Or try Demo Mode
+                  </ModernButton>
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

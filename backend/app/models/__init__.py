@@ -72,6 +72,15 @@ from app.models.agency_notification import (
     AgencyActivity,
     AgencyReport,
     AgencyTask,
+from app.models.creator_tools import (
+    Notification,
+    NotificationPreference,
+    BrandDeal,
+    ContentCalendarEntry,
+    CreatorInsight,
+    MediaKit,
+    CreatorRateCard,
+    PostingTimeAnalysis,
 )
 
 __all__ = [
@@ -141,4 +150,12 @@ __all__ = [
     "AgencyActivity",
     "AgencyReport",
     "AgencyTask",
+    "Notification",
+    "NotificationPreference",
+    "BrandDeal",
+    "ContentCalendarEntry",
+    "CreatorInsight",
+    "MediaKit",
+    "CreatorRateCard",
+    "PostingTimeAnalysis",
 ]

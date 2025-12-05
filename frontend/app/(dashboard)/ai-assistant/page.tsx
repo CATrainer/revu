@@ -1,6 +1,13 @@
 'use client';
 import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Brain, Send, Loader2, AlertCircle, Plus, MessageSquare, Trash2, Sparkles } from 'lucide-react';
+
+// Debug logging - only logs in development mode
+const isDev = process.env.NODE_ENV === 'development';
+const debug = (...args: unknown[]) => {
+  if (isDev) console.log(...args);
+};
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { api } from '@/lib/api';
@@ -87,6 +94,9 @@ const TypingIndicator = () => (
 );
 
 export default function AIAssistantPage() {
+  const searchParams = useSearchParams();
+  const initialPrompt = searchParams.get('prompt');
+
   // Core state - simplified
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -97,6 +107,7 @@ export default function AIAssistantPage() {
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [messageCount, setMessageCount] = useState(0);
+  const [promptHandled, setPromptHandled] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const activeStreamRef = useRef<EventSource | null>(null);
@@ -122,7 +133,7 @@ export default function AIAssistantPage() {
       // Try to restore last active session from localStorage
       const lastSessionId = localStorage.getItem('ai_chat_last_session_id');
       if (lastSessionId) {
-        console.log('[AI Chat] Restoring last session:', lastSessionId);
+        debug('[AI Chat] Restoring last session:', lastSessionId);
         // Small delay to ensure sessions are loaded
         setTimeout(() => {
           loadSession(lastSessionId).catch(err => {
@@ -140,7 +151,7 @@ export default function AIAssistantPage() {
   useEffect(() => {
     if (currentSessionId) {
       localStorage.setItem('ai_chat_last_session_id', currentSessionId);
-      console.log('[AI Chat] Saved session to localStorage:', currentSessionId);
+      debug('[AI Chat] Saved session to localStorage:', currentSessionId);
     }
   }, [currentSessionId]);
 
@@ -151,6 +162,24 @@ export default function AIAssistantPage() {
       stopPolling();
     };
   }, []);
+
+  // Handle initial prompt from query parameter (e.g., from Insights page)
+  useEffect(() => {
+    if (initialPrompt && !promptHandled && !isLoadingSessions && !isStreaming) {
+      setPromptHandled(true);
+      // Set the input and auto-send after a short delay
+      setInput(decodeURIComponent(initialPrompt));
+      // Use a timeout to ensure the UI is ready
+      const timer = setTimeout(() => {
+        // Auto-submit the prompt
+        const form = document.querySelector('form');
+        if (form) {
+          form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [initialPrompt, promptHandled, isLoadingSessions, isStreaming]);
 
   const cleanupStreams = () => {
     if (activeStreamRef.current) {
@@ -168,7 +197,7 @@ export default function AIAssistantPage() {
       if (!silent) setIsLoadingSessions(true);
       const response = await api.get('/chat/sessions?page=1&page_size=50');
       const fetchedSessions = response.data.sessions || [];
-      console.log('[AI Chat] Loaded sessions:', fetchedSessions.length, 'sessions');
+      debug('[AI Chat] Loaded sessions:', fetchedSessions.length, 'sessions');
       
       if (silent) {
         // Silent refresh: merge with existing, preserving any optimistically added sessions
@@ -194,7 +223,7 @@ export default function AIAssistantPage() {
   const loadSession = async (sessionId: string) => {
     if (currentSessionId === sessionId) return; // Already loaded
     
-    console.log('[AI Chat] Loading session:', sessionId);
+    debug('[AI Chat] Loading session:', sessionId);
     cleanupStreams();
     stopPolling();
     setIsLoadingMessages(true);
@@ -204,7 +233,7 @@ export default function AIAssistantPage() {
 
     try {
       const response = await api.get(`/chat/messages/${sessionId}`);
-      console.log('[AI Chat] Session loaded, message count:', response.data.messages?.length || 0);
+      debug('[AI Chat] Session loaded, message count:', response.data.messages?.length || 0);
       const loadedMessages: Message[] = (response.data.messages || []).map((msg: any) => ({
         id: msg.id,
         role: msg.role,
@@ -214,14 +243,14 @@ export default function AIAssistantPage() {
       }));
       setMessages(loadedMessages);
       setMessageCount(loadedMessages.filter(m => m.role === 'user').length);
-      console.log('[AI Chat] Messages set, user message count:', loadedMessages.filter(m => m.role === 'user').length);
+      debug('[AI Chat] Messages set, user message count:', loadedMessages.filter(m => m.role === 'user').length);
       
       // Check if there's an active generation for this session
       const hasGenerating = loadedMessages.some(m => m.streaming);
       if (hasGenerating) {
         const generatingMsg = loadedMessages.find(m => m.streaming);
         if (generatingMsg) {
-          console.log('[AI Chat] Reconnecting to active stream for message:', generatingMsg.id);
+          debug('[AI Chat] Reconnecting to active stream for message:', generatingMsg.id);
           setIsStreaming(true);
           reconnectToStream(sessionId, generatingMsg.id);
         }
@@ -231,7 +260,7 @@ export default function AIAssistantPage() {
       
       // If session doesn't exist (404), remove it from localStorage and sessions list
       if (err.response?.status === 404) {
-        console.log('[AI Chat] Session not found, removing from list');
+        debug('[AI Chat] Session not found, removing from list');
         setSessions(prev => prev.filter(s => s.id !== sessionId));
         localStorage.removeItem('ai_chat_last_session_id');
         setCurrentSessionId(null);
@@ -245,7 +274,7 @@ export default function AIAssistantPage() {
   };
 
   const createNewSession = async () => {
-    console.log('[AI Chat] Creating new blank session');
+    debug('[AI Chat] Creating new blank session');
     cleanupStreams();
     stopPolling();
     setCurrentSessionId(null);
@@ -279,7 +308,7 @@ export default function AIAssistantPage() {
     const token = localStorage.getItem('access_token');
     if (!token) return;
 
-    console.log(`[AI Chat] Connecting to stream (attempt ${retryCount + 1})...`);
+    debug(`[AI Chat] Connecting to stream (attempt ${retryCount + 1})...`);
     
     const eventSource = new EventSource(
       `${api.defaults.baseURL}/chat/stream/${sessionId}?message_id=${messageId}&token=${encodeURIComponent(token)}`
@@ -308,7 +337,7 @@ export default function AIAssistantPage() {
         const data = JSON.parse(event.data);
 
         if (data.type === 'start') {
-          console.log('[AI Chat] Generation started by worker');
+          debug('[AI Chat] Generation started by worker');
           // Worker has picked up the task, reset any timeout concerns
         } else if (data.type === 'chunk' && data.content) {
           chunkBufferRef.current += data.content;
@@ -325,7 +354,7 @@ export default function AIAssistantPage() {
             flushChunks(messageId);
           }
           
-          console.log('[AI Chat] Stream completed successfully');
+          debug('[AI Chat] Stream completed successfully');
           setMessages(prev =>
             prev.map(msg =>
               msg.id === messageId
@@ -345,7 +374,7 @@ export default function AIAssistantPage() {
           
           // If it's a timeout, try to reconnect once
           if (data.error.includes('Timeout') && retryCount === 0) {
-            console.log('[AI Chat] Timeout detected, attempting one reconnect...');
+            debug('[AI Chat] Timeout detected, attempting one reconnect...');
             eventSource.close();
             activeStreamRef.current = null;
             setTimeout(() => reconnectToStream(sessionId, messageId, 1), 1000);
@@ -369,7 +398,7 @@ export default function AIAssistantPage() {
       // Retry with exponential backoff (max 5 attempts)
       if (retryCount < 5) {
         const delay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Max 10s
-        console.log(`[AI Chat] Retrying in ${delay}ms...`);
+        debug(`[AI Chat] Retrying in ${delay}ms...`);
         
         setTimeout(() => {
           // Check if message still needs streaming
@@ -383,7 +412,7 @@ export default function AIAssistantPage() {
     };
 
     eventSource.onopen = () => {
-      console.log('[AI Chat] SSE connection established');
+      debug('[AI Chat] SSE connection established');
     };
   };
 
@@ -396,7 +425,7 @@ export default function AIAssistantPage() {
 
   const deleteSession = async (sessionId: string) => {
     try {
-      console.log('[AI Chat] Deleting session:', sessionId);
+      debug('[AI Chat] Deleting session:', sessionId);
       await api.delete(`/chat/sessions/${sessionId}`);
       setSessions(sessions.filter(s => s.id !== sessionId));
       if (currentSessionId === sessionId) {
@@ -431,13 +460,13 @@ export default function AIAssistantPage() {
       const isNewSession = !sessionId;
       
       if (!sessionId) {
-        console.log('[AI Chat] Creating new session...');
+        debug('[AI Chat] Creating new session...');
         const createResponse = await api.post('/chat/sessions', {
           title: 'New Chat',
           mode: 'general',
         });
         sessionId = createResponse.data.session_id;
-        console.log('[AI Chat] New session created:', sessionId);
+        debug('[AI Chat] New session created:', sessionId);
         setCurrentSessionId(sessionId);
         
         // Small delay to ensure session is committed to database
@@ -469,7 +498,7 @@ export default function AIAssistantPage() {
       setMessageCount(newMessageCount);
 
       // Send message
-      console.log('[AI Chat] Sending message to session:', sessionId);
+      debug('[AI Chat] Sending message to session:', sessionId);
       const response = await api.post('/chat/messages', {
         session_id: sessionId,
         content: userMessage.content,
@@ -480,7 +509,7 @@ export default function AIAssistantPage() {
       }
 
       const { message_id: assistantMessageId } = response.data;
-      console.log('[AI Chat] Message sent, assistant message ID:', assistantMessageId);
+      debug('[AI Chat] Message sent, assistant message ID:', assistantMessageId);
 
       // Auto-generate title after first message OR update for first 5 messages
       if ((newMessageCount === 1 || newMessageCount <= 5) && sessionId) {

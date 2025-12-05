@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Send, Loader2, Sparkles, MessageSquare, ExternalLink, Zap, AlertCircle } from 'lucide-react';
+import { X, Send, Loader2, Sparkles, MessageSquare, ExternalLink, Zap, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { pushToast } from '@/components/ui/toast';
+import { QuickReplyPanel } from '@/components/creator-tools';
 
 interface Interaction {
   id: string;
@@ -79,6 +80,7 @@ export function InteractionDetailPanel({
   const [responseText, setResponseText] = useState('');
   const [sending, setSending] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [showQuickReplies, setShowQuickReplies] = useState(false);
 
   useEffect(() => {
     loadContext();
@@ -445,10 +447,45 @@ export function InteractionDetailPanel({
             </p>
           </div>
         ) : (
-          // Normal compose mode
+          // Normal compose mode with Quick Reply Panel
           <div className="space-y-3">
-            <h3 className="text-base font-semibold text-primary-dark">Your Response</h3>
-            
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-primary-dark">Your Response</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowQuickReplies(!showQuickReplies)}
+                className="text-primary"
+              >
+                {showQuickReplies ? (
+                  <>
+                    <ChevronUp className="h-4 w-4 mr-1" />
+                    Hide Suggestions
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-1" />
+                    Quick Replies
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Quick Reply Panel */}
+            {showQuickReplies && (
+              <QuickReplyPanel
+                interactionId={interactionId}
+                interactionContent={interaction.content}
+                authorName={interaction.author_name}
+                platform={interaction.platform}
+                onSelectReply={(text) => {
+                  setResponseText(text);
+                  setShowQuickReplies(false);
+                }}
+                className="mb-4"
+              />
+            )}
+
             <Textarea
               value={responseText}
               onChange={(e) => setResponseText(e.target.value)}
@@ -497,7 +534,7 @@ export function InteractionDetailPanel({
             </div>
 
             <p className="text-xs text-secondary-dark mt-2">
-              Tip: Click <Sparkles className="h-3 w-3 inline" /> to generate an AI response
+              Tip: Use Quick Replies for templates and AI suggestions, or click <Sparkles className="h-3 w-3 inline" /> to generate a custom AI response
             </p>
           </div>
         )}

@@ -51,6 +51,8 @@ from app.api.v1.endpoints import demo, demo_webhooks, analytics, jobs
 from app.api.v1.endpoints import agency_auth, agency, creator_agency, agency_opportunities, creator_opportunities
 # New Agency Dashboard endpoints
 from app.api.v1.endpoints import agency_dashboard, agency_campaigns, agency_finance, agency_tasks
+# Creator tools (notifications, deals, calendar, insights, media kit, rates)
+from app.api.v1.endpoints import creator_tools
 
 # Create the main API router
 api_router = APIRouter()
@@ -366,6 +368,11 @@ api_router.include_router(
     agency_tasks.router,
     prefix="/agency",
     tags=["agency", "tasks"],
+# Creator tools (notifications, deals, calendar, insights, media kit, rates)
+api_router.include_router(
+    creator_tools.router,
+    prefix="/creator",
+    tags=["creator", "tools"],
 )
 
 

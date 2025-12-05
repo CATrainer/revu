@@ -25,6 +25,7 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useStore } from '@/lib/store';
 import { features } from '@/lib/features';
 import { AgencyBadge } from './AgencyBadge';
+import { NotificationCenter } from '@/components/creator-tools';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -293,6 +294,9 @@ export function Header({ onMenuClick }: HeaderProps) {
                 {personaLabel}
               </span>
             )}
+
+            {/* Notifications */}
+            <NotificationCenter compact />
 
             <ThemeToggle />
 
