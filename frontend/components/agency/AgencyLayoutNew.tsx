@@ -33,6 +33,7 @@ import {
   BarChart3,
   Menu,
   X,
+  Bot,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -61,6 +62,7 @@ const mainNavigation = [
   { name: 'Creators', href: '/agency/creators', icon: Users },
   { name: 'Reports', href: '/agency/reports', icon: FileText },
   { name: 'Finance', href: '/agency/finance', icon: DollarSign },
+  { name: 'Assistant', href: '/agency/assistant', icon: Bot },
 ];
 
 // Secondary navigation by route
