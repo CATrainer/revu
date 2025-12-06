@@ -26,14 +26,16 @@ import bash from 'react-syntax-highlighter/dist/esm/languages/prism/bash';
 import css from 'react-syntax-highlighter/dist/esm/languages/prism/css';
 import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql';
 
-// Register languages with the light build
-SyntaxHighlighter.registerLanguage('typescript', typescript);
-SyntaxHighlighter.registerLanguage('javascript', javascript);
-SyntaxHighlighter.registerLanguage('python', python);
-SyntaxHighlighter.registerLanguage('json', json);
-SyntaxHighlighter.registerLanguage('bash', bash);
-SyntaxHighlighter.registerLanguage('css', css);
-SyntaxHighlighter.registerLanguage('sql', sql);
+// Register languages with the light build (only in browser to avoid SSR issues)
+if (typeof window !== 'undefined') {
+  SyntaxHighlighter.registerLanguage('typescript', typescript);
+  SyntaxHighlighter.registerLanguage('javascript', javascript);
+  SyntaxHighlighter.registerLanguage('python', python);
+  SyntaxHighlighter.registerLanguage('json', json);
+  SyntaxHighlighter.registerLanguage('bash', bash);
+  SyntaxHighlighter.registerLanguage('css', css);
+  SyntaxHighlighter.registerLanguage('sql', sql);
+}
 
 interface Message {
   id: string;
