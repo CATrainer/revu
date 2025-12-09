@@ -368,6 +368,8 @@ api_router.include_router(
     agency_tasks.router,
     prefix="/agency",
     tags=["agency", "tasks"],
+)
+
 # Creator tools (notifications, deals, calendar, insights, media kit, rates)
 api_router.include_router(
     creator_tools.router,
