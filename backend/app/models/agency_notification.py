@@ -70,7 +70,7 @@ class AgencyNotification(Base):
     )
 
     # Metadata
-    metadata = Column(JSONB, nullable=False, default=dict)
+    notification_metadata = Column(JSONB, nullable=False, default=dict)
 
     # Relationships
     agency = relationship("Agency", backref="notifications")
@@ -121,7 +121,7 @@ class AgencyActivity(Base):
     new_state = Column(JSONB, nullable=True)
 
     # Metadata
-    metadata = Column(JSONB, nullable=False, default=dict)
+    activity_metadata = Column(JSONB, nullable=False, default=dict)
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(String(500), nullable=True)
 
