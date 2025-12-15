@@ -96,126 +96,6 @@ const stageConfig: Record<DealStage, { label: string; color: string; bgColor: st
   },
 };
 
-// Mock data for demonstration
-const mockDeals: Deal[] = [
-  {
-    id: '1',
-    agency_id: '1',
-    brand_name: 'Brand X',
-    brand_logo_url: undefined,
-    creator_ids: ['1'],
-    creators: [{ id: '1', name: 'John Smith', handle: '@johnsmith', platform: 'YouTube' }],
-    value: 15000,
-    currency: 'GBP',
-    stage: 'negotiating',
-    status: 'on_track',
-    priority: 'high',
-    target_posting_date: '2025-02-15',
-    campaign_type: 'Product Review',
-    tags: ['Tech', 'Review'],
-    owner_id: '1',
-    owner_name: 'Caleb',
-    notes: 'Great potential partnership',
-    next_action: 'Awaiting brand approval on script',
-    days_in_stage: 12,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    agency_id: '1',
-    brand_name: 'Brand Y',
-    creator_ids: ['2'],
-    creators: [{ id: '2', name: 'Jane Doe', handle: '@janedoe', platform: 'Instagram' }],
-    value: 8000,
-    currency: 'GBP',
-    stage: 'pitch_sent',
-    status: 'on_track',
-    priority: 'medium',
-    tags: ['Lifestyle'],
-    owner_name: 'Peter',
-    days_in_stage: 3,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    agency_id: '1',
-    brand_name: 'Brand Z',
-    creator_ids: ['1', '3'],
-    creators: [
-      { id: '1', name: 'John Smith', handle: '@johnsmith', platform: 'YouTube' },
-      { id: '3', name: 'Mike Johnson', handle: '@mikej', platform: 'TikTok' },
-    ],
-    value: 25000,
-    currency: 'GBP',
-    stage: 'booked',
-    status: 'action_needed',
-    priority: 'high',
-    target_posting_date: '2025-01-20',
-    campaign_type: 'Sponsored Post',
-    tags: ['Gaming'],
-    owner_name: 'Caleb',
-    next_action: 'Send contract to brand',
-    days_in_stage: 2,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    agency_id: '1',
-    brand_name: 'Brand A',
-    creator_ids: ['2'],
-    creators: [{ id: '2', name: 'Jane Doe', handle: '@janedoe', platform: 'Instagram' }],
-    value: 5000,
-    currency: 'GBP',
-    stage: 'prospecting',
-    status: 'on_track',
-    priority: 'low',
-    tags: ['Beauty'],
-    owner_name: 'Ollie',
-    days_in_stage: 1,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '5',
-    agency_id: '1',
-    brand_name: 'Brand B',
-    creator_ids: ['3'],
-    creators: [{ id: '3', name: 'Mike Johnson', handle: '@mikej', platform: 'TikTok' }],
-    value: 12000,
-    currency: 'GBP',
-    stage: 'in_progress',
-    status: 'on_track',
-    priority: 'medium',
-    target_posting_date: '2025-01-25',
-    campaign_type: 'Brand Integration',
-    tags: ['Tech', 'Review'],
-    owner_name: 'Peter',
-    days_in_stage: 5,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '6',
-    agency_id: '1',
-    brand_name: 'Brand C',
-    creator_ids: ['1'],
-    creators: [{ id: '1', name: 'John Smith', handle: '@johnsmith', platform: 'YouTube' }],
-    value: 10000,
-    currency: 'GBP',
-    stage: 'completed',
-    status: 'on_track',
-    priority: 'none',
-    tags: ['Gaming'],
-    owner_name: 'Caleb',
-    days_in_stage: 30,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
 // Active stages (exclude completed and lost for main board view)
 const activeStages: DealStage[] = ['prospecting', 'pitch_sent', 'negotiating', 'booked', 'in_progress'];
 const allStages: DealStage[] = [...activeStages, 'completed', 'lost'];
@@ -245,8 +125,8 @@ export default function PipelinePage() {
     queryFn: () => pipelineApi.getDeals(),
   });
 
-  // Use API data or fall back to mock data for demo
-  const deals = apiDeals && apiDeals.length > 0 ? apiDeals : mockDeals;
+  // Use API data
+  const deals = apiDeals || [];
 
   // Create deal mutation
   const createDealMutation = useMutation({
