@@ -16,7 +16,10 @@ import {
   Check,
   ChevronDown,
   DollarSign,
+  Bell,
+  Mail,
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { agencyApi, type Agency } from '@/lib/agency-api';
 import { toast } from 'sonner';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -220,6 +223,9 @@ export default function AgencySettingsPage() {
       {/* Currency Preference */}
       <CurrencyPreferenceCard />
 
+      {/* Notification Preferences */}
+      <NotificationPreferencesCard />
+
       {/* Agency Info */}
       {agency && (
         <Card>
@@ -270,6 +276,250 @@ export default function AgencySettingsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function NotificationPreferencesCard() {
+  const [preferences, setPreferences] = useState<{
+    in_app_enabled: boolean;
+    email_enabled: boolean;
+    email_frequency: string;
+    digest_hour: number;
+    type_settings: Record<string, { in_app?: boolean; email?: boolean }>;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [notificationTypes, setNotificationTypes] = useState<Array<{
+    id: string;
+    name: string;
+    types: Array<{ id: string; title: string; category: string; default_in_app: boolean; default_email: boolean }>;
+  }>>([]);
+
+  useEffect(() => {
+    fetchPreferences();
+    fetchNotificationTypes();
+  }, []);
+
+  const fetchPreferences = async () => {
+    try {
+      const response = await fetch('/api/agency/notifications/preferences');
+      if (response.ok) {
+        const data = await response.json();
+        setPreferences(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch preferences:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchNotificationTypes = async () => {
+    try {
+      const response = await fetch('/api/agency/notifications/types');
+      if (response.ok) {
+        const data = await response.json();
+        setNotificationTypes(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notification types:', error);
+    }
+  };
+
+  const updatePreferences = async (updates: Partial<typeof preferences>) => {
+    setSaving(true);
+    try {
+      const response = await fetch('/api/agency/notifications/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPreferences(data);
+        toast.success('Notification preferences updated');
+      }
+    } catch (error) {
+      console.error('Failed to update preferences:', error);
+      toast.error('Failed to update preferences');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleTypePreference = async (typeId: string, channel: 'in_app' | 'email', enabled: boolean) => {
+    if (!preferences) return;
+    
+    const newTypeSettings = {
+      ...preferences.type_settings,
+      [typeId]: {
+        ...preferences.type_settings?.[typeId],
+        [channel]: enabled,
+      },
+    };
+    
+    await updatePreferences({ type_settings: newTypeSettings });
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Notification Preferences
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Bell className="h-5 w-5" />
+          Notification Preferences
+        </CardTitle>
+        <CardDescription>
+          Control how you receive notifications about campaigns, deals, and team activity
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Global Settings */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div>
+              <div className="font-medium text-gray-900 dark:text-gray-100">In-App Notifications</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Show notifications in the dashboard</div>
+            </div>
+            <Switch
+              checked={preferences?.in_app_enabled ?? true}
+              onCheckedChange={(checked) => updatePreferences({ in_app_enabled: checked })}
+              disabled={saving}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div>
+              <div className="font-medium text-gray-900 dark:text-gray-100">Email Notifications</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Receive notifications via email</div>
+            </div>
+            <Switch
+              checked={preferences?.email_enabled ?? true}
+              onCheckedChange={(checked) => updatePreferences({ email_enabled: checked })}
+              disabled={saving}
+            />
+          </div>
+
+          {preferences?.email_enabled && (
+            <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-3">
+              <div className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email Delivery
+              </div>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="email_frequency"
+                    checked={preferences?.email_frequency === 'instant'}
+                    onChange={() => updatePreferences({ email_frequency: 'instant' })}
+                    disabled={saving}
+                    className="w-4 h-4 text-green-600"
+                  />
+                  <span className="text-sm text-gray-900 dark:text-gray-100">Instant</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="email_frequency"
+                    checked={preferences?.email_frequency === 'daily_digest'}
+                    onChange={() => updatePreferences({ email_frequency: 'daily_digest' })}
+                    disabled={saving}
+                    className="w-4 h-4 text-green-600"
+                  />
+                  <span className="text-sm text-gray-900 dark:text-gray-100">Daily Digest</span>
+                </label>
+              </div>
+              {preferences?.email_frequency === 'daily_digest' && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Send digest at:</span>
+                  <select
+                    value={preferences?.digest_hour ?? 9}
+                    onChange={(e) => updatePreferences({ digest_hour: parseInt(e.target.value) })}
+                    disabled={saving}
+                    className="px-3 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                  >
+                    {Array.from({ length: 24 }, (_, i) => (
+                      <option key={i} value={i}>
+                        {i.toString().padStart(2, '0')}:00 UTC
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Per-Type Settings */}
+        {notificationTypes.length > 0 && (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="font-medium text-gray-900 dark:text-gray-100">Notification Types</h4>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Choose which notifications you want to receive and how.
+            </p>
+
+            {notificationTypes.map((category) => (
+              <div key={category.id} className="space-y-2">
+                <h5 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  {category.name}
+                </h5>
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
+                  {category.types.map((type) => {
+                    const typeSettings = preferences?.type_settings?.[type.id] || {};
+                    const inAppEnabled = typeSettings.in_app ?? type.default_in_app;
+                    const emailEnabled = typeSettings.email ?? type.default_email;
+
+                    return (
+                      <div key={type.id} className="flex items-center justify-between p-3">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">{type.title}</div>
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            <Switch
+                              checked={inAppEnabled}
+                              onCheckedChange={(checked) => toggleTypePreference(type.id, 'in_app', checked)}
+                              disabled={saving || !preferences?.in_app_enabled}
+                              className="scale-75"
+                            />
+                            In-App
+                          </label>
+                          <label className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            <Switch
+                              checked={emailEnabled}
+                              onCheckedChange={(checked) => toggleTypePreference(type.id, 'email', checked)}
+                              disabled={saving || !preferences?.email_enabled}
+                              className="scale-75"
+                            />
+                            Email
+                          </label>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
