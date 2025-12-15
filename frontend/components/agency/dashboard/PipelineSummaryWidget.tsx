@@ -16,7 +16,7 @@ import {
 import type { PipelineStats, DealStage } from '@/lib/agency-dashboard-api';
 
 interface PipelineSummaryWidgetProps {
-  stats?: PipelineStats;
+  stats: PipelineStats;
   isLoading?: boolean;
 }
 
@@ -59,26 +59,7 @@ const stageConfig: Record<DealStage, { label: string; color: string; bgColor: st
   },
 };
 
-// Mock data for demonstration
-const mockStats: PipelineStats = {
-  total_value: 125000,
-  avg_deal_size: 8333,
-  deals_closing_this_month: 4,
-  deals_closing_this_month_value: 32000,
-  win_rate_this_month: 65,
-  stagnant_deals: 3,
-  by_stage: {
-    prospecting: { count: 12, value: 75000 },
-    pitch_sent: { count: 5, value: 25000 },
-    negotiating: { count: 8, value: 45000 },
-    booked: { count: 6, value: 38000 },
-    in_progress: { count: 4, value: 22000 },
-    completed: { count: 15, value: 85000 },
-    lost: { count: 5, value: 28000 },
-  },
-};
-
-export function PipelineSummaryWidget({ stats = mockStats, isLoading = false }: PipelineSummaryWidgetProps) {
+export function PipelineSummaryWidget({ stats, isLoading = false }: PipelineSummaryWidgetProps) {
   // Calculate total count for bar chart proportions
   const activeStages: DealStage[] = ['prospecting', 'pitch_sent', 'negotiating', 'booked', 'in_progress'];
   const totalActiveDeals = activeStages.reduce((sum, stage) => sum + (stats.by_stage[stage]?.count || 0), 0);

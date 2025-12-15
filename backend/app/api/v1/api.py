@@ -53,6 +53,8 @@ from app.api.v1.endpoints import agency_auth, agency, creator_agency, agency_opp
 from app.api.v1.endpoints import agency_dashboard, agency_campaigns, agency_finance, agency_tasks
 # Creator tools (notifications, deals, calendar, insights, media kit, rates)
 from app.api.v1.endpoints import creator_tools
+# Currency endpoints
+from app.api.v1.endpoints import currency
 
 # Create the main API router
 api_router = APIRouter()
@@ -375,6 +377,13 @@ api_router.include_router(
     creator_tools.router,
     prefix="/creator",
     tags=["creator", "tools"],
+)
+
+# Currency endpoints
+api_router.include_router(
+    currency.router,
+    prefix="/currency",
+    tags=["currency"],
 )
 
 

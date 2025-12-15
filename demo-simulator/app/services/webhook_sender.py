@@ -54,6 +54,46 @@ class WebhookSender:
         return await WebhookSender._send_webhook(webhook_url, payload)
     
     @staticmethod
+    async def send_content_metrics_updated(content_data: Dict) -> bool:
+        """
+        Send content.metrics_updated webhook to main app.
+        
+        Args:
+            content_data: Content metrics payload
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        webhook_url = f"{settings.MAIN_APP_URL}/api/v1/webhooks/demo"
+        
+        payload = {
+            'event': 'content.metrics_updated',
+            'data': content_data,
+        }
+        
+        return await WebhookSender._send_webhook(webhook_url, payload)
+    
+    @staticmethod
+    async def send_reply_followup(interaction_data: Dict) -> bool:
+        """
+        Send reply.followup webhook when demo user responds to creator's reply.
+        
+        Args:
+            interaction_data: Follow-up interaction payload
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        webhook_url = f"{settings.MAIN_APP_URL}/api/v1/webhooks/demo"
+        
+        payload = {
+            'event': 'reply.followup',
+            'data': interaction_data,
+        }
+        
+        return await WebhookSender._send_webhook(webhook_url, payload)
+    
+    @staticmethod
     async def _send_webhook(url: str, payload: Dict) -> bool:
         """Send webhook with HMAC signature."""
         try:

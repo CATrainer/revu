@@ -13,9 +13,13 @@ import {
   Save,
   Upload,
   Loader2,
+  Check,
+  ChevronDown,
+  DollarSign,
 } from 'lucide-react';
 import { agencyApi, type Agency } from '@/lib/agency-api';
 import { toast } from 'sonner';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function AgencySettingsPage() {
   const { user } = useAuth();
@@ -213,6 +217,9 @@ export default function AgencySettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Currency Preference */}
+      <CurrencyPreferenceCard />
+
       {/* Agency Info */}
       {agency && (
         <Card>
@@ -263,5 +270,84 @@ export default function AgencySettingsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function CurrencyPreferenceCard() {
+  const { currency, setCurrency, supportedCurrencies, currencyInfo } = useCurrency();
+  const [isOpen, setIsOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleCurrencyChange = async (newCurrency: string) => {
+    setSaving(true);
+    try {
+      await setCurrency(newCurrency);
+      toast.success(`Currency changed to ${newCurrency}`);
+    } catch {
+      toast.error('Failed to update currency');
+    } finally {
+      setSaving(false);
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <DollarSign className="h-5 w-5" />
+          Display Currency
+        </CardTitle>
+        <CardDescription>
+          Choose your preferred currency for displaying deal values, revenue, and financial data
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="relative">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            disabled={saving}
+            className="flex items-center justify-between w-full max-w-xs px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-green-500 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">{currencyInfo?.symbol || '$'}</span>
+              <div className="text-left">
+                <div className="font-medium text-gray-900 dark:text-gray-100">{currency}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{currencyInfo?.name || 'US Dollar'}</div>
+              </div>
+            </div>
+            <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isOpen && (
+            <div className="absolute z-50 mt-2 w-full max-w-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-64 overflow-y-auto">
+              {supportedCurrencies.map((curr) => (
+                <button
+                  key={curr.code}
+                  onClick={() => handleCurrencyChange(curr.code)}
+                  className={`flex items-center justify-between w-full px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                    currency === curr.code ? 'bg-green-50 dark:bg-green-900/20' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg w-6">{curr.symbol}</span>
+                    <div className="text-left">
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{curr.code}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{curr.name}</div>
+                    </div>
+                  </div>
+                  {currency === curr.code && (
+                    <Check className="h-5 w-5 text-green-500" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+          All monetary values will be converted and displayed in your selected currency.
+        </p>
+      </CardContent>
+    </Card>
   );
 }

@@ -13,20 +13,11 @@ import {
 import type { DashboardStats } from '@/lib/agency-dashboard-api';
 
 interface QuickStatsBarProps {
-  stats?: DashboardStats;
+  stats: DashboardStats;
   isLoading?: boolean;
 }
 
-// Mock stats for demonstration
-const mockStats: DashboardStats = {
-  total_active_campaigns: 15,
-  total_creators: 43,
-  revenue_this_month: 50000,
-  pipeline_value: 125000,
-  completion_rate: 94,
-};
-
-export function QuickStatsBar({ stats = mockStats, isLoading = false }: QuickStatsBarProps) {
+export function QuickStatsBar({ stats, isLoading = false }: QuickStatsBarProps) {
   // Format currency
   const formatCurrency = (value: number) => {
     if (value >= 1000000) {

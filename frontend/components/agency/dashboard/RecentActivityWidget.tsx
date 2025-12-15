@@ -20,71 +20,11 @@ import {
 import type { ActivityItem } from '@/lib/agency-dashboard-api';
 
 interface RecentActivityWidgetProps {
-  activities?: ActivityItem[];
+  activities: ActivityItem[];
   isLoading?: boolean;
 }
 
-// Mock activities for demonstration
-const mockActivities: ActivityItem[] = [
-  {
-    id: '1',
-    type: 'deal_moved',
-    description: 'Deal moved: Brand X from Negotiating → Booked',
-    actor_name: 'Caleb',
-    timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    link_url: '/agency/pipeline/1',
-  },
-  {
-    id: '2',
-    type: 'deliverable_uploaded',
-    description: 'Deliverable uploaded: Script for Brand Y',
-    actor_name: '@Creator1',
-    timestamp: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
-    link_url: '/agency/campaigns/2',
-  },
-  {
-    id: '3',
-    type: 'invoice_paid',
-    description: 'Invoice paid: #2024-045 - Brand Z - 5,000',
-    actor_name: 'System',
-    timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-    link_url: '/agency/finance/invoices/1',
-  },
-  {
-    id: '4',
-    type: 'report_generated',
-    description: 'Report generated: Brand A Q4 Campaign',
-    actor_name: 'Peter',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    link_url: '/agency/reports/1',
-  },
-  {
-    id: '5',
-    type: 'content_posted',
-    description: 'Content posted: Brand B x @Creator2 on Instagram',
-    actor_name: 'System',
-    timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    link_url: '/agency/campaigns/3',
-  },
-  {
-    id: '6',
-    type: 'creator_added',
-    description: 'Creator added: @Creator3 to platform',
-    actor_name: 'Ollie',
-    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    link_url: '/agency/creators/3',
-  },
-  {
-    id: '7',
-    type: 'comment_added',
-    description: 'Comment added on Brand C campaign',
-    actor_name: 'Caleb',
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    link_url: '/agency/campaigns/4',
-  },
-];
-
-export function RecentActivityWidget({ activities = mockActivities, isLoading = false }: RecentActivityWidgetProps) {
+export function RecentActivityWidget({ activities, isLoading = false }: RecentActivityWidgetProps) {
   const [filter, setFilter] = useState<string>('all');
   const [newCount, setNewCount] = useState(0);
 
@@ -253,8 +193,24 @@ export function RecentActivityWidget({ activities = mockActivities, isLoading = 
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-          {Object.entries(groupedActivities).map(([group, items]) => {
+        {activities.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="rounded-full bg-cyan-100 dark:bg-cyan-900/20 p-4 mb-4">
+              <Activity className="h-8 w-8 text-cyan-600 dark:text-cyan-400" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">No activity yet</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
+              Start creating campaigns, managing deals, and working with creators to see activity here.
+            </p>
+            <Link href="/agency/campaigns/new">
+              <Button size="sm">
+                Get Started
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+            {Object.entries(groupedActivities).map(([group, items]) => {
             const groupItems = items.filter(item => filteredActivities.includes(item));
             if (groupItems.length === 0) return null;
 
@@ -313,7 +269,8 @@ export function RecentActivityWidget({ activities = mockActivities, isLoading = 
               </div>
             );
           })}
-        </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

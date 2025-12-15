@@ -19,24 +19,11 @@ import {
 import type { FinancialStats } from '@/lib/agency-dashboard-api';
 
 interface FinancialOverviewWidgetProps {
-  stats?: FinancialStats;
+  stats: FinancialStats;
   isLoading?: boolean;
 }
 
-// Mock stats for demonstration
-const mockStats: FinancialStats = {
-  outstanding_receivables: 25000,
-  overdue_receivables: 5000,
-  overdue_count: 2,
-  oldest_overdue_days: 12,
-  creator_payouts_due: 18000,
-  creator_payouts_count: 7,
-  revenue_this_month: 50000,
-  revenue_last_month: 40000,
-  revenue_trend_percent: 25,
-};
-
-export function FinancialOverviewWidget({ stats = mockStats, isLoading = false }: FinancialOverviewWidgetProps) {
+export function FinancialOverviewWidget({ stats, isLoading = false }: FinancialOverviewWidgetProps) {
   // Format currency
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-GB', {

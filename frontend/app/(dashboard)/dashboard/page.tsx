@@ -36,15 +36,11 @@ interface DashboardMetrics {
     instagram: PlatformStatus;
     tiktok: PlatformStatus;
   };
-  is_demo?: boolean;
 }
 
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [demoMode, setDemoMode] = useState<boolean>(false);
-  const [demoProfile, setDemoProfile] = useState<any>(null);
-  const [hasDemoAccess, setHasDemoAccess] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -61,22 +57,7 @@ export default function DashboardPage() {
       }
     };
 
-    const fetchDemoStatus = async () => {
-      try {
-        const response = await fetch('/api/demo/status');
-        if (response.ok) {
-          const data = await response.json();
-          setDemoMode(data.status === 'enabled');
-          setDemoProfile(data.profile || null);
-          setHasDemoAccess(data.has_access ?? true); // Default to true if not provided
-        }
-      } catch (error) {
-        console.error('Failed to fetch demo status:', error);
-      }
-    };
-
     fetchMetrics();
-    fetchDemoStatus();
   }, []);
 
   const formatNumber = (num: number): string => {
@@ -89,81 +70,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-10 animate-slide-up px-4 md:px-0"> {/* Add horizontal padding on mobile */}
-      {/* Demo Mode Banner - Retro Styled */}
-      {hasDemoAccess && demoMode && (
-        <div className="glass-panel rounded-2xl border border-holo-purple/30 p-6 shadow-glow-purple backdrop-blur-md">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="h-3 w-3 rounded-full bg-gradient-to-r from-emerald-400 to-teal-400 animate-pulse-glow shadow-glow-teal" />
-              <div>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-holo-purple" />
-                  <span className="font-bold text-lg text-holo-purple">Demo Mode Active</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1.5">
-                  Using simulated data from <span className="font-semibold text-foreground">{demoProfile?.niche?.replace('_', ' ') || 'your demo profile'}</span>. Interactions will arrive shortly.
-                </p>
-              </div>
-            </div>
-            <Link href="/settings/demo-mode">
-              <ModernButton variant="outline" size="sm">
-                <Settings2 className="h-4 w-4 mr-2" />
-                Manage Demo
-              </ModernButton>
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* Demo Mode Enabling Banner */}
-      {hasDemoAccess && !demoMode && demoProfile?.status === 'enabling' && (
-        <div className="glass-panel rounded-2xl border border-yellow-500/30 p-6 shadow-glow-yellow backdrop-blur-md">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="h-3 w-3 rounded-full bg-yellow-500 animate-pulse" />
-              <div>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-yellow-500" />
-                  <span className="font-bold text-lg text-yellow-500">Demo Mode Setting Up</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1.5">
-                  Your demo profile is being created. This takes about 1-2 minutes. You can close this page and come back.
-                </p>
-              </div>
-            </div>
-            <Link href="/settings/demo-mode">
-              <ModernButton variant="outline" size="sm">
-                <Settings2 className="h-4 w-4 mr-2" />
-                View Progress
-              </ModernButton>
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* Onboarding: Enable Demo Mode - Retro Styled */}
-      {hasDemoAccess && !demoMode && !loading && (metrics?.interactions_today || 0) === 0 && (
-        <div className="glass-panel rounded-2xl border border-holo-teal/30 p-6 shadow-glow-teal backdrop-blur-md">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Sparkles className="h-6 w-6 text-holo-teal" />
-              <div>
-                <div className="font-bold text-lg">No interactions yet?</div>
-                <p className="text-sm text-muted-foreground mt-1.5">
-                  Try Demo Mode to see how Repruv works with AI-generated interactions
-                </p>
-              </div>
-            </div>
-            <Link href="/settings/demo-mode">
-              <ModernButton size="sm" className="gradient-teal shadow-glow-teal">
-                <Sparkles className="h-4 w-4 mr-2" />
-                Enable Demo Mode
-              </ModernButton>
-            </Link>
-          </div>
-        </div>
-      )}
-
       {/* Agency Invitations Banner - Show pending invitations */}
       <AgencyInvitationsBanner />
 
@@ -244,7 +150,7 @@ export default function DashboardPage() {
       {/* Platform Connections */}
       <div className="space-y-6">
         <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-          {metrics?.is_demo ? 'Connected Platforms (Demo)' : 'Connect Your Platforms'}
+          Connect Your Platforms
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* YouTube Card */}
@@ -284,7 +190,7 @@ export default function DashboardPage() {
               )}
 
               <div className="flex items-center gap-3 flex-wrap pt-2">
-                {!metrics?.is_demo && <PlatformConnectionButton platform="youtube" />}
+                <PlatformConnectionButton platform="youtube" />
                 {metrics?.connected_platforms?.youtube?.connected && (
                   <Link href="/interactions" className="text-sm text-holo-purple hover:text-holo-purple-light font-semibold hover:underline transition-colors">
                     View interactions →
@@ -331,7 +237,7 @@ export default function DashboardPage() {
               )}
 
               <div className="flex items-center gap-3 flex-wrap pt-2">
-                {!metrics?.is_demo && <PlatformConnectionButton platform="instagram" />}
+                <PlatformConnectionButton platform="instagram" />
                 {metrics?.connected_platforms?.instagram?.connected && (
                   <Link href="/interactions" className="text-sm text-holo-purple hover:text-holo-purple-light font-semibold hover:underline transition-colors">
                     View interactions →
@@ -379,7 +285,7 @@ export default function DashboardPage() {
               )}
 
               <div className="flex items-center gap-3 flex-wrap pt-2">
-                {!metrics?.is_demo && !metrics?.connected_platforms?.tiktok?.message && (
+                {!metrics?.connected_platforms?.tiktok?.message && (
                   <PlatformConnectionButton platform="tiktok" />
                 )}
                 {metrics?.connected_platforms?.tiktok?.connected && (
@@ -393,8 +299,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* No Platforms Connected - Real Mode Only */}
-      {!loading && !metrics?.is_demo && !metrics?.connected_platforms?.youtube?.connected &&
+      {/* No Platforms Connected */}
+      {!loading && !metrics?.connected_platforms?.youtube?.connected &&
        !metrics?.connected_platforms?.instagram?.connected && !metrics?.connected_platforms?.tiktok?.connected && (
         <div className="glass-panel rounded-2xl border border-amber-500/30 p-6 shadow-glass backdrop-blur-md">
           <div className="text-center space-y-4">
@@ -408,16 +314,6 @@ export default function DashboardPage() {
                 Your metrics will appear once you&apos;ve connected and synced your accounts.
               </p>
             </div>
-            {hasDemoAccess && (
-              <div className="pt-2">
-                <Link href="/settings/demo-mode">
-                  <ModernButton variant="outline" size="sm">
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Or try Demo Mode
-                  </ModernButton>
-                </Link>
-              </div>
-            )}
           </div>
         </div>
       )}

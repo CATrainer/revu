@@ -24,6 +24,14 @@ class DemoContent(Base):
     title = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     thumbnail_url = Column(Text, nullable=True)
+    url = Column(Text, nullable=True)  # Platform URL
+    
+    # Video-specific metadata
+    duration_seconds = Column(Integer, nullable=True)
+    
+    # Content metadata
+    hashtags = Column(Text, nullable=True)  # JSON array as string
+    theme = Column(String(100), nullable=True)  # Tutorial, Review, etc.
     
     # For main app integration - acts as platform content ID
     external_id = Column(String(100), nullable=False, unique=True, index=True)
@@ -33,6 +41,12 @@ class DemoContent(Base):
     likes = Column(Integer, default=0)
     comments_count = Column(Integer, default=0)
     shares = Column(Integer, default=0)
+    saves = Column(Integer, default=0)
+    
+    # Video-specific metrics
+    watch_time_minutes = Column(Integer, default=0)
+    avg_view_duration_seconds = Column(Integer, nullable=True)
+    retention_rate = Column(Integer, nullable=True)  # Percentage 0-100
     
     # Engagement targets
     target_views = Column(Integer, nullable=False)

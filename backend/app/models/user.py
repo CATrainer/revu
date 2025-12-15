@@ -109,6 +109,9 @@ class User(Base):
     countdown_t1_sent_at = Column(DateTime(timezone=True))
     launch_sent_at = Column(DateTime(timezone=True))
     
+    # User preferences
+    currency_preference = Column(String(3), default='USD', nullable=False, comment="Preferred display currency (ISO 4217)")
+    
     # Trial/subscription tracking
     trial_start_date = Column(DateTime(timezone=True), nullable=True, comment="When user started trial")
     trial_end_date = Column(DateTime(timezone=True), nullable=True, comment="When trial expires")

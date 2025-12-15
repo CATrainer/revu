@@ -14,63 +14,17 @@ import {
   Check,
   ArrowRight,
   ChevronRight,
+  Plus,
+  CheckCircle,
 } from 'lucide-react';
 import type { ActionRequiredItem } from '@/lib/agency-dashboard-api';
 
 interface ActionRequiredWidgetProps {
-  items?: ActionRequiredItem[];
+  items: ActionRequiredItem[];
   isLoading?: boolean;
 }
 
-// Mock data for demonstration
-const mockItems: ActionRequiredItem[] = [
-  {
-    id: '1',
-    type: 'approval',
-    title: 'Script approval overdue',
-    description: 'Brand X x @Creator1',
-    campaign_name: 'Brand X Product Review',
-    creator_name: '@Creator1',
-    urgency: 'overdue',
-    days_overdue: 3,
-    action_url: '/agency/campaigns/1',
-    quick_action: 'Review Now',
-  },
-  {
-    id: '2',
-    type: 'invoice',
-    title: 'Invoice #2024-045 overdue',
-    description: 'Brand Y - 5,000',
-    campaign_name: 'Brand Y Campaign',
-    urgency: 'overdue',
-    days_overdue: 7,
-    action_url: '/agency/finance/invoices/1',
-    quick_action: 'Send Reminder',
-  },
-  {
-    id: '3',
-    type: 'campaign',
-    title: 'Content posting today',
-    description: 'Brand Z x @Creator2',
-    campaign_name: 'Brand Z Sponsored Post',
-    creator_name: '@Creator2',
-    urgency: 'due_today',
-    action_url: '/agency/campaigns/2',
-    quick_action: 'View Campaign',
-  },
-  {
-    id: '4',
-    type: 'payment',
-    title: 'Payment milestone reached',
-    description: 'Brand A - Ready to invoice',
-    campaign_name: 'Brand A Review',
-    urgency: 'due_this_week',
-    action_url: '/agency/finance/invoices/new?campaign=3',
-    quick_action: 'Create Invoice',
-  },
-];
-
-export function ActionRequiredWidget({ items = mockItems, isLoading = false }: ActionRequiredWidgetProps) {
+export function ActionRequiredWidget({ items, isLoading = false }: ActionRequiredWidgetProps) {
   // Group items by urgency
   const overdue = items.filter(i => i.urgency === 'overdue');
   const dueToday = items.filter(i => i.urgency === 'due_today');

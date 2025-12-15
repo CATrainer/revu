@@ -14,6 +14,7 @@ from app.core.config import settings
 from app.models.user import User
 from app.models.interaction import Interaction
 from app.models.fan import Fan
+from app.models.content import ContentPiece, ContentPerformance
 from sqlalchemy import select, and_
 
 logger = logging.getLogger(__name__)
@@ -54,8 +55,16 @@ async def receive_demo_webhook(
             logger.info(f"Demo interaction created successfully: {result}")
             return {"status": "received", "created": result}
         elif payload.event == 'content.published':
-            await handle_content_published(session, payload.data)
-            return {"status": "received"}
+            result = await handle_content_published(session, payload.data)
+            logger.info(f"Demo content created successfully: {result}")
+            return {"status": "received", "created": result}
+        elif payload.event == 'content.metrics_updated':
+            result = await handle_content_metrics_updated(session, payload.data)
+            return {"status": "received", "updated": result}
+        elif payload.event == 'reply.followup':
+            result = await handle_interaction_created(session, payload.data)
+            logger.info(f"Demo reply followup created: {result}")
+            return {"status": "received", "created": result}
         else:
             logger.warning(f"Unknown demo event type: {payload.event}")
             return {"status": "received", "warning": "unknown_event_type"}
@@ -222,10 +231,168 @@ async def handle_interaction_created(session: AsyncSession, data: Dict) -> Dict:
         raise
 
 
-async def handle_content_published(session: AsyncSession, data: Dict):
-    """Handle new content published event."""
-    # For future: could create content records, track analytics, etc.
-    logger.info(f"Demo content published: {data.get('title')}")
+async def handle_content_published(session: AsyncSession, data: Dict) -> Dict:
+    """Handle new content published event - creates ContentPiece in production DB."""
+    
+    user_id_str = data.get('user_id')
+    if not user_id_str:
+        logger.error("Demo content webhook missing user_id")
+        raise ValueError("Missing user_id in content.published webhook")
+    
+    try:
+        user_id = uuid.UUID(user_id_str)
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"Invalid user_id format: {user_id_str}") from e
+    
+    # Verify user exists and is in demo mode
+    user_stmt = select(User).where(User.id == user_id)
+    user_result = await session.execute(user_stmt)
+    user = user_result.scalar_one_or_none()
+    
+    if not user:
+        raise ValueError(f"User {user_id} not found")
+    
+    if user.demo_mode_status != 'enabled':
+        raise ValueError(f"User {user_id} is not in demo mode")
+    
+    # Extract content data
+    platform = data.get('platform', 'youtube')
+    platform_id = data.get('id') or data.get('external_id')
+    content_type = data.get('type', 'video')
+    title = data.get('title', 'Demo Content')
+    description = data.get('description', '')
+    thumbnail_url = data.get('thumbnail_url')
+    url = data.get('url')
+    duration_seconds = data.get('duration_seconds')
+    hashtags = data.get('hashtags', [])
+    theme = data.get('theme')
+    published_at_str = data.get('published_at')
+    
+    # Parse published_at
+    if published_at_str:
+        try:
+            published_at = datetime.fromisoformat(published_at_str.replace('Z', '+00:00'))
+        except:
+            published_at = datetime.utcnow()
+    else:
+        published_at = datetime.utcnow()
+    
+    # Generate URL if not provided
+    if not url:
+        if platform == 'youtube':
+            url = f"https://youtube.com/watch?v={platform_id}"
+        elif platform == 'instagram':
+            url = f"https://instagram.com/p/{platform_id}"
+        elif platform == 'tiktok':
+            url = f"https://tiktok.com/@demo/video/{platform_id}"
+    
+    # Check if content already exists
+    existing_stmt = select(ContentPiece).where(ContentPiece.platform_id == platform_id)
+    existing_result = await session.execute(existing_stmt)
+    existing_content = existing_result.scalar_one_or_none()
+    
+    if existing_content:
+        logger.info(f"Demo content {platform_id} already exists - skipping")
+        return {"content_id": str(existing_content.id), "duplicate": True}
+    
+    # Create ContentPiece
+    content = ContentPiece(
+        id=uuid.uuid4(),
+        user_id=user_id,
+        organization_id=user.organization_id,
+        platform=platform,
+        platform_id=platform_id,
+        content_type=content_type,
+        title=title,
+        description=description,
+        url=url,
+        thumbnail_url=thumbnail_url,
+        duration_seconds=duration_seconds,
+        hashtags=hashtags if isinstance(hashtags, list) else [],
+        theme=theme,
+        published_at=published_at,
+        is_demo=True,  # CRITICAL: Mark as demo data
+    )
+    
+    session.add(content)
+    
+    # Create initial ContentPerformance record
+    metrics = data.get('metrics', {})
+    performance = ContentPerformance(
+        id=uuid.uuid4(),
+        content_id=content.id,
+        views=metrics.get('views', 0),
+        likes=metrics.get('likes', 0),
+        comments_count=metrics.get('comments_count', 0),
+        shares=metrics.get('shares', 0),
+        saves=metrics.get('saves', 0),
+        watch_time_minutes=metrics.get('watch_time_minutes', 0),
+        average_view_duration_seconds=metrics.get('avg_view_duration_seconds'),
+        retention_rate=metrics.get('retention_rate'),
+        engagement_rate=metrics.get('engagement_rate'),
+    )
+    
+    session.add(performance)
+    
+    await session.commit()
+    
+    logger.info(f"✅ Created demo content {content.id} for user {user_id} (platform: {platform}, is_demo: True)")
+    
+    return {"content_id": str(content.id), "user_id": str(user_id), "duplicate": False}
+
+
+async def handle_content_metrics_updated(session: AsyncSession, data: Dict) -> Dict:
+    """Handle content metrics update event."""
+    
+    platform_id = data.get('platform_id') or data.get('id')
+    if not platform_id:
+        raise ValueError("Missing platform_id in metrics update")
+    
+    # Find the content piece
+    content_stmt = select(ContentPiece).where(
+        and_(
+            ContentPiece.platform_id == platform_id,
+            ContentPiece.is_demo == True
+        )
+    )
+    content_result = await session.execute(content_stmt)
+    content = content_result.scalar_one_or_none()
+    
+    if not content:
+        logger.warning(f"Demo content {platform_id} not found for metrics update")
+        return {"updated": False, "reason": "content_not_found"}
+    
+    # Update performance metrics
+    metrics = data.get('metrics', {})
+    
+    if content.performance:
+        perf = content.performance
+        perf.views = metrics.get('views', perf.views)
+        perf.likes = metrics.get('likes', perf.likes)
+        perf.comments_count = metrics.get('comments_count', perf.comments_count)
+        perf.shares = metrics.get('shares', perf.shares)
+        perf.saves = metrics.get('saves', perf.saves)
+        perf.watch_time_minutes = metrics.get('watch_time_minutes', perf.watch_time_minutes)
+        if metrics.get('engagement_rate'):
+            perf.engagement_rate = metrics['engagement_rate']
+        perf.last_updated = datetime.utcnow()
+    else:
+        # Create performance record if missing
+        performance = ContentPerformance(
+            id=uuid.uuid4(),
+            content_id=content.id,
+            views=metrics.get('views', 0),
+            likes=metrics.get('likes', 0),
+            comments_count=metrics.get('comments_count', 0),
+            shares=metrics.get('shares', 0),
+            saves=metrics.get('saves', 0),
+        )
+        session.add(performance)
+    
+    await session.commit()
+    
+    logger.info(f"Updated metrics for demo content {content.id}")
+    return {"content_id": str(content.id), "updated": True}
 
 
 async def get_or_create_fan(

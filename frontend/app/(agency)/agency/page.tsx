@@ -166,27 +166,27 @@ export default function AgencyDashboardPage() {
       </div>
 
       {/* Quick Stats Bar */}
-      <QuickStatsBar stats={dashboardStats} isLoading={statsLoading} />
+      {dashboardStats && <QuickStatsBar stats={dashboardStats} isLoading={statsLoading} />}
 
       {/* Main Dashboard Grid */}
       {layoutPreset === 'default' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {/* Left Column */}
           <div className="space-y-6">
-            {visibleWidgets.actionRequired && <ActionRequiredWidget items={actionItems} isLoading={actionsLoading} />}
-            {visibleWidgets.pipeline && <PipelineSummaryWidget stats={pipelineStats} isLoading={pipelineLoading} />}
+            {visibleWidgets.actionRequired && actionItems && <ActionRequiredWidget items={actionItems} isLoading={actionsLoading} />}
+            {visibleWidgets.pipeline && pipelineStats && <PipelineSummaryWidget stats={pipelineStats} isLoading={pipelineLoading} />}
           </div>
 
           {/* Center Column */}
           <div className="space-y-6">
-            {visibleWidgets.deadlines && <UpcomingDeadlinesWidget deadlines={deadlines} isLoading={deadlinesLoading} />}
+            {visibleWidgets.deadlines && deadlines && <UpcomingDeadlinesWidget deadlines={deadlines} isLoading={deadlinesLoading} />}
             {visibleWidgets.creatorAvailability && <CreatorAvailabilityWidget />}
           </div>
 
           {/* Right Column */}
           <div className="space-y-6 lg:col-span-2 xl:col-span-1">
-            {visibleWidgets.recentActivity && <RecentActivityWidget activities={activity} isLoading={activityLoading} />}
-            {visibleWidgets.financial && <FinancialOverviewWidget stats={financialStats} isLoading={financialLoading} />}
+            {visibleWidgets.recentActivity && activity && <RecentActivityWidget activities={activity} isLoading={activityLoading} />}
+            {visibleWidgets.financial && financialStats && <FinancialOverviewWidget stats={financialStats} isLoading={financialLoading} />}
           </div>
         </div>
       )}
@@ -195,14 +195,14 @@ export default function AgencyDashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column */}
           <div className="space-y-6">
-            <FinancialOverviewWidget stats={financialStats} isLoading={financialLoading} />
-            <PipelineSummaryWidget stats={pipelineStats} isLoading={pipelineLoading} />
+            {financialStats && <FinancialOverviewWidget stats={financialStats} isLoading={financialLoading} />}
+            {pipelineStats && <PipelineSummaryWidget stats={pipelineStats} isLoading={pipelineLoading} />}
           </div>
 
           {/* Right Column */}
           <div className="space-y-6">
-            <ActionRequiredWidget items={actionItems} isLoading={actionsLoading} />
-            <RecentActivityWidget activities={activity} isLoading={activityLoading} />
+            {actionItems && <ActionRequiredWidget items={actionItems} isLoading={actionsLoading} />}
+            {activity && <RecentActivityWidget activities={activity} isLoading={activityLoading} />}
           </div>
         </div>
       )}
@@ -211,16 +211,16 @@ export default function AgencyDashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column */}
           <div className="space-y-6">
-            <ActionRequiredWidget items={actionItems} isLoading={actionsLoading} />
-            <UpcomingDeadlinesWidget deadlines={deadlines} isLoading={deadlinesLoading} />
+            {actionItems && <ActionRequiredWidget items={actionItems} isLoading={actionsLoading} />}
+            {deadlines && <UpcomingDeadlinesWidget deadlines={deadlines} isLoading={deadlinesLoading} />}
             <CampaignPerformanceWidget />
           </div>
 
           {/* Right Column */}
           <div className="space-y-6">
             <CreatorAvailabilityWidget />
-            <PipelineSummaryWidget stats={pipelineStats} isLoading={pipelineLoading} />
-            <RecentActivityWidget activities={activity} isLoading={activityLoading} />
+            {pipelineStats && <PipelineSummaryWidget stats={pipelineStats} isLoading={pipelineLoading} />}
+            {activity && <RecentActivityWidget activities={activity} isLoading={activityLoading} />}
           </div>
         </div>
       )}

@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -54,5 +55,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   // Removed waiting area logic - simplified for social media focus
 
   // For users with dashboard access, show normal dashboard layout
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return (
+    <CurrencyProvider>
+      <DashboardLayout>{children}</DashboardLayout>
+    </CurrencyProvider>
+  );
 }

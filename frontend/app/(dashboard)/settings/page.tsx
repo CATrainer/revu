@@ -8,12 +8,13 @@ import { Button } from '@/components/ui/button';
 import { useStore } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
 import { PlatformConnectionButton } from '@/components/integrations/PlatformConnectionButton';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { Check, ChevronDown, Globe } from 'lucide-react';
 
-const tabs = ['Integrations','Demo Mode'] as const;
+const tabs = ['Integrations', 'Preferences'] as const;
 
 export default function SettingsPage() {
   const [tab, setTab] = useState<typeof tabs[number]>('Integrations');
-  const [hasDemoAccess, setHasDemoAccess] = useState<boolean | null>(null);
   const sp = useSearchParams();
 
   useEffect(() => {
@@ -22,35 +23,12 @@ export default function SettingsPage() {
     if (found) setTab(found);
   }, [sp]);
 
-  // Check if user has demo access
-  useEffect(() => {
-    const checkDemoAccess = async () => {
-      try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch('/api/demo/status', {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setHasDemoAccess(data.has_access ?? true); // Default to true if not provided (backwards compat)
-        }
-      } catch (error) {
-        console.error('Failed to check demo access:', error);
-        setHasDemoAccess(true); // Default to true on error
-      }
-    };
-    checkDemoAccess();
-  }, []);
-
-  // Filter tabs based on demo access
-  const availableTabs = hasDemoAccess === false ? tabs.filter(t => t !== 'Demo Mode') : tabs;
-
   return (
     <div className="space-y-6 px-4 md:px-0">{/* Mobile padding */}
       <h1 className="text-2xl md:text-3xl font-bold text-primary-dark">Settings</h1>
 
       <div className="flex flex-wrap gap-2">
-        {availableTabs.map((t) => (
+        {tabs.map((t) => (
           <Button key={t} variant={tab === t ? 'default' : 'outline'} className={tab === t ? 'button-primary' : 'border-[var(--border)]'} onClick={() => setTab(t)}>
             {t}
           </Button>
@@ -63,7 +41,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
           {tab === 'Integrations' && <IntegrationsSection />}
-          {tab === 'Demo Mode' && <DemoModeSection hasDemoAccess={hasDemoAccess} />}
+          {tab === 'Preferences' && <PreferencesSection />}
         </CardContent>
       </Card>
     </div>
@@ -127,45 +105,81 @@ function IntegrationsSection() {
   );
 }
 
-function DemoModeSection({ hasDemoAccess }: { hasDemoAccess: boolean | null }) {
-  const router = useRouter();
 
-  // Show access denied if user doesn't have access
-  if (hasDemoAccess === false) {
-    return (
-      <div className="space-y-4">
-        <div className="p-4 rounded-md border border-yellow-500">
-          <div className="text-sm font-medium text-primary-dark mb-2">Access Restricted</div>
-          <div className="text-sm text-secondary-dark mt-2">
-            Demo mode is not currently available for your account.
-            Please contact support if you need access to demo functionality.
-          </div>
-        </div>
-      </div>
-    );
-  }
+function PreferencesSection() {
+  const { currency, setCurrency, supportedCurrencies, currencyInfo } = useCurrency();
+  const [isOpen, setIsOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleCurrencyChange = async (newCurrency: string) => {
+    setSaving(true);
+    try {
+      await setCurrency(newCurrency);
+    } finally {
+      setSaving(false);
+      setIsOpen(false);
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="p-4 rounded-md border border-[var(--border)]">
-        <div className="text-sm font-medium text-primary-dark mb-2">Demo Mode</div>
-        <div className="text-sm text-secondary-dark mt-2">
-          Test Repruv with AI-generated realistic interactions across YouTube, Instagram, and TikTok without connecting real accounts.
+    <div className="space-y-6">
+      {/* Currency Preference */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Globe className="h-5 w-5 text-secondary-dark" />
+          <h3 className="text-lg font-medium text-primary-dark">Display Currency</h3>
         </div>
-        <ul className="mt-3 space-y-1 text-sm text-secondary-dark">
-          <li>• Realistic AI-generated content and interactions</li>
-          <li>• Test all workflows and automations</li>
-          <li>• Configure follower counts and engagement levels</li>
-          <li>• Switch between demo and real mode anytime</li>
-        </ul>
-      </div>
+        <p className="text-sm text-secondary-dark">
+          Choose your preferred currency for displaying monetary values across the dashboard. 
+          This affects how deal values, revenue, and other financial data are shown.
+        </p>
+        
+        <div className="relative">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            disabled={saving}
+            className="flex items-center justify-between w-full max-w-xs px-4 py-3 rounded-lg border border-[var(--border)] card-background hover:border-primary/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">{currencyInfo?.symbol || '$'}</span>
+              <div className="text-left">
+                <div className="font-medium text-primary-dark">{currency}</div>
+                <div className="text-xs text-secondary-dark">{currencyInfo?.name || 'US Dollar'}</div>
+              </div>
+            </div>
+            <ChevronDown className={`h-5 w-5 text-secondary-dark transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </button>
 
-      <Button
-        className="button-primary"
-        onClick={() => router.push('/settings/demo-mode')}
-      >
-        Configure Demo Mode →
-      </Button>
+          {isOpen && (
+            <div className="absolute z-50 mt-2 w-full max-w-xs rounded-lg border border-[var(--border)] card-background shadow-lg max-h-64 overflow-y-auto">
+              {supportedCurrencies.map((curr) => (
+                <button
+                  key={curr.code}
+                  onClick={() => handleCurrencyChange(curr.code)}
+                  className={`flex items-center justify-between w-full px-4 py-3 hover:bg-primary/5 transition-colors ${
+                    currency === curr.code ? 'bg-primary/10' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg w-6">{curr.symbol}</span>
+                    <div className="text-left">
+                      <div className="font-medium text-primary-dark">{curr.code}</div>
+                      <div className="text-xs text-secondary-dark">{curr.name}</div>
+                    </div>
+                  </div>
+                  {currency === curr.code && (
+                    <Check className="h-5 w-5 text-green-500" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <p className="text-xs text-secondary-dark mt-2">
+          Note: Values are converted using current exchange rates. Original amounts are stored in their source currency.
+        </p>
+      </div>
     </div>
   );
 }

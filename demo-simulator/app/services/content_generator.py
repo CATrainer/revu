@@ -75,6 +75,50 @@ Return ONLY the title, nothing else."""
         
         return title
     
+    async def generate_video_description(
+        self,
+        session: AsyncSession,
+        title: str,
+        niche: str,
+        platform: str = 'youtube',
+        use_cache: bool = True
+    ) -> str:
+        """Generate realistic video description."""
+        
+        cache_key = f"desc_{niche}_{platform}_{hash(title) % 1000}"
+        
+        if use_cache and settings.USE_GENERATION_CACHE:
+            cached = await self._get_cached(session, cache_key, 'video_description')
+            if cached:
+                return cached['description']
+        
+        niche_context = self.NICHE_CONTEXTS.get(niche, 'general content')
+        
+        prompt = f"""Generate a realistic {platform} video description for a video titled "{title}" by a creator who makes {niche_context}.
+
+Requirements:
+- 2-3 short paragraphs
+- Include a brief summary of what the video covers
+- Add a call to action (like, subscribe, comment)
+- Keep it natural and authentic
+- Do NOT include timestamps or links
+
+Return ONLY the description text, nothing else."""
+        
+        response = self.client.messages.create(
+            model="claude-sonnet-4-5-20250929",
+            max_tokens=300,
+            temperature=0.8,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        description = response.content[0].text.strip()
+        
+        if use_cache and settings.USE_GENERATION_CACHE:
+            await self._save_to_cache(session, cache_key, 'video_description', {'description': description}, prompt)
+        
+        return description
+    
     async def generate_comments(
         self,
         session: AsyncSession,

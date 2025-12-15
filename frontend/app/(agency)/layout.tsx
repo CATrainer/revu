@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { AgencyLayout } from '@/components/agency/AgencyLayout';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -56,5 +57,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  return <AgencyLayout>{children}</AgencyLayout>;
+  return (
+    <CurrencyProvider>
+      <AgencyLayout>{children}</AgencyLayout>
+    </CurrencyProvider>
+  );
 }

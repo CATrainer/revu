@@ -19,7 +19,7 @@ import {
 import type { UpcomingDeadline } from '@/lib/agency-dashboard-api';
 
 interface UpcomingDeadlinesWidgetProps {
-  deadlines?: UpcomingDeadline[];
+  deadlines: UpcomingDeadline[];
   isLoading?: boolean;
 }
 
@@ -35,71 +35,7 @@ const generateDates = () => {
   return dates;
 };
 
-// Mock deadlines for demonstration
-const mockDeadlines: UpcomingDeadline[] = [
-  {
-    id: '1',
-    date: new Date().toISOString(),
-    type: 'content_posting',
-    title: 'YouTube Video Post',
-    campaign_name: 'Brand X Review',
-    creator_name: '@creator1',
-    brand_name: 'Brand X',
-    is_overdue: false,
-  },
-  {
-    id: '2',
-    date: new Date().toISOString(),
-    type: 'deliverable',
-    title: 'Script Due',
-    campaign_name: 'Brand Y Post',
-    creator_name: '@creator2',
-    brand_name: 'Brand Y',
-    is_overdue: false,
-  },
-  {
-    id: '3',
-    date: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-    type: 'approval',
-    title: 'Brand Approval',
-    campaign_name: 'Brand Z Campaign',
-    creator_name: '@creator1',
-    brand_name: 'Brand Z',
-    is_overdue: false,
-  },
-  {
-    id: '4',
-    date: new Date(Date.now() + 86400000 * 2).toISOString(), // 2 days
-    type: 'payment',
-    title: 'Payment Due',
-    campaign_name: 'Brand A Campaign',
-    brand_name: 'Brand A',
-    amount: 5000,
-    is_overdue: false,
-  },
-  {
-    id: '5',
-    date: new Date(Date.now() + 86400000 * 3).toISOString(), // 3 days
-    type: 'content_posting',
-    title: 'Instagram Post',
-    campaign_name: 'Brand B Campaign',
-    creator_name: '@creator3',
-    brand_name: 'Brand B',
-    is_overdue: false,
-  },
-  {
-    id: '6',
-    date: new Date(Date.now() - 86400000).toISOString(), // Yesterday - overdue
-    type: 'deliverable',
-    title: 'Draft Review',
-    campaign_name: 'Brand C Campaign',
-    creator_name: '@creator2',
-    brand_name: 'Brand C',
-    is_overdue: true,
-  },
-];
-
-export function UpcomingDeadlinesWidget({ deadlines = mockDeadlines, isLoading = false }: UpcomingDeadlinesWidgetProps) {
+export function UpcomingDeadlinesWidget({ deadlines, isLoading = false }: UpcomingDeadlinesWidgetProps) {
   const [startIndex, setStartIndex] = useState(0);
   const dates = generateDates();
   const visibleDays = 5;
@@ -174,6 +110,43 @@ export function UpcomingDeadlinesWidget({ deadlines = mockDeadlines, isLoading =
                 <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded" />
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Empty state
+  if (deadlines.length === 0) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-blue-500" />
+            Upcoming Deadlines
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="rounded-full bg-blue-100 dark:bg-blue-900/20 p-4 mb-4">
+              <Calendar className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">No upcoming deadlines</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
+              Create campaigns with deliverables and invoices to track deadlines here.
+            </p>
+            <div className="flex gap-2">
+              <Link href="/agency/campaigns/new">
+                <Button size="sm">
+                  Create Campaign
+                </Button>
+              </Link>
+              <Link href="/agency/finance">
+                <Button size="sm" variant="outline">
+                  Manage Invoices
+                </Button>
+              </Link>
+            </div>
           </div>
         </CardContent>
       </Card>
