@@ -32,6 +32,7 @@ class Fan(Base):
     
     # Classification
     is_superfan = Column(Boolean, default=False, index=True)
+    became_superfan_at = Column(DateTime)  # When this fan became a superfan
     is_vip = Column(Boolean, default=False, index=True)
     is_customer = Column(Boolean, default=False, index=True)
     is_blocked = Column(Boolean, default=False)
