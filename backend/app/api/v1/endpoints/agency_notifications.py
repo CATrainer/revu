@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import get_async_session
-from app.core.auth import get_current_user
+from app.core.security import get_current_user
 from app.models.user import User
 from app.models.agency import Agency, AgencyMember
 from app.models.agency_notification import AgencyNotification
