@@ -85,7 +85,6 @@ from app.models.creator_tools import (
 )
 from app.models.notification import (
     CreatorNotification,
-    NotificationPreference as NotificationPreferenceV2,
     NotificationDeliveryLog,
     CREATOR_NOTIFICATION_TYPES,
     AGENCY_NOTIFICATION_TYPES,
@@ -169,7 +168,6 @@ __all__ = [
     "PostingTimeAnalysis",
     # New Notification System
     "CreatorNotification",
-    "NotificationPreferenceV2",
     "NotificationDeliveryLog",
     "CREATOR_NOTIFICATION_TYPES",
     "AGENCY_NOTIFICATION_TYPES",
