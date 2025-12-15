@@ -83,6 +83,14 @@ from app.models.creator_tools import (
     CreatorRateCard,
     PostingTimeAnalysis,
 )
+from app.models.notification import (
+    CreatorNotification,
+    NotificationPreference as NotificationPreferenceV2,
+    NotificationDeliveryLog,
+    CREATOR_NOTIFICATION_TYPES,
+    AGENCY_NOTIFICATION_TYPES,
+    NOTIFICATION_CATEGORIES,
+)
 
 __all__ = [
     "Organization",
@@ -159,4 +167,11 @@ __all__ = [
     "MediaKit",
     "CreatorRateCard",
     "PostingTimeAnalysis",
+    # New Notification System
+    "CreatorNotification",
+    "NotificationPreferenceV2",
+    "NotificationDeliveryLog",
+    "CREATOR_NOTIFICATION_TYPES",
+    "AGENCY_NOTIFICATION_TYPES",
+    "NOTIFICATION_CATEGORIES",
 ]

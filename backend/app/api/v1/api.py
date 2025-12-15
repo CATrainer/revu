@@ -55,6 +55,8 @@ from app.api.v1.endpoints import agency_dashboard, agency_campaigns, agency_fina
 from app.api.v1.endpoints import creator_tools
 # Currency endpoints
 from app.api.v1.endpoints import currency
+# Notification endpoints
+from app.api.v1.endpoints import notifications, agency_notifications
 
 # Create the main API router
 api_router = APIRouter()
@@ -384,6 +386,19 @@ api_router.include_router(
     currency.router,
     prefix="/currency",
     tags=["currency"],
+)
+
+# Notification endpoints (creator)
+api_router.include_router(
+    notifications.router,
+    tags=["notifications"],
+)
+
+# Agency notification endpoints
+api_router.include_router(
+    agency_notifications.router,
+    prefix="/agency",
+    tags=["agency", "notifications"],
 )
 
 

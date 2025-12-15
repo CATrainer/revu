@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   DropdownMenu,
@@ -24,85 +24,112 @@ import {
   TrendingUp,
   Settings,
   Loader2,
+  Upload,
+  Play,
+  CheckCircle,
+  XCircle,
+  Send,
+  Calendar,
+  UserPlus,
+  UserMinus,
+  Users,
+  AtSign,
+  Clipboard,
+  Trophy,
 } from 'lucide-react';
 import type { Notification, NotificationType } from '@/lib/agency-dashboard-api';
 
-// Mock notifications for demonstration
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    user_id: '1',
-    type: 'deliverable_uploaded',
-    title: 'Script uploaded',
-    description: '@creator1 uploaded script for Brand X campaign',
-    link_url: '/agency/campaigns/1',
-    is_read: false,
-    is_actioned: false,
-    created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-  },
-  {
-    id: '2',
-    user_id: '1',
-    type: 'deliverable_due',
-    title: 'Script due tomorrow',
-    description: 'Brand Y campaign script is due in 24 hours',
-    link_url: '/agency/campaigns/2',
-    is_read: false,
-    is_actioned: false,
-    created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
-  },
-  {
-    id: '3',
-    user_id: '1',
-    type: 'invoice_paid',
-    title: 'Invoice paid',
-    description: 'Brand Z paid invoice #2024-045 for 7,500',
-    link_url: '/agency/finance/invoices/1',
-    is_read: false,
-    is_actioned: false,
-    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-  },
-  {
-    id: '4',
-    user_id: '1',
-    type: 'deal_moved',
-    title: 'Deal moved to Booked',
-    description: 'Brand A deal moved from Negotiating to Booked',
-    link_url: '/agency/pipeline/1',
-    is_read: true,
-    is_actioned: false,
-    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-  },
-  {
-    id: '5',
-    user_id: '1',
-    type: 'mention',
-    title: 'Peter mentioned you',
-    description: 'Peter mentioned you in Brand B campaign notes',
-    link_url: '/agency/campaigns/3',
-    is_read: true,
-    is_actioned: false,
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-  },
-  {
-    id: '6',
-    user_id: '1',
-    type: 'performance_milestone',
-    title: 'Campaign hit 1M views!',
-    description: 'Brand X campaign exceeded 1 million views',
-    link_url: '/agency/campaigns/1',
-    is_read: true,
-    is_actioned: true,
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-  },
-];
+// Icon mapping for agency notification types
+const notificationIcons: Record<string, React.ElementType> = {
+  deliverable_uploaded: Upload,
+  deliverable_due_soon: Clock,
+  deliverable_due: Clock,
+  deliverable_overdue: AlertTriangle,
+  script_approval_needed: FileUp,
+  content_approval_needed: FileUp,
+  campaign_started: Play,
+  campaign_completed: CheckCircle,
+  deal_stage_changed: GitBranch,
+  deal_moved: GitBranch,
+  deal_stagnant: AlertTriangle,
+  deal_won: Trophy,
+  deal_lost: XCircle,
+  invoice_sent: Send,
+  invoice_paid: DollarSign,
+  invoice_overdue: AlertTriangle,
+  payout_due: Calendar,
+  payout_completed: CheckCircle,
+  creator_joined: UserPlus,
+  creator_added: UserPlus,
+  creator_left: UserMinus,
+  creator_removed: UserMinus,
+  team_member_joined: Users,
+  mention: AtSign,
+  comment: MessageSquare,
+  comment_added: MessageSquare,
+  task_assigned: Clipboard,
+  task_due_soon: Clock,
+  task_overdue: AlertTriangle,
+  performance_milestone: TrendingUp,
+  approval_needed: FileUp,
+  approval_granted: CheckCircle,
+  system: Bell,
+};
 
 export function NotificationsDropdown() {
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'mentions'>('all');
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  // Fetch notifications from API
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const params = new URLSearchParams();
+      if (activeTab === 'unread') params.set('unread_only', 'true');
+      
+      const response = await fetch(`/api/agency/notifications?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unread_count || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeTab]);
+
+  // Fetch unread count
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const response = await fetch('/api/agency/notifications/unread-count');
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadCount(data.count || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error);
+    }
+  }, []);
+
+  // Initial fetch and polling
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000); // Poll every 30s
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount]);
+
+  // Fetch when dropdown opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchNotifications();
+    }
+  }, [isOpen, activeTab, fetchNotifications]);
+
   const hasUnread = unreadCount > 0;
 
   // Get icon for notification type
@@ -175,20 +202,35 @@ export function NotificationsDropdown() {
 
   // Mark notification as read
   const markAsRead = async (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, is_read: true } : n)
-    );
+    try {
+      const response = await fetch(`/api/agency/notifications/${id}/read`, { method: 'POST' });
+      if (response.ok) {
+        setNotifications(prev =>
+          prev.map(n => n.id === id ? { ...n, is_read: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    } catch (error) {
+      console.error('Failed to mark as read:', error);
+    }
   };
 
   // Mark all as read
   const markAllAsRead = async () => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 300));
-    setNotifications(prev =>
-      prev.map(n => ({ ...n, is_read: true }))
-    );
-    setIsLoading(false);
+    try {
+      const response = await fetch('/api/agency/notifications/read-all', { method: 'POST' });
+      if (response.ok) {
+        setNotifications(prev =>
+          prev.map(n => ({ ...n, is_read: true }))
+        );
+        setUnreadCount(0);
+      }
+    } catch (error) {
+      console.error('Failed to mark all as read:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Filter notifications based on active tab
@@ -222,7 +264,7 @@ export function NotificationsDropdown() {
   }, {} as Record<string, Notification[]>);
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />

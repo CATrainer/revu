@@ -42,6 +42,7 @@ celery_app.conf.update(
         "app.tasks.marketing",
         "app.tasks.chat_tasks",
         "app.tasks.demo_operations",  # Demo mode enable/disable tasks
+        "app.tasks.notifications",  # Notification detection tasks
     ],
 
     # Worker settings
@@ -98,6 +99,58 @@ celery_app.conf.beat_schedule = {
     "cleanup-stuck-demo-jobs": {
         "task": "demo.cleanup_stuck_jobs",
         "schedule": crontab(minute="*/10"),  # Every 10 minutes
+    },
+    
+    # =========================================================================
+    # Notification Detection Tasks
+    # =========================================================================
+    
+    # Creator notifications - check every 6 hours
+    "check-engagement-spikes": {
+        "task": "notifications.check_engagement_spikes",
+        "schedule": crontab(minute=0, hour="*/6"),  # Every 6 hours
+    },
+    "check-content-milestones": {
+        "task": "notifications.check_content_milestones",
+        "schedule": crontab(minute=15, hour="*/6"),  # Every 6 hours, offset
+    },
+    "check-negative-sentiment": {
+        "task": "notifications.check_negative_sentiment",
+        "schedule": crontab(minute=30, hour="*/6"),  # Every 6 hours, offset
+    },
+    
+    # Creator notifications - daily
+    "check-superfans": {
+        "task": "notifications.check_superfans",
+        "schedule": crontab(minute=0, hour=3),  # Daily at 3 AM UTC
+    },
+    
+    # Agency notifications - check every 6 hours
+    "check-deliverable-deadlines": {
+        "task": "notifications.check_deliverable_deadlines",
+        "schedule": crontab(minute=0, hour="*/6"),  # Every 6 hours
+    },
+    "check-task-deadlines": {
+        "task": "notifications.check_task_deadlines",
+        "schedule": crontab(minute=20, hour="*/6"),  # Every 6 hours, offset
+    },
+    
+    # Agency notifications - daily
+    "check-deal-stagnation": {
+        "task": "notifications.check_deal_stagnation",
+        "schedule": crontab(minute=0, hour=9),  # Daily at 9 AM UTC
+    },
+    
+    # Daily digest - runs every hour to catch users in different timezones
+    "send-daily-digests": {
+        "task": "notifications.send_daily_digests",
+        "schedule": crontab(minute=5),  # Every hour at :05
+    },
+    
+    # Cleanup old notifications - daily at 2 AM
+    "cleanup-old-notifications": {
+        "task": "notifications.cleanup_old_notifications",
+        "schedule": crontab(minute=0, hour=2),  # Daily at 2 AM UTC
     },
 }
 
