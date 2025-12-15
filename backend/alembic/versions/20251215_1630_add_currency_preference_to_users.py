@@ -1,7 +1,7 @@
 """Add currency_preference to users table
 
 Revision ID: 20251215_1630
-Revises: 
+Revises: 1b514d565aa0
 Create Date: 2025-12-15 16:30:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '20251215_1630'
-down_revision = None  # Will be set by alembic
+down_revision = '1b514d565aa0'
 branch_labels = None
 depends_on = None
 
