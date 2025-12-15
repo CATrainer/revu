@@ -18,9 +18,9 @@ from app.core.database import async_session_maker
 from app.models.user import User
 from app.models.notification import (
     CreatorNotification,
-    NotificationPreference,
     NotificationDeliveryLog,
 )
+from app.models.creator_tools import NotificationPreference
 from app.models.agency_notification import AgencyNotification
 from app.models.content import ContentPiece, ContentPerformance
 from app.models.fan import Fan
