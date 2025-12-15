@@ -10,7 +10,7 @@ from typing import Optional, List
 from uuid import UUID
 
 from sqlalchemy import (
-    Boolean, Column, DateTime, ForeignKey, String, Text, Index, Integer
+    Boolean, Column, DateTime, ForeignKey, Integer, String, Text, Index
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import relationship
@@ -94,6 +94,98 @@ class CreatorNotification(Base):
         if not self.is_dismissed:
             self.is_dismissed = True
             self.dismissed_at = datetime.utcnow()
+
+
+# =============================================================================
+# Notification Preferences (shared for both creator and agency users)
+# =============================================================================
+
+class NotificationPreference(Base):
+    """
+    User notification preferences.
+
+    Controls how and when notifications are delivered to users.
+    """
+
+    __tablename__ = "notification_preferences"
+
+    user_id = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    # In-app notification settings
+    in_app_enabled = Column(Boolean, nullable=False, default=True)
+
+    # Email notification settings
+    email_enabled = Column(Boolean, nullable=False, default=True)
+    email_frequency = Column(
+        String(20),
+        nullable=False,
+        default='instant',
+        comment="Frequency: instant, daily_digest, weekly_digest, never"
+    )
+    digest_hour = Column(
+        Integer,
+        nullable=False,
+        default=9,
+        comment="Hour (0-23 UTC) to send daily digest"
+    )
+    last_digest_sent_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Per-notification-type settings
+    type_settings = Column(
+        JSONB,
+        nullable=False,
+        default=dict,
+        comment="Per-type overrides: {type: {in_app: bool, email: bool}}"
+    )
+
+    # Muted entities (don't notify for specific content/fans/deals)
+    muted_entities = Column(
+        JSONB,
+        nullable=False,
+        default=list,
+        comment="List of muted entities: [{entity_type, entity_id, muted_until}]"
+    )
+
+    # Relationships
+    user = relationship("User", backref="notification_preference")
+
+    def __repr__(self) -> str:
+        return f"<NotificationPreference(user_id={self.user_id})>"
+
+    def is_type_enabled(self, notification_type: str, channel: str = 'in_app') -> bool:
+        """Check if a notification type is enabled for a channel."""
+        # Check global toggle first
+        if channel == 'in_app' and not self.in_app_enabled:
+            return False
+        if channel == 'email' and not self.email_enabled:
+            return False
+
+        # Check type-specific settings
+        type_settings = self.type_settings or {}
+        if notification_type in type_settings:
+            return type_settings[notification_type].get(channel, True)
+
+        return True
+
+    def is_entity_muted(self, entity_type: str, entity_id) -> bool:
+        """Check if a specific entity is muted."""
+        from datetime import datetime
+        for muted in (self.muted_entities or []):
+            if muted.get('entity_type') == entity_type and str(muted.get('entity_id')) == str(entity_id):
+                muted_until = muted.get('muted_until')
+                if muted_until is None:
+                    return True  # Permanently muted
+                if isinstance(muted_until, str):
+                    muted_until = datetime.fromisoformat(muted_until.replace('Z', '+00:00'))
+                if muted_until > datetime.utcnow():
+                    return True
+        return False
 
 
 # =============================================================================
