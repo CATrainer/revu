@@ -15,11 +15,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.notification import (
     CreatorNotification,
-    NotificationPreference,
     NotificationDeliveryLog,
     CREATOR_NOTIFICATION_TYPES,
     AGENCY_NOTIFICATION_TYPES,
 )
+from app.models.creator_tools import NotificationPreference
 from app.models.agency_notification import AgencyNotification
 from app.models.user import User
 

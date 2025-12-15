@@ -20,10 +20,10 @@ from app.models.user import User
 from app.models.agency import Agency, AgencyMember
 from app.models.agency_notification import AgencyNotification
 from app.models.notification import (
-    NotificationPreference,
     AGENCY_NOTIFICATION_TYPES,
     NOTIFICATION_CATEGORIES,
 )
+from app.models.creator_tools import NotificationPreference
 from app.services.notification_service import get_notification_service
 
 logger = logging.getLogger(__name__)

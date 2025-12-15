@@ -18,11 +18,11 @@ from app.core.security import get_current_user
 from app.models.user import User
 from app.models.notification import (
     CreatorNotification,
-    NotificationPreference,
     CREATOR_NOTIFICATION_TYPES,
     AGENCY_NOTIFICATION_TYPES,
     NOTIFICATION_CATEGORIES,
 )
+from app.models.creator_tools import NotificationPreference
 from app.services.notification_service import get_notification_service
 
 logger = logging.getLogger(__name__)
