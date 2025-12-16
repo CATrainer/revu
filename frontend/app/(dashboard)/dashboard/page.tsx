@@ -8,6 +8,7 @@ import { PendingActionsWidget } from '@/components/dashboard/PendingActionsWidge
 import { MonetizationWidget } from '@/components/dashboard/MonetizationWidget';
 import { AgencyWidget } from '@/components/dashboard/AgencyWidget';
 import { Loader2 } from 'lucide-react';
+import { api } from '@/lib/api';
 
 interface DashboardSummary {
   platform_warning: {
@@ -60,13 +61,8 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchSummary = async () => {
       try {
-        const response = await fetch('/api/v1/dashboard/dashboard-summary');
-        if (response.ok) {
-          const data = await response.json();
-          setSummary(data);
-        } else {
-          setError('Failed to load dashboard data');
-        }
+        const response = await api.get('/dashboard/dashboard-summary');
+        setSummary(response.data);
       } catch (err) {
         console.error('Failed to fetch dashboard summary:', err);
         setError('Failed to load dashboard data');
