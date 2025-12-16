@@ -95,8 +95,8 @@ async def get_demo_metrics(
 
     # Active workflows
     workflow_stmt = select(func.count(Workflow.id)).where(
-        Workflow.user_id == current_user.id,
-        Workflow.is_active == True
+        Workflow.created_by_id == current_user.id,
+        Workflow.status == 'active'
     )
     workflow_result = await db.execute(workflow_stmt)
     active_workflows = workflow_result.scalar() or 0
@@ -299,8 +299,8 @@ async def get_real_metrics(
 
     # === Active Workflows ===
     workflow_stmt = select(func.count(Workflow.id)).where(
-        Workflow.user_id == current_user.id,
-        Workflow.is_active == True
+        Workflow.created_by_id == current_user.id,
+        Workflow.status == 'active'
     )
     workflow_result = await db.execute(workflow_stmt)
     active_workflows = workflow_result.scalar() or 0
