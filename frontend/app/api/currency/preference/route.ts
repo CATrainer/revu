@@ -13,7 +13,7 @@ async function getAuthHeaders() {
   };
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const headers = await getAuthHeaders();
     
