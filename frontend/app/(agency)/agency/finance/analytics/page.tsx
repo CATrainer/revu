@@ -20,6 +20,7 @@ import {
   PieChart,
   Download,
 } from 'lucide-react';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 // Mock analytics data
 const monthlyRevenue = [
@@ -47,8 +48,9 @@ export default function FinanceAnalyticsPage() {
   const profit = totalRevenue - totalExpenses;
   const profitMargin = ((profit / totalRevenue) * 100).toFixed(1);
 
+  const { formatAmount, currency: userCurrency } = useCurrency();
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(amount);
+    return formatAmount(amount, userCurrency);
   };
 
   return (

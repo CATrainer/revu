@@ -49,6 +49,7 @@ import {
 } from 'lucide-react';
 import { pipelineApi, type Deal, type DealStage, type DealStatus, type PipelineStats } from '@/lib/agency-dashboard-api';
 import { toast } from 'sonner';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 // Stage configuration
 const stageConfig: Record<DealStage, { label: string; color: string; bgColor: string; borderColor: string }> = {
@@ -208,14 +209,10 @@ export default function PipelinePage() {
     };
   };
 
-  // Format currency
+  // Format currency using user preference
+  const { formatAmount, currency: userCurrency } = useCurrency();
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
+    return formatAmount(value, userCurrency, { decimals: 0 });
   };
 
   // Handle drag start
@@ -726,7 +723,7 @@ export default function PipelinePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="value">Deal Value (GBP) *</Label>
+              <Label htmlFor="value">Deal Value ({userCurrency}) *</Label>
               <Input
                 id="value"
                 type="number"

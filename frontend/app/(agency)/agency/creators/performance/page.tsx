@@ -26,6 +26,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 // Mock performance data
 const mockCreatorPerformance = [
@@ -107,8 +108,9 @@ export default function CreatorPerformancePage() {
     return num.toString();
   };
 
+  const { formatAmount, currency: userCurrency } = useCurrency();
   const formatCurrency = (num: number) => {
-    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(num);
+    return formatAmount(num, userCurrency);
   };
 
   return (

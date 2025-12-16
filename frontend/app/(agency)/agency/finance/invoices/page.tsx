@@ -36,6 +36,7 @@ import {
 import { financeApi, type Invoice, type InvoiceStatus } from '@/lib/agency-dashboard-api';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 
 const statusConfig: Record<InvoiceStatus, { label: string; color: string; icon: React.ReactNode }> = {
@@ -80,8 +81,9 @@ export default function InvoicesPage() {
     invoice.brand_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const { formatAmount, currency: userCurrency } = useCurrency();
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(amount);
+    return formatAmount(amount, userCurrency);
   };
 
   const formatDate = (dateString: string) => {

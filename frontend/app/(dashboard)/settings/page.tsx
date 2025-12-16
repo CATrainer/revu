@@ -153,7 +153,7 @@ function PreferencesSection() {
           </button>
 
           {isOpen && (
-            <div className="absolute z-50 mt-2 w-full max-w-xs rounded-lg border border-[var(--border)] card-background shadow-lg max-h-64 overflow-y-auto">
+            <div className="absolute z-[100] mt-2 w-full max-w-xs rounded-lg border border-[var(--border)] card-background shadow-xl max-h-64 overflow-y-auto">
               {supportedCurrencies.map((curr) => (
                 <button
                   key={curr.code}

@@ -19,6 +19,7 @@ import { ArrowLeft, Plus, Trash2, Loader2, FileText } from 'lucide-react';
 import { financeApi } from '@/lib/agency-dashboard-api';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface LineItem {
   id: string;
@@ -78,8 +79,9 @@ export default function NewInvoicePage() {
   const vat = subtotal * 0.2;
   const total = subtotal + vat;
 
+  const { formatAmount, currency: userCurrency } = useCurrency();
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(amount);
+    return formatAmount(amount, userCurrency);
   };
 
   const handleSubmit = (e: React.FormEvent) => {

@@ -380,7 +380,7 @@ function NotificationPreferencesCard() {
   }
 
   return (
-    <Card>
+    <Card id="notifications">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Bell className="h-5 w-5" />
@@ -570,7 +570,7 @@ function CurrencyPreferenceCard() {
           </button>
 
           {isOpen && (
-            <div className="absolute z-50 mt-2 w-full max-w-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-64 overflow-y-auto">
+            <div className="absolute z-[100] mt-2 w-full max-w-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl max-h-64 overflow-y-auto">
               {supportedCurrencies.map((curr) => (
                 <button
                   key={curr.code}

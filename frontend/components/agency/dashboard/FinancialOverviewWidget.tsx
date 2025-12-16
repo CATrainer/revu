@@ -17,6 +17,7 @@ import {
   ArrowDownRight,
 } from 'lucide-react';
 import type { FinancialStats } from '@/lib/agency-dashboard-api';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface FinancialOverviewWidgetProps {
   stats: FinancialStats;
@@ -24,14 +25,9 @@ interface FinancialOverviewWidgetProps {
 }
 
 export function FinancialOverviewWidget({ stats, isLoading = false }: FinancialOverviewWidgetProps) {
-  // Format currency
+  const { formatAmount, currency: userCurrency } = useCurrency();
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
+    return formatAmount(value, userCurrency, { decimals: 0 });
   };
 
   if (isLoading) {

@@ -14,6 +14,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 import type { PipelineStats, DealStage } from '@/lib/agency-dashboard-api';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface PipelineSummaryWidgetProps {
   stats: PipelineStats;
@@ -60,18 +61,14 @@ const stageConfig: Record<DealStage, { label: string; color: string; bgColor: st
 };
 
 export function PipelineSummaryWidget({ stats, isLoading = false }: PipelineSummaryWidgetProps) {
+  const { formatAmount, currency: userCurrency } = useCurrency();
+  
   // Calculate total count for bar chart proportions
   const activeStages: DealStage[] = ['prospecting', 'pitch_sent', 'negotiating', 'booked', 'in_progress'];
   const totalActiveDeals = activeStages.reduce((sum, stage) => sum + (stats.by_stage[stage]?.count || 0), 0);
 
-  // Format currency
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
+    return formatAmount(value, userCurrency, { decimals: 0 });
   };
 
   if (isLoading) {

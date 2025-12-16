@@ -24,6 +24,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import type { SearchResult, SearchResults } from '@/lib/agency-dashboard-api';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface GlobalSearchModalProps {
   open: boolean;
@@ -54,6 +55,8 @@ const mockRecentSearches = [
 export function GlobalSearchModal({ open, onOpenChange }: GlobalSearchModalProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { formatAmount, currency: userCurrency } = useCurrency();
+  const formatCurrency = (value: number) => formatAmount(value, userCurrency);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<SearchCategory>('all');
   const [isSearching, setIsSearching] = useState(false);
@@ -467,6 +470,9 @@ interface ResultSectionProps {
 }
 
 function ResultSection({ title, results, selectedIndex, startIndex, onSelect, getIcon }: ResultSectionProps) {
+  const { formatAmount, currency: userCurrency } = useCurrency();
+  const formatCurrency = (value: number) => formatAmount(value, userCurrency);
+  
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between px-3 py-1.5">
@@ -523,7 +529,7 @@ function ResultSection({ title, results, selectedIndex, startIndex, onSelect, ge
               </div>
               {result.metadata?.value && (
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(result.metadata.value as number)}
+                  {formatCurrency(result.metadata.value as number)}
                 </span>
               )}
               {isSelected && (

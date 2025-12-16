@@ -33,6 +33,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { pushToast } from '@/components/ui/toast';
 
 interface CreatorStats {
@@ -197,12 +198,9 @@ export function RateCalculator({ className }: RateCalculatorProps) {
     };
   }, [stats, niche, experienceLevel, manualMode, manualStats]);
 
+  const { formatAmount, currency: userCurrency } = useCurrency();
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-    }).format(amount);
+    return formatAmount(amount, userCurrency, { decimals: 0 });
   };
 
   const formatNumber = (num: number) => {

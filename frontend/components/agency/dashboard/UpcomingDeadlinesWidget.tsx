@@ -17,6 +17,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import type { UpcomingDeadline } from '@/lib/agency-dashboard-api';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface UpcomingDeadlinesWidgetProps {
   deadlines: UpcomingDeadline[];
@@ -81,13 +82,9 @@ export function UpcomingDeadlinesWidget({ deadlines, isLoading = false }: Upcomi
     });
   };
 
-  // Format currency
+  const { formatAmount, currency: userCurrency } = useCurrency();
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-      minimumFractionDigits: 0,
-    }).format(value);
+    return formatAmount(value, userCurrency, { decimals: 0 });
   };
 
   const canScrollLeft = startIndex > 0;

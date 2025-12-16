@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 // Mock billing data
 const currentPlan = {
@@ -51,8 +52,9 @@ const paymentMethod = {
 export default function BillingPage() {
   const [isUpdatingCard, setIsUpdatingCard] = useState(false);
 
+  const { formatAmount, currency: userCurrency } = useCurrency();
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(amount);
+    return formatAmount(amount, userCurrency);
   };
 
   const formatDate = (dateString: string) => {

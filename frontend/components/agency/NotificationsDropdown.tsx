@@ -384,7 +384,7 @@ export function NotificationsDropdown() {
         {/* Footer */}
         <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
           <Link
-            href="/agency/settings/notifications"
+            href="/agency/settings#notifications"
             className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
           >
             <Settings className="h-4 w-4" />

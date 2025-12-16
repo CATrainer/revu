@@ -26,6 +26,7 @@ import {
 import { financeApi, type Payout, type PayoutStatus } from '@/lib/agency-dashboard-api';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 const statusConfig: Record<PayoutStatus, { label: string; color: string }> = {
   pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' },
@@ -62,8 +63,9 @@ export default function PayoutsPage() {
   const pendingPayouts = filteredPayouts.filter(p => p.status === 'pending');
   const totalPending = pendingPayouts.reduce((sum, p) => sum + p.amount, 0);
 
+  const { formatAmount, currency: userCurrency } = useCurrency();
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(amount);
+    return formatAmount(amount, userCurrency);
   };
 
   const formatDate = (dateString: string) => {

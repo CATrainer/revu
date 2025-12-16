@@ -20,6 +20,7 @@ import {
   ArrowUpRight,
   Download,
 } from 'lucide-react';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 // Mock analytics data
 const stageMetrics = [
@@ -45,8 +46,9 @@ export default function PipelineAnalyticsPage() {
   const totalDeals = stageMetrics.reduce((sum, s) => sum + s.deals, 0);
   const avgDealValue = totalPipelineValue / totalDeals;
 
+  const { formatAmount, currency: userCurrency } = useCurrency();
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(amount);
+    return formatAmount(amount, userCurrency, { decimals: 0 });
   };
 
   return (
