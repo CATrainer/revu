@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { api } from '@/lib/api';
 
 // Types
 export interface CurrencyInfo {
@@ -116,20 +117,16 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
   // Get currency info for current currency
   const currencyInfo = SUPPORTED_CURRENCIES.find(c => c.code === currency) || null;
   
-  // Fetch exchange rates
+  // Fetch exchange rates - call backend directly
   const refreshRates = useCallback(async () => {
     setRatesLoading(true);
     setRatesError(null);
     
     try {
-      const response = await fetch('/api/currency/rates');
-      if (response.ok) {
-        const data: ExchangeRates = await response.json();
-        setRates(data.rates);
-        setLastUpdated(data.last_updated);
-      } else {
-        throw new Error('Failed to fetch rates');
-      }
+      const response = await api.get('/currency/rates');
+      const data: ExchangeRates = response.data;
+      setRates(data.rates);
+      setLastUpdated(data.last_updated);
     } catch (error) {
       console.error('Error fetching exchange rates:', error);
       setRatesError('Failed to fetch exchange rates');
@@ -139,23 +136,22 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
     }
   }, []);
   
-  // Fetch user's currency preference
+  // Fetch user's currency preference - call backend directly
   const fetchUserPreference = useCallback(async () => {
     try {
-      const response = await fetch('/api/currency/preference');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.currency) {
-          setCurrencyState(data.currency);
-        }
+      const response = await api.get('/currency/preference');
+      if (response.data?.currency) {
+        setCurrencyState(response.data.currency);
       }
+    } catch (error: any) {
       // If 401 or error, keep default USD - that's fine for guests
-    } catch (error) {
-      console.error('Error fetching currency preference:', error);
+      if (error?.response?.status !== 401) {
+        console.error('Error fetching currency preference:', error);
+      }
     }
   }, []);
   
-  // Update user's currency preference
+  // Update user's currency preference - call backend directly
   const setCurrency = useCallback(async (newCurrency: string) => {
     const upperCurrency = newCurrency.toUpperCase();
     const previousCurrency = currency;
@@ -163,26 +159,16 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
     // Optimistically update local state
     setCurrencyState(upperCurrency);
     
-    // Always attempt to save to backend - let the server handle auth
-    // The isAuthenticated state from Zustand may not be in sync
     try {
-      const response = await fetch('/api/currency/preference', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currency: upperCurrency }),
-      });
-      
-      if (!response.ok) {
-        // If unauthorized, still keep local state (guest preference)
-        if (response.status === 401) {
-          console.log('Not authenticated, keeping local currency preference');
-          return;
-        }
-        throw new Error('Failed to update preference');
+      await api.put('/currency/preference', { currency: upperCurrency });
+    } catch (error: any) {
+      // If unauthorized, still keep local state (guest preference)
+      if (error?.response?.status === 401) {
+        console.log('Not authenticated, keeping local currency preference');
+        return;
       }
-    } catch (error) {
       console.error('Error updating currency preference:', error);
-      // Revert on error (except auth errors which we handle above)
+      // Revert on error
       setCurrencyState(previousCurrency);
     }
   }, [currency]);
