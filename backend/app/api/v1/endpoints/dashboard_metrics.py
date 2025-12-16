@@ -25,7 +25,8 @@ from app.models.instagram import InstagramConnection
 from app.models.interaction import Interaction
 from app.models.workflow import Workflow
 from app.models.monetization import ActiveProject, ProjectTaskCompletion
-from app.models.agency import Agency, AgencyOpportunity
+from app.models.agency import Agency
+from app.models.agency_opportunity import AgencyOpportunity
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
