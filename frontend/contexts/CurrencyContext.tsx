@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { useAuth } from '@/lib/auth';
 
 // Types
 export interface CurrencyInfo {
@@ -104,7 +103,8 @@ interface CurrencyProviderProps {
 }
 
 export function CurrencyProvider({ children }: CurrencyProviderProps) {
-  const { user, isAuthenticated } = useAuth();
+  // Note: We don't rely on isAuthenticated from useAuth() because it may not be
+  // in sync. Instead, we always attempt API calls and let the server handle auth.
   
   // State
   const [currency, setCurrencyState] = useState<string>('USD');
@@ -141,28 +141,30 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
   
   // Fetch user's currency preference
   const fetchUserPreference = useCallback(async () => {
-    if (!isAuthenticated) return;
-    
     try {
       const response = await fetch('/api/currency/preference');
       if (response.ok) {
         const data = await response.json();
-        setCurrencyState(data.currency || 'USD');
+        if (data.currency) {
+          setCurrencyState(data.currency);
+        }
       }
+      // If 401 or error, keep default USD - that's fine for guests
     } catch (error) {
       console.error('Error fetching currency preference:', error);
     }
-  }, [isAuthenticated]);
+  }, []);
   
   // Update user's currency preference
   const setCurrency = useCallback(async (newCurrency: string) => {
     const upperCurrency = newCurrency.toUpperCase();
+    const previousCurrency = currency;
     
     // Optimistically update local state
     setCurrencyState(upperCurrency);
     
-    if (!isAuthenticated) return;
-    
+    // Always attempt to save to backend - let the server handle auth
+    // The isAuthenticated state from Zustand may not be in sync
     try {
       const response = await fetch('/api/currency/preference', {
         method: 'PUT',
@@ -171,14 +173,19 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
       });
       
       if (!response.ok) {
+        // If unauthorized, still keep local state (guest preference)
+        if (response.status === 401) {
+          console.log('Not authenticated, keeping local currency preference');
+          return;
+        }
         throw new Error('Failed to update preference');
       }
     } catch (error) {
       console.error('Error updating currency preference:', error);
-      // Revert on error
-      setCurrencyState(currency);
+      // Revert on error (except auth errors which we handle above)
+      setCurrencyState(previousCurrency);
     }
-  }, [isAuthenticated, currency]);
+  }, [currency]);
   
   // Convert amount from one currency to another
   // Logic: source -> USD -> target
@@ -251,11 +258,10 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
     return () => clearInterval(interval);
   }, [refreshRates]);
   
+  // Fetch user preference on mount - the API will return default if not authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchUserPreference();
-    }
-  }, [isAuthenticated, fetchUserPreference]);
+    fetchUserPreference();
+  }, [fetchUserPreference]);
   
   const value: CurrencyContextType = {
     currency,
