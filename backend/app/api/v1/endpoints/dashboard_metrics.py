@@ -561,12 +561,12 @@ async def get_dashboard_summary(
         "estimated_revenue": None,
     }
     
-    # Get active monetization project
+    # Get active monetization project (most recent one if multiple exist)
     project_result = await db.execute(
         select(ActiveProject).where(
             ActiveProject.user_id == current_user.id,
             ActiveProject.status == 'active'
-        ).order_by(ActiveProject.last_activity_at.desc())
+        ).order_by(ActiveProject.last_activity_at.desc()).limit(1)
     )
     active_project = project_result.scalar_one_or_none()
     
