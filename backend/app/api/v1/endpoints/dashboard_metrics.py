@@ -24,6 +24,8 @@ from app.models.youtube import YouTubeConnection, YouTubeVideo, YouTubeComment
 from app.models.instagram import InstagramConnection
 from app.models.interaction import Interaction
 from app.models.workflow import Workflow
+from app.models.monetization import ActiveProject, ProjectTaskCompletion
+from app.models.agency import Agency, AgencyOpportunity
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -389,3 +391,253 @@ async def get_dashboard_metrics(
         return await get_demo_metrics(db, current_user)
     else:
         return await get_real_metrics(db, current_user)
+
+
+@router.get("/dashboard-summary")
+async def get_dashboard_summary(
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get comprehensive dashboard summary for the new widget-based layout.
+    
+    Returns all data needed for the 4 dashboard widgets:
+    - platform_warning: Disconnected platforms that need attention
+    - engagement: Views, engagement rate, new followers with period comparisons
+    - pending_actions: Unanswered messages, awaiting approval, scheduled posts
+    - monetization: Active project status, progress, estimated revenue
+    - agency: Agency connection status, new opportunities, last message
+    """
+    is_demo_mode = (current_user.demo_mode_status == 'enabled')
+    
+    # Get base metrics (reuse existing logic)
+    if is_demo_mode:
+        base_metrics = await get_demo_metrics(db, current_user)
+    else:
+        base_metrics = await get_real_metrics(db, current_user)
+    
+    # === Platform Warning ===
+    connected_platforms = base_metrics.get('connected_platforms', {})
+    disconnected_platforms = []
+    for platform, status in connected_platforms.items():
+        if not status.get('connected', False) and not status.get('message'):  # Skip "coming soon" platforms
+            disconnected_platforms.append(platform)
+    
+    platform_warning = {
+        "show": len(disconnected_platforms) > 0 and not all(
+            connected_platforms.get(p, {}).get('message') for p in disconnected_platforms
+        ),
+        "disconnected": disconnected_platforms,
+        "connected_count": sum(1 for p in connected_platforms.values() if p.get('connected', False)),
+        "total_platforms": 3,  # YouTube, Instagram, TikTok
+    }
+    
+    # === Engagement Summary (7 days) ===
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    fourteen_days_ago = datetime.utcnow() - timedelta(days=14)
+    
+    # Calculate views from YouTube videos (last 7 days)
+    total_views_7d = 0
+    total_views_prev_7d = 0
+    
+    if not is_demo_mode:
+        # Current 7 days
+        views_stmt = select(func.sum(YouTubeVideo.view_count)).join(
+            YouTubeConnection,
+            YouTubeVideo.channel_id == YouTubeConnection.id
+        ).where(
+            YouTubeConnection.user_id == current_user.id,
+            YouTubeVideo.published_at >= seven_days_ago
+        )
+        views_result = await db.execute(views_stmt)
+        total_views_7d = views_result.scalar() or 0
+        
+        # Previous 7 days
+        prev_views_stmt = select(func.sum(YouTubeVideo.view_count)).join(
+            YouTubeConnection,
+            YouTubeVideo.channel_id == YouTubeConnection.id
+        ).where(
+            YouTubeConnection.user_id == current_user.id,
+            YouTubeVideo.published_at >= fourteen_days_ago,
+            YouTubeVideo.published_at < seven_days_ago
+        )
+        prev_views_result = await db.execute(prev_views_stmt)
+        total_views_prev_7d = prev_views_result.scalar() or 0
+    else:
+        # Demo mode - use simulated data
+        total_views_7d = 125000
+        total_views_prev_7d = 110000
+    
+    views_change = 0.0
+    if total_views_prev_7d > 0:
+        views_change = round(((total_views_7d - total_views_prev_7d) / total_views_prev_7d) * 100, 1)
+    elif total_views_7d > 0:
+        views_change = 100.0
+    
+    # New followers calculation
+    new_followers = 0
+    new_followers_change = 0.0
+    
+    if not is_demo_mode:
+        # Get YouTube subscriber growth
+        yt_result = await db.execute(
+            select(YouTubeConnection).where(
+                YouTubeConnection.user_id == current_user.id,
+                YouTubeConnection.connection_status == 'active'
+            )
+        )
+        yt_connections = yt_result.scalars().all()
+        for conn in yt_connections:
+            if conn.subscriber_growth_30d:
+                # Estimate 7-day growth as ~25% of 30-day growth
+                new_followers += int(conn.subscriber_growth_30d * 0.25)
+        
+        # Get Instagram follower growth (if available)
+        ig_result = await db.execute(
+            select(InstagramConnection).where(
+                InstagramConnection.user_id == current_user.id,
+                InstagramConnection.connection_status == 'active'
+            )
+        )
+        ig_connections = ig_result.scalars().all()
+        # Instagram doesn't have growth tracking yet, so skip for now
+    else:
+        # Demo mode
+        new_followers = 1250
+        new_followers_change = 8.5
+    
+    engagement_summary = {
+        "views_7d": total_views_7d,
+        "views_change": views_change,
+        "engagement_rate": base_metrics.get('engagement_rate', 0),
+        "engagement_change": base_metrics.get('engagement_change', 0),
+        "new_followers": new_followers,
+        "new_followers_change": new_followers_change,
+        "has_data": base_metrics.get('total_followers', 0) + base_metrics.get('total_subscribers', 0) > 0,
+    }
+    
+    # === Pending Actions ===
+    show_demo_data = is_demo_mode
+    
+    # Unanswered messages (status = unread or read, not answered)
+    unanswered_stmt = select(func.count(Interaction.id)).where(
+        Interaction.user_id == current_user.id,
+        Interaction.is_demo == show_demo_data,
+        Interaction.status.in_(['unread', 'read'])
+    )
+    unanswered_result = await db.execute(unanswered_stmt)
+    unanswered_count = unanswered_result.scalar() or 0
+    
+    # Awaiting approval
+    approval_stmt = select(func.count(Interaction.id)).where(
+        Interaction.user_id == current_user.id,
+        Interaction.is_demo == show_demo_data,
+        Interaction.status == 'awaiting_approval'
+    )
+    approval_result = await db.execute(approval_stmt)
+    awaiting_approval_count = approval_result.scalar() or 0
+    
+    # Scheduled posts today (we don't have a scheduled posts table yet, so return 0)
+    # This can be expanded when content scheduling is implemented
+    scheduled_today = 0
+    
+    pending_actions = {
+        "unanswered_messages": unanswered_count,
+        "awaiting_approval": awaiting_approval_count,
+        "scheduled_today": scheduled_today,
+        "total": unanswered_count + awaiting_approval_count + scheduled_today,
+        "all_caught_up": (unanswered_count + awaiting_approval_count + scheduled_today) == 0,
+    }
+    
+    # === Monetization Status ===
+    monetization_status = {
+        "has_project": False,
+        "project_id": None,
+        "project_name": None,
+        "tasks_completed": 0,
+        "tasks_total": 22,  # Standard task count
+        "progress_percent": 0,
+        "estimated_revenue": None,
+    }
+    
+    # Get active monetization project
+    project_result = await db.execute(
+        select(ActiveProject).where(
+            ActiveProject.user_id == current_user.id,
+            ActiveProject.status == 'active'
+        ).order_by(ActiveProject.last_activity_at.desc())
+    )
+    active_project = project_result.scalar_one_or_none()
+    
+    if active_project:
+        # Count completed tasks
+        tasks_result = await db.execute(
+            select(func.count(ProjectTaskCompletion.id)).where(
+                ProjectTaskCompletion.project_id == active_project.id
+            )
+        )
+        completed_tasks = tasks_result.scalar() or 0
+        
+        monetization_status = {
+            "has_project": True,
+            "project_id": str(active_project.id),
+            "project_name": active_project.opportunity_title,
+            "tasks_completed": completed_tasks,
+            "tasks_total": 22,
+            "progress_percent": active_project.overall_progress or 0,
+            "estimated_revenue": None,  # Can be calculated from opportunity template
+        }
+    
+    # === Agency Connection ===
+    agency_connection = {
+        "is_connected": False,
+        "agency_id": None,
+        "agency_name": None,
+        "agency_logo_url": None,
+        "new_opportunities": 0,
+        "last_message_date": None,
+    }
+    
+    if current_user.agency_id:
+        # Get agency details
+        agency_result = await db.execute(
+            select(Agency).where(Agency.id == current_user.agency_id)
+        )
+        agency = agency_result.scalar_one_or_none()
+        
+        if agency:
+            # Count new opportunities (sent or viewed status)
+            opps_result = await db.execute(
+                select(func.count(AgencyOpportunity.id)).where(
+                    AgencyOpportunity.creator_id == current_user.id,
+                    AgencyOpportunity.status.in_(['sent', 'viewed'])
+                )
+            )
+            new_opps = opps_result.scalar() or 0
+            
+            # Get last opportunity date as proxy for last message
+            last_opp_result = await db.execute(
+                select(AgencyOpportunity.sent_at).where(
+                    AgencyOpportunity.creator_id == current_user.id
+                ).order_by(AgencyOpportunity.sent_at.desc()).limit(1)
+            )
+            last_opp_date = last_opp_result.scalar_one_or_none()
+            
+            agency_connection = {
+                "is_connected": True,
+                "agency_id": str(agency.id),
+                "agency_name": agency.name,
+                "agency_logo_url": agency.logo_url,
+                "new_opportunities": new_opps,
+                "last_message_date": last_opp_date.isoformat() if last_opp_date else None,
+            }
+    
+    return {
+        "platform_warning": platform_warning,
+        "engagement": engagement_summary,
+        "pending_actions": pending_actions,
+        "monetization": monetization_status,
+        "agency": agency_connection,
+        "connected_platforms": connected_platforms,
+        "is_demo": is_demo_mode,
+    }
