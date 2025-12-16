@@ -542,7 +542,7 @@ function CurrencyPreferenceCard() {
   };
 
   return (
-    <Card>
+    <Card className="overflow-visible">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <DollarSign className="h-5 w-5" />
@@ -552,7 +552,7 @@ function CurrencyPreferenceCard() {
           Choose your preferred currency for displaying deal values, revenue, and financial data
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-visible">
         <div className="relative">
           <button
             onClick={() => setIsOpen(!isOpen)}
