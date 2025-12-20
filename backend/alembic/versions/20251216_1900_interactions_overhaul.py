@@ -167,6 +167,17 @@ def upgrade() -> None:
     # 4. WORKFLOWS TABLE - Add priority system and enhanced conditions
     # ==========================================================================
     
+    # Add user_id column first (needed for index)
+    if not column_exists(conn, 'workflows', 'user_id'):
+        op.add_column('workflows', sa.Column('user_id', UUID(as_uuid=True), nullable=True))
+        # Add foreign key constraint
+        op.create_foreign_key(
+            'fk_workflows_user_id',
+            'workflows', 'users',
+            ['user_id'], ['id'],
+            ondelete='CASCADE'
+        )
+    
     if not column_exists(conn, 'workflows', 'type'):
         op.add_column('workflows', sa.Column('type', sa.String(20), nullable=True, server_default='custom'))
         op.execute("UPDATE workflows SET type = 'custom' WHERE type IS NULL")
@@ -262,6 +273,9 @@ def downgrade() -> None:
         op.drop_column('users', 'archive_delete_days')
     
     # Remove workflow enhancements
+    if index_exists(conn, 'idx_workflows_priority'):
+        op.drop_index('idx_workflows_priority', table_name='workflows')
+    
     workflow_columns = [
         'type', 'priority', 'is_enabled', 'natural_language_conditions',
         'compiled_conditions', 'platforms', 'interaction_types', 'action_type', 'action_config'
@@ -270,8 +284,10 @@ def downgrade() -> None:
         if column_exists(conn, 'workflows', col):
             op.drop_column('workflows', col)
     
-    if index_exists(conn, 'idx_workflows_priority'):
-        op.drop_index('idx_workflows_priority', table_name='workflows')
+    # Drop user_id foreign key and column
+    if column_exists(conn, 'workflows', 'user_id'):
+        op.drop_constraint('fk_workflows_user_id', 'workflows', type_='foreignkey')
+        op.drop_column('workflows', 'user_id')
     
     # Remove view enhancements
     view_columns = ['natural_language_filter', 'compiled_filters', 'filter_compiled_at', 'filter_compiler_model']
