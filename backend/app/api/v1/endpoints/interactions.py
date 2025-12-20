@@ -609,55 +609,34 @@ async def generate_response(
         )
     
     try:
-        # Use Claude API (similar to AI assistant implementation)
-        from anthropic import Anthropic
+        # Use the new response generator with smart length and context
+        from app.services.response_generator import get_response_generator
         
-        client = Anthropic(api_key=api_key)
+        generator = get_response_generator(session)
         
-        # Build context
-        context_parts = [
-            f"Platform: {interaction.platform}",
-            f"Type: {interaction.type}",
-            f"User message: {interaction.content}",
-        ]
+        # Get previous response for regeneration (if this is a regenerate request)
+        previous_response = None
+        if interaction.pending_response and interaction.pending_response.get('text'):
+            previous_response = interaction.pending_response.get('text')
         
-        if interaction.parent_content_title:
-            context_parts.append(f"Regarding: {interaction.parent_content_title}")
-        
-        if payload.context:
-            context_parts.append(f"Additional context: {payload.context}")
-        
-        tone_instruction = ""
-        if payload.tone:
-            tone_instruction = f" Use a {payload.tone} tone."
-        
-        system_prompt = f"""You are an AI assistant helping content creators respond to their audience.
-Generate a thoughtful, engaging response to the following interaction.{tone_instruction}
-Keep it concise and authentic."""
-        
-        user_prompt = "\n".join(context_parts)
-        
-        # Generate response (using same model as demo-simulator)
-        response = client.messages.create(
-            model="claude-sonnet-4-5-20250929",
-            max_tokens=500,
-            temperature=0.7,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_prompt}]
+        generated_text = await generator.generate_response(
+            interaction=interaction,
+            user_id=current_user.id,
+            tone=payload.tone or "friendly",
+            previous_response=previous_response,
         )
-        
-        generated_text = response.content[0].text
         
         # Store as pending response
         pending = PendingResponse(
             text=generated_text,
             generated_at=datetime.utcnow(),
-            model="claude-sonnet-4-5-20250929",
-            confidence=0.85,  # Placeholder
+            model="claude-3-5-sonnet-latest",
+            confidence=0.85,
         )
         
         interaction.pending_response = pending.model_dump(mode='json')
         interaction.status = "awaiting_approval"
+        interaction.last_activity_at = datetime.utcnow()
         
         await session.commit()
         await session.refresh(interaction)
@@ -669,6 +648,7 @@ Keep it concise and authentic."""
         }
         
     except Exception as e:
+        logger.error(f"Failed to generate response: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to generate response: {str(e)}")
 
 
@@ -734,6 +714,7 @@ async def send_response(
     if payload.send_immediately:
         # Send reply via platform (works for demo and real platforms)
         from app.services.platform_actions import get_platform_action_service
+        from app.services.sent_response_service import get_sent_response_service
         
         platform_service = get_platform_action_service()
         result = await platform_service.send_reply(
@@ -747,6 +728,37 @@ async def send_response(
                 status_code=500,
                 detail=f"Failed to send response: {result.get('error', 'Unknown error')}"
             )
+        
+        # Determine response type and track AI details
+        response_type = 'manual'
+        ai_model = None
+        was_edited = False
+        original_ai_text = None
+        workflow_id = None
+        
+        if interaction.pending_response:
+            # This was an AI-generated response (semi-automated)
+            response_type = 'semi_automated'
+            ai_model = interaction.pending_response.get('model')
+            original_ai_text = interaction.pending_response.get('text')
+            was_edited = (payload.text != original_ai_text)
+            workflow_id = interaction.pending_response.get('workflow_id')
+        
+        # Record the sent response in sent_responses table
+        sent_service = get_sent_response_service(session)
+        await sent_service.record_sent_response(
+            interaction_id=interaction.id,
+            response_text=payload.text,
+            user_id=current_user.id,
+            response_type=response_type,
+            ai_model=ai_model,
+            was_edited=was_edited,
+            original_ai_text=original_ai_text,
+            workflow_id=UUID(workflow_id) if workflow_id else None,
+            platform_response_id=result.get("reply_id"),
+            organization_id=current_user.organization_id,
+            is_demo=interaction.is_demo,
+        )
         
         # Create a reply interaction record so it shows in the thread
         from uuid import uuid4
@@ -772,6 +784,7 @@ async def send_response(
             is_reply=True,
             created_at=datetime.utcnow(),
             platform_created_at=datetime.utcnow(),
+            last_activity_at=datetime.utcnow(),
         )
         
         # If original interaction doesn't have a thread_id, set it now
@@ -781,8 +794,9 @@ async def send_response(
         
         session.add(reply_interaction)
         
-        # Status and timestamps already updated by platform_service
+        # Update original interaction
         interaction.pending_response = None
+        interaction.last_activity_at = datetime.utcnow()
         await session.commit()
         
         return {
@@ -791,9 +805,163 @@ async def send_response(
             "status": "answered",
             "reply_id": result.get("reply_id"),
             "thread_updated": True,
+            "response_type": response_type,
         }
     
     return {
         "success": False,
         "message": "Invalid request parameters",
+    }
+
+
+# ==================== ARCHIVE ENDPOINTS ====================
+
+@router.post("/interactions/archive")
+async def archive_interactions(
+    interaction_ids: List[UUID],
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Manually archive one or more interactions."""
+    from app.services.archive_service import get_archive_service
+    
+    archive_service = get_archive_service(session)
+    archived_count = await archive_service.manual_archive(interaction_ids, current_user.id)
+    await session.commit()
+    
+    return {
+        "success": True,
+        "archived_count": archived_count,
+        "message": f"Archived {archived_count} interactions"
+    }
+
+
+@router.post("/interactions/unarchive")
+async def unarchive_interactions(
+    interaction_ids: List[UUID],
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Restore archived interactions."""
+    from app.services.archive_service import get_archive_service
+    
+    archive_service = get_archive_service(session)
+    unarchived_count = await archive_service.unarchive(interaction_ids, current_user.id)
+    await session.commit()
+    
+    return {
+        "success": True,
+        "unarchived_count": unarchived_count,
+        "message": f"Restored {unarchived_count} interactions"
+    }
+
+
+@router.delete("/interactions/archive/permanent")
+async def permanently_delete_archived(
+    interaction_ids: List[UUID],
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Permanently delete archived interactions."""
+    from app.services.archive_service import get_archive_service
+    
+    archive_service = get_archive_service(session)
+    deleted_count = await archive_service.permanent_delete(interaction_ids, current_user.id)
+    await session.commit()
+    
+    return {
+        "success": True,
+        "deleted_count": deleted_count,
+        "message": f"Permanently deleted {deleted_count} interactions"
+    }
+
+
+@router.get("/interactions/archive/stats")
+async def get_archive_stats(
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get archive statistics for the current user."""
+    from app.services.archive_service import get_archive_service
+    
+    archive_service = get_archive_service(session)
+    stats = await archive_service.get_archive_stats(current_user.id)
+    
+    return stats
+
+
+# ==================== SENT RESPONSES ENDPOINTS ====================
+
+@router.get("/interactions/sent")
+async def get_sent_responses(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    response_type: Optional[str] = Query(None, description="Filter by type: manual, semi_automated, automated"),
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get history of sent responses with their original interactions."""
+    from app.services.sent_response_service import get_sent_response_service
+    
+    is_demo = current_user.demo_mode_status == 'enabled'
+    service = get_sent_response_service(session)
+    
+    responses, total = await service.get_sent_responses(
+        user_id=current_user.id,
+        is_demo=is_demo,
+        page=page,
+        page_size=page_size,
+        response_type=response_type,
+    )
+    
+    return {
+        "responses": responses,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "has_more": (page * page_size) < total,
+    }
+
+
+@router.get("/interactions/sent/stats")
+async def get_sent_response_stats(
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get statistics about sent responses."""
+    from app.services.sent_response_service import get_sent_response_service
+    
+    is_demo = current_user.demo_mode_status == 'enabled'
+    service = get_sent_response_service(session)
+    
+    stats = await service.get_response_stats(current_user.id, is_demo)
+    
+    return stats
+
+
+# ==================== SYSTEM SETUP ENDPOINT ====================
+
+@router.post("/interactions/setup-system")
+async def setup_interactions_system(
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Set up system views and workflows for the current user.
+    
+    This is called automatically on first login or can be triggered manually.
+    Creates the 4 permanent views (All, Awaiting Approval, Archive, Sent)
+    and system workflows (Auto Moderator, Auto Archive).
+    """
+    from app.services.system_views_service import get_system_views_service
+    
+    service = get_system_views_service(session)
+    result = await service.setup_user_interactions_system(
+        user_id=current_user.id,
+        organization_id=current_user.organization_id,
+    )
+    await session.commit()
+    
+    return {
+        "success": True,
+        **result,
     }

@@ -90,6 +90,9 @@ from app.models.notification import (
     AGENCY_NOTIFICATION_TYPES,
     NOTIFICATION_CATEGORIES,
 )
+from app.models.sent_response import SentResponse
+from app.models.auto_moderator_settings import AutoModeratorSettings
+from app.models.response_queue import ResponseQueue, PlatformRateLimit
 
 __all__ = [
     "Organization",
@@ -172,4 +175,9 @@ __all__ = [
     "CREATOR_NOTIFICATION_TYPES",
     "AGENCY_NOTIFICATION_TYPES",
     "NOTIFICATION_CATEGORIES",
+    # Interactions Overhaul
+    "SentResponse",
+    "AutoModeratorSettings",
+    "ResponseQueue",
+    "PlatformRateLimit",
 ]

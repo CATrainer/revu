@@ -30,11 +30,15 @@ import { cn } from '@/lib/utils';
 interface View {
   id: string;
   name: string;
+  description?: string;
   icon: string;
   color: string;
   type: string;
+  filters: any;
+  display: any;
   is_pinned: boolean;
-  is_system: boolean;
+  is_system?: boolean;
+  is_shared?: boolean;
   interaction_count?: number;
   unread_count?: number;
 }

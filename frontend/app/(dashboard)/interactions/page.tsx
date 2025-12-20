@@ -29,7 +29,8 @@ interface View {
   filters: any;
   display: any;
   is_pinned: boolean;
-  is_system: boolean;
+  is_system?: boolean;
+  is_shared?: boolean;
   interaction_count?: number;
   unread_count?: number;
 }
@@ -52,7 +53,8 @@ export default function InteractionsPage() {
     all?: number;
     unanswered?: number;
     awaiting_approval?: number;
-    answered?: number;
+    archive?: number;
+    sent?: number;
   }>({});
 
   // Load views on mount

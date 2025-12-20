@@ -1,12 +1,14 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { Inbox, Clock, Archive, CheckCircle, Send } from 'lucide-react';
 
-export type TabType = 'all' | 'unanswered' | 'awaiting_approval' | 'answered';
+export type TabType = 'all' | 'unanswered' | 'awaiting_approval' | 'archive' | 'sent';
 
 interface Tab {
   id: TabType;
   label: string;
+  icon: React.ElementType;
   count?: number;
 }
 
@@ -17,16 +19,17 @@ interface ViewTabsProps {
     all?: number;
     unanswered?: number;
     awaiting_approval?: number;
-    answered?: number;
+    archive?: number;
+    sent?: number;
   };
 }
 
 export function ViewTabs({ activeTab, onTabChange, counts }: ViewTabsProps) {
   const tabs: Tab[] = [
-    { id: 'all', label: 'All', count: counts?.all },
-    { id: 'unanswered', label: 'Unanswered', count: counts?.unanswered },
-    { id: 'awaiting_approval', label: 'Awaiting Approval', count: counts?.awaiting_approval },
-    { id: 'answered', label: 'Answered', count: counts?.answered },
+    { id: 'all', label: 'All', icon: Inbox, count: counts?.all },
+    { id: 'awaiting_approval', label: 'Awaiting Approval', icon: Clock, count: counts?.awaiting_approval },
+    { id: 'archive', label: 'Archive', icon: Archive, count: counts?.archive },
+    { id: 'sent', label: 'Sent', icon: CheckCircle, count: counts?.sent },
   ];
 
   return (
@@ -49,6 +52,7 @@ export function ViewTabs({ activeTab, onTabChange, counts }: ViewTabsProps) {
               )}
             >
               <span className="flex items-center gap-2">
+                <tab.icon className="h-4 w-4" />
                 {tab.label}
                 {typeof tab.count === 'number' && (
                   <span

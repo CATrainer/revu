@@ -33,8 +33,13 @@ class Interaction(Base):
     parent_content_id = Column(String(255))  # Video/Post ID
     parent_content_title = Column(Text)
     parent_content_url = Column(Text)
+    parent_content_thumbnail_url = Column(Text)  # Thumbnail for video/post
+    parent_content_view_count = Column(Integer)  # View count for video/post
     is_reply = Column(Boolean, default=False)
     reply_to_id = Column(PGUUID(as_uuid=True), ForeignKey('interactions.id'))
+    
+    # Conversation history (for DMs)
+    conversation_history = Column(JSONB)  # [{sender: 'user'|'creator', content: str, timestamp: str}]
     
     # AI-enriched data
     sentiment = Column(String(16), index=True)  # positive, negative, neutral
@@ -74,6 +79,15 @@ class Interaction(Base):
     read_at = Column(DateTime)
     replied_at = Column(DateTime)  # When we created a reply on the platform
     responded_at = Column(DateTime)  # When we sent our response (for tracking)
+    last_activity_at = Column(DateTime, index=True)  # Updated on any activity
+    
+    # Archive lifecycle
+    archived_at = Column(DateTime, index=True)
+    archive_source = Column(String(20))  # 'auto' | 'manual' | 'workflow'
+    
+    # Workflow processing tracking
+    processed_by_workflow_id = Column(PGUUID(as_uuid=True), ForeignKey('workflows.id', ondelete='SET NULL'))
+    processed_at = Column(DateTime)
     
     # Foreign keys
     user_id = Column(PGUUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)

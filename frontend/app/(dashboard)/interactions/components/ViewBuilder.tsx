@@ -35,6 +35,7 @@ interface View {
   display: any;
   is_pinned?: boolean;
   is_shared?: boolean;
+  is_system?: boolean;
 }
 
 interface ViewBuilderProps {
