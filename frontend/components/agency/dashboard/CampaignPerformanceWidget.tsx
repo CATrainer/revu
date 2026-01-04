@@ -52,7 +52,7 @@ export function CampaignPerformanceWidget({ isLoading = false }: CampaignPerform
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Megaphone className="h-5 w-5 text-pink-500" />
+            <Megaphone className="h-5 w-5 text-emerald-500" />
             Campaign Performance
           </CardTitle>
         </CardHeader>
@@ -80,7 +80,7 @@ export function CampaignPerformanceWidget({ isLoading = false }: CampaignPerform
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Megaphone className="h-5 w-5 text-pink-500" />
+            <Megaphone className="h-5 w-5 text-emerald-500" />
             Campaign Performance
           </CardTitle>
           <Link
@@ -94,8 +94,8 @@ export function CampaignPerformanceWidget({ isLoading = false }: CampaignPerform
       </CardHeader>
       <CardContent className="flex-1 flex items-center justify-center">
         <div className="flex flex-col items-center justify-center text-center py-6">
-          <div className="rounded-full bg-pink-100 dark:bg-pink-900/20 p-3 mb-3">
-            <TrendingUp className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+          <div className="rounded-full bg-emerald-100 dark:bg-emerald-900/20 p-3 mb-3">
+            <TrendingUp className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
           </div>
           <h3 className="text-base font-semibold mb-1">Coming Soon</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-xs">

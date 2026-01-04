@@ -60,33 +60,33 @@ const statusConfig = {
   available: {
     label: 'Available',
     color: 'text-emerald-700 dark:text-emerald-300',
-    bgColor: 'bg-emerald-50 dark:bg-emerald-900/30',
-    borderColor: 'border-emerald-300 dark:border-emerald-700',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+    borderColor: 'border-emerald-200 dark:border-emerald-800',
     dotColor: 'bg-emerald-500',
     icon: CheckCircle,
   },
   booked: {
     label: 'Booked',
-    color: 'text-indigo-700 dark:text-indigo-300',
-    bgColor: 'bg-indigo-50 dark:bg-indigo-900/30',
-    borderColor: 'border-indigo-300 dark:border-indigo-700',
-    dotColor: 'bg-indigo-500',
+    color: 'text-sky-700 dark:text-sky-300',
+    bgColor: 'bg-sky-50 dark:bg-sky-900/20',
+    borderColor: 'border-sky-200 dark:border-sky-800',
+    dotColor: 'bg-sky-500',
     icon: Calendar,
   },
   tentative: {
     label: 'Tentative',
-    color: 'text-amber-700 dark:text-amber-300',
-    bgColor: 'bg-amber-50 dark:bg-amber-900/30',
-    borderColor: 'border-amber-300 dark:border-amber-700',
-    dotColor: 'bg-amber-500',
+    color: 'text-orange-700 dark:text-orange-300',
+    bgColor: 'bg-orange-50 dark:bg-orange-900/20',
+    borderColor: 'border-orange-200 dark:border-orange-800',
+    dotColor: 'bg-orange-500',
     icon: Clock,
   },
   unavailable: {
     label: 'Unavailable',
-    color: 'text-slate-600 dark:text-slate-400',
-    bgColor: 'bg-slate-100 dark:bg-slate-800/50',
-    borderColor: 'border-slate-300 dark:border-slate-600',
-    dotColor: 'bg-slate-400',
+    color: 'text-gray-600 dark:text-gray-400',
+    bgColor: 'bg-gray-50 dark:bg-gray-800/50',
+    borderColor: 'border-gray-200 dark:border-gray-700',
+    dotColor: 'bg-gray-400',
     icon: XCircle,
   },
 };
@@ -103,7 +103,7 @@ export function CreatorAvailabilityWidget({ isLoading = false }: CreatorAvailabi
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="h-5 w-5 text-indigo-500" />
+            <Users className="h-5 w-5 text-sky-500" />
             Creator Availability
           </CardTitle>
         </CardHeader>
@@ -126,7 +126,7 @@ export function CreatorAvailabilityWidget({ isLoading = false }: CreatorAvailabi
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="h-5 w-5 text-indigo-500" />
+            <Users className="h-5 w-5 text-sky-500" />
             Creator Availability
           </CardTitle>
           <Link

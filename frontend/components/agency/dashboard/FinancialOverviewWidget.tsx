@@ -87,16 +87,16 @@ export function FinancialOverviewWidget({ stats, isLoading = false }: FinancialO
           {/* Outstanding Receivables */}
           <Link
             href="/agency/finance/invoices?status=sent"
-            className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/20 transition-colors"
+            className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-2">
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mb-2">
               <Receipt className="h-4 w-4" />
               <span className="text-xs font-medium">Outstanding</span>
             </div>
-            <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+            <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">
               {formatCurrency(stats.outstanding_receivables)}
             </p>
-            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {stats.outstanding_count} {stats.outstanding_count === 1 ? 'invoice' : 'invoices'} pending
             </p>
           </Link>
@@ -142,16 +142,16 @@ export function FinancialOverviewWidget({ stats, isLoading = false }: FinancialO
           {/* Creator Payouts */}
           <Link
             href="/agency/finance/payouts"
-            className="p-4 rounded-lg bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/20 transition-colors"
+            className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/20 transition-colors"
           >
-            <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 mb-2">
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-2">
               <Users className="h-4 w-4" />
               <span className="text-xs font-medium">Payouts Due</span>
             </div>
-            <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+            <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">
               {formatCurrency(stats.creator_payouts_due)}
             </p>
-            <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
               {stats.creator_payouts_count} creators pending
             </p>
           </Link>

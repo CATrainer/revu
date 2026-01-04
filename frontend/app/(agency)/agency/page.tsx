@@ -161,11 +161,11 @@ export default function AgencyDashboardPage() {
 
       {/* Main Dashboard Grid */}
       {layoutPreset === 'default' && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Top Row: Action Required + Deadlines stacked, Pipeline, Creator Availability */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start">
             {/* Left: Action Required + Deadlines stacked (half height each) */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {visibleWidgets.actionRequired && <ActionRequiredWidget items={actionItems || []} isLoading={actionsLoading} />}
               {visibleWidgets.deadlines && <UpcomingDeadlinesWidget deadlines={deadlines || []} isLoading={deadlinesLoading} />}
             </div>
@@ -174,7 +174,7 @@ export default function AgencyDashboardPage() {
           </div>
 
           {/* Bottom Row: Campaign Performance, Financial */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {visibleWidgets.performance && <CampaignPerformanceWidget />}
             {visibleWidgets.financial && <FinancialOverviewWidget stats={financialStats || { outstanding_receivables: 0, outstanding_count: 0, overdue_receivables: 0, overdue_count: 0, oldest_overdue_days: 0, creator_payouts_due: 0, creator_payouts_count: 0, revenue_this_month: 0, revenue_last_month: 0, revenue_trend_percent: 0 }} isLoading={financialLoading || !financialStats} />}
           </div>
@@ -182,9 +182,9 @@ export default function AgencyDashboardPage() {
       )}
 
       {layoutPreset === 'financial' && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Top Row: Financial Overview (large) | Pipeline */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start">
             <div className="lg:col-span-2">
               <FinancialOverviewWidget stats={financialStats || { outstanding_receivables: 0, outstanding_count: 0, overdue_receivables: 0, overdue_count: 0, oldest_overdue_days: 0, creator_payouts_due: 0, creator_payouts_count: 0, revenue_this_month: 0, revenue_last_month: 0, revenue_trend_percent: 0 }} isLoading={financialLoading || !financialStats} />
             </div>
@@ -192,9 +192,9 @@ export default function AgencyDashboardPage() {
           </div>
 
           {/* Bottom Row: Campaign Performance | Actions + Deadlines stacked */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
             <CampaignPerformanceWidget />
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               <ActionRequiredWidget items={actionItems || []} isLoading={actionsLoading} />
               <UpcomingDeadlinesWidget deadlines={deadlines || []} isLoading={deadlinesLoading} />
             </div>
@@ -203,10 +203,10 @@ export default function AgencyDashboardPage() {
       )}
 
       {layoutPreset === 'operations' && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Top Row: Actions + Deadlines stacked | Creator Availability | Pipeline */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-            <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start">
+            <div className="flex flex-col gap-2">
               <ActionRequiredWidget items={actionItems || []} isLoading={actionsLoading} />
               <UpcomingDeadlinesWidget deadlines={deadlines || []} isLoading={deadlinesLoading} />
             </div>
@@ -215,7 +215,7 @@ export default function AgencyDashboardPage() {
           </div>
 
           {/* Bottom Row: Campaign Performance | Financial Overview */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <CampaignPerformanceWidget />
             <FinancialOverviewWidget stats={financialStats || { outstanding_receivables: 0, outstanding_count: 0, overdue_receivables: 0, overdue_count: 0, oldest_overdue_days: 0, creator_payouts_due: 0, creator_payouts_count: 0, revenue_this_month: 0, revenue_last_month: 0, revenue_trend_percent: 0 }} isLoading={financialLoading || !financialStats} />
           </div>
