@@ -37,9 +37,9 @@ export function CampaignPerformanceWidget({ isLoading = false }: CampaignPerform
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'exceeding':
-        return 'text-green-600 bg-green-50 dark:bg-green-900/20';
+        return 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20';
       case 'on_track':
-        return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20';
+        return 'text-sky-600 bg-sky-50 dark:bg-sky-900/20';
       case 'underperforming':
         return 'text-red-600 bg-red-50 dark:bg-red-900/20';
       default:
@@ -58,7 +58,7 @@ export function CampaignPerformanceWidget({ isLoading = false }: CampaignPerform
         </CardHeader>
         <CardContent>
           <div className="space-y-4 animate-pulse">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               {[1, 2, 3].map(i => (
                 <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-lg" />
               ))}

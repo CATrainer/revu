@@ -62,11 +62,11 @@ export function UpcomingDeadlinesWidget({ deadlines, isLoading = false }: Upcomi
     if (isOverdue) return 'text-red-600 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
     switch (type) {
       case 'content_posting':
-        return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
+        return 'text-sky-600 bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800';
       case 'deliverable':
-        return 'text-purple-600 bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800';
+        return 'text-cyan-600 bg-cyan-50 dark:bg-cyan-900/20 border-cyan-200 dark:border-cyan-800';
       case 'payment':
-        return 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+        return 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800';
       case 'approval':
         return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800';
       default:
@@ -95,12 +95,12 @@ export function UpcomingDeadlinesWidget({ deadlines, isLoading = false }: Upcomi
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-blue-500" />
+            <Calendar className="h-5 w-5 text-teal-500" />
             Upcoming Deadlines
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4 animate-pulse">
+          <div className="flex gap-3 animate-pulse">
             {[1, 2, 3, 4, 5].map(i => (
               <div key={i} className="flex-1 space-y-2">
                 <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded" />
@@ -119,18 +119,18 @@ export function UpcomingDeadlinesWidget({ deadlines, isLoading = false }: Upcomi
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-blue-500" />
+            <Calendar className="h-5 w-5 text-teal-500" />
             Upcoming Deadlines
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4 py-6">
-            <div className="h-14 w-14 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
-              <Calendar className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+          <div className="flex items-center gap-3 py-6">
+            <div className="h-14 w-14 rounded-full bg-teal-100 dark:bg-teal-900/20 flex items-center justify-center flex-shrink-0">
+              <Calendar className="h-7 w-7 text-teal-600 dark:text-teal-400" />
             </div>
             <div>
               <p className="font-medium text-gray-900 dark:text-gray-100">No upcoming deadlines</p>
-              <Link href="/agency/campaigns/new" className="text-sm text-blue-600 hover:underline mt-1 inline-block">Create a campaign to get started</Link>
+              <Link href="/agency/campaigns/new" className="text-sm text-teal-600 hover:underline mt-1 inline-block">Create a campaign to get started</Link>
             </div>
           </div>
         </CardContent>
@@ -143,7 +143,7 @@ export function UpcomingDeadlinesWidget({ deadlines, isLoading = false }: Upcomi
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-blue-500" />
+            <Calendar className="h-5 w-5 text-teal-500" />
             Upcoming Deadlines
           </CardTitle>
           <div className="flex items-center gap-2">

@@ -30,8 +30,8 @@ const stageConfig: Record<DealStage, { label: string; color: string; bgColor: st
   },
   pitch_sent: {
     label: 'Pitch Sent',
-    color: 'bg-blue-500',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    color: 'bg-sky-500',
+    bgColor: 'bg-sky-100 dark:bg-sky-900/30',
   },
   negotiating: {
     label: 'Negotiating',
@@ -45,8 +45,8 @@ const stageConfig: Record<DealStage, { label: string; color: string; bgColor: st
   },
   in_progress: {
     label: 'In Progress',
-    color: 'bg-purple-500',
-    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+    color: 'bg-cyan-500',
+    bgColor: 'bg-cyan-100 dark:bg-cyan-900/30',
   },
   completed: {
     label: 'Completed',
@@ -86,7 +86,7 @@ export function PipelineSummaryWidget({ stats, isLoading = false }: PipelineSumm
         <CardContent>
           <div className="space-y-4">
             <div className="animate-pulse h-8 bg-gray-200 dark:bg-gray-700 rounded-full" />
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               {[1, 2, 3].map(i => (
                 <div key={i} className="animate-pulse space-y-2">
                   <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded" />
@@ -169,7 +169,7 @@ export function PipelineSummaryWidget({ stats, isLoading = false }: PipelineSumm
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-3">
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs">
               <DollarSign className="h-3.5 w-3.5" />

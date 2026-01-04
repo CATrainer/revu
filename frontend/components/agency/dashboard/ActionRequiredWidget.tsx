@@ -120,7 +120,7 @@ export function ActionRequiredWidget({ items, isLoading = false }: ActionRequire
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4 py-6">
+          <div className="flex items-center gap-3 py-6">
             <div className="h-14 w-14 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
               <Check className="h-7 w-7 text-green-600" />
             </div>

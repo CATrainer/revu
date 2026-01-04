@@ -40,7 +40,7 @@ export function FinancialOverviewWidget({ stats, isLoading = false }: FinancialO
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="animate-pulse space-y-2 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                 <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
@@ -83,7 +83,7 @@ export function FinancialOverviewWidget({ stats, isLoading = false }: FinancialO
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Metric Cards */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {/* Outstanding Receivables */}
           <Link
             href="/agency/finance/invoices?status=sent"
