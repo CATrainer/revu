@@ -613,6 +613,7 @@ class PayoutMarkPaidRequest(BaseModel):
 class FinancialStats(BaseModel):
     """Financial overview stats."""
     outstanding_receivables: Decimal
+    outstanding_count: int
     overdue_receivables: Decimal
     overdue_count: int
     oldest_overdue_days: Optional[int] = None
@@ -705,6 +706,7 @@ class ActionRequiredItem(BaseModel):
 class UpcomingDeadline(BaseModel):
     """Upcoming deadline for dashboard."""
     id: str
+    campaign_id: Optional[str] = None  # Link to campaign detail page
     date: datetime
     type: str  # content_posting, deliverable, payment, approval
     title: str

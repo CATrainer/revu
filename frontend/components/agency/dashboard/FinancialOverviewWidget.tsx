@@ -57,7 +57,7 @@ export function FinancialOverviewWidget({ stats, isLoading = false }: FinancialO
   const trendUp = stats.revenue_trend_percent >= 0;
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -71,6 +71,13 @@ export function FinancialOverviewWidget({ stats, isLoading = false }: FinancialO
               <option>This Quarter</option>
               <option>This Year</option>
             </select>
+            <Link
+              href="/agency/finance"
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1"
+            >
+              View All
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </CardHeader>
@@ -90,7 +97,7 @@ export function FinancialOverviewWidget({ stats, isLoading = false }: FinancialO
               {formatCurrency(stats.outstanding_receivables)}
             </p>
             <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-              5 invoices pending
+              {stats.outstanding_count} {stats.outstanding_count === 1 ? 'invoice' : 'invoices'} pending
             </p>
           </Link>
 

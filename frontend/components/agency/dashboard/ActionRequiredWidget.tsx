@@ -120,14 +120,14 @@ export function ActionRequiredWidget({ items, isLoading = false }: ActionRequire
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center py-6 text-center">
-            <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center mb-3">
-              <Check className="h-6 w-6 text-green-600" />
+          <div className="flex items-center gap-4 py-6">
+            <div className="h-14 w-14 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
+              <Check className="h-7 w-7 text-green-600" />
             </div>
-            <p className="text-gray-600 dark:text-gray-400">No urgent actions required.</p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-              Check back later for upcoming items.
-            </p>
+            <div>
+              <p className="font-medium text-gray-900 dark:text-gray-100">No urgent actions required</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Check back later for upcoming items</p>
+            </div>
           </div>
         </CardContent>
       </Card>

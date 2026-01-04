@@ -309,6 +309,7 @@ async def get_upcoming_deadlines(
     for c in result.scalars().all():
         deadlines.append(UpcomingDeadline(
             id=str(c.id),
+            campaign_id=str(c.id),
             date=c.posting_date,
             type="content_posting",
             title=c.title,
@@ -333,6 +334,7 @@ async def get_upcoming_deadlines(
     for d in result.scalars().all():
         deadlines.append(UpcomingDeadline(
             id=str(d.id),
+            campaign_id=str(d.campaign_id) if d.campaign_id else None,
             date=d.due_date,
             type="deliverable",
             title=d.title,

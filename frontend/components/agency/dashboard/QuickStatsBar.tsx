@@ -9,15 +9,18 @@ import {
   DollarSign,
   GitBranch,
   CheckCircle,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import type { DashboardStats } from '@/lib/agency-dashboard-api';
 
 interface QuickStatsBarProps {
   stats: DashboardStats;
   isLoading?: boolean;
+  actionCount?: number;
 }
 
-export function QuickStatsBar({ stats, isLoading = false }: QuickStatsBarProps) {
+export function QuickStatsBar({ stats, isLoading = false, actionCount = 0 }: QuickStatsBarProps) {
   // Format currency
   const formatCurrency = (value: number) => {
     if (value >= 1000000) {
@@ -31,13 +34,22 @@ export function QuickStatsBar({ stats, isLoading = false }: QuickStatsBarProps) 
 
   const statItems = [
     {
+      label: 'Actions',
+      value: actionCount,
+      format: (v: number) => v.toString(),
+      href: '/agency/actions',
+      icon: actionCount > 0 ? AlertCircle : CheckCircle2,
+      color: actionCount > 0 ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300',
+      bgColor: actionCount > 0 ? 'bg-red-100 dark:bg-red-900/40' : 'bg-emerald-100 dark:bg-emerald-900/40',
+    },
+    {
       label: 'Active Campaigns',
       value: stats.total_active_campaigns,
       format: (v: number) => v.toString(),
       href: '/agency/campaigns?status=active',
       icon: Megaphone,
-      color: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+      color: 'text-indigo-700 dark:text-indigo-300',
+      bgColor: 'bg-indigo-100 dark:bg-indigo-900/40',
     },
     {
       label: 'Total Creators',
@@ -45,8 +57,8 @@ export function QuickStatsBar({ stats, isLoading = false }: QuickStatsBarProps) 
       format: (v: number) => v.toString(),
       href: '/agency/creators',
       icon: Users,
-      color: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+      color: 'text-violet-700 dark:text-violet-300',
+      bgColor: 'bg-violet-100 dark:bg-violet-900/40',
     },
     {
       label: "This Month's Revenue",
@@ -54,8 +66,8 @@ export function QuickStatsBar({ stats, isLoading = false }: QuickStatsBarProps) 
       format: (v: number) => `${formatCurrency(v)}`,
       href: '/agency/finance',
       icon: DollarSign,
-      color: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-green-50 dark:bg-green-900/20',
+      color: 'text-emerald-700 dark:text-emerald-300',
+      bgColor: 'bg-emerald-100 dark:bg-emerald-900/40',
       prefix: '£',
     },
     {
@@ -64,8 +76,8 @@ export function QuickStatsBar({ stats, isLoading = false }: QuickStatsBarProps) 
       format: (v: number) => `${formatCurrency(v)}`,
       href: '/agency/pipeline',
       icon: GitBranch,
-      color: 'text-orange-600 dark:text-orange-400',
-      bgColor: 'bg-orange-50 dark:bg-orange-900/20',
+      color: 'text-amber-700 dark:text-amber-300',
+      bgColor: 'bg-amber-100 dark:bg-amber-900/40',
       prefix: '£',
     },
     {
@@ -74,15 +86,15 @@ export function QuickStatsBar({ stats, isLoading = false }: QuickStatsBarProps) 
       format: (v: number) => `${v}%`,
       href: '/agency/campaigns?status=completed',
       icon: CheckCircle,
-      color: 'text-emerald-600 dark:text-emerald-400',
-      bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+      color: 'text-teal-700 dark:text-teal-300',
+      bgColor: 'bg-teal-100 dark:bg-teal-900/40',
     },
   ];
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-        {[1, 2, 3, 4, 5].map(i => (
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-4 p-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+        {[1, 2, 3, 4, 5, 6].map(i => (
           <div key={i} className="animate-pulse flex items-center gap-3 p-3">
             <div className="h-10 w-10 rounded-lg bg-gray-200 dark:bg-gray-700" />
             <div className="space-y-2">
@@ -96,7 +108,7 @@ export function QuickStatsBar({ stats, isLoading = false }: QuickStatsBarProps) 
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+    <div className="grid grid-cols-3 md:grid-cols-6 gap-4 p-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
       {statItems.map((item, index) => (
         <Link
           key={item.label}

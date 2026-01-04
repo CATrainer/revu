@@ -124,12 +124,17 @@ async def get_financial_stats(
 
     # Outstanding receivables (sent, not paid)
     result = await db.execute(
-        select(func.coalesce(func.sum(AgencyInvoice.total_amount), 0)).where(
+        select(
+            func.coalesce(func.sum(AgencyInvoice.total_amount), 0),
+            func.count(AgencyInvoice.id),
+        ).where(
             AgencyInvoice.agency_id == agency_id,
             AgencyInvoice.status.in_(['sent', 'viewed']),
         )
     )
-    outstanding = result.scalar() or Decimal("0")
+    row = result.one()
+    outstanding = row[0] or Decimal("0")
+    outstanding_count = row[1] or 0
 
     # Overdue receivables
     result = await db.execute(
@@ -199,6 +204,7 @@ async def get_financial_stats(
 
     return FinancialStats(
         outstanding_receivables=outstanding,
+        outstanding_count=outstanding_count,
         overdue_receivables=overdue_amount,
         overdue_count=overdue_count,
         oldest_overdue_days=oldest_overdue_days,

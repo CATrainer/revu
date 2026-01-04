@@ -76,32 +76,36 @@ export function CampaignPerformanceWidget({ isLoading = false }: CampaignPerform
 
   // Coming Soon - Backend endpoint not yet implemented
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Megaphone className="h-5 w-5 text-pink-500" />
-          Campaign Performance
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Megaphone className="h-5 w-5 text-pink-500" />
+            Campaign Performance
+          </CardTitle>
+          <Link
+            href="/agency/campaigns"
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1"
+          >
+            View All
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="rounded-full bg-pink-100 dark:bg-pink-900/20 p-4 mb-4">
-            <TrendingUp className="h-8 w-8 text-pink-600 dark:text-pink-400" />
+      <CardContent className="flex-1 flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center text-center py-6">
+          <div className="rounded-full bg-pink-100 dark:bg-pink-900/20 p-3 mb-3">
+            <TrendingUp className="h-6 w-6 text-pink-600 dark:text-pink-400" />
           </div>
-          <h3 className="text-lg font-semibold mb-2">Coming Soon</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
-            Campaign performance analytics and tracking will be available soon. View your campaigns to see individual metrics.
+          <h3 className="text-base font-semibold mb-1">Coming Soon</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-xs">
+            Campaign analytics and tracking
           </p>
           <div className="flex gap-2">
             <Link href="/agency/campaigns">
               <Button size="sm">
                 <Megaphone className="h-4 w-4 mr-2" />
                 View Campaigns
-              </Button>
-            </Link>
-            <Link href="/agency/campaigns/new">
-              <Button size="sm" variant="outline">
-                Create Campaign
               </Button>
             </Link>
           </div>

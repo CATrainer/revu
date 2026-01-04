@@ -247,6 +247,7 @@ export interface CreatorPayout {
 
 export interface FinancialStats {
   outstanding_receivables: number;
+  outstanding_count: number;
   overdue_receivables: number;
   overdue_count: number;
   oldest_overdue_days?: number;
@@ -317,6 +318,7 @@ export interface ActionRequiredItem {
 
 export interface UpcomingDeadline {
   id: string;
+  campaign_id?: string;  // Link to campaign detail page
   date: string;
   type: 'content_posting' | 'deliverable' | 'payment' | 'approval';
   title: string;
@@ -427,7 +429,7 @@ export const dashboardApi = {
   },
 
   getFinancialOverview: async (): Promise<FinancialStats> => {
-    const response = await api.get('/agency/dashboard/financial');
+    const response = await api.get('/agency/finance/stats');
     return response.data;
   },
 

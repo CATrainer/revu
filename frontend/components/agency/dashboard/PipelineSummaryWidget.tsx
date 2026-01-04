@@ -67,8 +67,9 @@ export function PipelineSummaryWidget({ stats, isLoading = false }: PipelineSumm
   const activeStages: DealStage[] = ['prospecting', 'pitch_sent', 'negotiating', 'booked', 'in_progress'];
   const totalActiveDeals = activeStages.reduce((sum, stage) => sum + (stats.by_stage[stage]?.count || 0), 0);
 
-  const formatCurrency = (value: number) => {
-    return formatAmount(value, userCurrency, { decimals: 0 });
+  const formatCurrency = (value: number | string) => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    return formatAmount(Math.round(numValue), userCurrency, { decimals: 0 });
   };
 
   if (isLoading) {
@@ -100,7 +101,7 @@ export function PipelineSummaryWidget({ stats, isLoading = false }: PipelineSumm
   }
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">

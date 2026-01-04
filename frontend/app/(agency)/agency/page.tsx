@@ -9,7 +9,6 @@ import {
   ActionRequiredWidget,
   PipelineSummaryWidget,
   UpcomingDeadlinesWidget,
-  RecentActivityWidget,
   FinancialOverviewWidget,
   CreatorAvailabilityWidget,
   CampaignPerformanceWidget,
@@ -52,7 +51,6 @@ const defaultWidgets = {
   pipeline: true,
   deadlines: true,
   creatorAvailability: true,
-  recentActivity: true,
   financial: true,
   performance: true,
 };
@@ -81,13 +79,6 @@ export default function AgencyDashboardPage() {
   const { data: deadlines, isLoading: deadlinesLoading } = useQuery({
     queryKey: ['agency-deadlines'],
     queryFn: () => dashboardApi.getUpcomingDeadlines(14),
-    staleTime: 30000,
-  });
-
-  // Fetch recent activity
-  const { data: activity, isLoading: activityLoading } = useQuery({
-    queryKey: ['agency-activity'],
-    queryFn: () => dashboardApi.getRecentActivity(20),
     staleTime: 30000,
   });
 
@@ -166,68 +157,69 @@ export default function AgencyDashboardPage() {
       </div>
 
       {/* Quick Stats Bar */}
-      {dashboardStats && <QuickStatsBar stats={dashboardStats} isLoading={statsLoading} />}
+      {dashboardStats && <QuickStatsBar stats={dashboardStats} isLoading={statsLoading} actionCount={actionItems?.length || 0} />}
 
       {/* Main Dashboard Grid */}
       {layoutPreset === 'default' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {/* Left Column */}
-          <div className="space-y-6">
-            {visibleWidgets.actionRequired && actionItems && <ActionRequiredWidget items={actionItems} isLoading={actionsLoading} />}
+        <div className="space-y-4">
+          {/* Top Row: Action Required + Deadlines stacked, Pipeline, Creator Availability */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            {/* Left: Action Required + Deadlines stacked (half height each) */}
+            <div className="flex flex-col gap-3">
+              {visibleWidgets.actionRequired && <ActionRequiredWidget items={actionItems || []} isLoading={actionsLoading} />}
+              {visibleWidgets.deadlines && <UpcomingDeadlinesWidget deadlines={deadlines || []} isLoading={deadlinesLoading} />}
+            </div>
             {visibleWidgets.pipeline && pipelineStats && <PipelineSummaryWidget stats={pipelineStats} isLoading={pipelineLoading} />}
-          </div>
-
-          {/* Center Column */}
-          <div className="space-y-6">
-            {visibleWidgets.deadlines && deadlines && <UpcomingDeadlinesWidget deadlines={deadlines} isLoading={deadlinesLoading} />}
             {visibleWidgets.creatorAvailability && <CreatorAvailabilityWidget />}
           </div>
 
-          {/* Right Column */}
-          <div className="space-y-6 lg:col-span-2 xl:col-span-1">
-            {visibleWidgets.recentActivity && activity && <RecentActivityWidget activities={activity} isLoading={activityLoading} />}
-            {visibleWidgets.financial && financialStats && <FinancialOverviewWidget stats={financialStats} isLoading={financialLoading} />}
+          {/* Bottom Row: Campaign Performance, Financial */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {visibleWidgets.performance && <CampaignPerformanceWidget />}
+            {visibleWidgets.financial && <FinancialOverviewWidget stats={financialStats || { outstanding_receivables: 0, outstanding_count: 0, overdue_receivables: 0, overdue_count: 0, oldest_overdue_days: 0, creator_payouts_due: 0, creator_payouts_count: 0, revenue_this_month: 0, revenue_last_month: 0, revenue_trend_percent: 0 }} isLoading={financialLoading || !financialStats} />}
           </div>
         </div>
       )}
 
       {layoutPreset === 'financial' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column */}
-          <div className="space-y-6">
-            {financialStats && <FinancialOverviewWidget stats={financialStats} isLoading={financialLoading} />}
+        <div className="space-y-4">
+          {/* Top Row: Financial Overview (large) | Pipeline */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            <div className="lg:col-span-2">
+              <FinancialOverviewWidget stats={financialStats || { outstanding_receivables: 0, outstanding_count: 0, overdue_receivables: 0, overdue_count: 0, oldest_overdue_days: 0, creator_payouts_due: 0, creator_payouts_count: 0, revenue_this_month: 0, revenue_last_month: 0, revenue_trend_percent: 0 }} isLoading={financialLoading || !financialStats} />
+            </div>
             {pipelineStats && <PipelineSummaryWidget stats={pipelineStats} isLoading={pipelineLoading} />}
           </div>
 
-          {/* Right Column */}
-          <div className="space-y-6">
-            {actionItems && <ActionRequiredWidget items={actionItems} isLoading={actionsLoading} />}
-            {activity && <RecentActivityWidget activities={activity} isLoading={activityLoading} />}
+          {/* Bottom Row: Campaign Performance | Actions + Deadlines stacked */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <CampaignPerformanceWidget />
+            <div className="flex flex-col gap-3">
+              <ActionRequiredWidget items={actionItems || []} isLoading={actionsLoading} />
+              <UpcomingDeadlinesWidget deadlines={deadlines || []} isLoading={deadlinesLoading} />
+            </div>
           </div>
         </div>
       )}
 
       {layoutPreset === 'operations' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column */}
-          <div className="space-y-6">
-            {actionItems && <ActionRequiredWidget items={actionItems} isLoading={actionsLoading} />}
-            {deadlines && <UpcomingDeadlinesWidget deadlines={deadlines} isLoading={deadlinesLoading} />}
-            <CampaignPerformanceWidget />
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-6">
+        <div className="space-y-4">
+          {/* Top Row: Actions + Deadlines stacked | Creator Availability | Pipeline */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            <div className="flex flex-col gap-3">
+              <ActionRequiredWidget items={actionItems || []} isLoading={actionsLoading} />
+              <UpcomingDeadlinesWidget deadlines={deadlines || []} isLoading={deadlinesLoading} />
+            </div>
             <CreatorAvailabilityWidget />
             {pipelineStats && <PipelineSummaryWidget stats={pipelineStats} isLoading={pipelineLoading} />}
-            {activity && <RecentActivityWidget activities={activity} isLoading={activityLoading} />}
+          </div>
+
+          {/* Bottom Row: Campaign Performance | Financial Overview */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <CampaignPerformanceWidget />
+            <FinancialOverviewWidget stats={financialStats || { outstanding_receivables: 0, outstanding_count: 0, overdue_receivables: 0, overdue_count: 0, oldest_overdue_days: 0, creator_payouts_due: 0, creator_payouts_count: 0, revenue_this_month: 0, revenue_last_month: 0, revenue_trend_percent: 0 }} isLoading={financialLoading || !financialStats} />
           </div>
         </div>
-      )}
-
-      {/* Campaign Performance - Full Width */}
-      {layoutPreset === 'default' && visibleWidgets.performance && (
-        <CampaignPerformanceWidget />
       )}
 
       {/* Customize Dashboard Dialog */}
@@ -270,14 +262,6 @@ export default function AgencyDashboardPage() {
                 id="widget-creator"
                 checked={visibleWidgets.creatorAvailability}
                 onCheckedChange={(checked) => setVisibleWidgets({ ...visibleWidgets, creatorAvailability: checked })}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="widget-activity" className="flex-1">Recent Activity</Label>
-              <Switch
-                id="widget-activity"
-                checked={visibleWidgets.recentActivity}
-                onCheckedChange={(checked) => setVisibleWidgets({ ...visibleWidgets, recentActivity: checked })}
               />
             </div>
             <div className="flex items-center justify-between">

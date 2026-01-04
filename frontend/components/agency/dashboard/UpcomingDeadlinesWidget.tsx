@@ -124,25 +124,13 @@ export function UpcomingDeadlinesWidget({ deadlines, isLoading = false }: Upcomi
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="rounded-full bg-blue-100 dark:bg-blue-900/20 p-4 mb-4">
-              <Calendar className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+          <div className="flex items-center gap-4 py-6">
+            <div className="h-14 w-14 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+              <Calendar className="h-7 w-7 text-blue-600 dark:text-blue-400" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">No upcoming deadlines</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
-              Create campaigns with deliverables and invoices to track deadlines here.
-            </p>
-            <div className="flex gap-2">
-              <Link href="/agency/campaigns/new">
-                <Button size="sm">
-                  Create Campaign
-                </Button>
-              </Link>
-              <Link href="/agency/finance">
-                <Button size="sm" variant="outline">
-                  Manage Invoices
-                </Button>
-              </Link>
+            <div>
+              <p className="font-medium text-gray-900 dark:text-gray-100">No upcoming deadlines</p>
+              <Link href="/agency/campaigns/new" className="text-sm text-blue-600 hover:underline mt-1 inline-block">Create a campaign to get started</Link>
             </div>
           </div>
         </CardContent>
@@ -191,10 +179,15 @@ export function UpcomingDeadlinesWidget({ deadlines, isLoading = false }: Upcomi
             <div className="space-y-2">
               {deadlines.filter(d => d.is_overdue).map(deadline => {
                 const Icon = getIcon(deadline.type);
+                const linkUrl = deadline.campaign_id 
+                  ? `/agency/campaigns/${deadline.campaign_id}`
+                  : deadline.type === 'payment' 
+                    ? `/agency/finance/invoices`
+                    : `/agency/campaigns`;
                 return (
                   <Link
                     key={deadline.id}
-                    href={`/agency/campaigns/${deadline.id}`}
+                    href={linkUrl}
                     className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 hover:underline"
                   >
                     <Icon className="h-3.5 w-3.5" />
@@ -259,11 +252,16 @@ export function UpcomingDeadlinesWidget({ deadlines, isLoading = false }: Upcomi
                       dayDeadlines.slice(0, 3).map(deadline => {
                         const Icon = getIcon(deadline.type);
                         const colorClass = getColor(deadline.type, deadline.is_overdue);
+                        const linkUrl = deadline.campaign_id 
+                          ? `/agency/campaigns/${deadline.campaign_id}`
+                          : deadline.type === 'payment' 
+                            ? `/agency/finance/invoices`
+                            : `/agency/campaigns`;
 
                         return (
                           <Link
                             key={deadline.id}
-                            href={`/agency/campaigns/${deadline.id}`}
+                            href={linkUrl}
                             className={cn(
                               'block p-2 rounded-lg border text-xs transition-colors hover:opacity-80',
                               colorClass

@@ -35,6 +35,7 @@ import {
   X,
   Bot,
   ListTodo,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   DropdownMenu,
