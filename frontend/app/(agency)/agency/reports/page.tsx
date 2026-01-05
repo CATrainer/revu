@@ -464,9 +464,9 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Reports</h1>
           <p className="mt-1 text-gray-600 dark:text-gray-400">
@@ -488,9 +488,9 @@ export default function ReportsPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="py-4">
-              <div className="grid gap-4">
+              <div className="grid gap-3">
                 {/* Quick Start */}
-                <div className="flex items-center gap-4 p-4 border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 rounded-lg cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                <div className="flex items-center gap-3 p-4 border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 rounded-lg cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
                   onClick={() => {
                     setShowNewReportDialog(false);
                     setShowReportBuilder(true);
@@ -524,13 +524,13 @@ export default function ReportsPage() {
                   <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
                     Popular Templates
                   </h4>
-                  <div className="grid gap-3">
+                  <div className="grid gap-2">
                     {templates.filter(t => t.is_popular).map(template => {
                       const Icon = template.icon;
                       return (
                         <div
                           key={template.id}
-                          className="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                          className="flex items-center gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                           onClick={() => startFromTemplate(template)}
                         >
                           <div className={cn(
@@ -577,9 +577,9 @@ export default function ReportsPage() {
         </TabsList>
 
         {/* Reports Tab */}
-        <TabsContent value="reports" className="space-y-4">
+        <TabsContent value="reports" className="space-y-3">
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -606,9 +606,9 @@ export default function ReportsPage() {
 
           {/* Favorites Section */}
           {filteredReports.some(r => r.is_favorite) && (
-            <div className="space-y-3">
+            <div className="space-y-2">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Favorites</h3>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
                 {filteredReports.filter(r => r.is_favorite).map(report => {
                   const TypeIcon = reportTypeConfig[report.type].icon;
                   return (
@@ -687,17 +687,17 @@ export default function ReportsPage() {
           )}
 
           {/* All Reports */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
               All Reports ({filteredReports.length})
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {filteredReports.map(report => {
                 const TypeIcon = reportTypeConfig[report.type].icon;
                 return (
                   <Card key={report.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3">
                         <div className={cn(
                           "h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0",
                           reportTypeConfig[report.type].color
@@ -720,7 +720,7 @@ export default function ReportsPage() {
                             {report.description}
                           </p>
                         </div>
-                        <div className="flex items-center gap-4 flex-shrink-0">
+                        <div className="flex items-center gap-3 flex-shrink-0">
                           {report.schedule && (
                             <Badge variant="outline" className="gap-1">
                               <Clock className="h-3 w-3" />
@@ -827,14 +827,14 @@ export default function ReportsPage() {
         </TabsContent>
 
         {/* Templates Tab */}
-        <TabsContent value="templates" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <TabsContent value="templates" className="space-y-3">
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
             {templates.map(template => {
               const Icon = template.icon;
               return (
                 <Card key={template.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
+                    <div className="flex items-start gap-3 mb-3">
                       <div className={cn(
                         "h-12 w-12 rounded-lg flex items-center justify-center",
                         reportTypeConfig[template.type].color
@@ -892,14 +892,14 @@ export default function ReportsPage() {
         </TabsContent>
 
         {/* Scheduled Tab */}
-        <TabsContent value="scheduled" className="space-y-4">
+        <TabsContent value="scheduled" className="space-y-3">
           <Card>
             <CardHeader>
               <CardTitle>Scheduled Reports</CardTitle>
               <CardDescription>Automatically generated reports on a schedule</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {reports.filter(r => r.schedule).map(report => {
                   const TypeIcon = reportTypeConfig[report.type].icon;
                   return (
@@ -907,7 +907,7 @@ export default function ReportsPage() {
                       key={report.id}
                       className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3">
                         <div className={cn(
                           "h-10 w-10 rounded-lg flex items-center justify-center",
                           reportTypeConfig[report.type].color
@@ -923,7 +923,7 @@ export default function ReportsPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3">
                         <Badge variant="outline" className="gap-1">
                           <Clock className="h-3 w-3" />
                           {report.schedule}
