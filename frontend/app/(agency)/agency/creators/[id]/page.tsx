@@ -202,7 +202,7 @@ export default function CreatorDetailPage() {
         {/* Middle & Right Columns */}
         <div className="lg:col-span-2 space-y-6">
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <Card>
               <CardContent className="pt-4 pb-4 text-center">
                 <Calendar className="h-6 w-6 mx-auto mb-2 text-blue-500" />

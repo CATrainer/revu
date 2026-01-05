@@ -56,9 +56,9 @@ const stageConfig: Record<PipelineStage, { label: string; color: string; bgColor
   },
   negotiation: {
     label: 'Negotiation',
-    color: 'text-amber-700 dark:text-amber-300',
-    bgColor: 'bg-amber-50 dark:bg-amber-900/40',
-    borderColor: 'border-amber-400',
+    color: 'text-orange-700 dark:text-orange-300',
+    bgColor: 'bg-orange-50 dark:bg-orange-900/40',
+    borderColor: 'border-orange-400',
   },
   contract: {
     label: 'Contract',
@@ -369,7 +369,7 @@ export default function PipelinePage() {
                           className={cn(
                             'cursor-pointer hover:shadow-md transition-all border-l-2',
                             isDragging && 'opacity-50 scale-95',
-                            deal.priority === 'high' ? 'border-l-amber-500' : 'border-l-transparent'
+                            deal.priority === 'high' ? 'border-l-orange-500' : 'border-l-transparent'
                           )}
                           draggable
                           onDragStart={() => handleDragStart(deal)}
@@ -394,7 +394,7 @@ export default function PipelinePage() {
                                 </div>
                               </div>
                               {deal.priority === 'high' && (
-                                <Star className="h-3 w-3 text-amber-500 fill-amber-500 flex-shrink-0" />
+                                <Star className="h-3 w-3 text-orange-500 fill-orange-500 flex-shrink-0" />
                               )}
                             </div>
                             <div className="mt-1.5 flex items-center justify-between text-xs">

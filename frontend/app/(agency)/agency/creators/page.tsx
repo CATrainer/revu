@@ -116,7 +116,7 @@ const connectionStatusConfig: Record<ConnectionStatus, { label: string; color: s
   },
   pending: {
     label: 'Pending',
-    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
     description: 'Awaiting creator consent to connect accounts.',
   },
   connected: {
@@ -490,7 +490,7 @@ export default function AgencyCreatorsPage() {
                         <span className={cn(
                           'font-medium',
                           creator.avg_engagement_rate >= 5 ? 'text-green-600' :
-                          creator.avg_engagement_rate >= 2 ? 'text-amber-600' : 'text-gray-600'
+                          creator.avg_engagement_rate >= 2 ? 'text-orange-600' : 'text-gray-600'
                         )}>
                           {creator.avg_engagement_rate.toFixed(1)}%
                         </span>
@@ -550,14 +550,14 @@ export default function AgencyCreatorsPage() {
           {/* Performance Tab */}
           <TabsContent value="performance" className="space-y-4">
             {/* Summary Stats with Tooltips */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Card className="cursor-help">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center">
-                          <Users className="h-5 w-5 text-sky-600" />
+                        <div className="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                          <Users className="h-5 w-5 text-blue-600" />
                         </div>
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400">Total Creators</p>
@@ -600,8 +600,8 @@ export default function AgencyCreatorsPage() {
                   <Card className="cursor-help">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                          <TrendingUp className="h-5 w-5 text-amber-600" />
+                        <div className="h-10 w-10 rounded-lg bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center">
+                          <TrendingUp className="h-5 w-5 text-orange-600" />
                         </div>
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400">Avg Engagement</p>
@@ -715,7 +715,7 @@ export default function AgencyCreatorsPage() {
                           <span className={cn(
                             'font-medium',
                             creator.avg_engagement_rate >= 5 ? 'text-green-600' :
-                            creator.avg_engagement_rate >= 2 ? 'text-amber-600' : 'text-gray-600'
+                            creator.avg_engagement_rate >= 2 ? 'text-orange-600' : 'text-gray-600'
                           )}>
                             {creator.avg_engagement_rate.toFixed(1)}%
                           </span>
@@ -724,7 +724,7 @@ export default function AgencyCreatorsPage() {
                           <span className={cn(
                             'font-medium',
                             creator.on_time_delivery_rate >= 95 ? 'text-green-600' :
-                            creator.on_time_delivery_rate >= 80 ? 'text-amber-600' : 'text-red-600'
+                            creator.on_time_delivery_rate >= 80 ? 'text-orange-600' : 'text-red-600'
                           )}>
                             {creator.on_time_delivery_rate}%
                           </span>
@@ -841,8 +841,8 @@ export default function AgencyCreatorsPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <Avatar className="h-10 w-10">
-                              <AvatarFallback className="bg-amber-100 text-amber-700">
-                                {(request.user_full_name || request.user_email).charAt(0).toUpperCase()}
+                              <AvatarFallback className="bg-orange-100 text-orange-700">
+                                {(request.user_full_name || request.user_email).charAt(0).toUpperCase()}}
                               </AvatarFallback>
                             </Avatar>
                             <div>

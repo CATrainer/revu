@@ -119,7 +119,7 @@ const statusConfig: Record<DisplayStatus, { label: string; color: string; bgColo
 // Priority config
 const priorityConfig: Record<TaskPriority, { label: string; color: string }> = {
   urgent: { label: 'Urgent', color: 'text-red-600 bg-red-100 dark:bg-red-900/40' },
-  high: { label: 'High', color: 'text-amber-600 bg-amber-100 dark:bg-amber-900/40' },
+  high: { label: 'High', color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/40' },
   normal: { label: 'Normal', color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/40' },
   low: { label: 'Low', color: 'text-slate-500 bg-slate-100 dark:bg-slate-800' },
 };
