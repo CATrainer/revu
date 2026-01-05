@@ -723,6 +723,17 @@ export const reportApi = {
     return response.data;
   },
 
+  createReport: async (data: {
+    campaign_id: string;
+    title: string;
+    template?: string;
+    sections?: string[];
+    include_metrics?: boolean;
+  }): Promise<Report> => {
+    const response = await api.post('/agency/reports', data);
+    return response.data;
+  },
+
   generateReport: async (campaignId: string, options?: {
     template?: string;
     sections?: string[];
@@ -747,6 +758,14 @@ export const reportApi = {
 
   deleteReport: async (id: string): Promise<void> => {
     await api.delete(`/agency/reports/${id}`);
+  },
+
+  exportReport: async (id: string, format: 'pdf' | 'csv'): Promise<Blob> => {
+    const response = await api.get(`/agency/reports/${id}/export`, {
+      params: { format },
+      responseType: 'blob',
+    });
+    return response.data;
   },
 };
 
