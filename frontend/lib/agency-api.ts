@@ -94,6 +94,21 @@ export const agencyApi = {
     return response.data;
   },
 
+  // Upload agency logo
+  uploadLogo: async (file: File): Promise<{ logo_url: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/agency/me/logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  // Delete agency (owner only)
+  deleteAgency: async (): Promise<void> => {
+    await api.delete('/agency/me');
+  },
+
   // Get agency stats
   getStats: async (): Promise<AgencyStats> => {
     const response = await api.get('/agency/stats');

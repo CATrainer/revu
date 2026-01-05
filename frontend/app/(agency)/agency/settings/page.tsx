@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,17 +19,33 @@ import {
   DollarSign,
   Bell,
   Mail,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { agencyApi, type Agency } from '@/lib/agency-api';
 import { toast } from 'sonner';
 import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function AgencySettingsPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [agency, setAgency] = useState<Agency | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: '',
     website: '',
@@ -54,6 +71,54 @@ export default function AgencySettingsPage() {
       toast.error('Failed to load agency settings');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('File size must be less than 2MB');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const result = await agencyApi.uploadLogo(file);
+      setAgency(prev => prev ? { ...prev, logo_url: result.logo_url } : null);
+      toast.success('Logo uploaded successfully!');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } } };
+      toast.error(err.response?.data?.detail || 'Failed to upload logo');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeleteAgency = async () => {
+    if (deleteConfirmText !== agency?.name) return;
+
+    setIsDeleting(true);
+    try {
+      await agencyApi.deleteAgency();
+      toast.success('Agency deleted successfully');
+      await logout();
+      router.push('/');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } } };
+      toast.error(err.response?.data?.detail || 'Failed to delete agency');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
@@ -84,10 +149,10 @@ export default function AgencySettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
           Agency Settings
         </h1>
         <p className="mt-1 text-gray-600 dark:text-gray-400">
@@ -95,166 +160,194 @@ export default function AgencySettingsPage() {
         </p>
       </div>
 
-      {/* Agency Profile */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Agency Profile</CardTitle>
-          <CardDescription>
-            This information will be visible to creators when they receive invitations
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Logo Upload */}
-          <div className="space-y-2">
-            <Label>Agency Logo</Label>
-            <div className="flex items-center gap-4">
-              <div className="h-20 w-20 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 overflow-hidden">
-                {agency?.logo_url ? (
-                  <img
-                    src={agency.logo_url}
-                    alt={agency.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <Building2 className="h-8 w-8 text-gray-400" />
-                )}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Left Column */}
+        <div className="space-y-6">
+          {/* Agency Profile */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Agency Profile</CardTitle>
+              <CardDescription>
+                This information will be visible to creators when they receive invitations
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Logo Upload */}
+              <div className="space-y-2">
+                <Label>Agency Logo</Label>
+                <div className="flex items-center gap-4">
+                  <div className="h-20 w-20 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 overflow-hidden">
+                    {agency?.logo_url ? (
+                      <img
+                        src={agency.logo_url}
+                        alt={agency.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Building2 className="h-8 w-8 text-gray-400" />
+                    )}
+                  </div>
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                      id="logo-upload"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={isUploading}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {isUploading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="mr-2 h-4 w-4" />
+                      )}
+                      {isUploading ? 'Uploading...' : 'Upload Logo'}
+                    </Button>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      PNG, JPG up to 2MB. Recommended 200x200px.
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <Button variant="outline" size="sm" disabled>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload Logo
-                </Button>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  PNG, JPG up to 2MB. Recommended 200x200px.
+
+              {/* Agency Name */}
+              <div className="space-y-2">
+                <Label htmlFor="name">Agency Name</Label>
+                <Input
+                  id="name"
+                  placeholder="Your Agency Name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+              </div>
+
+              {/* Website */}
+              <div className="space-y-2">
+                <Label htmlFor="website">Website</Label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="website"
+                    placeholder="https://youragency.com"
+                    className="pl-10"
+                    value={formData.website}
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Tell creators about your agency..."
+                  rows={4}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  This description will be shown to creators when they receive invitations.
                 </p>
               </div>
-            </div>
-          </div>
 
-          {/* Agency Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name">Agency Name</Label>
-            <Input
-              id="name"
-              placeholder="Your Agency Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
-          </div>
+              <Button
+                onClick={handleSave}
+                disabled={isSaving || !formData.name}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
 
-          {/* Website */}
-          <div className="space-y-2">
-            <Label htmlFor="website">Website</Label>
-            <div className="relative">
-              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                id="website"
-                placeholder="https://youragency.com"
-                className="pl-10"
-                value={formData.website}
-                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-              />
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Tell creators about your agency..."
-              rows={4}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              This description will be shown to creators when they receive invitations.
-            </p>
-          </div>
-
-          <Button
-            onClick={handleSave}
-            disabled={isSaving || !formData.name}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save Changes
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Account Owner */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Account Owner</CardTitle>
-          <CardDescription>
-            The primary contact for this agency account
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-medium text-lg">
-              {user?.full_name?.charAt(0) || user?.email?.charAt(0) || 'A'}
-            </div>
-            <div>
-              <p className="font-medium text-gray-900 dark:text-gray-100">
-                {user?.full_name || 'Agency Owner'}
-              </p>
+          {/* Account Owner */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Account Owner</CardTitle>
+              <CardDescription>
+                The primary contact for this agency account
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-medium text-lg">
+                  {user?.full_name?.charAt(0) || user?.email?.charAt(0) || 'A'}
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                    {user?.full_name || 'Agency Owner'}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {user?.email}
+                  </p>
+                </div>
+              </div>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {user?.email}
+                To transfer ownership, please contact support.
               </p>
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            To transfer ownership, please contact support.
-          </p>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      {/* Currency Preference */}
-      <CurrencyPreferenceCard />
+          {/* Agency Info */}
+          {agency && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Agency Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Agency ID</span>
+                  <span className="font-mono text-gray-900 dark:text-gray-100">{agency.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Slug</span>
+                  <span className="font-mono text-gray-900 dark:text-gray-100">{agency.slug}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Created</span>
+                  <span className="text-gray-900 dark:text-gray-100">
+                    {new Date(agency.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
-      {/* Notification Preferences */}
-      <NotificationPreferencesCard />
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Currency Preference */}
+          <CurrencyPreferenceCard />
 
-      {/* Agency Info */}
-      {agency && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Agency Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Agency ID</span>
-              <span className="font-mono text-gray-900 dark:text-gray-100">{agency.id}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Slug</span>
-              <span className="font-mono text-gray-900 dark:text-gray-100">{agency.slug}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Created</span>
-              <span className="text-gray-900 dark:text-gray-100">
-                {new Date(agency.created_at).toLocaleDateString()}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          {/* Notification Preferences */}
+          <NotificationPreferencesCard />
+        </div>
+      </div>
 
-      {/* Danger Zone */}
+      {/* Danger Zone - Full Width */}
       <Card className="border-red-200 dark:border-red-900">
         <CardHeader>
-          <CardTitle className="text-lg text-red-600 dark:text-red-400">Danger Zone</CardTitle>
+          <CardTitle className="text-lg text-red-600 dark:text-red-400 flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            Danger Zone
+          </CardTitle>
           <CardDescription>
             Irreversible actions for your agency account
           </CardDescription>
@@ -266,15 +359,64 @@ export default function AgencySettingsPage() {
                 Delete Agency
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Permanently delete your agency and all associated data
+                Permanently delete your agency and all associated data including creators, campaigns, and financial records
               </p>
             </div>
-            <Button variant="destructive" disabled>
+            <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+              <Trash2 className="mr-2 h-4 w-4" />
               Delete Agency
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Delete Agency
+            </DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete your agency,
+              all team members, creators, campaigns, invoices, and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              To confirm, type <span className="font-mono font-bold text-gray-900 dark:text-gray-100">{agency?.name}</span> below:
+            </p>
+            <Input
+              placeholder="Type agency name to confirm"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteConfirmText !== agency?.name || isDeleting}
+              onClick={handleDeleteAgency}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Agency
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

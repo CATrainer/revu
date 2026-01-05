@@ -134,11 +134,11 @@ export default function AgencyTeamPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
             Team
           </h1>
           <p className="mt-1 text-gray-600 dark:text-gray-400">
-            Manage your agency team members
+            Manage your agency team members and permissions
           </p>
         </div>
         <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
