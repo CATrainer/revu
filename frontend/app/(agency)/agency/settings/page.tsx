@@ -149,7 +149,7 @@ export default function AgencySettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
@@ -160,9 +160,9 @@ export default function AgencySettingsPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {/* Left Column */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Agency Profile */}
           <Card>
             <CardHeader>
@@ -332,7 +332,7 @@ export default function AgencySettingsPage() {
         </div>
 
         {/* Right Column */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Currency Preference */}
           <CurrencyPreferenceCard />
 
