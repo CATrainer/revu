@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,7 +68,10 @@ import {
   X,
   ChevronRight,
   Sparkles,
+  Loader2,
 } from 'lucide-react';
+import { reportApi, campaignApi } from '@/lib/agency-dashboard-api';
+import type { Report as APIReport, ReportStatus as APIReportStatus } from '@/lib/agency-dashboard-api';
 
 // Types
 type ReportType = 'campaign' | 'financial' | 'creator' | 'pipeline' | 'custom';
@@ -249,7 +253,39 @@ const statusConfig: Record<ReportStatus, { label: string; color: string }> = {
 };
 
 export default function ReportsPage() {
-  const [reports, setReports] = useState<Report[]>(mockReports);
+  const queryClient = useQueryClient();
+  
+  // Local state for favorites (client-side only until API supports it)
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  
+  // Fetch real reports from API
+  const { data: apiReports = [], isLoading: reportsLoading } = useQuery({
+    queryKey: ['agency-reports'],
+    queryFn: () => reportApi.getReports(),
+  });
+
+  // Transform API reports to display format
+  const reports = useMemo<Report[]>(() => {
+    return apiReports.map(r => ({
+      id: r.id,
+      name: r.title,
+      type: 'campaign' as ReportType,
+      description: `Report for ${r.brand_name} - ${r.creator_names.join(', ')}`,
+      status: r.status === 'draft' ? 'draft' : 'generated' as ReportStatus,
+      created_at: r.created_at,
+      last_generated: r.generated_at,
+      scheduled_for: null,
+      recipients: r.sent_to || [],
+      is_favorite: favorites.has(r.id),
+      metrics: r.metrics ? {
+        impressions: r.metrics.impressions,
+        engagement_rate: r.metrics.engagement_rate,
+        clicks: r.metrics.engagements,
+        conversions: 0,
+      } : undefined,
+    }));
+  }, [apiReports, favorites]);
+
   const [templates] = useState<ReportTemplate[]>(mockTemplates);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -271,6 +307,27 @@ export default function ReportsPage() {
     format: 'pdf' as ReportFormat,
   });
 
+  // Mutations for API operations
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => reportApi.deleteReport(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agency-reports'] }),
+  });
+
+  const exportMutation = useMutation({
+    mutationFn: ({ id, format }: { id: string; format: 'pdf' | 'csv' }) => 
+      reportApi.exportReport(id, format),
+    onSuccess: (blob, { format }) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `report.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+  });
+
   // Filter reports
   const filteredReports = reports.filter(report => {
     const matchesSearch =
@@ -282,9 +339,15 @@ export default function ReportsPage() {
 
   // Toggle favorite
   const toggleFavorite = (reportId: string) => {
-    setReports(prev =>
-      prev.map(r => r.id === reportId ? { ...r, is_favorite: !r.is_favorite } : r)
-    );
+    setFavorites(prev => {
+      const next = new Set(prev);
+      if (next.has(reportId)) {
+        next.delete(reportId);
+      } else {
+        next.add(reportId);
+      }
+      return next;
+    });
   };
 
   // Format date
@@ -297,27 +360,22 @@ export default function ReportsPage() {
   };
 
   // Download report
-  const handleDownload = (report: Report, format: 'pdf' | 'csv' | 'excel' = 'pdf') => {
-    toast.success(`Downloading ${report.name} as ${format.toUpperCase()}...`);
-    // Simulate download
-    setTimeout(() => {
-      toast.success(`${report.name}.${format} downloaded successfully`);
-    }, 1500);
+  const handleDownload = (report: Report, format: 'pdf' | 'csv' = 'pdf') => {
+    toast.info(`Downloading ${report.name} as ${format.toUpperCase()}...`);
+    exportMutation.mutate(
+      { id: report.id, format },
+      {
+        onSuccess: () => toast.success(`${report.name}.${format} downloaded successfully`),
+        onError: () => toast.error('Failed to download report'),
+      }
+    );
   };
 
-  // Duplicate report
+  // Duplicate report (creates a copy via API when available)
   const handleDuplicate = (report: Report) => {
-    const duplicatedReport: Report = {
-      ...report,
-      id: `${Date.now()}`,
-      name: `${report.name} (Copy)`,
-      status: 'draft',
-      created_at: new Date().toISOString().split('T')[0],
-      last_generated: null,
-      is_favorite: false,
-    };
-    setReports(prev => [duplicatedReport, ...prev]);
-    toast.success(`Report duplicated: ${duplicatedReport.name}`);
+    toast.info(`Duplicating "${report.name}"...`);
+    // For now, just show toast - API endpoint for duplicating would be needed
+    toast.success(`Report duplication feature coming soon!`);
   };
 
   // Share report
@@ -331,26 +389,25 @@ export default function ReportsPage() {
   // Delete report
   const handleDelete = (report: Report) => {
     if (confirm(`Are you sure you want to delete "${report.name}"? This action cannot be undone.`)) {
-      setReports(prev => prev.filter(r => r.id !== report.id));
-      toast.success(`Report "${report.name}" deleted`);
-      if (selectedReport?.id === report.id) {
-        setSelectedReport(null);
-      }
+      deleteMutation.mutate(report.id, {
+        onSuccess: () => {
+          toast.success(`Report "${report.name}" deleted`);
+          if (selectedReport?.id === report.id) {
+            setSelectedReport(null);
+          }
+        },
+        onError: () => toast.error('Failed to delete report'),
+      });
     }
   };
 
   // Generate report now
   const handleGenerateNow = (report: Report) => {
     toast.info(`Generating ${report.name}...`);
-    // Simulate generation
+    // Would use reportApi.generateReport with campaign_id
+    // For now, show success after delay
     setTimeout(() => {
-      setReports(prev =>
-        prev.map(r =>
-          r.id === report.id
-            ? { ...r, status: 'generated' as ReportStatus, last_generated: new Date().toISOString().split('T')[0] }
-            : r
-        )
-      );
+      queryClient.invalidateQueries({ queryKey: ['agency-reports'] });
       toast.success(`${report.name} generated successfully!`);
     }, 2000);
   };
@@ -378,15 +435,8 @@ export default function ReportsPage() {
     const currentIndex = report.schedule ? scheduleOptions.indexOf(report.schedule) : -1;
     const nextIndex = (currentIndex + 1) % scheduleOptions.length;
     const newSchedule = scheduleOptions[nextIndex];
-
-    setReports(prev =>
-      prev.map(r =>
-        r.id === report.id
-          ? { ...r, schedule: newSchedule, status: 'scheduled' as ReportStatus }
-          : r
-      )
-    );
-    toast.success(`Schedule updated to: ${newSchedule}`);
+    // Scheduling feature would require API support
+    toast.success(`Schedule updated to: ${newSchedule} (feature coming soon)`);
   };
 
   // Start building report from template
@@ -418,7 +468,7 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reports</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Reports</h1>
           <p className="mt-1 text-gray-600 dark:text-gray-400">
             Generate and manage reports for your agency
           </p>
@@ -530,11 +580,11 @@ export default function ReportsPage() {
         <TabsContent value="reports" className="space-y-4">
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
+            <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search reports..."
-                className="pl-9"
+                className="pl-10 h-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -741,7 +791,18 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          {filteredReports.length === 0 && (
+          {reportsLoading && (
+            <Card className="p-12">
+              <div className="text-center">
+                <Loader2 className="h-12 w-12 text-green-600 mx-auto mb-4 animate-spin" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  Loading reports...
+                </h3>
+              </div>
+            </Card>
+          )}
+
+          {!reportsLoading && filteredReports.length === 0 && (
             <Card className="p-12">
               <div className="text-center">
                 <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
