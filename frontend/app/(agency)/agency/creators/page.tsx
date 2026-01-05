@@ -842,7 +842,7 @@ export default function AgencyCreatorsPage() {
                           <div className="flex items-center gap-4">
                             <Avatar className="h-10 w-10">
                               <AvatarFallback className="bg-orange-100 text-orange-700">
-                                {(request.user_full_name || request.user_email).charAt(0).toUpperCase()}}
+                                {(request.user_full_name || request.user_email).charAt(0).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div>
