@@ -63,26 +63,26 @@ type DisplayStatus = 'draft' | 'sent' | 'paid' | 'overdue';
 const statusConfig: Record<DisplayStatus, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
   draft: { 
     label: 'Draft', 
-    color: 'text-gray-600 dark:text-gray-400', 
-    bgColor: 'bg-gray-100 dark:bg-gray-800',
+    color: 'text-slate-600 dark:text-slate-400', 
+    bgColor: 'bg-slate-100 dark:bg-slate-800',
     icon: Clock 
   },
   sent: { 
     label: 'Sent', 
-    color: 'text-sky-600 dark:text-sky-400', 
-    bgColor: 'bg-sky-100 dark:bg-sky-900/30',
+    color: 'text-blue-600 dark:text-blue-400', 
+    bgColor: 'bg-blue-100 dark:bg-blue-900/40',
     icon: Send 
   },
   paid: { 
     label: 'Paid', 
     color: 'text-emerald-600 dark:text-emerald-400', 
-    bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+    bgColor: 'bg-emerald-100 dark:bg-emerald-900/40',
     icon: CheckCircle 
   },
   overdue: { 
     label: 'Overdue', 
     color: 'text-red-600 dark:text-red-400', 
-    bgColor: 'bg-red-100 dark:bg-red-900/30',
+    bgColor: 'bg-red-100 dark:bg-red-900/40',
     icon: AlertTriangle 
   },
 };
@@ -467,7 +467,7 @@ export default function FinancePage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-2">

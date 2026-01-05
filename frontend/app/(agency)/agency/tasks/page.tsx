@@ -92,36 +92,36 @@ const apiStatusMap: Record<DisplayStatus, TaskStatus> = {
 const statusConfig: Record<DisplayStatus, { label: string; color: string; bgColor: string; icon: React.ReactNode }> = {
   todo: { 
     label: 'To Do', 
-    color: 'text-gray-600 dark:text-gray-400', 
-    bgColor: 'bg-gray-100 dark:bg-gray-800',
+    color: 'text-slate-600 dark:text-slate-400', 
+    bgColor: 'bg-slate-100 dark:bg-slate-800',
     icon: <Circle className="h-4 w-4" /> 
   },
   in_progress: { 
     label: 'In Progress', 
-    color: 'text-sky-600 dark:text-sky-400', 
-    bgColor: 'bg-sky-100 dark:bg-sky-900/30',
+    color: 'text-blue-600 dark:text-blue-400', 
+    bgColor: 'bg-blue-100 dark:bg-blue-900/40',
     icon: <Play className="h-4 w-4" /> 
   },
   review: { 
     label: 'Review', 
-    color: 'text-amber-600 dark:text-amber-400', 
-    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+    color: 'text-orange-600 dark:text-orange-400', 
+    bgColor: 'bg-orange-100 dark:bg-orange-900/40',
     icon: <Eye className="h-4 w-4" /> 
   },
   done: { 
     label: 'Done', 
     color: 'text-emerald-600 dark:text-emerald-400', 
-    bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+    bgColor: 'bg-emerald-100 dark:bg-emerald-900/40',
     icon: <CheckCircle2 className="h-4 w-4" /> 
   },
 };
 
 // Priority config
 const priorityConfig: Record<TaskPriority, { label: string; color: string }> = {
-  urgent: { label: 'Urgent', color: 'text-red-600 bg-red-100 dark:bg-red-900/30' },
-  high: { label: 'High', color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30' },
-  normal: { label: 'Normal', color: 'text-sky-600 bg-sky-100 dark:bg-sky-900/30' },
-  low: { label: 'Low', color: 'text-gray-500 bg-gray-100 dark:bg-gray-800' },
+  urgent: { label: 'Urgent', color: 'text-red-600 bg-red-100 dark:bg-red-900/40' },
+  high: { label: 'High', color: 'text-amber-600 bg-amber-100 dark:bg-amber-900/40' },
+  normal: { label: 'Normal', color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/40' },
+  low: { label: 'Low', color: 'text-slate-500 bg-slate-100 dark:bg-slate-800' },
 };
 
 // Task note interface
@@ -562,7 +562,7 @@ export default function TasksPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {(['todo', 'in_progress', 'review', 'done'] as DisplayStatus[]).map(status => (
           <Card key={status}>
             <CardContent className="p-4">
@@ -582,7 +582,7 @@ export default function TasksPage() {
 
       {/* Board View */}
       {viewMode === 'board' && (
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="flex gap-3 overflow-x-auto pb-4">
           {(['todo', 'in_progress', 'review', 'done'] as DisplayStatus[]).map(status => (
             <BoardColumn key={status} status={status} tasks={tasksByStatus[status]} />
           ))}
