@@ -49,14 +49,27 @@ class ContentAnalysisService:
     async def calculate_user_baseline(
         self,
         user_id: UUID,
-        days: int = 90,
+        days: Optional[int] = None,
         is_demo: bool = False
     ) -> Dict[str, float]:
         """Calculate user's baseline performance metrics.
         
         Returns average engagement rate, views, etc. for comparison.
+        
+        Args:
+            days: Number of days to look back. None means all time.
         """
-        date_from = datetime.utcnow() - timedelta(days=days)
+        # Build base filters
+        filters = [
+            ContentPiece.user_id == user_id,
+            ContentPiece.is_demo == is_demo,
+            ContentPiece.is_deleted == False,
+        ]
+        
+        # Add date filter only if days is specified
+        if days is not None:
+            date_from = datetime.utcnow() - timedelta(days=days)
+            filters.append(ContentPiece.published_at >= date_from)
         
         result = await self.session.execute(
             select(
@@ -69,14 +82,7 @@ class ContentAnalysisService:
             )
             .select_from(ContentPiece)
             .join(ContentPerformance, ContentPiece.id == ContentPerformance.content_id)
-            .where(
-                and_(
-                    ContentPiece.user_id == user_id,
-                    ContentPiece.is_demo == is_demo,
-                    ContentPiece.is_deleted == False,
-                    ContentPiece.published_at >= date_from,
-                )
-            )
+            .where(and_(*filters))
         )
         row = result.first()
         
@@ -93,7 +99,8 @@ class ContentAnalysisService:
         self,
         user_id: UUID,
         is_demo: bool = False,
-        force_reclassify: bool = False
+        force_reclassify: bool = False,
+        days: Optional[int] = None
     ) -> Dict[str, int]:
         """Classify all user content into performance categories.
         
@@ -102,9 +109,13 @@ class ContentAnalysisService:
         - average: between 0.5x and 1.5x
         - underperformer: engagement < 0.5x user average
         
+        Args:
+            days: Number of days to look back. None means all time.
+        
         Returns count of each category.
         """
-        baseline = await self.calculate_user_baseline(user_id, is_demo=is_demo)
+        # Use all-time baseline for classification to be consistent
+        baseline = await self.calculate_user_baseline(user_id, days=days, is_demo=is_demo)
         
         if baseline['total_content'] == 0:
             return {'top_performer': 0, 'average': 0, 'underperformer': 0}
@@ -160,23 +171,30 @@ class ContentAnalysisService:
         user_id: UUID,
         is_demo: bool = False,
         limit: int = 10,
-        days: int = 90
+        days: Optional[int] = None
     ) -> List[Dict[str, Any]]:
-        """Get top performing content with full details."""
-        date_from = datetime.utcnow() - timedelta(days=days)
+        """Get top performing content with full details.
+        
+        Args:
+            days: Number of days to look back. None means all time.
+        """
+        # Build base filters
+        filters = [
+            ContentPiece.user_id == user_id,
+            ContentPiece.is_demo == is_demo,
+            ContentPiece.is_deleted == False,
+            ContentPerformance.performance_category == 'overperforming',
+        ]
+        
+        # Add date filter only if days is specified
+        if days is not None:
+            date_from = datetime.utcnow() - timedelta(days=days)
+            filters.append(ContentPiece.published_at >= date_from)
         
         result = await self.session.execute(
             select(ContentPiece, ContentPerformance)
             .join(ContentPerformance, ContentPiece.id == ContentPerformance.content_id)
-            .where(
-                and_(
-                    ContentPiece.user_id == user_id,
-                    ContentPiece.is_demo == is_demo,
-                    ContentPiece.is_deleted == False,
-                    ContentPiece.published_at >= date_from,
-                    ContentPerformance.performance_category == 'overperforming',
-                )
-            )
+            .where(and_(*filters))
             .order_by(desc(ContentPerformance.performance_score))
             .limit(limit)
         )
@@ -204,23 +222,30 @@ class ContentAnalysisService:
         user_id: UUID,
         is_demo: bool = False,
         limit: int = 10,
-        days: int = 90
+        days: Optional[int] = None
     ) -> List[Dict[str, Any]]:
-        """Get underperforming content with full details."""
-        date_from = datetime.utcnow() - timedelta(days=days)
+        """Get underperforming content with full details.
+        
+        Args:
+            days: Number of days to look back. None means all time.
+        """
+        # Build base filters
+        filters = [
+            ContentPiece.user_id == user_id,
+            ContentPiece.is_demo == is_demo,
+            ContentPiece.is_deleted == False,
+            ContentPerformance.performance_category == 'underperforming',
+        ]
+        
+        # Add date filter only if days is specified
+        if days is not None:
+            date_from = datetime.utcnow() - timedelta(days=days)
+            filters.append(ContentPiece.published_at >= date_from)
         
         result = await self.session.execute(
             select(ContentPiece, ContentPerformance)
             .join(ContentPerformance, ContentPiece.id == ContentPerformance.content_id)
-            .where(
-                and_(
-                    ContentPiece.user_id == user_id,
-                    ContentPiece.is_demo == is_demo,
-                    ContentPiece.is_deleted == False,
-                    ContentPiece.published_at >= date_from,
-                    ContentPerformance.performance_category == 'underperforming',
-                )
-            )
+            .where(and_(*filters))
             .order_by(asc(ContentPerformance.performance_score))
             .limit(limit)
         )
@@ -412,12 +437,13 @@ Respond with JSON only:
         user_id: UUID,
         is_demo: bool = False,
         is_positive: bool = True,
-        days: int = 90
+        days: Optional[int] = None
     ) -> Dict[str, Any]:
         """Generate AI summary of patterns across top/underperforming content.
         
         Args:
             is_positive: True for success patterns, False for failure patterns
+            days: Number of days to look back. None means all time.
         """
         if is_positive:
             performers = await self.get_top_performers(user_id, is_demo, limit=10, days=days)

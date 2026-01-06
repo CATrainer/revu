@@ -380,7 +380,7 @@ async def get_insights_overview(
 
 @router.get("/whats-working", response_model=PerformersResponse)
 async def get_whats_working(
-    period: str = Query("90d", pattern="^(30d|90d|all)$"),
+    period: str = Query("all", pattern="^(30d|90d|all)$"),
     platform: Optional[str] = Query(None, pattern="^(youtube|instagram|tiktok|all)$"),
     limit: int = Query(10, ge=1, le=50),
     generate_analysis: bool = Query(True),
@@ -392,28 +392,29 @@ async def get_whats_working(
     is_demo = current_user.demo_mode_status == 'enabled'
     analysis_service = get_content_analysis_service(session)
     
-    # Ensure content is classified
-    await analysis_service.classify_content(current_user.id, is_demo)
-    
-    # Get baseline
-    baseline = await analysis_service.calculate_user_baseline(current_user.id, is_demo=is_demo)
-    
-    # Date range
+    # Determine days parameter (None = all time)
     now = datetime.utcnow()
     if period == "all":
-        date_from = datetime(2020, 1, 1)
+        days_param = None
+        date_from = datetime(2020, 1, 1)  # For response only
     else:
-        days = int(period.replace('d', ''))
-        date_from = now - timedelta(days=days)
+        days_param = int(period.replace('d', ''))
+        date_from = now - timedelta(days=days_param)
+    
+    # Ensure content is classified with matching time range
+    await analysis_service.classify_content(current_user.id, is_demo, days=days_param)
+    
+    # Get baseline with matching time range
+    baseline = await analysis_service.calculate_user_baseline(current_user.id, days=days_param, is_demo=is_demo)
     
     # Get top performers
     performers = await analysis_service.get_top_performers(
-        current_user.id, is_demo, limit=limit, days=(now - date_from).days
+        current_user.id, is_demo, limit=limit, days=days_param
     )
     
     # Generate trends summary
     trends = await analysis_service.generate_trends_summary(
-        current_user.id, is_demo, is_positive=True, days=(now - date_from).days
+        current_user.id, is_demo, is_positive=True, days=days_param
     )
     
     # Build response items
@@ -468,7 +469,7 @@ async def get_whats_working(
 
 @router.get("/whats-not-working", response_model=PerformersResponse)
 async def get_whats_not_working(
-    period: str = Query("90d", pattern="^(30d|90d|all)$"),
+    period: str = Query("all", pattern="^(30d|90d|all)$"),
     platform: Optional[str] = Query(None, pattern="^(youtube|instagram|tiktok|all)$"),
     limit: int = Query(10, ge=1, le=50),
     generate_analysis: bool = Query(True),
@@ -480,28 +481,29 @@ async def get_whats_not_working(
     is_demo = current_user.demo_mode_status == 'enabled'
     analysis_service = get_content_analysis_service(session)
     
-    # Ensure content is classified
-    await analysis_service.classify_content(current_user.id, is_demo)
-    
-    # Get baseline
-    baseline = await analysis_service.calculate_user_baseline(current_user.id, is_demo=is_demo)
-    
-    # Date range
+    # Determine days parameter (None = all time)
     now = datetime.utcnow()
     if period == "all":
-        date_from = datetime(2020, 1, 1)
+        days_param = None
+        date_from = datetime(2020, 1, 1)  # For response only
     else:
-        days = int(period.replace('d', ''))
-        date_from = now - timedelta(days=days)
+        days_param = int(period.replace('d', ''))
+        date_from = now - timedelta(days=days_param)
+    
+    # Ensure content is classified with matching time range
+    await analysis_service.classify_content(current_user.id, is_demo, days=days_param)
+    
+    # Get baseline with matching time range
+    baseline = await analysis_service.calculate_user_baseline(current_user.id, days=days_param, is_demo=is_demo)
     
     # Get underperformers
     performers = await analysis_service.get_underperformers(
-        current_user.id, is_demo, limit=limit, days=(now - date_from).days
+        current_user.id, is_demo, limit=limit, days=days_param
     )
     
     # Generate trends summary
     trends = await analysis_service.generate_trends_summary(
-        current_user.id, is_demo, is_positive=False, days=(now - date_from).days
+        current_user.id, is_demo, is_positive=False, days=days_param
     )
     
     # Build response items
