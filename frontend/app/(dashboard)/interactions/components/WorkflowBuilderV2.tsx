@@ -35,6 +35,7 @@ interface WorkflowData {
   action_config: {
     response_text?: string;
     tone?: string;
+    ai_instructions?: string;
   };
   status: 'active' | 'paused';
 }
@@ -130,6 +131,9 @@ export function WorkflowBuilderV2({
       case 0: // Basic Info & Action
         if (!workflowData.name.trim()) return false;
         if (workflowData.action_type === 'auto_respond' && !workflowData.action_config.response_text?.trim()) {
+          return false;
+        }
+        if (workflowData.action_type === 'generate_response' && !workflowData.action_config.ai_instructions?.trim()) {
           return false;
         }
         return true;
@@ -355,27 +359,49 @@ function BasicAndActionStep({ workflowData, updateWorkflowData }: BasicAndAction
       {/* Action Configuration */}
       <div className="border-t border-border pt-4">
         {workflowData.action_type === 'generate_response' ? (
-          <div>
-            <Label>Response Tone</Label>
-            <Select
-              value={workflowData.action_config.tone || 'friendly'}
-              onValueChange={(value) => updateWorkflowData({ 
-                action_config: { ...workflowData.action_config, tone: value }
-              })}
-            >
-              <SelectTrigger className="mt-1.5">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="friendly">Friendly</SelectItem>
-                <SelectItem value="professional">Professional</SelectItem>
-                <SelectItem value="casual">Casual</SelectItem>
-                <SelectItem value="formal">Formal</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-secondary-dark mt-1.5">
-              AI will generate responses in this tone for your approval
-            </p>
+          <div className="space-y-4">
+            {/* AI Instructions */}
+            <div>
+              <Label>Response Instructions *</Label>
+              <Textarea
+                value={workflowData.action_config.ai_instructions || ''}
+                onChange={(e) => updateWorkflowData({ 
+                  action_config: { ...workflowData.action_config, ai_instructions: e.target.value }
+                })}
+                placeholder="Tell the AI how to respond. For example:\n- Thank them for their comment\n- Answer questions about our product\n- Include a call-to-action to check out our latest video\n- Keep responses under 2 sentences"
+                className="mt-1.5"
+                rows={5}
+              />
+              <p className="text-xs text-secondary-dark mt-1.5">
+                Describe what the AI should include in responses, what to avoid, and any specific information to mention.
+              </p>
+            </div>
+
+            {/* Response Tone */}
+            <div>
+              <Label>Response Tone</Label>
+              <Select
+                value={workflowData.action_config.tone || 'friendly'}
+                onValueChange={(value) => updateWorkflowData({ 
+                  action_config: { ...workflowData.action_config, tone: value }
+                })}
+              >
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="friendly">Friendly & Warm</SelectItem>
+                  <SelectItem value="professional">Professional & Polished</SelectItem>
+                  <SelectItem value="casual">Casual & Relaxed</SelectItem>
+                  <SelectItem value="enthusiastic">Enthusiastic & Energetic</SelectItem>
+                  <SelectItem value="empathetic">Empathetic & Understanding</SelectItem>
+                  <SelectItem value="witty">Witty & Playful</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-secondary-dark mt-1.5">
+                Sets the overall tone and personality of AI responses
+              </p>
+            </div>
           </div>
         ) : (
           <div>
@@ -635,6 +661,15 @@ function ReviewStep({ workflowData, views }: ReviewStepProps) {
               </>
             )}
           </div>
+          {workflowData.action_type === 'generate_response' && workflowData.action_config.ai_instructions && (
+            <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-950/20 rounded border border-purple-200 dark:border-purple-800">
+              <p className="text-xs font-medium text-purple-700 dark:text-purple-300 mb-1">AI Instructions:</p>
+              <p className="text-xs text-purple-900 dark:text-purple-100 whitespace-pre-wrap">
+                {workflowData.action_config.ai_instructions.slice(0, 200)}
+                {workflowData.action_config.ai_instructions.length > 200 ? '...' : ''}
+              </p>
+            </div>
+          )}
           {workflowData.action_type === 'auto_respond' && workflowData.action_config.response_text && (
             <p className="text-xs text-secondary-dark mt-2 italic">
               "{workflowData.action_config.response_text.slice(0, 100)}

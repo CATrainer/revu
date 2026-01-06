@@ -360,6 +360,7 @@ Does this message match the condition? Respond with JSON only:
         """Generate AI response and put in awaiting_approval status."""
         action_config = workflow.action_config or {}
         tone = action_config.get("tone", "friendly")
+        ai_instructions = action_config.get("ai_instructions")
         
         # Generate response using the response generator
         from app.services.response_generator import get_response_generator
@@ -370,6 +371,7 @@ Does this message match the condition? Respond with JSON only:
                 interaction=interaction,
                 user_id=user_id,
                 tone=tone,
+                ai_instructions=ai_instructions,
             )
             
             # Store as pending response
@@ -379,6 +381,7 @@ Does this message match the condition? Respond with JSON only:
                 "model": settings.CLAUDE_MODEL,
                 "workflow_id": str(workflow.id),
                 "tone": tone,
+                "ai_instructions": ai_instructions,
             }
             interaction.status = 'awaiting_approval'
             

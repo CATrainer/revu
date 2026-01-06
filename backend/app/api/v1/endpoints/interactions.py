@@ -555,6 +555,83 @@ async def bulk_action(
     updated_count = 0
     failed_ids = []
     
+    # Handle actions that need special processing outside the loop
+    if payload.action == "unarchive":
+        # Use archive service for proper unarchive
+        from app.services.archive_service import get_archive_service
+        archive_service = get_archive_service(session)
+        updated_count = await archive_service.unarchive(payload.interaction_ids, current_user.id)
+        await session.commit()
+        return BulkActionResponse(
+            success=True,
+            updated_count=updated_count,
+            failed_ids=[],
+            message=f"Successfully restored {updated_count} interactions"
+        )
+    
+    if payload.action == "delete":
+        # Permanently delete interactions
+        from app.services.archive_service import get_archive_service
+        archive_service = get_archive_service(session)
+        deleted_count = await archive_service.permanent_delete(payload.interaction_ids, current_user.id)
+        await session.commit()
+        return BulkActionResponse(
+            success=True,
+            updated_count=deleted_count,
+            failed_ids=[],
+            message=f"Permanently deleted {deleted_count} interactions"
+        )
+    
+    if payload.action == "approve_all":
+        # Approve all pending responses
+        for interaction in interactions:
+            if interaction.status == "awaiting_approval" and interaction.pending_response:
+                try:
+                    pending = interaction.pending_response
+                    response_text = pending.get("text", "")
+                    
+                    if response_text:
+                        # Send the response
+                        from app.services.platform_actions import get_platform_action_service
+                        platform_service = get_platform_action_service()
+                        result = await platform_service.send_reply(interaction, response_text, session)
+                        
+                        if result.get("success"):
+                            # Record the sent response
+                            from app.services.sent_response_service import get_sent_response_service
+                            sent_service = get_sent_response_service(session)
+                            await sent_service.record_sent_response(
+                                interaction_id=interaction.id,
+                                response_text=response_text,
+                                user_id=current_user.id,
+                                response_type='semi_automated',
+                                workflow_id=UUID(pending.get("workflow_id")) if pending.get("workflow_id") else None,
+                                platform_response_id=result.get("reply_id"),
+                                is_demo=interaction.is_demo,
+                            )
+                            
+                            interaction.status = "answered"
+                            interaction.responded_at = datetime.utcnow()
+                            interaction.pending_response = None
+                            updated_count += 1
+                        else:
+                            failed_ids.append(interaction.id)
+                    else:
+                        failed_ids.append(interaction.id)
+                except Exception as e:
+                    failed_ids.append(interaction.id)
+            else:
+                failed_ids.append(interaction.id)
+        
+        await session.commit()
+        return BulkActionResponse(
+            success=True,
+            updated_count=updated_count,
+            failed_ids=failed_ids,
+            message=f"Approved and sent {updated_count} responses"
+        )
+    
+    # Standard actions processed in loop
     for interaction in interactions:
         try:
             if payload.action == "tag":
@@ -577,7 +654,9 @@ async def bulk_action(
                 interaction.read_at = None
             
             elif payload.action == "archive":
-                interaction.status = "archived"
+                # Properly archive with timestamp
+                interaction.archived_at = datetime.utcnow()
+                interaction.archive_source = "manual"
             
             elif payload.action == "spam":
                 interaction.status = "spam"

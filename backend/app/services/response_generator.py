@@ -92,8 +92,17 @@ class ResponseGenerator:
         user_id: UUID,
         tone: str = "friendly",
         previous_response: Optional[str] = None,
+        ai_instructions: Optional[str] = None,
     ) -> str:
-        """Generate an authentic response for an interaction."""
+        """Generate an authentic response for an interaction.
+        
+        Args:
+            interaction: The interaction to respond to
+            user_id: The user generating the response
+            tone: Response tone (friendly, professional, etc.)
+            previous_response: If regenerating, the previous response to avoid
+            ai_instructions: Custom instructions from workflow on how to respond
+        """
         # Get creator context
         user = await self.session.get(User, user_id)
         creator_context = await self._build_creator_context(user)
@@ -104,12 +113,16 @@ class ResponseGenerator:
         # Determine length based on their message
         length_category, max_tokens = self._determine_length(interaction, message_analysis)
         
+        # If custom instructions provided, allow longer responses
+        if ai_instructions:
+            max_tokens = max(max_tokens, self.MAX_TOKENS["medium"])
+        
         # Build prompts
         system_prompt = self._build_system_prompt(
-            creator_context, tone, length_category, message_analysis
+            creator_context, tone, length_category, message_analysis, ai_instructions
         )
         user_prompt = self._build_user_prompt(
-            interaction, message_analysis, previous_response
+            interaction, message_analysis, previous_response, ai_instructions
         )
         
         # Temperature: slightly higher for regeneration
@@ -254,7 +267,8 @@ class ResponseGenerator:
         creator_context: Dict[str, Any], 
         tone: str, 
         length: str,
-        analysis: Dict[str, Any]
+        analysis: Dict[str, Any],
+        ai_instructions: Optional[str] = None
     ) -> str:
         """Build system prompt optimized for authentic responses."""
         
@@ -268,6 +282,16 @@ class ResponseGenerator:
         
         # Emoji rule
         emoji_rule = "Use 1 emoji if it feels natural." if analysis["has_emojis"] else "NO emojis."
+        
+        # Custom instructions section
+        custom_instructions_section = ""
+        if ai_instructions:
+            custom_instructions_section = f"""
+
+CUSTOM INSTRUCTIONS FROM CREATOR:
+{ai_instructions}
+
+Follow these custom instructions while still sounding natural and human."""
         
         return f"""You're {creator_context['name']}, a {creator_context['niche']} creator. Write a reply.
 
@@ -305,13 +329,14 @@ BAD EXAMPLES (too AI):
 - "Hey Sarah! That means so much to me. I'm so glad you enjoyed the video!"
 - "Absolutely! I'd love to collaborate. Feel free to reach out anytime."
 
-Tone: {tone}. But always sound human first."""
+Tone: {tone}. But always sound human first.{custom_instructions_section}"""
     
     def _build_user_prompt(
         self,
         interaction: Interaction,
         analysis: Dict[str, Any],
-        previous_response: Optional[str]
+        previous_response: Optional[str],
+        ai_instructions: Optional[str] = None
     ) -> str:
         """Build the user prompt."""
         parts = []

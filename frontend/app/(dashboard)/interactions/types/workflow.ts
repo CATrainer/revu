@@ -11,6 +11,7 @@ export interface Workflow {
   action_config: {
     response_text?: string;
     tone?: string;
+    ai_instructions?: string;
   };
   user_id: string;
   organization_id?: string | null;
