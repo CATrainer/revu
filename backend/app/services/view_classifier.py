@@ -1,9 +1,13 @@
-"""AI-powered view classification service.
+"""View classification service for tagging interactions.
 
-This service evaluates interactions against AI view criteria using LLM.
+This service evaluates interactions against view criteria:
+- AI views: Uses LLM to evaluate natural language criteria
+- Manual views: Uses keyword/filter matching locally (no LLM needed)
 """
 import hashlib
+import json
 import logging
+import re
 from datetime import datetime
 from typing import List, Optional, Dict, Any, Tuple
 from uuid import UUID
@@ -21,10 +25,9 @@ logger = logging.getLogger(__name__)
 
 
 class ViewClassifierService:
-    """Service for classifying interactions against AI view criteria.
+    """Service for classifying interactions against view criteria.
     
-    Uses LLM to evaluate whether an interaction matches a view's
-    natural language criteria.
+    Handles both AI views (using LLM) and manual views (using keyword matching).
     """
     
     def __init__(self, session: AsyncSession):
@@ -33,16 +36,113 @@ class ViewClassifierService:
         self.model = "claude-3-haiku-20240307"  # Fast and cheap for classification
     
     @staticmethod
+    def compute_filter_hash(filters: dict) -> str:
+        """Compute a hash of the filters for change detection."""
+        return hashlib.sha256(json.dumps(filters, sort_keys=True).encode()).hexdigest()[:64]
+    
+    @staticmethod
     def compute_prompt_hash(prompt: str) -> str:
         """Compute a hash of the prompt for change detection."""
         return hashlib.sha256(prompt.encode()).hexdigest()[:64]
     
-    async def classify_interaction(
+    def classify_interaction_manual(
         self,
         interaction: Interaction,
         view: InteractionView
     ) -> Tuple[bool, float]:
-        """Classify a single interaction against a view's AI criteria.
+        """Classify an interaction against a manual view's filters (no LLM).
+        
+        Args:
+            interaction: The interaction to classify
+            view: The view with manual filters
+            
+        Returns:
+            Tuple of (matches: bool, confidence: float)
+        """
+        filters = view.filters or {}
+        
+        # If no filters defined, it matches everything
+        if not filters:
+            return True, 1.0
+        
+        content_lower = (interaction.content or '').lower()
+        
+        # Check platform filter
+        if 'platforms' in filters and filters['platforms']:
+            if interaction.platform not in filters['platforms']:
+                return False, 1.0
+        
+        # Check interaction type filter
+        if 'types' in filters and filters['types']:
+            if interaction.type not in filters['types']:
+                return False, 1.0
+        
+        # Check keyword filter (any keyword matches)
+        if 'keywords' in filters and filters['keywords']:
+            keywords = [k.lower() for k in filters['keywords']]
+            keyword_match = any(kw in content_lower for kw in keywords)
+            if not keyword_match:
+                return False, 1.0
+        
+        # Check sentiment filter
+        if 'sentiment' in filters and filters['sentiment']:
+            if interaction.sentiment != filters['sentiment']:
+                return False, 1.0
+        
+        # Check status filter
+        if 'status' in filters and filters['status']:
+            if interaction.status not in filters['status']:
+                return False, 1.0
+        
+        # Check categories filter
+        if 'categories' in filters and filters['categories']:
+            interaction_categories = interaction.categories or []
+            category_match = any(cat in interaction_categories for cat in filters['categories'])
+            if not category_match:
+                return False, 1.0
+        
+        # Check priority filter
+        if 'priority_min' in filters and filters['priority_min']:
+            if (interaction.priority_score or 0) < filters['priority_min']:
+                return False, 1.0
+        
+        if 'priority_max' in filters and filters['priority_max']:
+            if (interaction.priority_score or 100) > filters['priority_max']:
+                return False, 1.0
+        
+        # Check tags filter
+        if 'tags' in filters and filters['tags']:
+            interaction_tags = interaction.tags or []
+            tag_match = any(tag in interaction_tags for tag in filters['tags'])
+            if not tag_match:
+                return False, 1.0
+        
+        # Check author username filter
+        if 'author_username' in filters and filters['author_username']:
+            if interaction.author_username != filters['author_username']:
+                return False, 1.0
+        
+        # Check has_replies filter
+        if 'has_replies' in filters and filters['has_replies'] is not None:
+            has_replies = (interaction.reply_count or 0) > 0
+            if has_replies != filters['has_replies']:
+                return False, 1.0
+        
+        # Check is_unread filter
+        if 'is_unread' in filters and filters['is_unread'] is not None:
+            is_unread = interaction.status == 'unread'
+            if is_unread != filters['is_unread']:
+                return False, 1.0
+        
+        # All filters passed
+        return True, 1.0
+    
+    async def classify_interaction_ai(
+        self,
+        interaction: Interaction,
+        view: InteractionView
+    ) -> Tuple[bool, float]:
+        """Classify a single interaction against a view's AI criteria using LLM.
         
         Args:
             interaction: The interaction to classify
@@ -140,7 +240,10 @@ Response:"""
         interaction: Interaction,
         user_id: UUID
     ) -> List[InteractionViewTag]:
-        """Classify an interaction against all AI views for a user.
+        """Classify an interaction against ALL custom views for a user.
+        
+        - AI views: Uses LLM classification
+        - Manual views: Uses keyword/filter matching (no LLM)
         
         Args:
             interaction: The interaction to classify
@@ -149,14 +252,12 @@ Response:"""
         Returns:
             List of created/updated view tags
         """
-        # Get all AI-filtered custom views for this user
+        # Get all custom views for this user (both AI and manual)
         result = await self.session.execute(
             select(InteractionView).where(
                 and_(
                     InteractionView.user_id == user_id,
-                    InteractionView.filter_mode == 'ai',
-                    InteractionView.is_system == False,
-                    InteractionView.ai_prompt.isnot(None)
+                    InteractionView.is_system == False
                 )
             )
         )
@@ -167,7 +268,17 @@ Response:"""
         
         tags = []
         for view in views:
-            matches, confidence = await self.classify_interaction(interaction, view)
+            # Determine filter mode and classify accordingly
+            filter_mode = view.filter_mode or 'manual'
+            
+            if filter_mode == 'ai' and view.ai_prompt:
+                # AI view - use LLM
+                matches, confidence = await self.classify_interaction_ai(interaction, view)
+                prompt_hash = self.compute_prompt_hash(view.ai_prompt)
+            else:
+                # Manual view - use keyword matching
+                matches, confidence = self.classify_interaction_manual(interaction, view)
+                prompt_hash = self.compute_filter_hash(view.filters or {})
             
             # Create or update the tag
             tag = await self._upsert_view_tag(
@@ -175,7 +286,7 @@ Response:"""
                 view_id=view.id,
                 matches=matches,
                 confidence=confidence,
-                prompt_hash=self.compute_prompt_hash(view.ai_prompt)
+                prompt_hash=prompt_hash
             )
             tags.append(tag)
         
@@ -225,27 +336,27 @@ Response:"""
         view: InteractionView,
         batch_size: int = 50
     ) -> int:
-        """Tag all interactions for a newly created or updated AI view.
+        """Tag all interactions for a newly created or updated view.
         
-        This is called when a new AI view is created or when the prompt changes.
+        Works for both AI and manual views.
         
         Args:
-            view: The AI view to tag interactions for
+            view: The view to tag interactions for
             batch_size: Number of interactions to process at once
             
         Returns:
             Number of interactions tagged
         """
-        if view.filter_mode != 'ai' or not view.ai_prompt:
-            return 0
+        filter_mode = view.filter_mode or 'manual'
         
-        prompt_hash = self.compute_prompt_hash(view.ai_prompt)
+        # Compute the hash for change detection
+        if filter_mode == 'ai' and view.ai_prompt:
+            current_hash = self.compute_prompt_hash(view.ai_prompt)
+            view.ai_prompt_hash = current_hash
+        else:
+            current_hash = self.compute_filter_hash(view.filters or {})
         
-        # Update the view's prompt hash
-        view.ai_prompt_hash = prompt_hash
-        
-        # Get all interactions for this user that haven't been tagged for this view
-        # or were tagged with a different prompt hash
+        # Get all interactions for this user
         offset = 0
         total_tagged = 0
         
@@ -275,18 +386,22 @@ Response:"""
                 )
                 existing = existing_tag.scalar_one_or_none()
                 
-                # Skip if already tagged with same prompt
-                if existing and existing.prompt_hash == prompt_hash:
+                # Skip if already tagged with same hash
+                if existing and existing.prompt_hash == current_hash:
                     continue
                 
-                # Classify and tag
-                matches, confidence = await self.classify_interaction(interaction, view)
+                # Classify based on view type
+                if filter_mode == 'ai' and view.ai_prompt:
+                    matches, confidence = await self.classify_interaction_ai(interaction, view)
+                else:
+                    matches, confidence = self.classify_interaction_manual(interaction, view)
+                
                 await self._upsert_view_tag(
                     interaction_id=interaction.id,
                     view_id=view.id,
                     matches=matches,
                     confidence=confidence,
-                    prompt_hash=prompt_hash
+                    prompt_hash=current_hash
                 )
                 total_tagged += 1
             

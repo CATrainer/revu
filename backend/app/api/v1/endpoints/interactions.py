@@ -176,9 +176,10 @@ async def create_interaction(
         # Log error but don't fail interaction creation
         logger.error(f"Workflow evaluation failed: {e}")
 
-    # Tag interaction against all AI views for this user
+    # Tag interaction against all custom views for this user
+    # AI views use LLM, manual views use keyword matching
     background_tasks.add_task(
-        tag_interaction_for_ai_views,
+        tag_interaction_for_all_views,
         interaction_id=str(interaction.id),
         user_id=str(current_user.id)
     )
@@ -186,8 +187,12 @@ async def create_interaction(
     return interaction
 
 
-async def tag_interaction_for_ai_views(interaction_id: str, user_id: str):
-    """Background task to tag an interaction against all AI views."""
+async def tag_interaction_for_all_views(interaction_id: str, user_id: str):
+    """Background task to tag an interaction against all custom views.
+    
+    - AI views: Uses LLM classification
+    - Manual views: Uses keyword/filter matching (no LLM needed)
+    """
     from uuid import UUID
     from app.core.database import async_session_maker
     from app.services.view_classifier import ViewClassifierService
@@ -195,7 +200,7 @@ async def tag_interaction_for_ai_views(interaction_id: str, user_id: str):
     async with async_session_maker() as session:
         interaction = await session.get(Interaction, UUID(interaction_id))
         if not interaction:
-            logger.error(f"Interaction {interaction_id} not found for AI tagging")
+            logger.error(f"Interaction {interaction_id} not found for view tagging")
             return
         
         classifier = ViewClassifierService(session)
@@ -204,7 +209,7 @@ async def tag_interaction_for_ai_views(interaction_id: str, user_id: str):
             user_id=UUID(user_id)
         )
         await session.commit()
-        logger.info(f"Tagged interaction {interaction_id} for {len(tags)} AI views")
+        logger.info(f"Tagged interaction {interaction_id} for {len(tags)} views")
 
 
 @router.get("/interactions", response_model=InteractionList)

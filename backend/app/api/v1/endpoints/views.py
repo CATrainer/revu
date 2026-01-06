@@ -29,8 +29,9 @@ async def create_view(
 ):
     """Create a new custom view.
     
-    For AI views (filter_mode='ai'), the view will be created and a background
-    task will tag all existing interactions against the AI criteria.
+    A background task will tag all existing interactions against the view criteria:
+    - AI views: Uses LLM classification
+    - Manual views: Uses keyword/filter matching (no LLM needed)
     """
     from app.services.view_classifier import ViewClassifierService
     
@@ -61,19 +62,19 @@ async def create_view(
     await session.commit()
     await session.refresh(view)
     
-    # If AI view, trigger background tagging of all interactions
-    if view.filter_mode == 'ai' and view.ai_prompt:
-        background_tasks.add_task(
-            tag_interactions_for_view_task,
-            view_id=str(view.id),
-            user_id=str(current_user.id)
-        )
+    # Trigger background tagging of all interactions for this view
+    # Works for both AI views (LLM) and manual views (keyword matching)
+    background_tasks.add_task(
+        tag_interactions_for_view_task,
+        view_id=str(view.id),
+        user_id=str(current_user.id)
+    )
     
     return view
 
 
 async def tag_interactions_for_view_task(view_id: str, user_id: str):
-    """Background task to tag all interactions for a new AI view."""
+    """Background task to tag all interactions for a new view (AI or manual)."""
     import logging
     from uuid import UUID
     from app.core.database import async_session_maker
