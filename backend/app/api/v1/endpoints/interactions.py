@@ -908,6 +908,8 @@ async def send_response(
         
         # Update original interaction
         interaction.pending_response = None
+        interaction.status = 'answered'
+        interaction.responded_at = datetime.utcnow()  # Required for Sent view filter
         interaction.last_activity_at = datetime.utcnow()
         await session.commit()
         
@@ -1018,6 +1020,7 @@ async def approve_response(
     # Update original interaction - clear pending and mark as answered
     interaction.pending_response = None
     interaction.status = 'answered'
+    interaction.responded_at = datetime.utcnow()  # Required for Sent view filter
     interaction.last_activity_at = datetime.utcnow()
     await session.commit()
     
