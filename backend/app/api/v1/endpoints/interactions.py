@@ -167,31 +167,35 @@ async def create_interaction(
     await session.commit()
     await session.refresh(interaction)
 
-    # Trigger workflow evaluation
-    from app.services.workflow_engine import WorkflowEngine
-    workflow_engine = WorkflowEngine()
+    # STEP 1: Tag interaction for views FIRST (required for workflow view scope)
+    # This must happen before workflow evaluation
     try:
-        workflow_results = await workflow_engine.process_interaction(
-            db=session,
+        from app.services.view_classifier import ViewClassifierService
+        classifier = ViewClassifierService(session)
+        tags = await classifier.classify_interaction_for_all_views(
+            interaction=interaction,
+            user_id=current_user.id
+        )
+        await session.commit()
+        logger.info(f"Tagged interaction {interaction.id} for {len(tags)} views")
+    except Exception as e:
+        logger.error(f"View tagging failed: {e}")
+
+    # STEP 2: Run workflow evaluation with V2 engine
+    # Only ONE workflow runs per interaction (highest priority wins)
+    from app.services.workflow_engine_v2 import get_workflow_engine
+    workflow_engine = get_workflow_engine(session)
+    try:
+        workflow_result = await workflow_engine.process_interaction(
             interaction=interaction,
             user_id=current_user.id,
-            organization_id=getattr(current_user, 'organization_id', None),
         )
-        # Store workflow results in interaction metadata if needed
-        if workflow_results:
-            interaction.triggered_workflows = [r.get("workflow_id") for r in workflow_results if "workflow_id" in r]
-            await session.commit()
+        if workflow_result:
+            logger.info(f"Workflow '{workflow_result['workflow_name']}' executed for interaction {interaction.id}")
+        await session.commit()
     except Exception as e:
         # Log error but don't fail interaction creation
         logger.error(f"Workflow evaluation failed: {e}")
-
-    # Tag interaction against all custom views for this user
-    # AI views use LLM, manual views use keyword matching
-    background_tasks.add_task(
-        tag_interaction_for_all_views,
-        interaction_id=str(interaction.id),
-        user_id=str(current_user.id)
-    )
 
     return interaction
 

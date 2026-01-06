@@ -1,10 +1,18 @@
-"""Endpoints for Workflows and Workflow Approvals."""
+"""Endpoints for Workflows V2.
+
+Workflow System V2:
+- Only ONE workflow runs per interaction (highest priority wins)
+- Workflows only apply to new incoming messages
+- Two actions only: auto_respond, generate_response
+- Natural language conditions evaluated by LLM
+- View scope: multi-select views or "all"
+"""
 from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app.core.database import get_async_session
 from app.models.workflow import Workflow, WorkflowApproval, WorkflowExecution
@@ -13,68 +21,82 @@ from app.schemas.workflow import (
     WorkflowCreate,
     WorkflowOut,
     WorkflowUpdate,
+    WorkflowReorder,
+    WorkflowListOut,
     ApprovalCreate,
     ApprovalOut,
     ApprovalUpdate,
     WorkflowExecutionCreate,
     WorkflowExecutionOut,
 )
-from app.services.workflow_service import WorkflowService
 from app.core.security import get_current_active_user
 
 router = APIRouter()
 
 
 # ------------------------------ Workflows ------------------------------------
+
 @router.post("", response_model=WorkflowOut, status_code=status.HTTP_201_CREATED)
 async def create_workflow(
     payload: WorkflowCreate,
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    svc = WorkflowService()
-    # Comprehensive validation
-    try:
-        svc.validate_workflow(
-            name=payload.name,
-            trigger=payload.trigger.model_dump() if payload.trigger else None,
-            conditions=[c.model_dump() for c in (payload.conditions or [])],
-            actions=[a.model_dump() for a in (payload.actions or [])]
-        )
-    except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
-
+    """Create a new workflow.
+    
+    New workflows are added at the lowest priority (highest number).
+    """
+    # Validate action config
+    if payload.action_type == 'auto_respond':
+        if not payload.action_config or not payload.action_config.get('response_text'):
+            raise HTTPException(
+                status_code=400, 
+                detail="auto_respond action requires response_text in action_config"
+            )
+    
+    # Get the next priority number (lowest priority = highest number)
+    result = await session.execute(
+        select(func.coalesce(func.max(Workflow.priority), 0))
+        .where(Workflow.user_id == current_user.id)
+    )
+    max_priority = result.scalar() or 0
+    
     obj = Workflow(
         name=payload.name,
         status=payload.status,
-        description=payload.description,
-        trigger=payload.trigger.model_dump() if payload.trigger else None,
-        conditions=[c.model_dump() for c in (payload.conditions or [])],
-        actions=[a.model_dump() for a in (payload.actions or [])],
-        organization_id=current_user.organization_id if hasattr(current_user, "organization_id") else None,
-        created_by_id=current_user.id,
+        priority=max_priority + 1,
+        platforms=payload.platforms,
+        interaction_types=payload.interaction_types,
+        view_ids=payload.view_ids,
+        ai_conditions=payload.ai_conditions,
+        action_type=payload.action_type,
+        action_config=payload.action_config,
+        user_id=current_user.id,
+        organization_id=getattr(current_user, "organization_id", None),
     )
     session.add(obj)
-    await session.flush()
+    await session.commit()
     await session.refresh(obj)
     return obj
 
 
 @router.get("", response_model=List[WorkflowOut])
 async def list_workflows(
-    status_eq: Optional[str] = None,
+    status_filter: Optional[str] = None,
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    stmt = select(Workflow).where(
-        (Workflow.organization_id == current_user.organization_id)
-        if getattr(current_user, "organization_id", None) is not None
-        else True
-    )
-    if status_eq:
-        stmt = stmt.where(Workflow.status == status_eq)
-    res = await session.execute(stmt.order_by(Workflow.created_at.desc()))
-    return list(res.scalars().all())
+    """List all workflows for the current user, ordered by priority."""
+    stmt = select(Workflow).where(Workflow.user_id == current_user.id)
+    
+    if status_filter:
+        stmt = stmt.where(Workflow.status == status_filter)
+    
+    # Order by priority (lower = higher priority)
+    stmt = stmt.order_by(Workflow.priority.asc())
+    
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
 
 
 @router.get("/{workflow_id}", response_model=WorkflowOut)
@@ -83,10 +105,9 @@ async def get_workflow(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
+    """Get a specific workflow."""
     obj = await session.get(Workflow, workflow_id)
-    if not obj:
-        raise HTTPException(status_code=404, detail="Workflow not found")
-    if getattr(current_user, "organization_id", None) is not None and obj.organization_id != current_user.organization_id:
+    if not obj or obj.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Workflow not found")
     return obj
 
@@ -98,37 +119,40 @@ async def update_workflow(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
+    """Update a workflow."""
     obj = await session.get(Workflow, workflow_id)
-    if not obj:
+    if not obj or obj.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Workflow not found")
-    if getattr(current_user, "organization_id", None) is not None and obj.organization_id != current_user.organization_id:
-        raise HTTPException(status_code=404, detail="Workflow not found")
+    
+    # Update fields if provided
     if payload.name is not None:
         obj.name = payload.name
     if payload.status is not None:
         obj.status = payload.status
-    if payload.description is not None:
-        obj.description = payload.description
-    if payload.trigger is not None:
-        obj.trigger = payload.trigger.model_dump() if payload.trigger else None
-    if payload.conditions is not None:
-        obj.conditions = [c.model_dump() for c in (payload.conditions or [])]
-    # Validate updated workflow
-    if any([payload.name, payload.trigger, payload.conditions, payload.actions]):
-        svc = WorkflowService()
-        try:
-            svc.validate_workflow(
-                name=payload.name if payload.name is not None else obj.name,
-                trigger=(payload.trigger.model_dump() if payload.trigger else None) if payload.trigger is not None else obj.trigger,
-                conditions=[c.model_dump() for c in payload.conditions] if payload.conditions is not None else obj.conditions,
-                actions=[a.model_dump() for a in payload.actions] if payload.actions is not None else obj.actions
+    if payload.platforms is not None:
+        obj.platforms = payload.platforms
+    if payload.interaction_types is not None:
+        obj.interaction_types = payload.interaction_types
+    if payload.view_ids is not None:
+        obj.view_ids = payload.view_ids
+    if payload.ai_conditions is not None:
+        obj.ai_conditions = payload.ai_conditions
+    if payload.action_type is not None:
+        obj.action_type = payload.action_type
+    if payload.action_config is not None:
+        obj.action_config = payload.action_config
+    if payload.priority is not None:
+        obj.priority = payload.priority
+    
+    # Validate action config if action_type is auto_respond
+    if obj.action_type == 'auto_respond':
+        if not obj.action_config or not obj.action_config.get('response_text'):
+            raise HTTPException(
+                status_code=400, 
+                detail="auto_respond action requires response_text in action_config"
             )
-        except ValueError as ve:
-            raise HTTPException(status_code=400, detail=str(ve))
-
-    if payload.actions is not None:
-        obj.actions = [a.model_dump() for a in (payload.actions or [])]
-    await session.flush()
+    
+    await session.commit()
     await session.refresh(obj)
     return obj
 
@@ -139,29 +163,63 @@ async def delete_workflow(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
+    """Delete a workflow."""
     obj = await session.get(Workflow, workflow_id)
-    if not obj:
-        raise HTTPException(status_code=404, detail="Workflow not found")
-    if getattr(current_user, "organization_id", None) is not None and obj.organization_id != current_user.organization_id:
+    if not obj or obj.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Workflow not found")
     await session.delete(obj)
+    await session.commit()
     return None
 
 
+# ------------------------- Priority Reordering ----------------------------
+
+@router.post("/reorder", response_model=List[WorkflowOut])
+async def reorder_workflows(
+    payload: WorkflowReorder,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Reorder workflows by priority.
+    
+    The first workflow in the list gets priority 1 (highest), 
+    second gets priority 2, etc.
+    """
+    # Verify all workflows belong to user
+    for idx, workflow_id in enumerate(payload.workflow_ids):
+        obj = await session.get(Workflow, workflow_id)
+        if not obj or obj.user_id != current_user.id:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Workflow {workflow_id} not found"
+            )
+        obj.priority = idx + 1
+    
+    await session.commit()
+    
+    # Return updated list
+    result = await session.execute(
+        select(Workflow)
+        .where(Workflow.user_id == current_user.id)
+        .order_by(Workflow.priority.asc())
+    )
+    return list(result.scalars().all())
+
+
 # ------------------------- Workflow state actions ----------------------------
+
 @router.post("/{workflow_id}/activate", response_model=WorkflowOut)
 async def activate_workflow(
     workflow_id: UUID,
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
+    """Activate a paused workflow."""
     obj = await session.get(Workflow, workflow_id)
-    if not obj:
-        raise HTTPException(status_code=404, detail="Workflow not found")
-    if getattr(current_user, "organization_id", None) is not None and obj.organization_id != current_user.organization_id:
+    if not obj or obj.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Workflow not found")
     obj.status = "active"
-    await session.flush()
+    await session.commit()
     await session.refresh(obj)
     return obj
 
@@ -172,13 +230,12 @@ async def pause_workflow(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
+    """Pause an active workflow."""
     obj = await session.get(Workflow, workflow_id)
-    if not obj:
-        raise HTTPException(status_code=404, detail="Workflow not found")
-    if getattr(current_user, "organization_id", None) is not None and obj.organization_id != current_user.organization_id:
+    if not obj or obj.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Workflow not found")
     obj.status = "paused"
-    await session.flush()
+    await session.commit()
     await session.refresh(obj)
     return obj
 

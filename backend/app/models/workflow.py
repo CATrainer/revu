@@ -9,55 +9,70 @@ from app.core.database import Base
 class Workflow(Base):
     """Represents an interaction workflow.
 
-    Workflows are automations that run on incoming interactions. Each workflow has:
-    - Trigger conditions (which interactions it applies to)
-    - An action (what to do when triggered)
-    - A priority (determines which workflow runs if multiple match)
+    Workflows are automations that run on NEW incoming interactions only.
     
-    Only ONE workflow runs per interaction - highest priority wins.
-    System workflows (Auto Moderator, Auto Archive) have fixed priorities 1-2.
+    Key principles:
+    - Only ONE workflow runs per interaction (highest priority wins)
+    - Workflows only apply to new incoming messages (not replies, not existing)
+    - Priority determines execution order (lower number = higher priority)
+    - Natural language conditions are evaluated by LLM
+    
+    Flow:
+    1. New interaction arrives
+    2. View labeling happens first
+    3. Check which workflows match (filters + view scope)
+    4. Evaluate natural language conditions via LLM
+    5. Highest priority matching workflow executes
     """
 
     __tablename__ = "workflows"
 
     name = Column(String(255), nullable=False)
-    status = Column(String(20), nullable=False, default="active")  # active|paused|draft
-    description = Column(Text)
+    status = Column(String(20), nullable=False, default="active")  # active|paused
     
-    # Workflow type and priority
-    type = Column(String(20), nullable=False, default="custom")  # 'system' | 'custom'
-    priority = Column(Integer, nullable=False, default=100)  # Lower = higher priority. System: 1-2, Custom: 3+
+    # Priority for execution order (lower = higher priority, 1 is highest)
+    # User can reorder workflows which updates this value
+    priority = Column(Integer, nullable=False, default=100)
     is_enabled = Column(Boolean, default=True)
 
-    # Legacy JSON configs (kept for backward compatibility)
-    trigger = Column(JSONB, nullable=True)
-    conditions = Column(JSONB, nullable=True)
-    actions = Column(JSONB, nullable=True)
+    # Filters (platform and interaction type)
+    platforms = Column(ARRAY(String(32)))  # ['youtube', 'instagram', 'tiktok', 'twitter'] - empty = all
+    interaction_types = Column(ARRAY(String(16)))  # ['comment', 'dm', 'mention'] - empty = all
     
-    # New: Natural language conditions (evaluated by AI)
-    natural_language_conditions = Column(ARRAY(Text))  # ["Hateful messages", "Spam content"]
-    compiled_conditions = Column(JSONB, nullable=True)  # AI-compiled structured conditions
+    # View scope - which views this workflow applies to
+    # Empty array or contains "all" = applies to all interactions
+    # Otherwise, only runs for interactions that match these views
+    view_ids = Column(ARRAY(PGUUID(as_uuid=True)))  # UUIDs of views this workflow applies to
     
-    # Platform and interaction type filters
-    platforms = Column(ARRAY(String(32)))  # ['youtube', 'instagram', 'tiktok', 'twitter']
-    interaction_types = Column(ARRAY(String(16)))  # ['comment', 'dm', 'mention']
+    # Natural language conditions (evaluated by LLM)
+    # Multiple conditions use OR logic - workflow matches if ANY condition matches
+    # Each individual condition is interpreted naturally by the AI
+    # Example: ["Questions about pricing", "Shipping inquiries", "Product availability"]
+    ai_conditions = Column(ARRAY(Text), nullable=True)
     
-    # Action configuration
-    action_type = Column(String(50))  # 'auto_moderate', 'auto_archive', 'auto_respond', 'generate_response'
-    action_config = Column(JSONB)  # Action-specific config (e.g., template text, tone settings)
+    # Action: 'auto_respond' or 'generate_response'
+    action_type = Column(String(50), nullable=False)  # 'auto_respond' | 'generate_response'
+    action_config = Column(JSONB)  # {response_text: str, tone: str}
 
-    # View association (workflows can be scoped to a specific view or global)
-    view_id = Column(PGUUID(as_uuid=True), ForeignKey("interaction_views.id", ondelete="SET NULL"), nullable=True)
-    is_global = Column(Boolean, default=False)  # If true, applies to all views
-
-    # Ownership / scoping
-    user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    # Ownership
+    user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     organization_id = Column(PGUUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
-    created_by_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
     # Relationships
     approvals = relationship("WorkflowApproval", back_populates="workflow", cascade="all, delete-orphan")
     executions = relationship("WorkflowExecution", back_populates="workflow", cascade="all, delete-orphan")
+    
+    # Legacy fields (kept for migration, will be removed later)
+    description = Column(Text, nullable=True)  # DEPRECATED
+    trigger = Column(JSONB, nullable=True)  # DEPRECATED
+    conditions = Column(JSONB, nullable=True)  # DEPRECATED
+    actions = Column(JSONB, nullable=True)  # DEPRECATED
+    type = Column(String(20), nullable=True)  # DEPRECATED
+    view_id = Column(PGUUID(as_uuid=True), ForeignKey("interaction_views.id", ondelete="SET NULL"), nullable=True)  # DEPRECATED
+    is_global = Column(Boolean, nullable=True)  # DEPRECATED
+    natural_language_conditions = Column(ARRAY(Text), nullable=True)  # DEPRECATED
+    compiled_conditions = Column(JSONB, nullable=True)  # DEPRECATED
+    created_by_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)  # DEPRECATED
 
 
 class WorkflowApproval(Base):

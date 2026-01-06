@@ -1,6 +1,16 @@
-"""Workflow Engine V2 - Priority-based workflow execution with AI condition evaluation."""
+"""Workflow Engine V2 - Priority-based workflow execution with AI condition evaluation.
+
+This engine processes new incoming interactions through user-defined workflows.
+
+Key principles:
+1. Only ONE workflow runs per interaction (highest priority wins)
+2. Workflows only apply to new incoming messages
+3. View labeling happens BEFORE workflow evaluation
+4. Natural language conditions are evaluated by LLM
+5. Two actions: auto_respond, generate_response
+"""
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Set
 from uuid import UUID
 import json
 
@@ -9,19 +19,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
 from app.models.interaction import Interaction
-from app.models.workflow import Workflow
-from app.models.auto_moderator_settings import AutoModeratorSettings
-from app.services.archive_service import get_archive_service
+from app.models.workflow import Workflow, WorkflowExecution
+from app.models.view_tag import InteractionViewTag
+from app.core.config import settings
 
 
 class WorkflowEngineV2:
     """Priority-based workflow engine.
     
-    Key principles:
-    1. Only ONE workflow runs per interaction (highest priority wins)
-    2. System workflows have fixed priorities (1-2)
-    3. Custom workflows start at priority 3+
-    4. Natural language conditions are evaluated by AI
+    Flow:
+    1. New interaction arrives
+    2. View labeling happens first (done elsewhere)
+    3. Check which workflows match (filters + view scope)
+    4. Evaluate natural language conditions via LLM
+    5. Highest priority matching workflow executes
     """
     
     def __init__(self, session: AsyncSession):
@@ -33,9 +44,8 @@ class WorkflowEngineV2:
         """Lazy-load Anthropic client."""
         if self._anthropic_client is None:
             from anthropic import AsyncAnthropic
-            import os
             self._anthropic_client = AsyncAnthropic(
-                api_key=os.getenv("ANTHROPIC_API_KEY")
+                api_key=settings.EFFECTIVE_ANTHROPIC_KEY
             )
         return self._anthropic_client
     
@@ -55,12 +65,17 @@ class WorkflowEngineV2:
         Returns:
             Result dict if a workflow executed, None otherwise
         """
-        # Skip if already processed
-        if interaction.processed_by_workflow_id:
-            logger.debug(f"Interaction {interaction.id} already processed by workflow {interaction.processed_by_workflow_id}")
+        # Skip if already processed by a workflow
+        if interaction.workflow_id:
+            logger.debug(f"Interaction {interaction.id} already processed by workflow {interaction.workflow_id}")
             return None
         
-        # Get all active workflows in priority order (lower priority number = higher priority)
+        # Skip replies - workflows only apply to incoming messages
+        if interaction.is_reply or interaction.type == 'reply':
+            logger.debug(f"Skipping reply interaction {interaction.id}")
+            return None
+        
+        # Get all active workflows in priority order (lower number = higher priority)
         result = await self.session.execute(
             select(Workflow)
             .where(
@@ -78,63 +93,144 @@ class WorkflowEngineV2:
             logger.debug(f"No active workflows for user {user_id}")
             return None
         
+        # Get view tags for this interaction (for view scope checking)
+        interaction_view_ids = await self._get_interaction_view_ids(interaction.id)
+        
+        # Find the first (highest priority) matching workflow
         for workflow in workflows:
-            # Check platform filter
-            if workflow.platforms and interaction.platform not in workflow.platforms:
-                continue
+            match_result = await self._check_workflow_match(
+                interaction, workflow, interaction_view_ids
+            )
             
-            # Check interaction type filter
-            if workflow.interaction_types and interaction.type not in workflow.interaction_types:
+            if not match_result["matches"]:
                 continue
-            
-            # Evaluate natural language conditions
-            if workflow.natural_language_conditions:
-                matches = await self._evaluate_conditions(interaction, workflow)
-                if not matches:
-                    continue
             
             # All conditions matched - execute action
-            logger.info(f"Workflow '{workflow.name}' (priority {workflow.priority}) matched interaction {interaction.id}")
+            logger.info(
+                f"Workflow '{workflow.name}' (priority {workflow.priority}) "
+                f"matched interaction {interaction.id}"
+            )
             
-            result = await self._execute_action(interaction, workflow, user_id)
+            action_result = await self._execute_action(interaction, workflow, user_id)
             
-            # Mark as processed
-            interaction.processed_by_workflow_id = workflow.id
-            interaction.processed_at = datetime.utcnow()
+            # Mark interaction as processed by this workflow
             interaction.workflow_id = workflow.id
             interaction.workflow_action = workflow.action_type
+            
+            # Log execution
+            await self._log_execution(
+                workflow_id=workflow.id,
+                interaction_id=interaction.id,
+                status="completed",
+                result=action_result,
+                user_id=user_id,
+            )
             
             return {
                 "workflow_id": str(workflow.id),
                 "workflow_name": workflow.name,
                 "action_type": workflow.action_type,
-                "result": result,
+                "result": action_result,
             }
         
         logger.debug(f"No workflows matched interaction {interaction.id}")
         return None
     
-    async def _evaluate_conditions(
+    async def _get_interaction_view_ids(self, interaction_id: UUID) -> Set[UUID]:
+        """Get all view IDs that this interaction is tagged with."""
+        result = await self.session.execute(
+            select(InteractionViewTag.view_id)
+            .where(InteractionViewTag.interaction_id == interaction_id)
+        )
+        return set(row[0] for row in result.fetchall())
+    
+    async def _check_workflow_match(
         self,
         interaction: Interaction,
-        workflow: Workflow
-    ) -> bool:
-        """Use AI to evaluate if interaction matches workflow conditions.
+        workflow: Workflow,
+        interaction_view_ids: Set[UUID],
+    ) -> Dict[str, Any]:
+        """Check if a workflow matches an interaction.
+        
+        Checks in order:
+        1. Platform filter
+        2. Interaction type filter
+        3. View scope
+        4. AI condition (if any)
+        
+        Returns:
+            Dict with 'matches' bool and 'reason' string
+        """
+        # Check platform filter
+        if workflow.platforms and len(workflow.platforms) > 0:
+            if interaction.platform not in workflow.platforms:
+                return {"matches": False, "reason": "Platform not in filter"}
+        
+        # Check interaction type filter
+        if workflow.interaction_types and len(workflow.interaction_types) > 0:
+            if interaction.type not in workflow.interaction_types:
+                return {"matches": False, "reason": "Interaction type not in filter"}
+        
+        # Check view scope
+        if workflow.view_ids and len(workflow.view_ids) > 0:
+            # Workflow is scoped to specific views
+            # Check if interaction is tagged with any of those views
+            if not interaction_view_ids.intersection(set(workflow.view_ids)):
+                return {"matches": False, "reason": "Interaction not in workflow's view scope"}
+        
+        # Check AI conditions (if any) - OR logic between multiple conditions
+        if workflow.ai_conditions and len(workflow.ai_conditions) > 0:
+            ai_match = await self._evaluate_ai_conditions(interaction, workflow.ai_conditions)
+            if not ai_match["matches"]:
+                return {"matches": False, "reason": f"AI conditions not met: {ai_match.get('reason', 'unknown')}"}
+        
+        return {"matches": True, "reason": "All conditions met"}
+    
+    async def _evaluate_ai_conditions(
+        self,
+        interaction: Interaction,
+        conditions: List[str]
+    ) -> Dict[str, Any]:
+        """Evaluate multiple AI conditions with OR logic.
         
         Args:
             interaction: The interaction to evaluate
-            workflow: The workflow with conditions to check
+            conditions: List of natural language condition strings
             
         Returns:
-            True if ALL conditions match, False otherwise
+            Dict with 'matches' bool and 'reason' string
+            Matches if ANY condition is satisfied (OR logic)
         """
-        if not workflow.natural_language_conditions:
-            return True
+        # Filter out empty conditions
+        valid_conditions = [c.strip() for c in conditions if c and c.strip()]
         
-        # Build context for AI
-        conditions_text = "\n".join(f"- {c}" for c in workflow.natural_language_conditions)
+        if not valid_conditions:
+            return {"matches": True, "reason": "No conditions to check"}
         
-        prompt = f"""Evaluate if this social media message matches ALL of the following conditions.
+        # Evaluate each condition - return True on first match (OR logic)
+        for condition in valid_conditions:
+            result = await self._evaluate_single_condition(interaction, condition)
+            if result["matches"]:
+                return {"matches": True, "reason": f"Matched: {condition}"}
+        
+        # None matched
+        return {"matches": False, "reason": "No conditions matched"}
+    
+    async def _evaluate_single_condition(
+        self,
+        interaction: Interaction,
+        condition: str
+    ) -> Dict[str, Any]:
+        """Use AI to evaluate if interaction matches a single natural language condition.
+        
+        Args:
+            interaction: The interaction to evaluate
+            condition: Natural language condition string
+            
+        Returns:
+            Dict with 'matches' bool and 'reason' string
+        """
+        prompt = f"""Evaluate if this social media message matches the following condition.
 
 MESSAGE DETAILS:
 - Platform: {interaction.platform}
@@ -142,15 +238,16 @@ MESSAGE DETAILS:
 - Author: @{interaction.author_username or 'unknown'}
 - Content: "{interaction.content}"
 
-CONDITIONS TO CHECK (message must match ALL):
-{conditions_text}
+CONDITION:
+{condition}
 
-Respond with JSON only: {{"matches": true/false, "reason": "brief explanation"}}"""
+Does this message match the condition? Respond with JSON only:
+{{"matches": true/false, "reason": "brief explanation"}}"""
 
         try:
             response = await self.anthropic_client.messages.create(
-                model="claude-3-5-sonnet-latest",
-                max_tokens=200,
+                model="claude-3-haiku-20240307",  # Fast model for classification
+                max_tokens=150,
                 temperature=0,
                 messages=[{"role": "user", "content": prompt}]
             )
@@ -158,19 +255,28 @@ Respond with JSON only: {{"matches": true/false, "reason": "brief explanation"}}
             result_text = response.content[0].text.strip()
             
             # Parse JSON response
+            # Handle potential markdown code blocks
+            if "```" in result_text:
+                result_text = result_text.split("```")[1]
+                if result_text.startswith("json"):
+                    result_text = result_text[4:]
+                result_text = result_text.strip()
+            
             if result_text.startswith("{"):
                 result = json.loads(result_text)
                 matches = result.get("matches", False)
                 reason = result.get("reason", "")
                 
-                logger.debug(f"Condition evaluation for workflow '{workflow.name}': matches={matches}, reason={reason}")
-                return matches
+                logger.debug(f"AI condition evaluation: matches={matches}, reason={reason}")
+                return {"matches": matches, "reason": reason}
             
-            return False
+            logger.warning(f"Unexpected AI response format: {result_text}")
+            return {"matches": False, "reason": "Could not parse AI response"}
             
         except Exception as e:
-            logger.error(f"Error evaluating conditions for workflow {workflow.id}: {e}")
-            return False
+            logger.error(f"Error evaluating AI condition: {e}")
+            # On error, don't match (fail safe)
+            return {"matches": False, "reason": f"Error: {str(e)}"}
     
     async def _execute_action(
         self,
@@ -191,13 +297,7 @@ Respond with JSON only: {{"matches": true/false, "reason": "brief explanation"}}
         action_type = workflow.action_type
         action_config = workflow.action_config or {}
         
-        if action_type == 'auto_moderate':
-            return await self._execute_moderation(interaction, workflow, user_id)
-        
-        elif action_type == 'auto_archive':
-            return await self._execute_archive(interaction, workflow)
-        
-        elif action_type == 'auto_respond':
+        if action_type == 'auto_respond':
             return await self._execute_auto_respond(interaction, workflow, user_id)
         
         elif action_type == 'generate_response':
@@ -207,77 +307,6 @@ Respond with JSON only: {{"matches": true/false, "reason": "brief explanation"}}
             logger.warning(f"Unknown action type: {action_type}")
             return {"action": "unknown", "error": f"Unknown action type: {action_type}"}
     
-    async def _execute_moderation(
-        self,
-        interaction: Interaction,
-        workflow: Workflow,
-        user_id: UUID
-    ) -> Dict[str, Any]:
-        """Execute auto-moderation action.
-        
-        Gets the user's platform-specific settings and performs the appropriate action.
-        """
-        # Get user's moderation settings
-        result = await self.session.execute(
-            select(AutoModeratorSettings).where(AutoModeratorSettings.user_id == user_id)
-        )
-        settings = result.scalar_one_or_none()
-        
-        if not settings:
-            # Create default settings
-            settings = AutoModeratorSettings(user_id=user_id)
-            self.session.add(settings)
-            await self.session.flush()
-        
-        # Get action for this platform and type
-        action = settings.get_action(interaction.platform, interaction.type)
-        
-        if action == 'none':
-            return {"action": "none", "reason": "Moderation disabled for this platform/type"}
-        
-        # Execute platform action
-        from app.services.platform_actions import get_platform_action_service
-        platform_service = get_platform_action_service()
-        
-        if action == 'delete':
-            result = await platform_service.delete_interaction(interaction, self.session)
-            if result["success"]:
-                # Also delete from our database
-                await self.session.delete(interaction)
-            return {"action": "delete", "platform_result": result}
-        
-        elif action == 'hide':
-            result = await platform_service.hide_interaction(interaction, self.session)
-            return {"action": "hide", "platform_result": result}
-        
-        elif action == 'block':
-            result = await platform_service.block_user(interaction, self.session)
-            return {"action": "block", "platform_result": result}
-        
-        elif action == 'mute':
-            result = await platform_service.mute_user(interaction, self.session)
-            return {"action": "mute", "platform_result": result}
-        
-        elif action == 'report':
-            result = await platform_service.report_interaction(interaction, self.session)
-            return {"action": "report", "platform_result": result}
-        
-        return {"action": action, "error": "Action not implemented"}
-    
-    async def _execute_archive(
-        self,
-        interaction: Interaction,
-        workflow: Workflow
-    ) -> Dict[str, Any]:
-        """Execute auto-archive action."""
-        archive_service = get_archive_service(self.session)
-        success = await archive_service.archive_by_workflow(interaction.id, workflow.id)
-        
-        return {
-            "action": "archive",
-            "success": success,
-        }
-    
     async def _execute_auto_respond(
         self,
         interaction: Interaction,
@@ -286,25 +315,25 @@ Respond with JSON only: {{"matches": true/false, "reason": "brief explanation"}}
     ) -> Dict[str, Any]:
         """Execute auto-respond with template text."""
         action_config = workflow.action_config or {}
-        template = action_config.get("template", "")
+        response_text = action_config.get("response_text", "")
         
-        if not template:
-            return {"action": "auto_respond", "error": "No template configured"}
+        if not response_text:
+            return {"action": "auto_respond", "error": "No response_text configured"}
         
-        # Send the response
+        # Send the response via platform
         from app.services.platform_actions import get_platform_action_service
         platform_service = get_platform_action_service()
         
-        result = await platform_service.send_reply(interaction, template, self.session)
+        result = await platform_service.send_reply(interaction, response_text, self.session)
         
-        if result["success"]:
+        if result.get("success"):
             # Record the sent response
             from app.services.sent_response_service import get_sent_response_service
             sent_service = get_sent_response_service(self.session)
             
             await sent_service.record_sent_response(
                 interaction_id=interaction.id,
-                response_text=template,
+                response_text=response_text,
                 user_id=user_id,
                 response_type='automated',
                 workflow_id=workflow.id,
@@ -312,12 +341,13 @@ Respond with JSON only: {{"matches": true/false, "reason": "brief explanation"}}
                 is_demo=interaction.is_demo,
             )
             
+            # Update interaction status
             interaction.status = 'answered'
             interaction.responded_at = datetime.utcnow()
         
         return {
             "action": "auto_respond",
-            "success": result["success"],
+            "success": result.get("success", False),
             "platform_result": result,
         }
     
@@ -335,26 +365,56 @@ Respond with JSON only: {{"matches": true/false, "reason": "brief explanation"}}
         from app.services.response_generator import get_response_generator
         generator = get_response_generator(self.session)
         
-        response_text = await generator.generate_response(
-            interaction=interaction,
-            user_id=user_id,
-            tone=tone,
+        try:
+            response_text = await generator.generate_response(
+                interaction=interaction,
+                user_id=user_id,
+                tone=tone,
+            )
+            
+            # Store as pending response
+            interaction.pending_response = {
+                "text": response_text,
+                "generated_at": datetime.utcnow().isoformat(),
+                "model": settings.CLAUDE_MODEL,
+                "workflow_id": str(workflow.id),
+                "tone": tone,
+            }
+            interaction.status = 'awaiting_approval'
+            
+            return {
+                "action": "generate_response",
+                "success": True,
+                "response_preview": response_text[:100] + "..." if len(response_text) > 100 else response_text,
+            }
+            
+        except Exception as e:
+            logger.error(f"Error generating response: {e}")
+            return {
+                "action": "generate_response",
+                "success": False,
+                "error": str(e),
+            }
+    
+    async def _log_execution(
+        self,
+        workflow_id: UUID,
+        interaction_id: UUID,
+        status: str,
+        result: Optional[Dict[str, Any]] = None,
+        error: Optional[str] = None,
+        user_id: Optional[UUID] = None,
+    ):
+        """Log workflow execution for audit trail."""
+        execution = WorkflowExecution(
+            workflow_id=workflow_id,
+            status=status,
+            context={"interaction_id": str(interaction_id)},
+            result=result,
+            error=error,
+            created_by_id=user_id,
         )
-        
-        # Store as pending response
-        interaction.pending_response = {
-            "text": response_text,
-            "generated_at": datetime.utcnow().isoformat(),
-            "model": "claude-3-5-sonnet-latest",
-            "workflow_id": str(workflow.id),
-        }
-        interaction.status = 'awaiting_approval'
-        
-        return {
-            "action": "generate_response",
-            "success": True,
-            "response_preview": response_text[:100] + "..." if len(response_text) > 100 else response_text,
-        }
+        self.session.add(execution)
 
 
 def get_workflow_engine(session: AsyncSession) -> WorkflowEngineV2:
