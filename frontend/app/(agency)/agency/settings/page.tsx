@@ -161,154 +161,126 @@ export default function AgencySettingsPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Left Column */}
-        <div className="space-y-4">
-          {/* Agency Profile */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Agency Profile</CardTitle>
-              <CardDescription>
-                This information will be visible to creators when they receive invitations
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Logo Upload */}
-              <div className="space-y-2">
-                <Label>Agency Logo</Label>
-                <div className="flex items-center gap-4">
-                  <div className="h-20 w-20 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 overflow-hidden">
-                    {agency?.logo_url ? (
-                      <img
-                        src={agency.logo_url}
-                        alt={agency.name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <Building2 className="h-8 w-8 text-gray-400" />
-                    )}
-                  </div>
-                  <div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                      className="hidden"
-                      id="logo-upload"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={isUploading}
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      {isUploading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Upload className="mr-2 h-4 w-4" />
-                      )}
-                      {isUploading ? 'Uploading...' : 'Upload Logo'}
-                    </Button>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      PNG, JPG up to 2MB. Recommended 200x200px.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Agency Name */}
-              <div className="space-y-2">
-                <Label htmlFor="name">Agency Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Your Agency Name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-
-              {/* Website */}
-              <div className="space-y-2">
-                <Label htmlFor="website">Website</Label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="website"
-                    placeholder="https://youragency.com"
-                    className="pl-10"
-                    value={formData.website}
-                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Tell creators about your agency..."
-                  rows={4}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  This description will be shown to creators when they receive invitations.
-                </p>
-              </div>
-
-              <Button
-                onClick={handleSave}
-                disabled={isSaving || !formData.name}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Account Owner */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Account Owner</CardTitle>
-              <CardDescription>
-                The primary contact for this agency account
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        {/* Left Column - Agency Profile */}
+        <Card className="h-fit">
+          <CardHeader>
+            <CardTitle className="text-lg">Agency Profile</CardTitle>
+            <CardDescription>
+              This information will be visible to creators when they receive invitations
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Logo Upload */}
+            <div className="space-y-2">
+              <Label>Agency Logo</Label>
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-medium text-lg">
-                  {user?.full_name?.charAt(0) || user?.email?.charAt(0) || 'A'}
+                <div className="h-20 w-20 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 overflow-hidden">
+                  {agency?.logo_url ? (
+                    <img
+                      src={agency.logo_url}
+                      alt={agency.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <Building2 className="h-8 w-8 text-gray-400" />
+                  )}
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">
-                    {user?.full_name || 'Agency Owner'}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {user?.email}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                    id="logo-upload"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isUploading}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {isUploading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="mr-2 h-4 w-4" />
+                    )}
+                    {isUploading ? 'Uploading...' : 'Upload Logo'}
+                  </Button>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    PNG, JPG up to 2MB. Recommended 200x200px.
                   </p>
                 </div>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                To transfer ownership, please contact support.
-              </p>
-            </CardContent>
-          </Card>
+            </div>
 
+            {/* Agency Name */}
+            <div className="space-y-2">
+              <Label htmlFor="name">Agency Name</Label>
+              <Input
+                id="name"
+                placeholder="Your Agency Name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+
+            {/* Website */}
+            <div className="space-y-2">
+              <Label htmlFor="website">Website</Label>
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="website"
+                  placeholder="https://youragency.com"
+                  className="pl-10"
+                  value={formData.website}
+                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Tell creators about your agency..."
+                rows={4}
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                This description will be shown to creators when they receive invitations.
+              </p>
+            </div>
+
+            <Button
+              onClick={handleSave}
+              disabled={isSaving || !formData.name}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Right Column - Agency Info, Account Owner, Currency */}
+        <div className="space-y-4">
           {/* Agency Info */}
           {agency && (
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Agency Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
@@ -329,17 +301,42 @@ export default function AgencySettingsPage() {
               </CardContent>
             </Card>
           )}
-        </div>
 
-        {/* Right Column */}
-        <div className="space-y-4">
+          {/* Account Owner */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Account Owner</CardTitle>
+              <CardDescription>
+                The primary contact for this agency account
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-medium text-lg">
+                  {user?.full_name?.charAt(0) || user?.email?.charAt(0) || 'A'}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                    {user?.full_name || 'Agency Owner'}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {user?.email}
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                To transfer ownership, please contact support.
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Currency Preference */}
           <CurrencyPreferenceCard />
-
-          {/* Notification Preferences */}
-          <NotificationPreferencesCard />
         </div>
       </div>
+
+      {/* Notification Preferences - Full Width Horizontal */}
+      <NotificationPreferencesCard />
 
       {/* Danger Zone - Full Width */}
       <Card className="border-red-200 dark:border-red-900">
@@ -506,7 +503,7 @@ function NotificationPreferencesCard() {
   if (loading) {
     return (
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4">
           <CardTitle className="text-lg flex items-center gap-2">
             <Bell className="h-5 w-5" />
             Notification Preferences
@@ -523,22 +520,26 @@ function NotificationPreferencesCard() {
 
   return (
     <Card id="notifications">
-      <CardHeader>
+      <CardHeader className="pb-4">
         <CardTitle className="text-lg flex items-center gap-2">
           <Bell className="h-5 w-5" />
           Notification Preferences
         </CardTitle>
         <CardDescription>
-          Control how you receive notifications about campaigns, deals, and team activity
+          Control how you receive notifications
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Global Settings */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div>
-              <div className="font-medium text-gray-900 dark:text-gray-100">In-App Notifications</div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">Show notifications in the dashboard</div>
+      <CardContent className="space-y-4">
+        {/* Global Settings Row */}
+        <div className="flex items-center gap-6 p-3 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-800/30 border border-gray-200 dark:border-gray-700">
+          {/* In-App Toggle */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30">
+              <Bell className="h-4 w-4 text-green-600 dark:text-green-400" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">In-App</span>
+              <span className="text-[10px] text-gray-500">Dashboard alerts</span>
             </div>
             <Switch
               checked={preferences?.in_app_enabled ?? true}
@@ -547,10 +548,16 @@ function NotificationPreferencesCard() {
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div>
-              <div className="font-medium text-gray-900 dark:text-gray-100">Email Notifications</div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">Receive notifications via email</div>
+          <div className="w-px h-10 bg-gray-200 dark:bg-gray-700" />
+
+          {/* Email Toggle */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30">
+              <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Email</span>
+              <span className="text-[10px] text-gray-500">Inbox delivery</span>
             </div>
             <Switch
               checked={preferences?.email_enabled ?? true}
@@ -559,103 +566,117 @@ function NotificationPreferencesCard() {
             />
           </div>
 
+          {/* Email Frequency - Only show when email is enabled */}
           {preferences?.email_enabled && (
-            <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-3">
-              <div className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Email Delivery
-              </div>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="email_frequency"
-                    checked={preferences?.email_frequency === 'instant'}
-                    onChange={() => updatePreferences({ email_frequency: 'instant' })}
+            <>
+              <div className="w-px h-10 bg-gray-200 dark:bg-gray-700" />
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">Delivery:</span>
+                <div className="flex items-center bg-white dark:bg-gray-800 rounded-full p-0.5 border border-gray-200 dark:border-gray-700 shadow-sm">
+                  <button
+                    onClick={() => updatePreferences({ email_frequency: 'instant' })}
                     disabled={saving}
-                    className="w-4 h-4 text-green-600"
-                  />
-                  <span className="text-sm text-gray-900 dark:text-gray-100">Instant</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="email_frequency"
-                    checked={preferences?.email_frequency === 'daily_digest'}
-                    onChange={() => updatePreferences({ email_frequency: 'daily_digest' })}
+                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${
+                      preferences?.email_frequency === 'instant'
+                        ? 'bg-blue-500 text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-blue-600'
+                    }`}
+                  >
+                    Instant
+                  </button>
+                  <button
+                    onClick={() => updatePreferences({ email_frequency: 'daily_digest' })}
                     disabled={saving}
-                    className="w-4 h-4 text-green-600"
-                  />
-                  <span className="text-sm text-gray-900 dark:text-gray-100">Daily Digest</span>
-                </label>
-              </div>
-              {preferences?.email_frequency === 'daily_digest' && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Send digest at:</span>
+                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${
+                      preferences?.email_frequency === 'daily_digest'
+                        ? 'bg-blue-500 text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-blue-600'
+                    }`}
+                  >
+                    Daily Digest
+                  </button>
+                </div>
+                {preferences?.email_frequency === 'daily_digest' && (
                   <select
                     value={preferences?.digest_hour ?? 9}
                     onChange={(e) => updatePreferences({ digest_hour: parseInt(e.target.value) })}
                     disabled={saving}
-                    className="px-3 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                    className="px-2 py-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-gray-100 shadow-sm"
                   >
                     {Array.from({ length: 24 }, (_, i) => (
                       <option key={i} value={i}>
-                        {i.toString().padStart(2, '0')}:00 UTC
+                        {i.toString().padStart(2, '0')}:00
                       </option>
                     ))}
                   </select>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            </>
           )}
         </div>
 
-        {/* Per-Type Settings */}
+        {/* Notification Types Table */}
         {notificationTypes.length > 0 && (
-          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="font-medium text-gray-900 dark:text-gray-100">Notification Types</h4>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Choose which notifications you want to receive and how.
-            </p>
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {/* Table Header */}
+            <div className="flex items-center justify-between px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+              <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Notification Type</span>
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-1.5 w-12 justify-center">
+                  <Bell className="h-3.5 w-3.5 text-green-500" />
+                  <span className="text-[10px] font-medium text-gray-500">App</span>
+                </div>
+                <div className="flex items-center gap-1.5 w-12 justify-center">
+                  <Mail className="h-3.5 w-3.5 text-blue-500" />
+                  <span className="text-[10px] font-medium text-gray-500">Email</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Table Body - Grouped by Category */}
+            {notificationTypes.map((category, catIdx) => (
+              <div key={category.id}>
+                {/* Category Header */}
+                <div className={`px-4 py-1.5 bg-gray-100/50 dark:bg-gray-800/30 ${catIdx > 0 ? 'border-t border-gray-200 dark:border-gray-700' : ''}`}>
+                  <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {category.name}
+                  </span>
+                </div>
+                {/* Category Items */}
+                {category.types.map((type, idx) => {
+                  const typeSettings = preferences?.type_settings?.[type.id] || {};
+                  const inAppEnabled = typeSettings.in_app ?? type.default_in_app;
+                  const emailEnabled = typeSettings.email ?? type.default_email;
 
-            {notificationTypes.map((category) => (
-              <div key={category.id} className="space-y-2">
-                <h5 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                  {category.name}
-                </h5>
-                <div className="rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
-                  {category.types.map((type) => {
-                    const typeSettings = preferences?.type_settings?.[type.id] || {};
-                    const inAppEnabled = typeSettings.in_app ?? type.default_in_app;
-                    const emailEnabled = typeSettings.email ?? type.default_email;
-
-                    return (
-                      <div key={type.id} className="flex items-center justify-between p-3">
-                        <div className="text-sm text-gray-900 dark:text-gray-100">{type.title}</div>
-                        <div className="flex items-center gap-4">
-                          <label className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                            <Switch
-                              checked={inAppEnabled}
-                              onCheckedChange={(checked) => toggleTypePreference(type.id, 'in_app', checked)}
-                              disabled={saving || !preferences?.in_app_enabled}
-                              className="scale-75"
-                            />
-                            In-App
-                          </label>
-                          <label className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                            <Switch
-                              checked={emailEnabled}
-                              onCheckedChange={(checked) => toggleTypePreference(type.id, 'email', checked)}
-                              disabled={saving || !preferences?.email_enabled}
-                              className="scale-75"
-                            />
-                            Email
-                          </label>
+                  return (
+                    <div 
+                      key={type.id} 
+                      className={`flex items-center justify-between px-4 py-2 ${
+                        idx !== category.types.length - 1 ? 'border-b border-gray-100 dark:border-gray-800' : ''
+                      } hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors`}
+                    >
+                      <span className="text-sm text-gray-900 dark:text-gray-100">{type.title}</span>
+                      <div className="flex items-center gap-6">
+                        <div className="w-12 flex justify-center">
+                          <Switch
+                            checked={inAppEnabled}
+                            onCheckedChange={(checked) => toggleTypePreference(type.id, 'in_app', checked)}
+                            disabled={saving || !preferences?.in_app_enabled}
+                            className="scale-75"
+                          />
+                        </div>
+                        <div className="w-12 flex justify-center">
+                          <Switch
+                            checked={emailEnabled}
+                            onCheckedChange={(checked) => toggleTypePreference(type.id, 'email', checked)}
+                            disabled={saving || !preferences?.email_enabled}
+                            className="scale-75"
+                          />
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>
