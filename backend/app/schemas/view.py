@@ -31,13 +31,18 @@ class ViewFilters(BaseModel):
 
 class ViewDisplay(BaseModel):
     """Display preferences for views."""
-    sort_by: str = Field(default="newest", description="newest, oldest, priority, engagement")
-    group_by: Optional[str] = Field(None, description="platform, date, author, null for no grouping")
-    show_replies: bool = True
+    # Support both camelCase (from DB) and snake_case
+    sortBy: Optional[str] = Field(default="newest", description="newest, oldest, priority, engagement")
+    sort_by: Optional[str] = Field(default=None, description="Alias for sortBy")
+    groupBy: Optional[str] = Field(None, description="platform, date, author, null for no grouping")
+    group_by: Optional[str] = Field(default=None, description="Alias for groupBy")
+    showReplies: Optional[bool] = Field(default=True)
+    show_replies: Optional[bool] = Field(default=None, description="Alias for showReplies")
     density: str = Field(default="comfortable", description="comfortable, compact")
     
     class Config:
         extra = "allow"  # Allow additional display options
+        populate_by_name = True
 
 
 class ViewBase(BaseModel):
@@ -88,15 +93,30 @@ class ViewUpdate(BaseModel):
     workflow_ids: Optional[List[UUID]] = None
 
 
-class ViewOut(ViewBase):
+class ViewOut(BaseModel):
     """Schema for view output."""
     id: UUID
+    name: str
+    description: Optional[str] = None
+    icon: str = '📋'
+    color: str = '#3b82f6'
+    type: str = 'custom'
+    
+    # Filter mode and AI prompt
+    filter_mode: Optional[str] = 'manual'
+    ai_prompt: Optional[str] = None
+    ai_prompt_hash: Optional[str] = None
+    
+    # Filters and display as raw dicts to avoid validation issues
+    filters: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    display: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    
+    is_pinned: bool = False
+    is_shared: bool = False
     is_template: bool = False
     is_system: bool = False
+    order_index: int = 0
     workflow_ids: Optional[List[UUID]] = None
-    
-    # AI filtering status
-    ai_prompt_hash: Optional[str] = None
     
     # Ownership
     user_id: UUID
