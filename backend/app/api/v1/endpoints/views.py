@@ -94,7 +94,7 @@ async def tag_interactions_for_view_task(view_id: str, user_id: str):
         logger.info(f"Tagged {count} interactions for view {view_id}")
 
 
-@router.get("/views", response_model=ViewList)
+@router.get("/views")
 async def list_views(
     include_shared: bool = Query(True, description="Include organization shared views"),
     only_pinned: bool = Query(False, description="Only return pinned views"),
@@ -102,60 +102,102 @@ async def list_views(
     current_user: User = Depends(get_current_active_user),
 ):
     """List all views accessible to the user."""
-    # Check if "All" system view exists, create if not
-    all_view_stmt = select(InteractionView).where(
-        and_(
-            InteractionView.user_id == current_user.id,
-            InteractionView.is_system == True,
-            InteractionView.name == "All"
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Check if "All" system view exists, create if not
+        all_view_stmt = select(InteractionView).where(
+            and_(
+                InteractionView.user_id == current_user.id,
+                InteractionView.is_system == True,
+                InteractionView.name == "All"
+            )
         )
-    )
-    all_view_result = await session.execute(all_view_stmt)
-    all_view_exists = all_view_result.scalar_one_or_none()
-    
-    if not all_view_exists:
-        # Auto-create "All" system view
-        all_view = InteractionView(
-            name="All",
-            description="All interactions across all platforms",
-            icon="📬",
-            color="#6B7280",
-            type="system",
-            filter_mode="manual",  # System views use manual filtering
-            filters={},
-            display={"sortBy": "newest", "groupBy": None, "columns": ["author", "content", "platform", "status", "priority", "created_at"]},
-            is_pinned=True,
-            is_system=True,
-            order_index=0,
-            user_id=current_user.id,
-            organization_id=getattr(current_user, 'organization_id', None),
+        all_view_result = await session.execute(all_view_stmt)
+        all_view_exists = all_view_result.scalar_one_or_none()
+        
+        if not all_view_exists:
+            # Auto-create "All" system view
+            all_view = InteractionView(
+                name="All",
+                description="All interactions across all platforms",
+                icon="📬",
+                color="#6B7280",
+                type="system",
+                filter_mode="manual",  # System views use manual filtering
+                filters={},
+                display={"sortBy": "newest", "groupBy": None, "columns": ["author", "content", "platform", "status", "priority", "created_at"]},
+                is_pinned=True,
+                is_system=True,
+                order_index=0,
+                user_id=current_user.id,
+                organization_id=getattr(current_user, 'organization_id', None),
+            )
+            session.add(all_view)
+            await session.commit()
+            logger.info(f"Created All system view for user {current_user.id}")
+        
+        # Build query for user's views
+        stmt = select(InteractionView).where(
+            InteractionView.user_id == current_user.id
         )
-        session.add(all_view)
-        await session.commit()
-    
-    # Build query for user's views
-    stmt = select(InteractionView).where(
-        InteractionView.user_id == current_user.id
-    )
-    
-    if only_pinned:
-        stmt = stmt.where(InteractionView.is_pinned == True)
-    
-    # Order by system first, then pinned, then by order_index
-    stmt = stmt.order_by(
-        InteractionView.is_system.desc(),
-        InteractionView.is_pinned.desc(),
-        InteractionView.order_index.asc(),
-        InteractionView.created_at.desc()
-    )
-    
-    result = await session.execute(stmt)
-    views = list(result.scalars().all())
-    
-    return ViewList(
-        views=views,
-        total=len(views)
-    )
+        
+        if only_pinned:
+            stmt = stmt.where(InteractionView.is_pinned == True)
+        
+        # Order by system first, then pinned, then by order_index
+        stmt = stmt.order_by(
+            InteractionView.is_system.desc(),
+            InteractionView.is_pinned.desc(),
+            InteractionView.order_index.asc(),
+            InteractionView.created_at.desc()
+        )
+        
+        result = await session.execute(stmt)
+        views = list(result.scalars().all())
+        
+        logger.info(f"Found {len(views)} views for user {current_user.id}")
+        
+        # Manually serialize to avoid Pydantic validation issues
+        views_data = []
+        for view in views:
+            try:
+                view_dict = {
+                    "id": str(view.id),
+                    "name": view.name,
+                    "description": view.description,
+                    "icon": view.icon or "📋",
+                    "color": view.color or "#3b82f6",
+                    "type": view.type or "custom",
+                    "filter_mode": view.filter_mode or "manual",
+                    "ai_prompt": view.ai_prompt,
+                    "ai_prompt_hash": view.ai_prompt_hash,
+                    "filters": view.filters or {},
+                    "display": view.display or {},
+                    "is_pinned": view.is_pinned or False,
+                    "is_shared": view.is_shared or False,
+                    "is_template": view.is_template or False,
+                    "is_system": view.is_system or False,
+                    "order_index": view.order_index or 0,
+                    "workflow_ids": [str(wid) for wid in (view.workflow_ids or [])] if view.workflow_ids else None,
+                    "user_id": str(view.user_id),
+                    "organization_id": str(view.organization_id) if view.organization_id else None,
+                    "created_at": view.created_at.isoformat() if view.created_at else None,
+                    "updated_at": view.updated_at.isoformat() if view.updated_at else None,
+                }
+                views_data.append(view_dict)
+            except Exception as e:
+                logger.error(f"Error serializing view {view.id}: {e}")
+                continue
+        
+        return {"views": views_data, "total": len(views_data)}
+        
+    except Exception as e:
+        logger.error(f"Error listing views: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise
 
 
 @router.get("/views/{view_id}", response_model=ViewOut)
