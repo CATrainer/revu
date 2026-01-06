@@ -95,6 +95,12 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(minute=0),  # Every hour
     },
     
+    # Content Analysis: Classify all users' content daily
+    "classify-content-daily": {
+        "task": "content_analysis.classify_all_users",
+        "schedule": crontab(hour=2, minute=0),  # Daily at 2 AM UTC
+    },
+    
     # Demo mode: Cleanup stuck jobs every 10 minutes
     "cleanup-stuck-demo-jobs": {
         "task": "demo.cleanup_stuck_jobs",

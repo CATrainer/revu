@@ -35,6 +35,7 @@ from app.api.v1.endpoints import (
     feedback,
     credits,
     insights,
+    insights_v2,
     action_plans,
     onboarding,
     applications,
@@ -293,6 +294,12 @@ api_router.include_router(
 api_router.include_router(
     insights.router,
     prefix="/insights",
+    tags=["insights", "analytics"],
+)
+
+api_router.include_router(
+    insights_v2.router,
+    prefix="/insights/v2",
     tags=["insights", "analytics"],
 )
 

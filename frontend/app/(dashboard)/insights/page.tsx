@@ -1,588 +1,580 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Skeleton } from "@/components/ui/skeleton"
-import { api } from "@/lib/api"
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { api } from '@/lib/api';
 import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Calendar,
   Eye,
   Heart,
-  MessageCircle,
-  Share2,
-  Sparkles,
-  Target,
-  AlertCircle,
   BarChart3,
+  Target,
   Youtube,
   Instagram,
   Play,
-} from "lucide-react"
-import Link from "next/link"
+  Sparkles,
+  Info,
+  ArrowRight,
+  Zap,
+} from 'lucide-react';
+import Link from 'next/link';
 
-interface ContentPerformance {
-  id: string
-  views: number
-  likes: number
-  comments_count: number
-  shares: number
-  engagement_rate: number
-  performance_score: number
-  percentile_rank: number
-  performance_category: string
+interface MetricWithChange {
+  value: number;
+  previous_value: number;
+  change_percent: number;
+  trend: 'up' | 'down' | 'stable';
 }
 
-interface ContentInsight {
-  id: string
-  insight_type: string
-  category: string
-  title: string
-  description: string
-  impact_level: string
-  is_positive: boolean
+interface PerformanceDistribution {
+  top_performers: number;
+  average: number;
+  underperformers: number;
+  top_performers_percent: number;
+  average_percent: number;
+  underperformers_percent: number;
 }
 
-interface ContentPiece {
-  id: string
-  platform: string
-  content_type: string
-  title: string
-  url: string
-  thumbnail_url: string
-  published_at: string
-  theme: string
-  performance: ContentPerformance
-  insights: ContentInsight[]
+interface PlatformMetrics {
+  platform: string;
+  platform_display: string;
+  content_count: number;
+  total_views: number;
+  avg_engagement_rate: number;
+  avg_views_per_content: number;
+  top_performer_count: number;
 }
 
-interface DashboardSummary {
-  total_content: number
-  overperforming_count: number
-  normal_count: number
-  underperforming_count: number
-  avg_engagement_rate: number
-  total_views: number
-  total_reach: number
-  engagement_trend: string
+interface ThemeMetrics {
+  theme: string;
+  content_count: number;
+  avg_engagement_rate: number;
+  total_views: number;
 }
 
-interface ThemePerformance {
-  id: string
-  name: string
-  description: string
-  content_count: number
-  avg_engagement_rate: number
-  avg_performance_score: number
-  total_views: number
+interface OverviewData {
+  total_content: MetricWithChange;
+  avg_engagement_rate: MetricWithChange;
+  total_views: MetricWithChange;
+  total_interactions: MetricWithChange;
+  performance_distribution: PerformanceDistribution;
+  platforms: PlatformMetrics[];
+  top_themes: ThemeMetrics[];
+  period_start: string;
+  period_end: string;
+  period_label: string;
 }
 
-interface PlatformComparison {
-  platform: string
-  content_count: number
-  avg_engagement_rate: number
-  total_views: number
-  avg_performance_score: number
-}
-
-interface InsightsDashboardData {
-  summary: DashboardSummary
-  top_performers: ContentPiece[]
-  needs_attention: ContentPiece[]
-  top_themes: ThemePerformance[]
-  platform_comparison: PlatformComparison[]
-}
-
-export default function InsightsDashboardPage() {
-  const router = useRouter()
-  const [data, setData] = useState<InsightsDashboardData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [timePeriod, setTimePeriod] = useState("30d")
-  const [platformFilter, setPlatformFilter] = useState("all")
+export default function InsightsOverviewPage() {
+  const [data, setData] = useState<OverviewData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState('30d');
+  const [platform, setPlatform] = useState('all');
 
   useEffect(() => {
-    fetchDashboardData()
-  }, [timePeriod, platformFilter])
+    fetchData();
+  }, [period, platform]);
 
-  const fetchDashboardData = async () => {
-    setLoading(true)
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      const params = new URLSearchParams({
-        time_period: timePeriod,
-        platform_filter: platformFilter,
-      })
-
-      const response = await api.get(`/insights/dashboard?${params}`)
-      setData(response.data)
-    } catch (error: any) {
-      console.error('❌ Failed to fetch insights:', error)
-      // Axios interceptor will handle 401 and redirect to login automatically
-      if (error.response?.status !== 401) {
-        // Only log non-401 errors since 401 is handled by redirect
-        console.error('Insights API error:', error.response?.status, error.response?.data)
-      }
+      const params = new URLSearchParams({ period });
+      if (platform !== 'all') params.append('platform', platform);
+      
+      const response = await api.get(`/insights/v2/overview?${params}`);
+      setData(response.data);
+    } catch (error) {
+      console.error('Failed to fetch insights:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-  const getPlatformIcon = (platform: string) => {
-    switch (platform.toLowerCase()) {
-      case 'youtube':
-        return <Youtube className="h-4 w-4" />
-      case 'instagram':
-        return <Instagram className="h-4 w-4" />
-      case 'tiktok':
-        return <Play className="h-4 w-4" />
-      default:
-        return null
-    }
-  }
+  };
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case 'up':
-        return <TrendingUp className="h-4 w-4 text-green-500" />
+        return <TrendingUp className="h-4 w-4 text-emerald-500" />;
       case 'down':
-        return <TrendingDown className="h-4 w-4 text-red-500" />
+        return <TrendingDown className="h-4 w-4 text-red-500" />;
       default:
-        return <Minus className="h-4 w-4 text-gray-500" />
+        return <Minus className="h-4 w-4 text-muted-foreground" />;
     }
-  }
+  };
 
-  const getPerformanceBadge = (category: string) => {
-    switch (category) {
-      case 'overperforming':
-        return <Badge variant="success">Overperforming</Badge>
-      case 'underperforming':
-        return <Badge variant="destructive">Needs Attention</Badge>
+  const getTrendColor = (trend: string, change: number) => {
+    if (trend === 'up') return 'text-emerald-600';
+    if (trend === 'down') return 'text-red-600';
+    return 'text-muted-foreground';
+  };
+
+  const getPlatformIcon = (platform: string) => {
+    switch (platform.toLowerCase()) {
+      case 'youtube':
+        return <Youtube className="h-5 w-5 text-red-500" />;
+      case 'instagram':
+        return <Instagram className="h-5 w-5 text-pink-500" />;
+      case 'tiktok':
+        return <Play className="h-5 w-5" />;
       default:
-        return <Badge variant="secondary">Normal</Badge>
+        return <BarChart3 className="h-5 w-5" />;
     }
-  }
+  };
 
-  const getImpactColor = (level: string) => {
-    switch (level) {
-      case 'high':
-        return 'text-red-500'
-      case 'medium':
-        return 'text-yellow-500'
-      default:
-        return 'text-blue-500'
-    }
-  }
-
-  // Navigate to AI assistant with context about successful content
-  const handleMakeMoreLikeThis = (content: ContentPiece) => {
-    const insights = content.insights.map(i => i.description).join('. ')
-    const prompt = encodeURIComponent(
-      `I want to create more content like my successful "${content.title}" which got ${content.performance.views.toLocaleString()} views and ${content.performance.engagement_rate.toFixed(1)}% engagement. ` +
-      `Key success factors were: ${insights}. ` +
-      `Give me 3-5 specific content ideas that would replicate this success for my ${content.platform} channel.`
-    )
-    router.push(`/ai-assistant?prompt=${prompt}`)
-  }
-
-  // Navigate to AI assistant with context about underperforming content
-  const handleDiagnoseWithAI = (content: ContentPiece) => {
-    const insights = content.insights.map(i => i.description).join('. ')
-    const prompt = encodeURIComponent(
-      `Help me understand why my "${content.title}" underperformed with only ${content.performance.views.toLocaleString()} views and ${content.performance.engagement_rate.toFixed(1)}% engagement. ` +
-      `Issues identified: ${insights}. ` +
-      `What specific changes could I make to improve similar content in the future?`
-    )
-    router.push(`/ai-assistant?prompt=${prompt}`)
-  }
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toLocaleString();
+  };
 
   if (loading) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-10 w-32" />
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32" />
+          </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-32" />
+            <Skeleton key={i} className="h-36" />
           ))}
         </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Skeleton className="h-80" />
+          <Skeleton className="h-80" />
+        </div>
       </div>
-    )
+    );
   }
 
   if (!data) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="glass-panel rounded-3xl p-12 border border-holo-teal/30 shadow-glow-teal backdrop-blur-md max-w-md text-center">
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-holo-teal/20 to-holo-blue/20 inline-block mb-6">
-            <AlertCircle className="h-16 w-16 text-holo-teal" />
-          </div>
-          <h3 className="text-2xl font-bold mb-3 text-holo-teal">No Data Available</h3>
-          <p className="text-muted-foreground mb-6 text-base">
+        <Card className="max-w-md text-center p-8">
+          <BarChart3 className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-xl font-semibold mb-2">No Data Yet</h3>
+          <p className="text-muted-foreground mb-4">
             Enable demo mode or connect your social accounts to see insights.
           </p>
-          <Button asChild size="lg">
+          <Button asChild>
             <Link href="/settings">Get Started</Link>
           </Button>
-        </div>
+        </Card>
       </div>
-    )
+    );
   }
 
+  const dist = data.performance_distribution;
+  const totalCategorized = dist.top_performers + dist.average + dist.underperformers;
+
   return (
-    <div className="space-y-8 p-6">
-      {/* Header - Gradient */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tight text-holo-purple">What's Working</h1>
-          <p className="text-muted-foreground text-lg font-medium mt-2">
-            Understand your content performance and discover what resonates with your audience
-          </p>
+    <TooltipProvider>
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Content Insights</h1>
+            <p className="text-muted-foreground mt-1">
+              {data.period_label} • {data.total_content.value} pieces of content analyzed
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Select value={platform} onValueChange={setPlatform}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Platforms</SelectItem>
+                <SelectItem value="youtube">YouTube</SelectItem>
+                <SelectItem value="instagram">Instagram</SelectItem>
+                <SelectItem value="tiktok">TikTok</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={period} onValueChange={setPeriod}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="90d">Last 90 days</SelectItem>
+                <SelectItem value="all">All Time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Select value={platformFilter} onValueChange={setPlatformFilter}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Platforms</SelectItem>
-              <SelectItem value="youtube">YouTube</SelectItem>
-              <SelectItem value="instagram">Instagram</SelectItem>
-              <SelectItem value="tiktok">TikTok</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={timePeriod} onValueChange={setTimePeriod}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Content</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.summary.total_content}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {data.summary.overperforming_count} overperforming
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Avg Engagement</CardTitle>
-            {getTrendIcon(data.summary.engagement_trend)}
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.summary.avg_engagement_rate.toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {data.summary.engagement_trend === 'up' ? 'Trending up' : data.summary.engagement_trend === 'down' ? 'Trending down' : 'Stable'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Views</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.summary.total_views.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {data.summary.total_reach.toLocaleString()} impressions
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Performance Distribution</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2 mt-2">
-              <div className="flex-1 text-center">
-                <div className="text-lg font-bold text-green-600">{data.summary.overperforming_count}</div>
-                <div className="text-xs text-muted-foreground">Great</div>
+        {/* Key Metrics */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Total Content */}
+          <Card className="relative overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-sm font-medium">Total Content</CardTitle>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">Number of posts/videos published in the selected period</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
-              <div className="flex-1 text-center">
-                <div className="text-lg font-bold">{data.summary.normal_count}</div>
-                <div className="text-xs text-muted-foreground">Normal</div>
-              </div>
-              <div className="flex-1 text-center">
-                <div className="text-lg font-bold text-red-600">{data.summary.underperforming_count}</div>
-                <div className="text-xs text-muted-foreground">Poor</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="top-performers" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="top-performers">Top Performers</TabsTrigger>
-          <TabsTrigger value="needs-attention">Needs Attention</TabsTrigger>
-          <TabsTrigger value="themes">Themes</TabsTrigger>
-          <TabsTrigger value="platforms">Platform Comparison</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="top-performers" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Best Performing Content</CardTitle>
-              <CardDescription>
-                Learn from what worked and replicate your success
-              </CardDescription>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="space-y-4">
-              {data.top_performers.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  No top performers yet. Keep creating!
-                </p>
-              ) : (
-                data.top_performers.map((content) => (
-                  <Card key={content.id} className="overflow-hidden">
-                    <div className="flex flex-col md:flex-row gap-4 p-4">
-                      <img
-                        src={content.thumbnail_url || '/placeholder.png'}
-                        alt={content.title}
-                        className="w-full md:w-48 h-32 object-cover rounded-lg"
-                      />
-                      <div className="flex-1 space-y-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              {getPlatformIcon(content.platform)}
-                              <Badge variant="outline" className="text-xs">
-                                {content.content_type}
-                              </Badge>
-                              {getPerformanceBadge(content.performance.performance_category)}
-                            </div>
-                            <h3 className="font-semibold line-clamp-2">{content.title}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(content.published_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-2xl font-bold">{content.performance.performance_score.toFixed(0)}</div>
-                            <div className="text-xs text-muted-foreground">Score</div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-4 gap-2 text-sm">
-                          <div>
-                            <div className="flex items-center gap-1 text-muted-foreground">
-                              <Eye className="h-3 w-3" />
-                              <span className="text-xs">Views</span>
-                            </div>
-                            <div className="font-semibold">{content.performance.views.toLocaleString()}</div>
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1 text-muted-foreground">
-                              <Heart className="h-3 w-3" />
-                              <span className="text-xs">Likes</span>
-                            </div>
-                            <div className="font-semibold">{content.performance.likes.toLocaleString()}</div>
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1 text-muted-foreground">
-                              <MessageCircle className="h-3 w-3" />
-                              <span className="text-xs">Comments</span>
-                            </div>
-                            <div className="font-semibold">{content.performance.comments_count.toLocaleString()}</div>
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1 text-muted-foreground">
-                              <TrendingUp className="h-3 w-3" />
-                              <span className="text-xs">Engagement</span>
-                            </div>
-                            <div className="font-semibold">{content.performance.engagement_rate.toFixed(1)}%</div>
-                          </div>
-                        </div>
-
-                        {content.insights.length > 0 && (
-                          <div className="space-y-2">
-                            <div className="text-sm font-medium flex items-center gap-1">
-                              <Sparkles className="h-4 w-4" />
-                              Why it worked:
-                            </div>
-                            <div className="space-y-1">
-                              {content.insights.slice(0, 3).map((insight) => (
-                                <div key={insight.id} className="flex items-start gap-2 text-sm">
-                                  <span className={`font-bold ${getImpactColor(insight.impact_level)}`}>•</span>
-                                  <span className="text-muted-foreground">{insight.description}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/insights/content/${content.id}`}>
-                              View Full Details
-                            </Link>
-                          </Button>
-                          <Button size="sm" onClick={() => handleMakeMoreLikeThis(content)}>
-                            <Sparkles className="h-4 w-4 mr-1" />
-                            Make More Like This
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))
-              )}
+            <CardContent>
+              <div className="text-3xl font-bold">{data.total_content.value}</div>
+              <div className="flex items-center gap-1 mt-1">
+                {getTrendIcon(data.total_content.trend)}
+                <span className={`text-sm ${getTrendColor(data.total_content.trend, data.total_content.change_percent)}`}>
+                  {data.total_content.change_percent > 0 ? '+' : ''}{data.total_content.change_percent}%
+                </span>
+                <span className="text-xs text-muted-foreground">vs previous</span>
+              </div>
             </CardContent>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
           </Card>
-        </TabsContent>
 
-        <TabsContent value="needs-attention" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Content That Needs Attention</CardTitle>
-              <CardDescription>
-                Understand what didn't work and improve your strategy
-              </CardDescription>
+          {/* Avg Engagement */}
+          <Card className="relative overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-sm font-medium">Avg Engagement</CardTitle>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">(Likes + Comments) ÷ Views × 100, averaged across all content</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <Heart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="space-y-4">
-              {data.needs_attention.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Great! No underperforming content.
-                </p>
-              ) : (
-                data.needs_attention.map((content) => (
-                  <Card key={content.id} className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          {getPlatformIcon(content.platform)}
-                          {getPerformanceBadge(content.performance.performance_category)}
-                        </div>
-                        <h3 className="font-semibold line-clamp-2">{content.title}</h3>
-                      </div>
-                    </div>
+            <CardContent>
+              <div className="text-3xl font-bold">{data.avg_engagement_rate.value.toFixed(1)}%</div>
+              <div className="flex items-center gap-1 mt-1">
+                {getTrendIcon(data.avg_engagement_rate.trend)}
+                <span className={`text-sm ${getTrendColor(data.avg_engagement_rate.trend, data.avg_engagement_rate.change_percent)}`}>
+                  {data.avg_engagement_rate.change_percent > 0 ? '+' : ''}{data.avg_engagement_rate.change_percent}%
+                </span>
+                <span className="text-xs text-muted-foreground">vs previous</span>
+              </div>
+            </CardContent>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 to-rose-500" />
+          </Card>
 
-                    {content.insights.length > 0 && (
-                      <div className="space-y-2 mb-4">
-                        <div className="text-sm font-medium flex items-center gap-1">
-                          <AlertCircle className="h-4 w-4" />
-                          What went wrong:
-                        </div>
-                        <div className="space-y-1">
-                          {content.insights.map((insight) => (
-                            <div key={insight.id} className="flex items-start gap-2 text-sm">
-                              <span className="text-red-500">•</span>
-                              <span className="text-muted-foreground">{insight.description}</span>
-                            </div>
-                          ))}
-                        </div>
+          {/* Total Views */}
+          <Card className="relative overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-sm font-medium">Total Views</CardTitle>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">Sum of views across all content in the period</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{formatNumber(data.total_views.value)}</div>
+              <div className="flex items-center gap-1 mt-1">
+                {getTrendIcon(data.total_views.trend)}
+                <span className={`text-sm ${getTrendColor(data.total_views.trend, data.total_views.change_percent)}`}>
+                  {data.total_views.change_percent > 0 ? '+' : ''}{data.total_views.change_percent}%
+                </span>
+                <span className="text-xs text-muted-foreground">vs previous</span>
+              </div>
+            </CardContent>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 to-blue-500" />
+          </Card>
+
+          {/* Total Interactions */}
+          <Card className="relative overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-sm font-medium">Interactions</CardTitle>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">Total likes + comments + shares across all content</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <Zap className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{formatNumber(data.total_interactions.value)}</div>
+              <div className="flex items-center gap-1 mt-1">
+                {getTrendIcon(data.total_interactions.trend)}
+                <span className={`text-sm ${getTrendColor(data.total_interactions.trend, data.total_interactions.change_percent)}`}>
+                  {data.total_interactions.change_percent > 0 ? '+' : ''}{data.total_interactions.change_percent}%
+                </span>
+                <span className="text-xs text-muted-foreground">vs previous</span>
+              </div>
+            </CardContent>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-orange-500" />
+          </Card>
+        </div>
+
+        {/* Performance Distribution & Quick Actions */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Performance Distribution */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Performance Distribution</CardTitle>
+                  <CardDescription>How your content is performing relative to your average</CardDescription>
+                </div>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm">
+                    <p><strong>Top Performers:</strong> 1.5x+ your average engagement</p>
+                    <p><strong>Average:</strong> Between 0.5x and 1.5x</p>
+                    <p><strong>Underperformers:</strong> Below 0.5x your average</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {totalCategorized > 0 ? (
+                <div className="space-y-6">
+                  {/* Visual bar */}
+                  <div className="h-8 rounded-full overflow-hidden flex bg-muted">
+                    {dist.top_performers > 0 && (
+                      <div 
+                        className="bg-emerald-500 flex items-center justify-center text-white text-xs font-medium transition-all"
+                        style={{ width: `${dist.top_performers_percent}%` }}
+                      >
+                        {dist.top_performers_percent > 10 && `${dist.top_performers_percent.toFixed(0)}%`}
                       </div>
                     )}
+                    {dist.average > 0 && (
+                      <div 
+                        className="bg-blue-500 flex items-center justify-center text-white text-xs font-medium transition-all"
+                        style={{ width: `${dist.average_percent}%` }}
+                      >
+                        {dist.average_percent > 10 && `${dist.average_percent.toFixed(0)}%`}
+                      </div>
+                    )}
+                    {dist.underperformers > 0 && (
+                      <div 
+                        className="bg-amber-500 flex items-center justify-center text-white text-xs font-medium transition-all"
+                        style={{ width: `${dist.underperformers_percent}%` }}
+                      >
+                        {dist.underperformers_percent > 10 && `${dist.underperformers_percent.toFixed(0)}%`}
+                      </div>
+                    )}
+                  </div>
 
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/insights/content/${content.id}`}>
-                          View Details
-                        </Link>
-                      </Button>
-                      <Button size="sm" variant="secondary" onClick={() => handleDiagnoseWithAI(content)}>
-                        <Sparkles className="h-4 w-4 mr-1" />
-                        Diagnose with AI
-                      </Button>
+                  {/* Legend */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
+                      <div className="text-3xl font-bold text-emerald-600">{dist.top_performers}</div>
+                      <div className="text-sm text-emerald-700 dark:text-emerald-400 font-medium">Top Performers</div>
+                      <div className="text-xs text-muted-foreground mt-1">1.5x+ engagement</div>
                     </div>
-                  </Card>
-                ))
+                    <div className="text-center p-4 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                      <div className="text-3xl font-bold text-blue-600">{dist.average}</div>
+                      <div className="text-sm text-blue-700 dark:text-blue-400 font-medium">Average</div>
+                      <div className="text-xs text-muted-foreground mt-1">On track</div>
+                    </div>
+                    <div className="text-center p-4 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                      <div className="text-3xl font-bold text-amber-600">{dist.underperformers}</div>
+                      <div className="text-sm text-amber-700 dark:text-amber-400 font-medium">Needs Attention</div>
+                      <div className="text-xs text-muted-foreground mt-1">Below 0.5x</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>Not enough data to show distribution</p>
+                </div>
               )}
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="themes" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {data.top_themes.map((theme) => (
-              <Card key={theme.id}>
-                <CardHeader>
-                  <CardTitle>{theme.name}</CardTitle>
-                  <CardDescription>{theme.description || `${theme.content_count} pieces of content`}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Avg Engagement</span>
-                      <span className="font-semibold">{theme.avg_engagement_rate?.toFixed(1) || 0}%</span>
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Dive deeper into your performance</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Link href="/insights/whats-working" className="block">
+                <div className="p-4 rounded-lg border bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors group">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <TrendingUp className="h-5 w-5 text-emerald-600" />
+                      <div>
+                        <div className="font-medium text-emerald-900 dark:text-emerald-100">What's Working</div>
+                        <div className="text-xs text-emerald-700 dark:text-emerald-400">
+                          {dist.top_performers} top performers
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Performance Score</span>
-                      <span className="font-semibold">{theme.avg_performance_score?.toFixed(0) || 0}/100</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Total Views</span>
-                      <span className="font-semibold">{theme.total_views.toLocaleString()}</span>
-                    </div>
+                    <ArrowRight className="h-4 w-4 text-emerald-600 group-hover:translate-x-1 transition-transform" />
                   </div>
-                  <Button variant="outline" size="sm" className="w-full mt-4">
-                    Explore {theme.name}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
+                </div>
+              </Link>
 
-        <TabsContent value="platforms" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            {data.platform_comparison.map((platform) => (
-              <Card key={platform.platform}>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    {getPlatformIcon(platform.platform)}
-                    <CardTitle className="capitalize">{platform.platform}</CardTitle>
+              <Link href="/insights/whats-not-working" className="block">
+                <div className="p-4 rounded-lg border bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-950/30 transition-colors group">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <TrendingDown className="h-5 w-5 text-amber-600" />
+                      <div>
+                        <div className="font-medium text-amber-900 dark:text-amber-100">What's Not Working</div>
+                        <div className="text-xs text-amber-700 dark:text-amber-400">
+                          {dist.underperformers} need attention
+                        </div>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-amber-600 group-hover:translate-x-1 transition-transform" />
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="text-3xl font-bold">{platform.avg_engagement_rate.toFixed(1)}%</div>
-                      <div className="text-sm text-muted-foreground">Avg Engagement</div>
+                </div>
+              </Link>
+
+              <Link href="/ai-assistant" className="block">
+                <div className="p-4 rounded-lg border hover:bg-muted/50 transition-colors group">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Sparkles className="h-5 w-5 text-purple-600" />
+                      <div>
+                        <div className="font-medium">Ask AI Assistant</div>
+                        <div className="text-xs text-muted-foreground">Get personalized advice</div>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Content</span>
-                      <span className="font-semibold">{platform.content_count}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Total Views</span>
-                      <span className="font-semibold">{platform.total_views.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Avg Score</span>
-                      <span className="font-semibold">{platform.avg_performance_score.toFixed(0)}/100</span>
-                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  )
+                </div>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Platform Comparison & Top Themes */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Platform Comparison */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Platform Comparison</CardTitle>
+              <CardDescription>Performance breakdown by platform</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {data.platforms.length > 0 ? (
+                <div className="space-y-4">
+                  {data.platforms.map((p) => (
+                    <div key={p.platform} className="p-4 rounded-lg border bg-card hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          {getPlatformIcon(p.platform)}
+                          <div>
+                            <div className="font-medium">{p.platform_display}</div>
+                            <div className="text-xs text-muted-foreground">{p.content_count} pieces</div>
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="text-emerald-600">
+                          {p.top_performer_count} hits
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <div className="text-muted-foreground text-xs">Engagement</div>
+                          <div className="font-semibold">{p.avg_engagement_rate.toFixed(1)}%</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground text-xs">Total Views</div>
+                          <div className="font-semibold">{formatNumber(p.total_views)}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground text-xs">Avg Views</div>
+                          <div className="font-semibold">{formatNumber(p.avg_views_per_content)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No platform data available</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Top Themes */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Top Performing Themes</CardTitle>
+              <CardDescription>Content topics ranked by engagement</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {data.top_themes.length > 0 ? (
+                <div className="space-y-3">
+                  {data.top_themes.map((theme, index) => (
+                    <div 
+                      key={theme.theme} 
+                      className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{theme.theme}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {theme.content_count} pieces • {formatNumber(theme.total_views)} views
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-emerald-600">{theme.avg_engagement_rate.toFixed(1)}%</div>
+                        <div className="text-xs text-muted-foreground">engagement</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Sparkles className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No theme data available yet</p>
+                  <p className="text-xs mt-1">Themes are identified by AI analysis</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </TooltipProvider>
+  );
 }
