@@ -116,14 +116,14 @@ export default function ViewSidebar({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium truncate">{view.name}</span>
-            {view.unread_count && view.unread_count > 0 && (
+            {view.interaction_count !== undefined && view.interaction_count > 0 && (
               <span className={cn(
                 "text-xs px-1.5 py-0.5 rounded-full",
                 isActive
                   ? "bg-primary-foreground/20 text-primary-foreground"
-                  : "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
               )}>
-                {view.unread_count}
+                {view.interaction_count}
               </span>
             )}
           </div>

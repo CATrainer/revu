@@ -21,7 +21,6 @@ import {
   Sparkles,
   User,
   Bot,
-  Zap,
   ArrowRight,
   Clock,
   CheckCircle2
