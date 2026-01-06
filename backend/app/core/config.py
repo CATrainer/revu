@@ -137,7 +137,7 @@ class Settings(BaseSettings):
     # Anthropic/Claude API
     ANTHROPIC_API_KEY: Optional[str] = None  # Primary name
     CLAUDE_API_KEY: Optional[str] = None     # Alias for backwards compatibility
-    CLAUDE_MODEL: Optional[str] = "claude-3-5-sonnet-latest"
+    CLAUDE_MODEL: Optional[str] = "claude-sonnet-4-20250514"
     CLAUDE_MAX_TOKENS: int = 500
     
     @property

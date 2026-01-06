@@ -116,8 +116,11 @@ class ResponseGenerator:
         temperature = 0.85 if previous_response else 0.75
         
         try:
+            from app.core.config import settings
+            model = settings.CLAUDE_MODEL or "claude-sonnet-4-20250514"
+            
             response = await self.anthropic_client.messages.create(
-                model="claude-3-5-sonnet-latest",
+                model=model,
                 max_tokens=max_tokens,
                 temperature=temperature,
                 system=system_prompt,
