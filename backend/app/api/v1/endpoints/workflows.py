@@ -28,8 +28,21 @@ from app.schemas.workflow import (
     ApprovalUpdate,
     WorkflowExecutionCreate,
     WorkflowExecutionOut,
+    SystemWorkflowUpdate,
 )
 from app.core.security import get_current_active_user
+from app.models.workflow import (
+    SYSTEM_WORKFLOW_AUTO_MODERATOR,
+    SYSTEM_WORKFLOW_AUTO_ARCHIVE,
+    MIN_USER_WORKFLOW_PRIORITY,
+)
+from app.services.system_workflows import (
+    ensure_system_workflows_exist,
+    is_system_workflow,
+    validate_system_workflow_update,
+    get_system_workflow_info,
+    SYSTEM_WORKFLOWS,
+)
 
 router = APIRouter()
 
@@ -45,6 +58,7 @@ async def create_workflow(
     """Create a new workflow.
     
     New workflows are added at the lowest priority (highest number).
+    User workflows start at priority 3+ (1 and 2 are reserved for system workflows).
     """
     # Validate action config
     if payload.action_type == 'auto_respond':
@@ -55,16 +69,18 @@ async def create_workflow(
             )
     
     # Get the next priority number (lowest priority = highest number)
+    # User workflows start at MIN_USER_WORKFLOW_PRIORITY (3)
     result = await session.execute(
-        select(func.coalesce(func.max(Workflow.priority), 0))
+        select(func.coalesce(func.max(Workflow.priority), MIN_USER_WORKFLOW_PRIORITY - 1))
         .where(Workflow.user_id == current_user.id)
     )
-    max_priority = result.scalar() or 0
+    max_priority = result.scalar() or (MIN_USER_WORKFLOW_PRIORITY - 1)
+    new_priority = max(max_priority + 1, MIN_USER_WORKFLOW_PRIORITY)
     
     obj = Workflow(
         name=payload.name,
         status=payload.status,
-        priority=max_priority + 1,
+        priority=new_priority,
         platforms=payload.platforms,
         interaction_types=payload.interaction_types,
         view_ids=payload.view_ids,
@@ -73,6 +89,7 @@ async def create_workflow(
         action_config=payload.action_config,
         user_id=current_user.id,
         organization_id=getattr(current_user, "organization_id", None),
+        system_workflow_type=None,  # Regular workflow
     )
     session.add(obj)
     await session.commit()
@@ -83,14 +100,30 @@ async def create_workflow(
 @router.get("", response_model=List[WorkflowOut])
 async def list_workflows(
     status_filter: Optional[str] = None,
+    include_system: bool = True,
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    """List all workflows for the current user, ordered by priority."""
+    """List all workflows for the current user, ordered by priority.
+    
+    System workflows (Auto Moderator, Auto Archive) are automatically created
+    if they don't exist.
+    """
+    # Ensure system workflows exist
+    await ensure_system_workflows_exist(
+        session, 
+        current_user.id, 
+        getattr(current_user, "organization_id", None)
+    )
+    await session.commit()
+    
     stmt = select(Workflow).where(Workflow.user_id == current_user.id)
     
     if status_filter:
         stmt = stmt.where(Workflow.status == status_filter)
+    
+    if not include_system:
+        stmt = stmt.where(Workflow.system_workflow_type.is_(None))
     
     # Order by priority (lower = higher priority)
     stmt = stmt.order_by(Workflow.priority.asc())
@@ -119,38 +152,60 @@ async def update_workflow(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Update a workflow."""
+    """Update a workflow.
+    
+    For system workflows, only ai_conditions and status can be updated.
+    """
     obj = await session.get(Workflow, workflow_id)
     if not obj or obj.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Workflow not found")
     
-    # Update fields if provided
-    if payload.name is not None:
-        obj.name = payload.name
-    if payload.status is not None:
-        obj.status = payload.status
-    if payload.platforms is not None:
-        obj.platforms = payload.platforms
-    if payload.interaction_types is not None:
-        obj.interaction_types = payload.interaction_types
-    if payload.view_ids is not None:
-        obj.view_ids = payload.view_ids
-    if payload.ai_conditions is not None:
-        obj.ai_conditions = payload.ai_conditions
-    if payload.action_type is not None:
-        obj.action_type = payload.action_type
-    if payload.action_config is not None:
-        obj.action_config = payload.action_config
-    if payload.priority is not None:
-        obj.priority = payload.priority
-    
-    # Validate action config if action_type is auto_respond
-    if obj.action_type == 'auto_respond':
-        if not obj.action_config or not obj.action_config.get('response_text'):
-            raise HTTPException(
-                status_code=400, 
-                detail="auto_respond action requires response_text in action_config"
-            )
+    # Check if this is a system workflow with restricted updates
+    if is_system_workflow(obj):
+        update_dict = payload.model_dump(exclude_unset=True)
+        is_valid, error_msg = validate_system_workflow_update(obj, update_dict)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=error_msg)
+        
+        # Only update allowed fields for system workflows
+        if payload.ai_conditions is not None:
+            obj.ai_conditions = payload.ai_conditions
+        if payload.status is not None:
+            obj.status = payload.status
+    else:
+        # Regular workflow - update all fields
+        if payload.name is not None:
+            obj.name = payload.name
+        if payload.status is not None:
+            obj.status = payload.status
+        if payload.platforms is not None:
+            obj.platforms = payload.platforms
+        if payload.interaction_types is not None:
+            obj.interaction_types = payload.interaction_types
+        if payload.view_ids is not None:
+            obj.view_ids = payload.view_ids
+        if payload.ai_conditions is not None:
+            obj.ai_conditions = payload.ai_conditions
+        if payload.action_type is not None:
+            obj.action_type = payload.action_type
+        if payload.action_config is not None:
+            obj.action_config = payload.action_config
+        if payload.priority is not None:
+            # Ensure user workflows can't take system workflow priorities
+            if payload.priority < MIN_USER_WORKFLOW_PRIORITY:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"User workflows must have priority >= {MIN_USER_WORKFLOW_PRIORITY}"
+                )
+            obj.priority = payload.priority
+        
+        # Validate action config if action_type is auto_respond
+        if obj.action_type == 'auto_respond':
+            if not obj.action_config or not obj.action_config.get('response_text'):
+                raise HTTPException(
+                    status_code=400, 
+                    detail="auto_respond action requires response_text in action_config"
+                )
     
     await session.commit()
     await session.refresh(obj)
@@ -163,10 +218,20 @@ async def delete_workflow(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Delete a workflow."""
+    """Delete a workflow.
+    
+    System workflows cannot be deleted.
+    """
     obj = await session.get(Workflow, workflow_id)
     if not obj or obj.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Workflow not found")
+    
+    if is_system_workflow(obj):
+        raise HTTPException(
+            status_code=400,
+            detail="System workflows cannot be deleted. You can pause them instead."
+        )
+    
     await session.delete(obj)
     await session.commit()
     return None
@@ -182,22 +247,32 @@ async def reorder_workflows(
 ):
     """Reorder workflows by priority.
     
-    The first workflow in the list gets priority 1 (highest), 
-    second gets priority 2, etc.
+    System workflows (Auto Moderator, Auto Archive) have fixed priorities (1, 2)
+    and cannot be reordered. Only user workflows can be reordered.
+    
+    User workflows start at priority 3.
     """
-    # Verify all workflows belong to user
-    for idx, workflow_id in enumerate(payload.workflow_ids):
+    # Verify all workflows belong to user and filter out system workflows
+    user_workflows = []
+    for workflow_id in payload.workflow_ids:
         obj = await session.get(Workflow, workflow_id)
         if not obj or obj.user_id != current_user.id:
             raise HTTPException(
                 status_code=404, 
                 detail=f"Workflow {workflow_id} not found"
             )
-        obj.priority = idx + 1
+        if is_system_workflow(obj):
+            # Skip system workflows - they keep their fixed priority
+            continue
+        user_workflows.append(obj)
+    
+    # Reorder user workflows starting at MIN_USER_WORKFLOW_PRIORITY
+    for idx, obj in enumerate(user_workflows):
+        obj.priority = MIN_USER_WORKFLOW_PRIORITY + idx
     
     await session.commit()
     
-    # Return updated list
+    # Return updated list (including system workflows)
     result = await session.execute(
         select(Workflow)
         .where(Workflow.user_id == current_user.id)

@@ -6,6 +6,19 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 
+# System workflow types with fixed priorities
+SYSTEM_WORKFLOW_AUTO_MODERATOR = "auto_moderator"  # Priority 1
+SYSTEM_WORKFLOW_AUTO_ARCHIVE = "auto_archive"      # Priority 2
+
+SYSTEM_WORKFLOW_PRIORITIES = {
+    SYSTEM_WORKFLOW_AUTO_MODERATOR: 1,
+    SYSTEM_WORKFLOW_AUTO_ARCHIVE: 2,
+}
+
+# Minimum priority for user-created workflows (system workflows use 1 and 2)
+MIN_USER_WORKFLOW_PRIORITY = 3
+
+
 class Workflow(Base):
     """Represents an interaction workflow.
 
@@ -16,6 +29,12 @@ class Workflow(Base):
     - Workflows only apply to new incoming messages (not replies, not existing)
     - Priority determines execution order (lower number = higher priority)
     - Natural language conditions are evaluated by LLM
+    
+    System Workflows:
+    - Priority 1: Auto Moderator - handles harassment, spam, inappropriate content
+    - Priority 2: Auto Archive - archives interactions that don't need response
+    - System workflows have fixed actions that vary by interaction type
+    - Users can only edit activation conditions (ai_conditions) on system workflows
     
     Flow:
     1. New interaction arrives
@@ -31,9 +50,14 @@ class Workflow(Base):
     status = Column(String(20), nullable=False, default="active")  # active|paused
     
     # Priority for execution order (lower = higher priority, 1 is highest)
-    # User can reorder workflows which updates this value
+    # System workflows have fixed priorities: 1 (auto_moderator), 2 (auto_archive)
+    # User workflows start at priority 3+
     priority = Column(Integer, nullable=False, default=100)
     is_enabled = Column(Boolean, default=True)
+    
+    # System workflow type: 'auto_moderator', 'auto_archive', or NULL for regular workflows
+    # System workflows have fixed actions and users can only edit ai_conditions
+    system_workflow_type = Column(String(50), nullable=True, index=True)
 
     # Filters (platform and interaction type)
     platforms = Column(ARRAY(String(32)))  # ['youtube', 'instagram', 'tiktok', 'twitter'] - empty = all

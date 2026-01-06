@@ -176,3 +176,49 @@ class DemoActionProvider(PlatformActionProvider):
         except Exception as e:
             logger.error(f"Error reacting to demo interaction: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
+    
+    async def block_user(
+        self,
+        interaction: Interaction,
+        session: AsyncSession
+    ) -> Dict[str, Any]:
+        """Block user in demo mode.
+        
+        For demo mode, we just simulate blocking by marking it successful.
+        In a real implementation, this would call the platform's block API.
+        """
+        url = f"{self.demo_url}/actions/block-user"
+        
+        payload = {
+            "platform_id": interaction.platform_id,
+            "author_username": interaction.author_username,
+            "author_id": interaction.author_id,
+            "user_id": str(interaction.user_id),
+            "platform": interaction.platform,
+        }
+        
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(url, json=payload)
+                
+                if response.status_code == 200:
+                    return {"success": True}
+                elif response.status_code == 404:
+                    # Demo service doesn't have this endpoint yet - simulate success
+                    logger.info(f"Demo block_user endpoint not found, simulating success")
+                    return {"success": True, "simulated": True}
+                else:
+                    return {
+                        "success": False,
+                        "error": f"Demo service returned {response.status_code}"
+                    }
+        
+        except httpx.TimeoutException:
+            # For demo mode, simulate success on timeout
+            logger.warning("Demo service timeout on block_user, simulating success")
+            return {"success": True, "simulated": True}
+        
+        except Exception as e:
+            logger.error(f"Error blocking user in demo: {e}", exc_info=True)
+            # For demo mode, simulate success
+            return {"success": True, "simulated": True}

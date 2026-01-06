@@ -63,6 +63,9 @@ class WorkflowOut(BaseModel):
     priority: int
     is_enabled: bool
     
+    # System workflow type (auto_moderator, auto_archive, or null for regular)
+    system_workflow_type: Optional[str] = None
+    
     # Filters
     platforms: Optional[List[str]] = None
     interaction_types: Optional[List[str]] = None
@@ -87,6 +90,12 @@ class WorkflowOut(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class SystemWorkflowUpdate(BaseModel):
+    """Update a system workflow (limited fields)."""
+    ai_conditions: Optional[List[str]] = None
+    status: Optional[Literal['active', 'paused']] = None
 
 
 class WorkflowReorder(BaseModel):

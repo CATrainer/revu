@@ -11,7 +11,10 @@ import {
   ChevronUp,
   ChevronDown,
   Plus,
-  Zap
+  Zap,
+  Shield,
+  Archive,
+  Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +30,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
-import type { Workflow, View } from '../types/workflow';
+import { type Workflow, type View, isSystemWorkflow, SYSTEM_WORKFLOW_AUTO_MODERATOR, SYSTEM_WORKFLOW_AUTO_ARCHIVE } from '../types/workflow';
 
 interface WorkflowListV2Props {
   workflows: Workflow[];
@@ -152,31 +155,52 @@ export function WorkflowListV2({
               reordering && 'pointer-events-none'
             )}
           >
-            {/* Priority Controls */}
+            {/* Priority Controls - disabled for system workflows */}
             <div className="flex flex-col gap-0.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={() => handleMoveUp(index)}
-                disabled={index === 0 || reordering}
-              >
-                <ChevronUp className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={() => handleMoveDown(index)}
-                disabled={index === workflows.length - 1 || reordering}
-              >
-                <ChevronDown className="h-4 w-4" />
-              </Button>
+              {isSystemWorkflow(workflow) ? (
+                <div className="h-12 w-6 flex items-center justify-center">
+                  <Lock className="h-3 w-3 text-muted-foreground" />
+                </div>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => handleMoveUp(index)}
+                    disabled={index === 0 || reordering || isSystemWorkflow(workflows[index - 1])}
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => handleMoveDown(index)}
+                    disabled={index === workflows.length - 1 || reordering}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
 
-            {/* Priority Number */}
-            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted text-sm font-medium">
-              {index + 1}
+            {/* Priority Number with system workflow indicator */}
+            <div className={cn(
+              "flex items-center justify-center h-8 w-8 rounded-full text-sm font-medium",
+              isSystemWorkflow(workflow) 
+                ? workflow.system_workflow_type === SYSTEM_WORKFLOW_AUTO_MODERATOR
+                  ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                  : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                : "bg-muted"
+            )}>
+              {isSystemWorkflow(workflow) ? (
+                workflow.system_workflow_type === SYSTEM_WORKFLOW_AUTO_MODERATOR 
+                  ? <Shield className="h-4 w-4" />
+                  : <Archive className="h-4 w-4" />
+              ) : (
+                workflow.priority
+              )}
             </div>
 
             {/* Workflow Info */}
@@ -185,6 +209,11 @@ export function WorkflowListV2({
                 <span className="font-medium text-primary-dark truncate">
                   {workflow.name}
                 </span>
+                {isSystemWorkflow(workflow) && (
+                  <Badge variant="outline" className="text-xs border-purple-300 text-purple-700 dark:border-purple-700 dark:text-purple-400">
+                    System
+                  </Badge>
+                )}
                 <Badge 
                   variant={workflow.status === 'active' ? 'default' : 'secondary'}
                   className="text-xs"
@@ -196,7 +225,17 @@ export function WorkflowListV2({
               <div className="flex items-center gap-3 text-xs text-secondary-dark">
                 {/* Action Type */}
                 <span className="flex items-center gap-1">
-                  {workflow.action_type === 'generate_response' ? (
+                  {workflow.system_workflow_type === SYSTEM_WORKFLOW_AUTO_MODERATOR ? (
+                    <>
+                      <Shield className="h-3 w-3 text-red-500" />
+                      Block/Delete
+                    </>
+                  ) : workflow.system_workflow_type === SYSTEM_WORKFLOW_AUTO_ARCHIVE ? (
+                    <>
+                      <Archive className="h-3 w-3 text-amber-500" />
+                      Archive
+                    </>
+                  ) : workflow.action_type === 'generate_response' ? (
                     <>
                       <Sparkles className="h-3 w-3 text-purple-500" />
                       Generate Response
@@ -255,15 +294,17 @@ export function WorkflowListV2({
                 <Edit2 className="h-4 w-4" />
               </Button>
               
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                onClick={() => setDeleteWorkflow(workflow)}
-                title="Delete workflow"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              {!isSystemWorkflow(workflow) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                  onClick={() => setDeleteWorkflow(workflow)}
+                  title="Delete workflow"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         ))}

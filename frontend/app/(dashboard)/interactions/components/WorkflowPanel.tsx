@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 import { WorkflowBuilderV2 } from './WorkflowBuilderV2';
 import { WorkflowListV2 } from './WorkflowListV2';
-import type { Workflow, View } from '../types/workflow';
+import { SystemWorkflowEditor } from './SystemWorkflowEditor';
+import { type Workflow, type View, isSystemWorkflow } from '../types/workflow';
 
 interface WorkflowPanelProps {
   viewId: string | null;
@@ -67,6 +68,7 @@ export function WorkflowPanel({
 
   const handleEditWorkflow = (workflow: Workflow) => {
     setEditingWorkflow(workflow);
+    // System workflows use a different editor
     setShowBuilder(true);
   };
 
@@ -128,7 +130,13 @@ export function WorkflowPanel({
       </div>
 
       {/* Workflow Builder Modal */}
-      {showBuilder && (
+      {showBuilder && editingWorkflow && isSystemWorkflow(editingWorkflow) ? (
+        <SystemWorkflowEditor
+          workflow={editingWorkflow}
+          onClose={handleBuilderClose}
+          onSave={handleBuilderSave}
+        />
+      ) : showBuilder && (
         <WorkflowBuilderV2
           existingWorkflow={editingWorkflow}
           views={allViews}

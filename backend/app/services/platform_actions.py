@@ -105,6 +105,25 @@ class PlatformActionProvider(ABC):
             }
         """
         pass
+    
+    @abstractmethod
+    async def block_user(
+        self,
+        interaction: Interaction,
+        session: AsyncSession
+    ) -> Dict[str, Any]:
+        """
+        Block the user who sent this interaction.
+        
+        Used by Auto Moderator for DMs and mentions.
+        
+        Returns:
+            {
+                "success": bool,
+                "error": Optional[str]
+            }
+        """
+        pass
 
 
 class PlatformActionService:
@@ -243,6 +262,28 @@ class PlatformActionService:
             reaction_type,
             session
         )
+    
+    async def block_user(
+        self,
+        interaction: Interaction,
+        session: AsyncSession
+    ) -> Dict[str, Any]:
+        """Block user on any platform."""
+        provider = self._get_provider(interaction)
+        
+        logger.info(
+            f"Blocking user {interaction.author_username} on {interaction.platform} "
+            f"(is_demo={interaction.is_demo})"
+        )
+        
+        result = await provider.block_user(interaction, session)
+        
+        if result.get("success"):
+            logger.info(f"✅ User blocked on {interaction.platform}")
+        else:
+            logger.warning(f"❌ Block failed: {result.get('error')}")
+        
+        return result
 
 
 # Singleton instance

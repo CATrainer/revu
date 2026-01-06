@@ -19,7 +19,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
 from app.models.interaction import Interaction
-from app.models.workflow import Workflow, WorkflowExecution
+from app.models.workflow import (
+    Workflow, 
+    WorkflowExecution,
+    SYSTEM_WORKFLOW_AUTO_MODERATOR,
+    SYSTEM_WORKFLOW_AUTO_ARCHIVE,
+)
 from app.models.view_tag import InteractionViewTag
 from app.core.config import settings
 
@@ -297,7 +302,15 @@ Does this message match the condition? Respond with JSON only:
         action_type = workflow.action_type
         action_config = workflow.action_config or {}
         
-        if action_type == 'auto_respond':
+        # Handle system workflow actions
+        if workflow.system_workflow_type == SYSTEM_WORKFLOW_AUTO_MODERATOR:
+            return await self._execute_moderate(interaction, workflow, user_id)
+        
+        elif workflow.system_workflow_type == SYSTEM_WORKFLOW_AUTO_ARCHIVE:
+            return await self._execute_archive(interaction, workflow, user_id)
+        
+        # Handle regular workflow actions
+        elif action_type == 'auto_respond':
             return await self._execute_auto_respond(interaction, workflow, user_id)
         
         elif action_type == 'generate_response':
@@ -306,6 +319,107 @@ Does this message match the condition? Respond with JSON only:
         else:
             logger.warning(f"Unknown action type: {action_type}")
             return {"action": "unknown", "error": f"Unknown action type: {action_type}"}
+    
+    async def _execute_moderate(
+        self,
+        interaction: Interaction,
+        workflow: Workflow,
+        user_id: UUID
+    ) -> Dict[str, Any]:
+        """Execute Auto Moderator action based on interaction type.
+        
+        Actions by interaction type:
+        - DM: Block the user on the platform
+        - Comment: Delete the comment
+        - Mention: Block the user
+        """
+        action_config = workflow.action_config or {}
+        interaction_type = interaction.type
+        
+        # Determine action based on interaction type
+        if interaction_type == 'dm':
+            action = action_config.get("dm_action", "block_user")
+        elif interaction_type == 'comment':
+            action = action_config.get("comment_action", "delete_comment")
+        elif interaction_type == 'mention':
+            action = action_config.get("mention_action", "block_user")
+        else:
+            action = "delete_comment"  # Default fallback
+        
+        from app.services.platform_actions import get_platform_action_service
+        platform_service = get_platform_action_service()
+        
+        result = {"action": "moderate", "sub_action": action, "success": False}
+        
+        try:
+            if action == "block_user":
+                # Block the user on the platform
+                block_result = await platform_service.block_user(
+                    interaction, 
+                    self.session
+                )
+                result["success"] = block_result.get("success", False)
+                result["platform_result"] = block_result
+                
+                if result["success"]:
+                    interaction.status = "moderated"
+                    interaction.moderation_action = "blocked"
+                    logger.info(f"Blocked user {interaction.author_username} for interaction {interaction.id}")
+                    
+            elif action == "delete_comment":
+                # Delete the comment from the platform
+                delete_result = await platform_service.delete_interaction(
+                    interaction, 
+                    self.session
+                )
+                result["success"] = delete_result.get("success", False)
+                result["platform_result"] = delete_result
+                
+                if result["success"]:
+                    interaction.status = "moderated"
+                    interaction.moderation_action = "deleted"
+                    logger.info(f"Deleted comment {interaction.id}")
+            
+            # Archive locally after moderation
+            interaction.archived_at = datetime.utcnow()
+            interaction.archive_source = "auto_moderator"
+                    
+        except Exception as e:
+            logger.error(f"Error executing moderate action: {e}")
+            result["error"] = str(e)
+        
+        return result
+    
+    async def _execute_archive(
+        self,
+        interaction: Interaction,
+        workflow: Workflow,
+        user_id: UUID
+    ) -> Dict[str, Any]:
+        """Execute Auto Archive action - archives interaction locally.
+        
+        Does NOT delete from platform, just archives in our system.
+        """
+        try:
+            interaction.archived_at = datetime.utcnow()
+            interaction.archive_source = "auto_archive"
+            interaction.status = "archived"
+            
+            logger.info(f"Auto-archived interaction {interaction.id}")
+            
+            return {
+                "action": "archive",
+                "success": True,
+                "archived_at": interaction.archived_at.isoformat(),
+            }
+            
+        except Exception as e:
+            logger.error(f"Error executing archive action: {e}")
+            return {
+                "action": "archive",
+                "success": False,
+                "error": str(e),
+            }
     
     async def _execute_auto_respond(
         self,
