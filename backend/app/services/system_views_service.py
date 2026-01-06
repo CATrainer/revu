@@ -21,14 +21,15 @@ SYSTEM_VIEWS = [
         'is_pinned': True,
         'order_index': 0,
         'filters': {
-            'exclude_archived': True
+            'exclude_archived': True,
+            'exclude_sent': True  # Exclude sent unless there's new activity after response
         },
         'display': {
             'sortBy': 'newest',
             'showReplies': True,
             'density': 'comfortable'
         },
-        'description': 'All non-archived interactions'
+        'description': 'Interactions needing attention (excludes sent and archived)'
     },
     {
         'name': 'Awaiting Approval',
@@ -39,7 +40,8 @@ SYSTEM_VIEWS = [
         'is_pinned': True,
         'order_index': 1,
         'filters': {
-            'status': ['awaiting_approval']
+            'status': ['awaiting_approval'],
+            'exclude_archived': True
         },
         'display': {
             'sortBy': 'oldest',  # Show oldest first so they get approved
@@ -57,14 +59,14 @@ SYSTEM_VIEWS = [
         'is_pinned': True,
         'order_index': 2,
         'filters': {
-            'archived_only': True
+            'archived_only': True  # Only show archived interactions (manual or auto)
         },
         'display': {
             'sortBy': 'newest',
             'showReplies': False,
             'density': 'compact'
         },
-        'description': 'Archived interactions'
+        'description': 'Manually or automatically archived interactions'
     },
     {
         'name': 'Sent',
@@ -75,15 +77,15 @@ SYSTEM_VIEWS = [
         'is_pinned': True,
         'order_index': 3,
         'filters': {
-            'status': ['answered'],
-            'has_sent_response': True
+            'has_sent_response': True,
+            'exclude_archived': True
         },
         'display': {
             'sortBy': 'newest',
             'showReplies': True,
             'density': 'comfortable'
         },
-        'description': 'History of all sent responses'
+        'description': 'Interactions where you have sent a response'
     },
 ]
 

@@ -137,6 +137,14 @@ class InteractionFilters(BaseModel):
     author_username: Optional[str] = None
     assigned_to_user_id: Optional[UUID] = None
     fan_id: Optional[UUID] = None
+    
+    # Archive filters
+    exclude_archived: Optional[bool] = None  # Exclude archived interactions
+    archived_only: Optional[bool] = None  # Only show archived interactions
+    
+    # Sent/Response filters
+    exclude_sent: Optional[bool] = None  # Exclude interactions with sent responses (unless new activity)
+    has_sent_response: Optional[bool] = None  # Only show interactions with sent responses
 
 
 # ==================== BULK ACTION SCHEMAS ====================

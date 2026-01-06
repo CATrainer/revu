@@ -41,6 +41,7 @@ interface View {
   is_shared?: boolean;
   interaction_count?: number;
   unread_count?: number;
+  order_index?: number;
 }
 
 interface ViewSidebarProps {
@@ -68,8 +69,9 @@ export default function ViewSidebar({
 }: ViewSidebarProps) {
   const [pinningId, setPinningId] = useState<string | null>(null);
 
-  const pinnedViews = views.filter(v => v.is_pinned);
-  const unpinnedViews = views.filter(v => !v.is_pinned);
+  // Separate system views (All, Awaiting Approval, Archive, Sent) from custom views
+  const systemViews = views.filter(v => v.is_system).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+  const customViews = views.filter(v => !v.is_system);
 
   const handlePinToggle = async (view: View) => {
     setPinningId(view.id);
@@ -210,36 +212,36 @@ export default function ViewSidebar({
       </div>
 
       {/* Views List */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-6">
+      <div className="flex-1 overflow-y-auto p-3 space-y-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <>
-            {/* Pinned Views */}
-            {pinnedViews.length > 0 && (
+            {/* System Views - Always show at top */}
+            {systemViews.length > 0 && (
               <div className="space-y-1">
-                {pinnedViews.map(renderView)}
+                {systemViews.map(renderView)}
               </div>
             )}
 
-            {/* Divider if we have both pinned and unpinned */}
-            {pinnedViews.length > 0 && unpinnedViews.length > 0 && (
-              <div className="border-t" />
+            {/* Divider between system and custom views */}
+            {systemViews.length > 0 && customViews.length > 0 && (
+              <div className="border-t my-3" />
             )}
 
             {/* Custom Views */}
-            {unpinnedViews.length > 0 && (
+            {customViews.length > 0 && (
               <div className="space-y-1">
                 <div className="text-xs font-semibold text-muted-foreground mb-2 px-3">
                   CUSTOM VIEWS
                 </div>
-                {unpinnedViews.map(renderView)}
+                {customViews.map(renderView)}
               </div>
             )}
 
-            {/* Empty State */}
+            {/* Empty State - only show if no views at all */}
             {views.length === 0 && (
               <div className="text-center py-8 px-4">
                 <Inbox className="h-12 w-12 text-muted-foreground mx-auto mb-3" />

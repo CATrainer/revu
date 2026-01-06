@@ -63,7 +63,6 @@ interface InteractionListProps {
   viewId: string;
   filters?: any;
   sortBy?: string;
-  tab?: string;
   platforms?: string[];
   onInteractionClick?: (id: string) => void;
 }
@@ -72,7 +71,6 @@ export default function InteractionList({
   viewId, 
   filters, 
   sortBy = 'newest',
-  tab,
   platforms = [],
   onInteractionClick,
 }: InteractionListProps) {
@@ -85,7 +83,7 @@ export default function InteractionList({
 
   useEffect(() => {
     loadInteractions();
-  }, [viewId, page, sortBy, tab, platforms]);
+  }, [viewId, page, sortBy, platforms]);
 
   const loadInteractions = async () => {
     try {
@@ -98,7 +96,6 @@ export default function InteractionList({
         sort_by: sortBy,
       });
       
-      if (tab) params.append('tab', tab);
       if (platforms.length > 0) {
         platforms.forEach(p => params.append('platforms', p));
       }

@@ -105,6 +105,30 @@ def build_filter_query(
     if filters.fan_id:
         conditions.append(Interaction.fan_id == filters.fan_id)
     
+    # Archive filters
+    if filters.exclude_archived:
+        conditions.append(Interaction.archived_at.is_(None))
+    
+    if filters.archived_only:
+        conditions.append(Interaction.archived_at.isnot(None))
+    
+    # Sent/Response filters
+    if filters.exclude_sent:
+        # Exclude interactions that have been responded to, UNLESS there's new activity after the response
+        # An interaction should show in "All" if:
+        # 1. It has never been responded to (responded_at is None), OR
+        # 2. It has new activity after the response (last_activity_at > responded_at)
+        conditions.append(
+            or_(
+                Interaction.responded_at.is_(None),
+                Interaction.last_activity_at > Interaction.responded_at
+            )
+        )
+    
+    if filters.has_sent_response:
+        # Only show interactions that have been responded to
+        conditions.append(Interaction.responded_at.isnot(None))
+    
     return base_query.where(and_(*conditions))
 
 

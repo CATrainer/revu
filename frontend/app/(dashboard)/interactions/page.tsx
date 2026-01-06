@@ -9,7 +9,6 @@ import Link from 'next/link';
 import ViewSidebar from './components/ViewSidebar';
 import InteractionList from './components/InteractionList';
 import ViewBuilder from './components/ViewBuilder';
-import { ViewTabs, type TabType } from './components/ViewTabs';
 import { ViewControls } from './components/ViewControls';
 import { InteractionDetailPanel } from './components/InteractionDetailPanel';
 import { WorkflowPanel } from './components/WorkflowPanel';
@@ -42,20 +41,12 @@ export default function InteractionsPage() {
   const [showViewBuilder, setShowViewBuilder] = useState(false);
   const [editingView, setEditingView] = useState<View | null>(null);
   
-  // V2: Tab and filter state
-  const [activeTab, setActiveTab] = useState<TabType>('all');
+  // V2: Filter state
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
   const [selectedInteractionId, setSelectedInteractionId] = useState<string | null>(null);
   const [showWorkflowPanel, setShowWorkflowPanel] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
-  const [tabCounts, setTabCounts] = useState<{
-    all?: number;
-    unanswered?: number;
-    awaiting_approval?: number;
-    archive?: number;
-    sent?: number;
-  }>({});
 
   // Load views on mount
   useEffect(() => {
@@ -92,12 +83,12 @@ export default function InteractionsPage() {
     setShowViewBuilder(true);
   };
 
-  const handleViewSaved = async (savedView: View) => {
+  const handleViewSaved = async (savedView: any) => {
     await loadViews();
     setShowViewBuilder(false);
     setEditingView(null);
     // Set newly created view as active
-    if (!editingView) {
+    if (!editingView && savedView?.id) {
       setActiveViewId(savedView.id);
     }
   };
@@ -205,15 +196,6 @@ export default function InteractionsPage() {
           </div>
         </div>
 
-        {/* V2: View Tabs */}
-        {activeViewId && (
-          <ViewTabs
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            counts={tabCounts}
-          />
-        )}
-
         {/* V2: View Controls (Sort & Filter) */}
         {activeViewId && (
           <ViewControls
@@ -232,7 +214,6 @@ export default function InteractionsPage() {
               viewId={activeViewId}
               filters={activeView?.filters}
               sortBy={sortBy}
-              tab={activeTab}
               platforms={selectedPlatforms}
               onInteractionClick={handleInteractionClick}
             />
