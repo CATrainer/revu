@@ -3,7 +3,7 @@ import logging
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_, desc
 
@@ -135,6 +135,7 @@ def build_filter_query(
 @router.post("/interactions", response_model=InteractionOut, status_code=status.HTTP_201_CREATED)
 async def create_interaction(
     payload: InteractionCreate,
+    background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -175,9 +176,35 @@ async def create_interaction(
         # Log error but don't fail interaction creation
         logger.error(f"Workflow evaluation failed: {e}")
 
-    # TODO: Update thread and fan records
+    # Tag interaction against all AI views for this user
+    background_tasks.add_task(
+        tag_interaction_for_ai_views,
+        interaction_id=str(interaction.id),
+        user_id=str(current_user.id)
+    )
 
     return interaction
+
+
+async def tag_interaction_for_ai_views(interaction_id: str, user_id: str):
+    """Background task to tag an interaction against all AI views."""
+    from uuid import UUID
+    from app.core.database import async_session_maker
+    from app.services.view_classifier import ViewClassifierService
+    
+    async with async_session_maker() as session:
+        interaction = await session.get(Interaction, UUID(interaction_id))
+        if not interaction:
+            logger.error(f"Interaction {interaction_id} not found for AI tagging")
+            return
+        
+        classifier = ViewClassifierService(session)
+        tags = await classifier.classify_interaction_for_all_views(
+            interaction=interaction,
+            user_id=UUID(user_id)
+        )
+        await session.commit()
+        logger.info(f"Tagged interaction {interaction_id} for {len(tags)} AI views")
 
 
 @router.get("/interactions", response_model=InteractionList)
@@ -273,8 +300,13 @@ async def list_interactions_by_view(
 ):
     """List interactions filtered by a specific view's configuration.
     
+    For AI views: Uses pre-computed tags to filter interactions
+    For Manual views: Uses traditional filter parameters
+    
     Query params (sort_by, tab, platforms) override view defaults.
     """
+    from app.models.view_tag import InteractionViewTag
+    
     # Get view
     view = await session.get(InteractionView, view_id)
     
@@ -288,42 +320,83 @@ async def list_interactions_by_view(
                 view.organization_id == current_user.organization_id):
             raise HTTPException(status_code=404, detail="View not found")
     
-    # Parse view filters
-    filters = InteractionFilters(**view.filters)
-    
-    # Override with query params if provided
-    if platforms:
-        filters.platforms = platforms
-    
-    # Apply tab-based filtering for custom views
-    # Tabs act as subsets within the custom view's criteria
-    if tab:
-        if tab == "unanswered":
-            # Show interactions that haven't been responded to yet
-            filters.status = ["unread", "read"]
-            filters.exclude_sent = True
-            filters.exclude_archived = True
-        elif tab == "awaiting_approval":
-            # Show AI-generated responses pending approval
-            filters.status = ["awaiting_approval"]
-            filters.exclude_archived = True
-        elif tab == "archive":
-            # Show archived interactions within this view's criteria
-            filters.archived_only = True
-            # Clear exclude_archived if it was set by view
-            filters.exclude_archived = None
-        elif tab == "sent":
-            # Show interactions with sent responses
-            filters.has_sent_response = True
-            filters.exclude_archived = True
-            # Clear exclude_sent if it was set
-            filters.exclude_sent = None
-        # Note: no "all" tab for custom views - they use the permanent views instead
-    
-    # Build query
-    query = select(Interaction)
     show_demo_data = (current_user.demo_mode_status == 'enabled')
-    query = build_filter_query(query, filters, current_user.id, show_demo_data)
+    
+    # Handle AI-filtered views differently
+    if view.filter_mode == 'ai' and not view.is_system:
+        # For AI views, query based on pre-computed tags
+        query = (
+            select(Interaction)
+            .join(InteractionViewTag, InteractionViewTag.interaction_id == Interaction.id)
+            .where(
+                and_(
+                    InteractionViewTag.view_id == view_id,
+                    InteractionViewTag.matches == True,
+                    Interaction.user_id == current_user.id,
+                    Interaction.is_demo == show_demo_data
+                )
+            )
+        )
+        
+        # Apply tab filters on top of AI view results
+        if tab:
+            if tab == "unanswered":
+                query = query.where(and_(
+                    Interaction.status.in_(["unread", "read"]),
+                    Interaction.archived_at.is_(None),
+                    or_(Interaction.responded_at.is_(None), Interaction.last_activity_at > Interaction.responded_at)
+                ))
+            elif tab == "awaiting_approval":
+                query = query.where(and_(
+                    Interaction.status == "awaiting_approval",
+                    Interaction.archived_at.is_(None)
+                ))
+            elif tab == "archive":
+                query = query.where(Interaction.archived_at.isnot(None))
+            elif tab == "sent":
+                query = query.where(and_(
+                    Interaction.responded_at.isnot(None),
+                    Interaction.archived_at.is_(None)
+                ))
+        
+        # Apply platform filter if specified
+        if platforms:
+            query = query.where(Interaction.platform.in_(platforms))
+    else:
+        # For manual/system views, use traditional filter approach
+        filters = InteractionFilters(**view.filters)
+        
+        # Override with query params if provided
+        if platforms:
+            filters.platforms = platforms
+        
+        # Apply tab-based filtering for custom views
+        # Tabs act as subsets within the custom view's criteria
+        if tab:
+            if tab == "unanswered":
+                # Show interactions that haven't been responded to yet
+                filters.status = ["unread", "read"]
+                filters.exclude_sent = True
+                filters.exclude_archived = True
+            elif tab == "awaiting_approval":
+                # Show AI-generated responses pending approval
+                filters.status = ["awaiting_approval"]
+                filters.exclude_archived = True
+            elif tab == "archive":
+                # Show archived interactions within this view's criteria
+                filters.archived_only = True
+                # Clear exclude_archived if it was set by view
+                filters.exclude_archived = None
+            elif tab == "sent":
+                # Show interactions with sent responses
+                filters.has_sent_response = True
+                filters.exclude_archived = True
+                # Clear exclude_sent if it was set
+                filters.exclude_sent = None
+        
+        # Build query
+        query = select(Interaction)
+        query = build_filter_query(query, filters, current_user.id, show_demo_data)
     
     # Apply sorting (query param overrides view default)
     effective_sort = sort_by or view.display.get('sortBy', 'newest')

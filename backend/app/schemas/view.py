@@ -48,6 +48,13 @@ class ViewBase(BaseModel):
     color: str = Field(default='#3b82f6', max_length=20)
     type: str = Field(default='custom', description="smart, custom, workflow")
     
+    # Filter mode: 'ai' for natural language, 'manual' for traditional filters
+    filter_mode: Optional[str] = Field(default='manual', description="ai or manual")
+    
+    # AI filtering: natural language prompt
+    ai_prompt: Optional[str] = Field(None, description="Natural language description of what to show, e.g. 'brand deal inquiries'")
+    
+    # Manual filters (used when filter_mode='manual')
     filters: ViewFilters = Field(default_factory=ViewFilters)
     display: ViewDisplay = Field(default_factory=ViewDisplay)
     
@@ -68,6 +75,10 @@ class ViewUpdate(BaseModel):
     icon: Optional[str] = Field(None, max_length=50)
     color: Optional[str] = Field(None, max_length=20)
     
+    # Filter mode and AI prompt
+    filter_mode: Optional[str] = None
+    ai_prompt: Optional[str] = None
+    
     filters: Optional[ViewFilters] = None
     display: Optional[ViewDisplay] = None
     
@@ -83,6 +94,9 @@ class ViewOut(ViewBase):
     is_template: bool = False
     is_system: bool = False
     workflow_ids: Optional[List[UUID]] = None
+    
+    # AI filtering status
+    ai_prompt_hash: Optional[str] = None
     
     # Ownership
     user_id: UUID

@@ -196,6 +196,7 @@ async def create_db_and_tables() -> None:
                 youtube,
                 workflow,
                 application,
+                view_tag,
             )
 
             # Configure the registry to resolve any relationship mapping issues

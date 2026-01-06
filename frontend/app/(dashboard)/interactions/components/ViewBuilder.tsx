@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { X, Plus, Loader2 } from 'lucide-react';
+import { Loader2, Sparkles, SlidersHorizontal, Wand2 } from 'lucide-react';
 import { api } from '@/lib/api';
 
 interface View {
@@ -31,6 +31,8 @@ interface View {
   icon: string;
   color: string;
   type: string;
+  filter_mode: 'ai' | 'manual';
+  ai_prompt?: string;
   filters: any;
   display: any;
   is_pinned?: boolean;
@@ -47,8 +49,24 @@ interface ViewBuilderProps {
 const EMOJI_ICONS = ['📥', '⭐', '💰', '🤝', '❓', '😠', '💬', '🎯', '📧', '🔥', '💡', '📊'];
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'];
 
+// Example AI prompts to help users
+const AI_PROMPT_EXAMPLES = [
+  'Brand deal inquiries and sponsorship requests',
+  'Questions about merchandise or products',
+  'Collaboration requests from other creators',
+  'Negative comments that need attention',
+  'Messages from verified accounts',
+  'Fan art and creative submissions',
+];
+
 export default function ViewBuilder({ view, onClose, onSave }: ViewBuilderProps) {
-  const [formData, setFormData] = useState<View>({
+  // Determine initial filter mode
+  const initialFilterMode = view?.filter_mode || (view?.ai_prompt ? 'ai' : 'ai');
+  
+  const [filterMode, setFilterMode] = useState<'ai' | 'manual'>(initialFilterMode);
+  const [aiPrompt, setAiPrompt] = useState(view?.ai_prompt || '');
+  
+  const [formData, setFormData] = useState<Omit<View, 'filter_mode' | 'ai_prompt'>>({
     name: view?.name || '',
     description: view?.description || '',
     icon: view?.icon || '📥',
@@ -70,6 +88,7 @@ export default function ViewBuilder({ view, onClose, onSave }: ViewBuilderProps)
     new Set(view?.filters?.types || [])
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [isTagging, setIsTagging] = useState(false);
 
   const handlePlatformToggle = (platform: string) => {
     const newSet = new Set(selectedPlatforms);
@@ -99,42 +118,52 @@ export default function ViewBuilder({ view, onClose, onSave }: ViewBuilderProps)
       return;
     }
 
+    // Validate AI prompt if in AI mode
+    if (filterMode === 'ai' && !aiPrompt.trim()) {
+      alert('Please describe what interactions you want to see');
+      return;
+    }
+
     setIsSaving(true);
+    if (filterMode === 'ai') {
+      setIsTagging(true);
+    }
 
     try {
-      // Build filters object
+      // Build filters object for manual mode
       const filters: any = {};
       
-      if (selectedPlatforms.size > 0) {
-        filters.platforms = Array.from(selectedPlatforms);
+      if (filterMode === 'manual') {
+        if (selectedPlatforms.size > 0) {
+          filters.platforms = Array.from(selectedPlatforms);
+        }
+        
+        if (selectedTypes.size > 0) {
+          filters.types = Array.from(selectedTypes);
+        }
+        
+        if (keywords.trim()) {
+          filters.keywords = keywords.split(',').map(k => k.trim()).filter(k => k);
+        }
+        
+        if (formData.filters.sentiment) filters.sentiment = formData.filters.sentiment;
+        if (formData.filters.status) filters.status = formData.filters.status;
+        if (formData.filters.priority_min) filters.priority_min = formData.filters.priority_min;
       }
-      
-      if (selectedTypes.size > 0) {
-        filters.types = Array.from(selectedTypes);
-      }
-      
-      if (keywords.trim()) {
-        filters.keywords = keywords.split(',').map(k => k.trim()).filter(k => k);
-      }
-      
-      // Copy additional filters from formData if they exist
-      if (formData.filters.sentiment) filters.sentiment = formData.filters.sentiment;
-      if (formData.filters.status) filters.status = formData.filters.status;
-      if (formData.filters.priority_min) filters.priority_min = formData.filters.priority_min;
 
       const payload = {
         ...formData,
+        filter_mode: filterMode,
+        ai_prompt: filterMode === 'ai' ? aiPrompt : undefined,
         filters,
       };
 
       let savedView;
       
       if (view?.id) {
-        // Update existing view
         const response = await api.patch(`/views/${view.id}`, payload);
         savedView = response.data;
       } else {
-        // Create new view
         const response = await api.post('/views', payload);
         savedView = response.data;
       }
@@ -145,6 +174,7 @@ export default function ViewBuilder({ view, onClose, onSave }: ViewBuilderProps)
       alert('Failed to save view');
     } finally {
       setIsSaving(false);
+      setIsTagging(false);
     }
   };
 
@@ -152,200 +182,244 @@ export default function ViewBuilder({ view, onClose, onSave }: ViewBuilderProps)
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {view?.id ? 'Edit View' : 'Create New View'}
+          <DialogTitle className="flex items-center gap-2">
+            <Wand2 className="h-5 w-5 text-primary" />
+            {view?.id ? 'Edit View' : 'Create Smart View'}
           </DialogTitle>
           <DialogDescription>
-            Customize filters to organize your interactions exactly how you want.
+            Create a view to automatically organize your interactions using AI or manual filters.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name">View Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Merch Inquiries"
-                required
-              />
-            </div>
+          {/* View Name */}
+          <div>
+            <Label htmlFor="name">View Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g., Brand Deals, Fan Questions, Collabs"
+              className="mt-1"
+              required
+            />
+          </div>
 
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Optional description for this view"
-                rows={2}
-              />
+          {/* Filter Mode Toggle */}
+          <div className="space-y-3">
+            <Label>How do you want to filter?</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setFilterMode('ai')}
+                className={`p-4 rounded-lg border-2 text-left transition-all ${
+                  filterMode === 'ai'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-muted hover:border-muted-foreground/30'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className={`h-5 w-5 ${filterMode === 'ai' ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <span className="font-semibold">AI Filtering</span>
+                  <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Recommended</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Describe what you want in plain English. AI will automatically classify interactions.
+                </p>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setFilterMode('manual')}
+                className={`p-4 rounded-lg border-2 text-left transition-all ${
+                  filterMode === 'manual'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-muted hover:border-muted-foreground/30'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <SlidersHorizontal className={`h-5 w-5 ${filterMode === 'manual' ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <span className="font-semibold">Manual Filtering</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Set specific filters like keywords, platforms, and sentiment manually.
+                </p>
+              </button>
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
+          {/* AI Filtering Section */}
+          {filterMode === 'ai' && (
+            <div className="space-y-4 p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20">
               <div>
-                <Label>Icon</Label>
+                <Label htmlFor="ai-prompt" className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  Describe what interactions you want to see
+                </Label>
+                <Textarea
+                  id="ai-prompt"
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder="e.g., Show me all brand deal inquiries and sponsorship requests"
+                  className="mt-2 min-h-[100px]"
+                  required={filterMode === 'ai'}
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Be specific! The AI will analyze each interaction to determine if it matches your description.
+                </p>
+              </div>
+              
+              {/* Example prompts */}
+              <div>
+                <Label className="text-xs text-muted-foreground">Try one of these examples:</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {EMOJI_ICONS.map((emoji) => (
+                  {AI_PROMPT_EXAMPLES.map((example) => (
                     <button
-                      key={emoji}
+                      key={example}
                       type="button"
-                      onClick={() => setFormData({ ...formData, icon: emoji })}
-                      className={`text-2xl p-2 rounded border-2 transition-all ${
-                        formData.icon === emoji 
-                          ? 'border-primary bg-primary/10' 
-                          : 'border-transparent hover:border-muted'
+                      onClick={() => setAiPrompt(example)}
+                      className="text-xs px-3 py-1.5 rounded-full bg-background border hover:bg-muted transition-colors"
+                    >
+                      {example}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Manual Filtering Section */}
+          {filterMode === 'manual' && (
+            <div className="space-y-4 border rounded-lg p-4">
+              {/* Platforms */}
+              <div>
+                <Label>Platforms</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {['instagram', 'youtube', 'tiktok', 'twitter'].map((platform) => (
+                    <button
+                      key={platform}
+                      type="button"
+                      onClick={() => handlePlatformToggle(platform)}
+                      className={`px-3 py-1.5 rounded-md text-sm capitalize transition-all ${
+                        selectedPlatforms.has(platform)
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted hover:bg-muted/80'
                       }`}
                     >
-                      {emoji}
+                      {platform}
                     </button>
                   ))}
                 </div>
               </div>
 
+              {/* Interaction Types */}
               <div>
-                <Label>Color</Label>
+                <Label>Interaction Types</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {COLORS.map((color) => (
+                  {['comment', 'dm', 'mention'].map((type) => (
                     <button
-                      key={color}
+                      key={type}
                       type="button"
-                      onClick={() => setFormData({ ...formData, color })}
-                      className={`h-8 w-8 rounded-full border-2 transition-all ${
-                        formData.color === color 
-                          ? 'border-primary scale-110' 
-                          : 'border-transparent hover:scale-105'
+                      onClick={() => handleTypeToggle(type)}
+                      className={`px-3 py-1.5 rounded-md text-sm capitalize transition-all ${
+                        selectedTypes.has(type)
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted hover:bg-muted/80'
                       }`}
-                      style={{ backgroundColor: color }}
-                    />
+                    >
+                      {type}
+                    </button>
                   ))}
                 </div>
               </div>
+
+              {/* Keywords */}
+              <div>
+                <Label htmlFor="keywords">Keywords (comma-separated)</Label>
+                <Input
+                  id="keywords"
+                  value={keywords}
+                  onChange={(e) => setKeywords(e.target.value)}
+                  placeholder="merch, shop, store, buy"
+                  className="mt-1"
+                />
+              </div>
+
+              {/* Sentiment */}
+              <div>
+                <Label htmlFor="sentiment">Sentiment</Label>
+                <Select
+                  value={formData.filters.sentiment || 'any'}
+                  onValueChange={(value) => 
+                    setFormData({
+                      ...formData,
+                      filters: { 
+                        ...formData.filters, 
+                        sentiment: value === 'any' ? undefined : value 
+                      }
+                    })
+                  }
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any</SelectItem>
+                    <SelectItem value="positive">Positive</SelectItem>
+                    <SelectItem value="negative">Negative</SelectItem>
+                    <SelectItem value="neutral">Neutral</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Filters */}
-          <div className="space-y-4 border-t pt-4">
-            <h3 className="font-semibold">Filters</h3>
-
-            {/* Platforms */}
+          {/* Icon & Color */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Platforms</Label>
+              <Label>Icon</Label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {['instagram', 'youtube', 'tiktok', 'twitter'].map((platform) => (
+                {EMOJI_ICONS.map((emoji) => (
                   <button
-                    key={platform}
+                    key={emoji}
                     type="button"
-                    onClick={() => handlePlatformToggle(platform)}
-                    className={`px-3 py-1.5 rounded-md text-sm capitalize transition-all ${
-                      selectedPlatforms.has(platform)
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted hover:bg-muted/80'
+                    onClick={() => setFormData({ ...formData, icon: emoji })}
+                    className={`text-xl p-1.5 rounded border-2 transition-all ${
+                      formData.icon === emoji 
+                        ? 'border-primary bg-primary/10' 
+                        : 'border-transparent hover:border-muted'
                     }`}
                   >
-                    {platform}
+                    {emoji}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Interaction Types */}
             <div>
-              <Label>Interaction Types</Label>
+              <Label>Color</Label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {['comment', 'dm', 'mention'].map((type) => (
+                {COLORS.map((color) => (
                   <button
-                    key={type}
+                    key={color}
                     type="button"
-                    onClick={() => handleTypeToggle(type)}
-                    className={`px-3 py-1.5 rounded-md text-sm capitalize transition-all ${
-                      selectedTypes.has(type)
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted hover:bg-muted/80'
+                    onClick={() => setFormData({ ...formData, color })}
+                    className={`h-7 w-7 rounded-full border-2 transition-all ${
+                      formData.color === color 
+                        ? 'border-primary scale-110' 
+                        : 'border-transparent hover:scale-105'
                     }`}
-                  >
-                    {type}
-                  </button>
+                    style={{ backgroundColor: color }}
+                  />
                 ))}
               </div>
-            </div>
-
-            {/* Keywords */}
-            <div>
-              <Label htmlFor="keywords">Keywords (comma-separated)</Label>
-              <Input
-                id="keywords"
-                value={keywords}
-                onChange={(e) => setKeywords(e.target.value)}
-                placeholder="merch, shop, store, buy"
-              />
-            </div>
-
-            {/* Sentiment */}
-            <div>
-              <Label htmlFor="sentiment">Sentiment</Label>
-              <Select
-                value={formData.filters.sentiment || 'any'}
-                onValueChange={(value) => 
-                  setFormData({
-                    ...formData,
-                    filters: { 
-                      ...formData.filters, 
-                      sentiment: value === 'any' ? undefined : value 
-                    }
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any</SelectItem>
-                  <SelectItem value="positive">Positive</SelectItem>
-                  <SelectItem value="negative">Negative</SelectItem>
-                  <SelectItem value="neutral">Neutral</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Status */}
-            <div>
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.filters.status?.[0] || 'any'}
-                onValueChange={(value) => 
-                  setFormData({
-                    ...formData,
-                    filters: { 
-                      ...formData.filters, 
-                      status: value === 'any' ? undefined : [value]
-                    }
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any Status</SelectItem>
-                  <SelectItem value="unread">Unread</SelectItem>
-                  <SelectItem value="read">Read</SelectItem>
-                  <SelectItem value="replied">Replied</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
           {/* Display Options */}
-          <div className="space-y-4 border-t pt-4">
-            <h3 className="font-semibold">Display Options</h3>
-
-            <div>
-              <Label htmlFor="sortBy">Sort By</Label>
+          <div className="space-y-3">
+            <Label>Display Options</Label>
+            <div className="flex items-center gap-6">
               <Select
                 value={formData.display.sortBy}
                 onValueChange={(value) => 
@@ -355,8 +429,8 @@ export default function ViewBuilder({ view, onClose, onSave }: ViewBuilderProps)
                   })
                 }
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="newest">Newest First</SelectItem>
@@ -365,9 +439,7 @@ export default function ViewBuilder({ view, onClose, onSave }: ViewBuilderProps)
                   <SelectItem value="engagement">Most Engaged</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
 
-            <div className="flex items-center gap-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="pinned"
@@ -376,21 +448,8 @@ export default function ViewBuilder({ view, onClose, onSave }: ViewBuilderProps)
                     setFormData({ ...formData, is_pinned: checked as boolean })
                   }
                 />
-                <Label htmlFor="pinned" className="cursor-pointer">
+                <Label htmlFor="pinned" className="cursor-pointer text-sm">
                   Pin to sidebar
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="shared"
-                  checked={formData.is_shared}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, is_shared: checked as boolean })
-                  }
-                />
-                <Label htmlFor="shared" className="cursor-pointer">
-                  Share with team
                 </Label>
               </div>
             </div>
@@ -401,8 +460,17 @@ export default function ViewBuilder({ view, onClose, onSave }: ViewBuilderProps)
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving}>
-              {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {view?.id ? 'Save Changes' : 'Create View'}
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {isTagging ? 'Analyzing interactions...' : 'Saving...'}
+                </>
+              ) : (
+                <>
+                  {filterMode === 'ai' && <Sparkles className="h-4 w-4 mr-2" />}
+                  {view?.id ? 'Save Changes' : 'Create View'}
+                </>
+              )}
             </Button>
           </DialogFooter>
         </form>

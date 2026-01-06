@@ -1,7 +1,7 @@
 """API endpoints for custom views."""
 from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 
@@ -23,16 +23,31 @@ router = APIRouter()
 @router.post("/views", response_model=ViewOut, status_code=status.HTTP_201_CREATED)
 async def create_view(
     payload: ViewCreate,
+    background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Create a new custom view."""
+    """Create a new custom view.
+    
+    For AI views (filter_mode='ai'), the view will be created and a background
+    task will tag all existing interactions against the AI criteria.
+    """
+    from app.services.view_classifier import ViewClassifierService
+    
+    # Compute prompt hash if AI view
+    ai_prompt_hash = None
+    if payload.filter_mode == 'ai' and payload.ai_prompt:
+        ai_prompt_hash = ViewClassifierService.compute_prompt_hash(payload.ai_prompt)
+    
     view = InteractionView(
         name=payload.name,
         description=payload.description,
         icon=payload.icon,
         color=payload.color,
         type=payload.type,
+        filter_mode=payload.filter_mode,
+        ai_prompt=payload.ai_prompt,
+        ai_prompt_hash=ai_prompt_hash,
         filters=payload.filters.model_dump(exclude_none=True),
         display=payload.display.model_dump(),
         is_pinned=payload.is_pinned,
@@ -46,7 +61,36 @@ async def create_view(
     await session.commit()
     await session.refresh(view)
     
+    # If AI view, trigger background tagging of all interactions
+    if view.filter_mode == 'ai' and view.ai_prompt:
+        background_tasks.add_task(
+            tag_interactions_for_view_task,
+            view_id=str(view.id),
+            user_id=str(current_user.id)
+        )
+    
     return view
+
+
+async def tag_interactions_for_view_task(view_id: str, user_id: str):
+    """Background task to tag all interactions for a new AI view."""
+    import logging
+    from uuid import UUID
+    from app.core.database import async_session_maker
+    from app.services.view_classifier import ViewClassifierService
+    
+    logger = logging.getLogger(__name__)
+    logger.info(f"Starting background tagging for view {view_id}")
+    
+    async with async_session_maker() as session:
+        view = await session.get(InteractionView, UUID(view_id))
+        if not view:
+            logger.error(f"View {view_id} not found")
+            return
+        
+        classifier = ViewClassifierService(session)
+        count = await classifier.tag_all_interactions_for_view(view)
+        logger.info(f"Tagged {count} interactions for view {view_id}")
 
 
 @router.get("/views", response_model=ViewList)
@@ -76,6 +120,7 @@ async def list_views(
             icon="📬",
             color="#6B7280",
             type="system",
+            filter_mode="manual",  # System views use manual filtering
             filters={},
             display={"sortBy": "newest", "groupBy": None, "columns": ["author", "content", "platform", "status", "priority", "created_at"]},
             is_pinned=True,

@@ -18,7 +18,14 @@ class InteractionView(Base):
     color = Column(String(20), default='#3b82f6')
     type = Column(String(20), default='custom')  # smart, custom, workflow
     
-    # Filter configuration (flexible JSON structure)
+    # Filter mode: 'ai' for natural language filtering, 'manual' for traditional filters
+    filter_mode = Column(String(20), default='ai', nullable=False)
+    
+    # AI filtering: natural language prompt describing what interactions to show
+    ai_prompt = Column(Text)  # e.g., "Show me all brand deal inquiries and collaboration requests"
+    ai_prompt_hash = Column(String(64))  # Hash to detect prompt changes for re-tagging
+    
+    # Manual filter configuration (flexible JSON structure)
     filters = Column(JSONB, nullable=False, server_default='{}')
     # Example: {
     #   "platforms": ["instagram", "youtube"],

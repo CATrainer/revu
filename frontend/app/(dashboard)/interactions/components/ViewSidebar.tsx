@@ -34,6 +34,8 @@ interface View {
   icon: string;
   color: string;
   type: string;
+  filter_mode?: 'ai' | 'manual';
+  ai_prompt?: string;
   filters: any;
   display: any;
   is_pinned: boolean;
