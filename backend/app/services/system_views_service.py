@@ -81,7 +81,7 @@ SYSTEM_VIEWS = [
         'is_pinned': True,
         'order_index': 3,
         'filters': {
-            'has_sent_response': True,
+            'outgoing_replies_only': True,
             'exclude_archived': True
         },
         'display': {
@@ -89,7 +89,7 @@ SYSTEM_VIEWS = [
             'showReplies': True,
             'density': 'comfortable'
         },
-        'description': 'Interactions where you have sent a response'
+        'description': 'Your outgoing responses'
     },
 ]
 

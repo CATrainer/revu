@@ -43,8 +43,14 @@ def build_filter_query(
     # CRITICAL: Filter by demo mode - users should only see data matching their mode
     conditions.append(Interaction.is_demo == user_demo_mode)
     
-    # Exclude reply interactions from main list - they only appear in thread view
-    conditions.append(or_(Interaction.is_reply == False, Interaction.is_reply.is_(None)))
+    # Reply filters - control whether to show/hide our outgoing replies (type='reply')
+    if filters.outgoing_replies_only:
+        # Sent view: Only show our outgoing replies
+        conditions.append(Interaction.type == 'reply')
+    elif filters.exclude_outgoing_replies is not False:
+        # Default: Exclude our outgoing replies from main list (they appear in thread view)
+        # Incoming responses from fans (type='comment', 'dm') still show up
+        conditions.append(Interaction.type != 'reply')
     
     if filters.platforms:
         conditions.append(Interaction.platform.in_(filters.platforms))
@@ -396,8 +402,8 @@ async def list_interactions_by_view(
                 # Clear exclude_archived if it was set by view
                 filters.exclude_archived = None
             elif tab == "sent":
-                # Show interactions with sent responses
-                filters.has_sent_response = True
+                # Show our outgoing replies
+                filters.outgoing_replies_only = True
                 filters.exclude_archived = True
                 # Clear exclude_sent if it was set
                 filters.exclude_sent = None

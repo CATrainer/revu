@@ -145,6 +145,10 @@ class InteractionFilters(BaseModel):
     # Sent/Response filters
     exclude_sent: Optional[bool] = None  # Exclude interactions with sent responses (unless new activity)
     has_sent_response: Optional[bool] = None  # Only show interactions with sent responses
+    
+    # Reply filters
+    exclude_outgoing_replies: Optional[bool] = None  # Exclude our outgoing replies (type='reply')
+    outgoing_replies_only: Optional[bool] = None  # Only show our outgoing replies (for Sent view)
 
 
 # ==================== BULK ACTION SCHEMAS ====================
