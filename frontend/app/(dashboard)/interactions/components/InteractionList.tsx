@@ -68,7 +68,7 @@ interface Interaction {
   parent_content_title?: string;
   // For awaiting approval / sent views
   pending_response?: {
-    content: string;
+    text: string;
     generated_at: string;
     workflow_name?: string;
   };
@@ -472,7 +472,7 @@ export default function InteractionList({
                   )}
                 </div>
                 <div className="bg-primary/5 border border-primary/20 rounded-lg rounded-tl-none p-3 text-sm">
-                  {interaction.pending_response.content}
+                  {interaction.pending_response.text}
                 </div>
               </div>
             </div>
