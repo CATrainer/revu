@@ -43,6 +43,9 @@ def build_filter_query(
     # CRITICAL: Filter by demo mode - users should only see data matching their mode
     conditions.append(Interaction.is_demo == user_demo_mode)
     
+    # Exclude reply interactions from main list - they only appear in thread view
+    conditions.append(or_(Interaction.is_reply == False, Interaction.is_reply.is_(None)))
+    
     if filters.platforms:
         conditions.append(Interaction.platform.in_(filters.platforms))
     
@@ -618,6 +621,13 @@ async def get_interaction_context(
         ).order_by(Interaction.created_at.asc())
         thread_result = await session.execute(thread_query)
         thread_messages = list(thread_result.scalars().all())
+    else:
+        # For demo content without thread_id, look for replies via reply_to_id
+        replies_query = select(Interaction).where(
+            Interaction.reply_to_id == interaction_id
+        ).order_by(Interaction.created_at.asc())
+        replies_result = await session.execute(replies_query)
+        thread_messages = list(replies_result.scalars().all())
     
     # Get parent content info (simplified for now)
     parent_content = None
@@ -675,7 +685,25 @@ async def get_interaction_thread(
         raise HTTPException(status_code=404, detail="Interaction not found")
     
     if not interaction.thread_id:
-        # Return single message if not part of thread
+        # For demo content without thread_id, look for replies via reply_to_id
+        replies_query = select(Interaction).where(
+            Interaction.reply_to_id == interaction.id
+        ).order_by(Interaction.created_at.asc())
+        replies_result = await session.execute(replies_query)
+        replies = list(replies_result.scalars().all())
+        
+        if replies:
+            # Include original + replies as the "thread"
+            messages = [interaction] + replies
+            participants = set(msg.author_username for msg in messages if msg.author_username)
+            return InteractionThread(
+                id=interaction.id,
+                messages=messages,
+                participant_count=len(participants),
+                total_messages=len(messages),
+            )
+        
+        # No replies, return single message
         return InteractionThread(
             id=interaction.id,
             messages=[interaction],
