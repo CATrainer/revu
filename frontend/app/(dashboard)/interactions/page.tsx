@@ -26,6 +26,8 @@ interface View {
   icon: string;
   color: string;
   type: string;
+  filter_mode?: 'ai' | 'manual';
+  ai_prompt?: string;
   filters: any;
   display: any;
   is_pinned: boolean;
@@ -224,6 +226,7 @@ export default function InteractionsPage() {
           {activeViewId ? (
             <InteractionList
               viewId={activeViewId}
+              viewName={activeView?.name}
               filters={activeView?.filters}
               sortBy={sortBy}
               tab={activeView?.is_system ? undefined : activeTab}

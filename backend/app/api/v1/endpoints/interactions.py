@@ -931,6 +931,113 @@ async def send_response(
     }
 
 
+@router.post("/interactions/{interaction_id}/approve-response")
+async def approve_response(
+    interaction_id: UUID,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Quick approve and send a pending AI-generated response.
+    
+    This is used from the Awaiting Approval view for one-click approval.
+    """
+    interaction = await session.get(Interaction, interaction_id)
+    
+    if not interaction or interaction.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Interaction not found")
+    
+    if not interaction.pending_response:
+        raise HTTPException(status_code=400, detail="No pending response to approve")
+    
+    pending_text = interaction.pending_response.get('text', '')
+    if not pending_text:
+        raise HTTPException(status_code=400, detail="Pending response has no content")
+    
+    # Send the response via platform
+    from app.services.platform_actions import get_platform_action_service
+    from app.services.sent_response_service import get_sent_response_service
+    
+    platform_service = get_platform_action_service()
+    result = await platform_service.send_reply(
+        interaction,
+        pending_text,
+        session
+    )
+    
+    if not result["success"]:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to send response: {result.get('error', 'Unknown error')}"
+        )
+    
+    # Determine if this was fully automated (auto-approved) or semi-automated (user approved)
+    response_type = 'semi_automated'  # User clicked approve
+    ai_model = interaction.pending_response.get('model')
+    workflow_id = interaction.pending_response.get('workflow_id')
+    
+    # Record the sent response
+    sent_service = get_sent_response_service(session)
+    await sent_service.record_sent_response(
+        interaction_id=interaction.id,
+        response_text=pending_text,
+        user_id=current_user.id,
+        response_type=response_type,
+        ai_model=ai_model,
+        was_edited=False,  # Quick approve means no edits
+        original_ai_text=pending_text,
+        workflow_id=UUID(workflow_id) if workflow_id else None,
+        platform_response_id=result.get("reply_id"),
+        organization_id=current_user.organization_id,
+        is_demo=interaction.is_demo,
+    )
+    
+    # Create reply interaction record
+    from uuid import uuid4
+    reply_interaction = Interaction(
+        id=uuid4(),
+        platform=interaction.platform,
+        type='reply',
+        platform_id=result.get("reply_id", f"reply_{uuid4().hex[:12]}"),
+        content=pending_text,
+        author_username=current_user.email,
+        author_name=current_user.full_name or current_user.email,
+        author_is_verified=True,
+        status='answered',
+        priority_score=0,
+        user_id=current_user.id,
+        organization_id=current_user.organization_id,
+        is_demo=interaction.is_demo,
+        thread_id=interaction.thread_id or interaction.id,
+        parent_content_id=interaction.parent_content_id,
+        parent_content_title=interaction.parent_content_title,
+        parent_content_url=interaction.parent_content_url,
+        reply_to_id=interaction.id,
+        is_reply=True,
+        created_at=datetime.utcnow(),
+        platform_created_at=datetime.utcnow(),
+        last_activity_at=datetime.utcnow(),
+    )
+    
+    if not interaction.thread_id:
+        interaction.thread_id = interaction.id
+        reply_interaction.thread_id = interaction.id
+    
+    session.add(reply_interaction)
+    
+    # Update original interaction - clear pending and mark as answered
+    interaction.pending_response = None
+    interaction.status = 'answered'
+    interaction.last_activity_at = datetime.utcnow()
+    await session.commit()
+    
+    return {
+        "success": True,
+        "message": "Response approved and sent",
+        "reply_id": result.get("reply_id"),
+        "response_type": response_type,
+    }
+
+
 # ==================== ARCHIVE ENDPOINTS ====================
 
 @router.post("/interactions/{interaction_id}/archive")
