@@ -62,11 +62,10 @@ async def init_db():
     # Import models to register them with Base.metadata
     from app.models import DemoProfile, DemoContent, DemoInteraction, GenerationCache  # noqa: F401
     
-    # Run schema migrations for any missing columns
-    async with engine.begin() as conn:
-        await _apply_schema_migrations(conn)
-    
-    print("✅ Database schema migrations applied")
+    # Skip migrations on startup to avoid event loop conflicts
+    # The url column migration should be run manually via SQL:
+    # ALTER TABLE demo_content ADD COLUMN IF NOT EXISTS url TEXT;
+    print("⏭️  Skipping database initialization (tables already exist)")
 
 
 async def _apply_schema_migrations(conn):
