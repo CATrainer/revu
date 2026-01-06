@@ -893,7 +893,7 @@ async def send_response(
             user_id=current_user.id,
             organization_id=current_user.organization_id,
             is_demo=interaction.is_demo,  # Match original interaction
-            thread_id=interaction.thread_id or interaction.id,  # Link to thread
+            thread_id=interaction.thread_id,  # Only set if original has one (FK constraint)
             parent_content_id=interaction.parent_content_id,
             parent_content_title=interaction.parent_content_title,
             parent_content_url=interaction.parent_content_url,
@@ -903,11 +903,6 @@ async def send_response(
             platform_created_at=datetime.utcnow(),
             last_activity_at=datetime.utcnow(),
         )
-        
-        # If original interaction doesn't have a thread_id, set it now
-        if not interaction.thread_id:
-            interaction.thread_id = interaction.id
-            reply_interaction.thread_id = interaction.id
         
         session.add(reply_interaction)
         
@@ -1007,7 +1002,7 @@ async def approve_response(
         user_id=current_user.id,
         organization_id=current_user.organization_id,
         is_demo=interaction.is_demo,
-        thread_id=interaction.thread_id or interaction.id,
+        thread_id=interaction.thread_id,  # Only set if original has one (FK constraint)
         parent_content_id=interaction.parent_content_id,
         parent_content_title=interaction.parent_content_title,
         parent_content_url=interaction.parent_content_url,
@@ -1017,10 +1012,6 @@ async def approve_response(
         platform_created_at=datetime.utcnow(),
         last_activity_at=datetime.utcnow(),
     )
-    
-    if not interaction.thread_id:
-        interaction.thread_id = interaction.id
-        reply_interaction.thread_id = interaction.id
     
     session.add(reply_interaction)
     
