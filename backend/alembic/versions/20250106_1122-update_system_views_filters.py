@@ -91,10 +91,11 @@ def upgrade() -> None:
     
     for view_name, config in SYSTEM_VIEW_FILTERS.items():
         # Update the filters and description for each system view
+        # Use CAST() instead of :: to avoid conflict with SQLAlchemy parameter syntax
         connection.execute(
             sa.text("""
                 UPDATE interaction_views 
-                SET filters = :filters::jsonb,
+                SET filters = CAST(:filters AS jsonb),
                     description = :description,
                     updated_at = NOW()
                 WHERE name = :name 
@@ -115,10 +116,11 @@ def downgrade() -> None:
     connection = op.get_bind()
     
     for view_name, config in OLD_SYSTEM_VIEW_FILTERS.items():
+        # Use CAST() instead of :: to avoid conflict with SQLAlchemy parameter syntax
         connection.execute(
             sa.text("""
                 UPDATE interaction_views 
-                SET filters = :filters::jsonb,
+                SET filters = CAST(:filters AS jsonb),
                     description = :description,
                     updated_at = NOW()
                 WHERE name = :name 
