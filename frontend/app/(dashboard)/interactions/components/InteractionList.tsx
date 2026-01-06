@@ -165,6 +165,25 @@ export default function InteractionList({
     }
   };
 
+  const handleArchive = async (id: string) => {
+    try {
+      await api.post(`/interactions/${id}/archive`);
+      loadInteractions();
+    } catch (error) {
+      console.error('Failed to archive:', error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this interaction?')) return;
+    try {
+      await api.delete(`/interactions/${id}`);
+      loadInteractions();
+    } catch (error) {
+      console.error('Failed to delete:', error);
+    }
+  };
+
   const getPlatformIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
       case 'instagram': return <Instagram className="h-4 w-4" />;
@@ -386,12 +405,12 @@ export default function InteractionList({
                       <Tag className="h-4 w-4 mr-2" />
                       Add Tag
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleArchive(interaction.id)}>
                       <Archive className="h-4 w-4 mr-2" />
                       Archive
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive">
+                    <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(interaction.id)}>
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete
                     </DropdownMenuItem>
