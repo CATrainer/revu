@@ -9,6 +9,7 @@ import Link from 'next/link';
 import ViewSidebar from './components/ViewSidebar';
 import InteractionList from './components/InteractionList';
 import ViewBuilder from './components/ViewBuilder';
+import { ViewTabs, type TabType } from './components/ViewTabs';
 import { ViewControls } from './components/ViewControls';
 import { InteractionDetailPanel } from './components/InteractionDetailPanel';
 import { WorkflowPanel } from './components/WorkflowPanel';
@@ -47,6 +48,9 @@ export default function InteractionsPage() {
   const [selectedInteractionId, setSelectedInteractionId] = useState<string | null>(null);
   const [showWorkflowPanel, setShowWorkflowPanel] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  
+  // Tab state for custom views (not used for system views)
+  const [activeTab, setActiveTab] = useState<TabType>('unanswered');
 
   // Load views on mount
   useEffect(() => {
@@ -196,6 +200,14 @@ export default function InteractionsPage() {
           </div>
         </div>
 
+        {/* View Tabs - Only show for custom views (not system views) */}
+        {activeViewId && activeView && !activeView.is_system && (
+          <ViewTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
+        )}
+
         {/* V2: View Controls (Sort & Filter) */}
         {activeViewId && (
           <ViewControls
@@ -214,6 +226,7 @@ export default function InteractionsPage() {
               viewId={activeViewId}
               filters={activeView?.filters}
               sortBy={sortBy}
+              tab={activeView?.is_system ? undefined : activeTab}
               platforms={selectedPlatforms}
               onInteractionClick={handleInteractionClick}
             />

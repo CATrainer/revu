@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 import { Inbox, Clock, Archive, CheckCircle, Send } from 'lucide-react';
 
-export type TabType = 'all' | 'unanswered' | 'awaiting_approval' | 'archive' | 'sent';
+export type TabType = 'unanswered' | 'awaiting_approval' | 'archive' | 'sent';
 
 interface Tab {
   id: TabType;
@@ -25,8 +25,9 @@ interface ViewTabsProps {
 }
 
 export function ViewTabs({ activeTab, onTabChange, counts }: ViewTabsProps) {
+  // Tabs for custom views - these filter within the custom view's criteria
   const tabs: Tab[] = [
-    { id: 'all', label: 'All', icon: Inbox, count: counts?.all },
+    { id: 'unanswered', label: 'Unanswered', icon: Inbox, count: counts?.unanswered },
     { id: 'awaiting_approval', label: 'Awaiting Approval', icon: Clock, count: counts?.awaiting_approval },
     { id: 'archive', label: 'Archive', icon: Archive, count: counts?.archive },
     { id: 'sent', label: 'Sent', icon: CheckCircle, count: counts?.sent },

@@ -295,15 +295,30 @@ async def list_interactions_by_view(
     if platforms:
         filters.platforms = platforms
     
-    # Apply tab-based filtering (overrides view filters)
+    # Apply tab-based filtering for custom views
+    # Tabs act as subsets within the custom view's criteria
     if tab:
         if tab == "unanswered":
+            # Show interactions that haven't been responded to yet
             filters.status = ["unread", "read"]
+            filters.exclude_sent = True
+            filters.exclude_archived = True
         elif tab == "awaiting_approval":
+            # Show AI-generated responses pending approval
             filters.status = ["awaiting_approval"]
-        elif tab == "answered":
-            filters.status = ["answered"]
-        # "all" tab doesn't filter by status
+            filters.exclude_archived = True
+        elif tab == "archive":
+            # Show archived interactions within this view's criteria
+            filters.archived_only = True
+            # Clear exclude_archived if it was set by view
+            filters.exclude_archived = None
+        elif tab == "sent":
+            # Show interactions with sent responses
+            filters.has_sent_response = True
+            filters.exclude_archived = True
+            # Clear exclude_sent if it was set
+            filters.exclude_sent = None
+        # Note: no "all" tab for custom views - they use the permanent views instead
     
     # Build query
     query = select(Interaction)

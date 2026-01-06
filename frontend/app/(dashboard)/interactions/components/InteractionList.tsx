@@ -63,6 +63,7 @@ interface InteractionListProps {
   viewId: string;
   filters?: any;
   sortBy?: string;
+  tab?: string;  // For custom views: unanswered, awaiting_approval, archive, sent
   platforms?: string[];
   onInteractionClick?: (id: string) => void;
 }
@@ -71,6 +72,7 @@ export default function InteractionList({
   viewId, 
   filters, 
   sortBy = 'newest',
+  tab,
   platforms = [],
   onInteractionClick,
 }: InteractionListProps) {
@@ -83,7 +85,7 @@ export default function InteractionList({
 
   useEffect(() => {
     loadInteractions();
-  }, [viewId, page, sortBy, platforms]);
+  }, [viewId, page, sortBy, tab, platforms]);
 
   const loadInteractions = async () => {
     try {
@@ -95,6 +97,11 @@ export default function InteractionList({
         page_size: '20',
         sort_by: sortBy,
       });
+      
+      // Add tab filter for custom views
+      if (tab) {
+        params.append('tab', tab);
+      }
       
       if (platforms.length > 0) {
         platforms.forEach(p => params.append('platforms', p));
