@@ -62,10 +62,11 @@ async def init_db():
     # Import models to register them with Base.metadata
     from app.models import DemoProfile, DemoContent, DemoInteraction, GenerationCache  # noqa: F401
     
-    # Skip database initialization entirely to avoid event loop conflicts
-    # Tables already exist, and migrations can be run manually if needed
-    print("⏭️  Skipping database initialization (tables already exist)")
-    return
+    # Run schema migrations for any missing columns
+    async with engine.begin() as conn:
+        await _apply_schema_migrations(conn)
+    
+    print("✅ Database schema migrations applied")
 
 
 async def _apply_schema_migrations(conn):
@@ -93,8 +94,20 @@ async def _apply_schema_migrations(conn):
         await conn.execute(add_column)
         print("✅ Added channel_name column successfully!")
     
-    # Add future migrations here as needed
-    # Example:
-    # if not await _column_exists(conn, 'table_name', 'new_column'):
-    #     await conn.execute(text("ALTER TABLE ..."))
-    #     print("✅ Added new_column...")
+    # Migration 2: Add url column to demo_content
+    check_url_column = text("""
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'demo_content' 
+        AND column_name = 'url'
+    """)
+    
+    result = await conn.execute(check_url_column)
+    if result.fetchone() is None:
+        print("📦 Adding url column to demo_content...")
+        add_url_column = text("""
+            ALTER TABLE demo_content 
+            ADD COLUMN url TEXT
+        """)
+        await conn.execute(add_url_column)
+        print("✅ Added url column successfully!")
