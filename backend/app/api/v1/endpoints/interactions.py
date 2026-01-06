@@ -933,6 +933,46 @@ async def send_response(
 
 # ==================== ARCHIVE ENDPOINTS ====================
 
+@router.post("/interactions/{interaction_id}/archive")
+async def archive_single_interaction(
+    interaction_id: UUID,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Archive a single interaction."""
+    from app.services.archive_service import get_archive_service
+    
+    archive_service = get_archive_service(session)
+    archived_count = await archive_service.manual_archive([interaction_id], current_user.id)
+    await session.commit()
+    
+    return {
+        "success": True,
+        "archived": archived_count > 0,
+        "message": "Interaction archived" if archived_count > 0 else "Interaction not found"
+    }
+
+
+@router.post("/interactions/{interaction_id}/unarchive")
+async def unarchive_single_interaction(
+    interaction_id: UUID,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Unarchive a single interaction."""
+    from app.services.archive_service import get_archive_service
+    
+    archive_service = get_archive_service(session)
+    unarchived_count = await archive_service.unarchive([interaction_id], current_user.id)
+    await session.commit()
+    
+    return {
+        "success": True,
+        "unarchived": unarchived_count > 0,
+        "message": "Interaction restored" if unarchived_count > 0 else "Interaction not found"
+    }
+
+
 @router.post("/interactions/archive")
 async def archive_interactions(
     interaction_ids: List[UUID],
