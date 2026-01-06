@@ -74,10 +74,16 @@ class ResponseGenerator:
         """Lazy-load Anthropic client."""
         if self._anthropic_client is None:
             from anthropic import AsyncAnthropic
-            import os
-            self._anthropic_client = AsyncAnthropic(
-                api_key=os.getenv("ANTHROPIC_API_KEY")
-            )
+            from app.core.config import settings
+            
+            api_key = settings.EFFECTIVE_ANTHROPIC_KEY
+            if not api_key:
+                raise ValueError(
+                    "Anthropic API key not configured. "
+                    "Set ANTHROPIC_API_KEY or CLAUDE_API_KEY environment variable."
+                )
+            
+            self._anthropic_client = AsyncAnthropic(api_key=api_key)
         return self._anthropic_client
     
     async def generate_response(
