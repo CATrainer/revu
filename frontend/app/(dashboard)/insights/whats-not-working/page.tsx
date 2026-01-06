@@ -90,7 +90,7 @@ export default function WhatsNotWorkingPage() {
   const router = useRouter();
   const [data, setData] = useState<PerformersData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState('90d');
+  const [period, setPeriod] = useState('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
