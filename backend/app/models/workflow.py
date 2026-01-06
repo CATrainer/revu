@@ -69,7 +69,7 @@ class Workflow(Base):
     actions = Column(JSONB, nullable=True)  # DEPRECATED
     type = Column(String(20), nullable=True)  # DEPRECATED
     view_id = Column(PGUUID(as_uuid=True), ForeignKey("interaction_views.id", ondelete="SET NULL"), nullable=True)  # DEPRECATED
-    is_global = Column(Boolean, nullable=True)  # DEPRECATED
+    is_global = Column(Boolean, nullable=False, default=False)  # DEPRECATED - kept for DB compatibility
     natural_language_conditions = Column(ARRAY(Text), nullable=True)  # DEPRECATED
     compiled_conditions = Column(JSONB, nullable=True)  # DEPRECATED
     created_by_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)  # DEPRECATED
