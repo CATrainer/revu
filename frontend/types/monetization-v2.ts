@@ -172,18 +172,38 @@ export interface TaskReorderRequest {
 
 // ==================== AI Recommendations ====================
 
+export interface PersonalizedRevenueRange {
+  low: number;
+  high: number;
+  unit: string;
+  note: string;
+}
+
+export interface CreatorProfileSummary {
+  total_followers: number;
+  platforms: string[];
+  primary_platform: string;
+  niche: string;
+  avg_engagement_rate: number;
+  posting_frequency: string;
+  existing_revenue_streams: string[];
+}
+
 export interface AIRecommendation {
   template: TemplateListItem;
   fit_score: number;
   fit_reasons: string[];
+  personalized_description?: string;
+  personalized_revenue?: PersonalizedRevenueRange;
   potential_challenges: string[];
-  estimated_monthly_revenue: number;
+  estimated_monthly_revenue?: number;
   personalized_tips: string[];
 }
 
 export interface AIRecommendationsResponse {
   recommendations: AIRecommendation[];
   creator_summary: string;
+  creator_profile?: CreatorProfileSummary;
   generated_at: string;
 }
 

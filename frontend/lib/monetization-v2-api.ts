@@ -38,8 +38,20 @@ export async function getTemplate(templateId: string): Promise<TemplateDetail> {
   return response.data;
 }
 
-export async function getAIRecommendations(limit: number = 5): Promise<AIRecommendationsResponse> {
-  const response = await api.get<AIRecommendationsResponse>(`${BASE_URL}/templates/recommendations?limit=${limit}`);
+export interface GetRecommendationsOptions {
+  limit?: number;
+  category?: string;
+  useAI?: boolean;
+}
+
+export async function getAIRecommendations(options: GetRecommendationsOptions = {}): Promise<AIRecommendationsResponse> {
+  const { limit = 5, category, useAI = false } = options;
+  const params = new URLSearchParams();
+  params.append('limit', limit.toString());
+  if (category) params.append('category', category);
+  if (useAI) params.append('use_ai', 'true');
+  
+  const response = await api.get<AIRecommendationsResponse>(`${BASE_URL}/templates/recommendations?${params}`);
   return response.data;
 }
 

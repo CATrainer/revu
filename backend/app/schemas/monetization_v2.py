@@ -221,18 +221,40 @@ class TasksByStatus(BaseModel):
 
 # ==================== AI Recommendation Schemas ====================
 
+class PersonalizedRevenueRange(BaseModel):
+    """Personalized revenue estimate based on creator profile."""
+    low: int
+    high: int
+    unit: str
+    note: str  # e.g., "Based on your 50,000 followers and 4.2% engagement"
+
+
+class CreatorProfileSummary(BaseModel):
+    """Summary of creator profile used for recommendations."""
+    total_followers: int
+    platforms: List[str]
+    primary_platform: str
+    niche: str
+    avg_engagement_rate: float
+    posting_frequency: str
+    existing_revenue_streams: List[str]
+
+
 class AIRecommendation(BaseModel):
     """AI-recommended template with fit score."""
     template: TemplateListItem
     fit_score: float  # 0-100
     fit_reasons: List[str]
-    potential_challenges: List[str]
-    estimated_monthly_revenue: int
-    personalized_tips: List[str]
+    personalized_description: Optional[str] = None
+    personalized_revenue: Optional[PersonalizedRevenueRange] = None
+    potential_challenges: List[str] = []
+    estimated_monthly_revenue: Optional[int] = None  # Deprecated, use personalized_revenue
+    personalized_tips: List[str] = []
 
 
 class AIRecommendationsResponse(BaseModel):
     """Response for AI recommendations endpoint."""
     recommendations: List[AIRecommendation]
-    creator_summary: str  # Brief summary of creator's profile used for recommendations
+    creator_summary: str  # Brief text summary
+    creator_profile: Optional[CreatorProfileSummary] = None  # Structured profile data
     generated_at: datetime

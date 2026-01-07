@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Filter, Sparkles, DollarSign, Clock, Users, ChevronRight, Loader2 } from 'lucide-react';
+import { Search, Filter, Sparkles, DollarSign, Clock, Users, ChevronRight, Loader2, TrendingUp, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { getTemplates } from '@/lib/monetization-v2-api';
-import type { TemplateListItem, TemplateListResponse } from '@/types/monetization-v2';
+import { getTemplates, getAIRecommendations } from '@/lib/monetization-v2-api';
+import type { TemplateListItem, TemplateListResponse, AIRecommendation, AIRecommendationsResponse } from '@/types/monetization-v2';
 import { CATEGORY_INFO } from '@/types/monetization-v2';
 
 interface TemplateBrowserProps {
@@ -18,13 +18,18 @@ interface TemplateBrowserProps {
 export function TemplateBrowser({ onSelectTemplate }: TemplateBrowserProps) {
   const [templates, setTemplates] = useState<TemplateListItem[]>([]);
   const [categories, setCategories] = useState<Record<string, number>>({});
+  const [recommendations, setRecommendations] = useState<AIRecommendation[]>([]);
+  const [creatorSummary, setCreatorSummary] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingRecs, setIsLoadingRecs] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showRecommendations, setShowRecommendations] = useState(true);
 
   useEffect(() => {
     loadTemplates();
+    loadRecommendations();
   }, []);
 
   const loadTemplates = async () => {
@@ -39,6 +44,20 @@ export function TemplateBrowser({ onSelectTemplate }: TemplateBrowserProps) {
       console.error('Error loading templates:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadRecommendations = async () => {
+    setIsLoadingRecs(true);
+    try {
+      const data = await getAIRecommendations({ limit: 5 });
+      setRecommendations(data.recommendations);
+      setCreatorSummary(data.creator_summary);
+    } catch (err) {
+      console.error('Error loading recommendations:', err);
+      // Non-fatal - recommendations are optional
+    } finally {
+      setIsLoadingRecs(false);
     }
   };
 
@@ -88,6 +107,61 @@ export function TemplateBrowser({ onSelectTemplate }: TemplateBrowserProps) {
 
   return (
     <div className="space-y-6">
+      {/* AI Recommendations Section */}
+      {showRecommendations && recommendations.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-600" />
+              <h2 className="text-lg font-bold text-primary-dark">Recommended For You</h2>
+            </div>
+            <button
+              onClick={() => setShowRecommendations(false)}
+              className="text-sm text-secondary-dark hover:text-primary-dark"
+            >
+              Hide
+            </button>
+          </div>
+          {creatorSummary && (
+            <p className="text-sm text-secondary-dark mb-4">
+              Based on your profile: {creatorSummary}
+            </p>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {recommendations.slice(0, 3).map((rec) => (
+              <RecommendationCard
+                key={rec.template.id}
+                recommendation={rec}
+                onSelect={() => onSelectTemplate(rec.template.id)}
+              />
+            ))}
+          </div>
+          {recommendations.length > 3 && (
+            <div className="mt-4 text-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Show all recommendations by scrolling or expanding
+                }}
+              >
+                View {recommendations.length - 3} more recommendations
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Loading state for recommendations */}
+      {isLoadingRecs && recommendations.length === 0 && (
+        <div className="mb-8 p-6 rounded-xl bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-100 dark:border-purple-800">
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
+            <span className="text-sm text-secondary-dark">Loading personalized recommendations...</span>
+          </div>
+        </div>
+      )}
+
       {/* Search and Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
@@ -237,6 +311,115 @@ function TemplateCard({ template, onSelect }: TemplateCardProps) {
         >
           {template.revenue_model === 'recurring' ? '🔄 Recurring' : template.revenue_model === 'hybrid' ? '🔀 Hybrid' : '💰 One-time'}
         </Badge>
+      </div>
+    </div>
+  );
+}
+
+// ==================== Recommendation Card ====================
+
+interface RecommendationCardProps {
+  recommendation: AIRecommendation;
+  onSelect: () => void;
+}
+
+function RecommendationCard({ recommendation, onSelect }: RecommendationCardProps) {
+  const { template, fit_score, fit_reasons, personalized_description, personalized_revenue } = recommendation;
+  const categoryInfo = CATEGORY_INFO[template.category] || { icon: '📋', label: template.category, color: 'gray' };
+
+  const formatRevenue = (range: { low: number; high: number; unit: string }) => {
+    const formatNum = (n: number) => {
+      if (n >= 1000) return `$${(n / 1000).toFixed(0)}k`;
+      return `$${n}`;
+    };
+    const unitLabel = range.unit.replace('per_', '/').replace('_', ' ');
+    return `${formatNum(range.low)} - ${formatNum(range.high)} ${unitLabel}`;
+  };
+
+  // Determine score color
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-600 bg-green-100 dark:bg-green-900/40';
+    if (score >= 60) return 'text-blue-600 bg-blue-100 dark:bg-blue-900/40';
+    return 'text-orange-600 bg-orange-100 dark:bg-orange-900/40';
+  };
+
+  return (
+    <div
+      className="relative dashboard-card p-5 hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 border-purple-100 dark:border-purple-800 bg-gradient-to-br from-white to-purple-50/30 dark:from-gray-900 dark:to-purple-900/10"
+      onClick={onSelect}
+    >
+      {/* Match Score Badge */}
+      <div className="absolute -top-2 -right-2">
+        <div className={cn(
+          'px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1',
+          getScoreColor(fit_score)
+        )}>
+          <TrendingUp className="h-3 w-3" />
+          {Math.round(fit_score)}% match
+        </div>
+      </div>
+
+      {/* Header */}
+      <div className="flex items-start gap-3 mb-3">
+        <span className="text-2xl">{categoryInfo.icon}</span>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-primary-dark group-hover:text-[var(--brand-primary)] transition-colors line-clamp-1">
+            {template.title}
+          </h3>
+          <Badge variant="secondary" className="text-xs mt-1">
+            {template.subcategory.replace('_', ' ')}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Personalized Description */}
+      {personalized_description && (
+        <p className="text-sm text-secondary-dark mb-3 line-clamp-2">
+          {personalized_description}
+        </p>
+      )}
+
+      {/* Match Reasons */}
+      {fit_reasons.length > 0 && (
+        <div className="space-y-1 mb-3">
+          {fit_reasons.slice(0, 2).map((reason, idx) => (
+            <div key={idx} className="flex items-start gap-2 text-xs text-green-700 dark:text-green-400">
+              <Zap className="h-3 w-3 mt-0.5 flex-shrink-0" />
+              <span>{reason}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Personalized Revenue */}
+      <div className="pt-3 border-t border-[var(--border)]">
+        {personalized_revenue ? (
+          <div>
+            <div className="flex items-center gap-2 text-sm">
+              <DollarSign className="h-4 w-4 text-green-600" />
+              <span className="text-primary-dark font-bold">
+                {formatRevenue(personalized_revenue)}
+              </span>
+            </div>
+            <p className="text-xs text-secondary-dark mt-1">
+              {personalized_revenue.note}
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-sm">
+            <DollarSign className="h-4 w-4 text-green-600" />
+            <span className="text-primary-dark font-medium">
+              {formatRevenue(template.expected_revenue_range)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* CTA */}
+      <div className="mt-3 flex items-center justify-end">
+        <span className="text-xs text-[var(--brand-primary)] font-medium group-hover:underline flex items-center gap-1">
+          Start this project <ChevronRight className="h-3 w-3" />
+        </span>
       </div>
     </div>
   );

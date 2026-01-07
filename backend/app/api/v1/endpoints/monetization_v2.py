@@ -21,11 +21,12 @@ from app.models.monetization import CreatorProfile
 from app.models.monetization_v2 import MonetizationTemplate, MonetizationProject, MonetizationTask
 from app.services.monetization_template_service import MonetizationTemplateService
 from app.services.monetization_project_service import MonetizationProjectService, MonetizationTaskService
+from app.services.monetization_recommendation_service import MonetizationRecommendationService
 from app.schemas.monetization_v2 import (
     TemplateListItem, TemplateDetail, TemplateListResponse,
     ProjectCreate, ProjectUpdate, ProjectListItem, ProjectDetail, ProjectListResponse,
     TaskBase, TaskUpdate, TaskReorder, TasksByStatus, TaskStatus,
-    AIRecommendation, AIRecommendationsResponse,
+    AIRecommendation, AIRecommendationsResponse, PersonalizedRevenueRange, CreatorProfileSummary,
     SuitableFor, RevenueRange
 )
 from sqlalchemy import select
@@ -117,88 +118,159 @@ async def get_template(
 @router.get("/templates/recommendations", response_model=AIRecommendationsResponse)
 async def get_ai_recommendations(
     limit: int = Query(5, ge=1, le=10, description="Number of recommendations"),
+    category: Optional[str] = Query(None, description="Filter by category"),
+    use_ai: bool = Query(False, description="Use AI for personalized descriptions (slower)"),
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user)
 ):
     """
     Get AI-powered template recommendations based on creator profile.
     
-    Analyzes the creator's profile (followers, niche, platform, engagement)
-    and returns the top matching templates with fit scores and personalized tips.
+    Analyzes the creator's profile including:
+    - Follower count across all connected platforms
+    - Primary platform and niche
+    - Engagement rate from content performance
+    - Existing monetization projects
+    - Posting frequency
+    
+    Returns the top matching templates with:
+    - Fit scores (0-100)
+    - Personalized descriptions explaining why it's a good fit
+    - Personalized revenue estimates based on their metrics
+    - Match reasons
     """
-    # Get creator profile
-    profile_result = await db.execute(
-        select(CreatorProfile).where(CreatorProfile.user_id == current_user.id)
-    )
-    profile = profile_result.scalar_one_or_none()
-    
-    if not profile:
-        raise HTTPException(
-            status_code=400,
-            detail="Creator profile required. Please set up your profile first."
-        )
-    
-    service = MonetizationTemplateService(db)
-    
-    # Get templates with fit scores
-    scored_templates = await service.get_templates_for_creator(
-        follower_count=profile.follower_count,
-        niche=profile.niche,
-        platform=profile.primary_platform,
-        limit=limit
-    )
-    
-    recommendations = []
-    for item in scored_templates:
-        template = item["template"]
-        fit_score = item["fit_score"]
-        
-        # Generate fit reasons based on score components
-        fit_reasons = []
-        suitable_for = template.suitable_for or {}
-        
-        if profile.follower_count >= suitable_for.get("min_followers", 0):
-            fit_reasons.append(f"Your {profile.follower_count:,} followers exceed the minimum requirement")
-        
-        template_niches = suitable_for.get("niches", [])
-        if not template_niches or profile.niche.lower() in [n.lower() for n in template_niches]:
-            fit_reasons.append(f"Perfect match for {profile.niche} creators")
-        
-        template_platforms = suitable_for.get("platforms", [])
-        if not template_platforms or profile.primary_platform.lower() in [p.lower() for p in template_platforms]:
-            fit_reasons.append(f"Optimized for {profile.primary_platform.title()} creators")
-        
-        # Estimate revenue based on profile
-        revenue_range = template.expected_revenue_range or {}
-        base_revenue = (revenue_range.get("low", 0) + revenue_range.get("high", 0)) / 2
-        follower_multiplier = min(profile.follower_count / 10000, 5)  # Cap at 5x
-        estimated_revenue = int(base_revenue * (0.5 + follower_multiplier * 0.1))
-        
-        recommendations.append(AIRecommendation(
-            template=TemplateListItem(
-                id=template.id,
-                category=template.category,
-                subcategory=template.subcategory,
-                title=template.title,
-                description=template.description,
-                revenue_model=template.revenue_model,
-                expected_timeline=template.expected_timeline,
-                expected_revenue_range=RevenueRange(**revenue_range) if revenue_range else RevenueRange(low=0, high=0, unit="per_month"),
-                suitable_for=SuitableFor(**suitable_for) if suitable_for else SuitableFor(min_followers=0, niches=[], platforms=[])
-            ),
-            fit_score=fit_score,
-            fit_reasons=fit_reasons,
-            potential_challenges=[],  # TODO: Add AI-generated challenges
-            estimated_monthly_revenue=estimated_revenue,
-            personalized_tips=[]  # TODO: Add AI-generated tips
-        ))
-    
     from datetime import datetime
-    return AIRecommendationsResponse(
-        recommendations=recommendations,
-        creator_summary=f"{profile.niche} creator on {profile.primary_platform.title()} with {profile.follower_count:,} followers",
-        generated_at=datetime.utcnow()
-    )
+    
+    recommendation_service = MonetizationRecommendationService(db)
+    
+    try:
+        # Get recommendations using the full recommendation engine
+        if category:
+            recommendations_data = await recommendation_service.get_recommendations_by_category(
+                user_id=current_user.id,
+                category=category,
+                limit=limit
+            )
+        else:
+            recommendations_data = await recommendation_service.get_recommendations(
+                user_id=current_user.id,
+                limit=limit,
+                use_ai_descriptions=use_ai
+            )
+        
+        # Build the creator profile for response
+        profile = await recommendation_service.build_creator_profile(current_user.id)
+        
+        # Convert to response format
+        recommendations = []
+        for rec in recommendations_data:
+            template = rec.template
+            suitable_for = template.suitable_for or {}
+            revenue_range = template.expected_revenue_range or {}
+            
+            recommendations.append(AIRecommendation(
+                template=TemplateListItem(
+                    id=template.id,
+                    category=template.category,
+                    subcategory=template.subcategory,
+                    title=template.title,
+                    description=template.description,
+                    revenue_model=template.revenue_model,
+                    expected_timeline=template.expected_timeline,
+                    expected_revenue_range=RevenueRange(**revenue_range) if revenue_range else RevenueRange(low=0, high=0, unit="per_month"),
+                    suitable_for=SuitableFor(**suitable_for) if suitable_for else SuitableFor(min_followers=0, niches=[], platforms=[])
+                ),
+                fit_score=rec.match_score,
+                fit_reasons=rec.match_reasons,
+                personalized_description=rec.personalized_description,
+                personalized_revenue=PersonalizedRevenueRange(
+                    low=rec.personalized_revenue.low,
+                    high=rec.personalized_revenue.high,
+                    unit=rec.personalized_revenue.unit,
+                    note=rec.personalized_revenue.note
+                ),
+                potential_challenges=[],
+                estimated_monthly_revenue=rec.personalized_revenue.low,  # For backward compatibility
+                personalized_tips=[]
+            ))
+        
+        # Build creator summary
+        creator_summary = f"{profile.niche} creator on {profile.primary_platform.title()} with {profile.total_followers:,} followers"
+        if profile.avg_engagement_rate > 0:
+            creator_summary += f" and {profile.avg_engagement_rate:.1f}% engagement"
+        
+        return AIRecommendationsResponse(
+            recommendations=recommendations,
+            creator_summary=creator_summary,
+            creator_profile=CreatorProfileSummary(
+                total_followers=profile.total_followers,
+                platforms=profile.platforms,
+                primary_platform=profile.primary_platform,
+                niche=profile.niche,
+                avg_engagement_rate=profile.avg_engagement_rate,
+                posting_frequency=profile.posting_frequency,
+                existing_revenue_streams=profile.existing_revenue_streams
+            ),
+            generated_at=datetime.utcnow()
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating recommendations: {e}")
+        # Fallback to basic recommendations if the full engine fails
+        profile_result = await db.execute(
+            select(CreatorProfile).where(CreatorProfile.user_id == current_user.id)
+        )
+        profile = profile_result.scalar_one_or_none()
+        
+        if not profile:
+            raise HTTPException(
+                status_code=400,
+                detail="Creator profile required. Please set up your profile first."
+            )
+        
+        # Use basic template service as fallback
+        template_service = MonetizationTemplateService(db)
+        scored_templates = await template_service.get_templates_for_creator(
+            follower_count=profile.follower_count,
+            niche=profile.niche,
+            platform=profile.primary_platform,
+            limit=limit
+        )
+        
+        recommendations = []
+        for item in scored_templates:
+            template = item["template"]
+            fit_score = item["fit_score"]
+            suitable_for = template.suitable_for or {}
+            revenue_range = template.expected_revenue_range or {}
+            
+            recommendations.append(AIRecommendation(
+                template=TemplateListItem(
+                    id=template.id,
+                    category=template.category,
+                    subcategory=template.subcategory,
+                    title=template.title,
+                    description=template.description,
+                    revenue_model=template.revenue_model,
+                    expected_timeline=template.expected_timeline,
+                    expected_revenue_range=RevenueRange(**revenue_range) if revenue_range else RevenueRange(low=0, high=0, unit="per_month"),
+                    suitable_for=SuitableFor(**suitable_for) if suitable_for else SuitableFor(min_followers=0, niches=[], platforms=[])
+                ),
+                fit_score=fit_score,
+                fit_reasons=[f"Suitable for {profile.niche} creators on {profile.primary_platform}"],
+                personalized_description=None,
+                personalized_revenue=None,
+                potential_challenges=[],
+                estimated_monthly_revenue=int((revenue_range.get("low", 0) + revenue_range.get("high", 0)) / 2),
+                personalized_tips=[]
+            ))
+        
+        return AIRecommendationsResponse(
+            recommendations=recommendations,
+            creator_summary=f"{profile.niche} creator on {profile.primary_platform.title()} with {profile.follower_count:,} followers",
+            creator_profile=None,
+            generated_at=datetime.utcnow()
+        )
 
 
 # ==================== Project Endpoints ====================
