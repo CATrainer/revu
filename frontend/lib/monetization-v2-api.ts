@@ -98,3 +98,53 @@ export async function reorderTask(taskId: string, data: TaskReorderRequest): Pro
   const response = await api.post<Task>(`${BASE_URL}/tasks/${taskId}/reorder`, data);
   return response.data;
 }
+
+// ==================== AI Partner ====================
+
+export interface AIPartnerMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ToolCallInfo {
+  id: string;
+  name: string;
+  arguments: Record<string, any>;
+}
+
+export interface AIPartnerChatResponse {
+  content: string;
+  tool_calls: ToolCallInfo[];
+  requires_confirmation: boolean;
+}
+
+export interface ExecuteToolResponse {
+  success: boolean;
+  message: string;
+  data?: Record<string, any>;
+  error?: string;
+}
+
+export async function sendAIPartnerMessage(
+  projectId: string,
+  messages: AIPartnerMessage[]
+): Promise<AIPartnerChatResponse> {
+  const response = await api.post<AIPartnerChatResponse>(`${BASE_URL}/ai-partner/chat`, {
+    project_id: projectId,
+    messages,
+  });
+  return response.data;
+}
+
+export async function executeAIPartnerTool(
+  projectId: string,
+  toolName: string,
+  toolArguments: Record<string, any>
+): Promise<ExecuteToolResponse> {
+  const response = await api.post<ExecuteToolResponse>(`${BASE_URL}/ai-partner/execute-tool`, {
+    project_id: projectId,
+    tool_name: toolName,
+    tool_arguments: toolArguments,
+  });
+  return response.data;
+}

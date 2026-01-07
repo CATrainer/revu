@@ -23,12 +23,15 @@ from app.services.monetization_template_service import MonetizationTemplateServi
 from app.services.monetization_project_service import MonetizationProjectService, MonetizationTaskService
 from app.services.monetization_recommendation_service import MonetizationRecommendationService
 from app.services.monetization_customization_service import MonetizationCustomizationService
+from app.services.monetization_ai_partner_service import MonetizationAIPartnerService
 from app.schemas.monetization_v2 import (
     TemplateListItem, TemplateDetail, TemplateListResponse,
     ProjectCreate, ProjectUpdate, ProjectListItem, ProjectDetail, ProjectListResponse,
     TaskBase, TaskUpdate, TaskReorder, TasksByStatus, TaskStatus, PhaseProgress,
     AIRecommendation, AIRecommendationsResponse, PersonalizedRevenueRange, CreatorProfileSummary,
-    SuitableFor, RevenueRange
+    SuitableFor, RevenueRange,
+    AIPartnerChatRequest, AIPartnerChatResponse, ToolCallInfo,
+    ExecuteToolRequest, ExecuteToolResponse
 )
 from sqlalchemy import select
 
@@ -646,4 +649,93 @@ async def reorder_task(
         notes=task.notes,
         created_at=task.created_at,
         updated_at=task.updated_at
+    )
+
+
+# ==================== AI Partner Endpoints ====================
+
+@router.post("/ai-partner/chat", response_model=AIPartnerChatResponse)
+async def ai_partner_chat(
+    data: AIPartnerChatRequest,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Send a message to the AI partner for a monetization project.
+    
+    The AI partner can:
+    - Answer questions about tasks and the project
+    - Suggest task status changes (requires confirmation)
+    - Suggest decision updates (requires confirmation)
+    - Provide guidance within project context
+    
+    If the AI wants to take an action, it will return tool_calls that
+    require user confirmation before execution.
+    """
+    service = MonetizationAIPartnerService(db)
+    
+    # Convert messages to the format expected by the service
+    messages = [{"role": m.role, "content": m.content} for m in data.messages]
+    
+    response = await service.chat(
+        project_id=data.project_id,
+        user_id=current_user.id,
+        messages=messages
+    )
+    
+    # Convert tool calls to response format
+    tool_calls = [
+        ToolCallInfo(
+            id=tc.id,
+            name=tc.name,
+            arguments=tc.arguments
+        )
+        for tc in response.tool_calls
+    ]
+    
+    return AIPartnerChatResponse(
+        content=response.content,
+        tool_calls=tool_calls,
+        requires_confirmation=response.requires_confirmation
+    )
+
+
+@router.post("/ai-partner/execute-tool", response_model=ExecuteToolResponse)
+async def execute_ai_partner_tool(
+    data: ExecuteToolRequest,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Execute a tool call after user confirmation.
+    
+    This endpoint is called after the user confirms an action suggested
+    by the AI partner (e.g., marking a task complete, updating decisions).
+    """
+    service = MonetizationAIPartnerService(db)
+    
+    result = await service.execute_tool(
+        project_id=data.project_id,
+        user_id=current_user.id,
+        tool_name=data.tool_name,
+        tool_args=data.tool_arguments
+    )
+    
+    # If decisions were updated, trigger re-customization
+    if data.tool_name == "update_monetization_decisions" and result.get("success"):
+        changed_keys = result.get("changed_keys", [])
+        if changed_keys:
+            background_tasks.add_task(
+                _recustomize_tasks_background,
+                data.project_id,
+                current_user.id,
+                changed_keys
+            )
+    
+    return ExecuteToolResponse(
+        success=result.get("success", False),
+        message=result.get("message", ""),
+        data=result if result.get("success") else None,
+        error=result.get("error")
     )

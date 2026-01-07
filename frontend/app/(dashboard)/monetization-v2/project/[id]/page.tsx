@@ -29,6 +29,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getProject, updateProject, deleteProject, getTemplate } from '@/lib/monetization-v2-api';
 import { KanbanBoard } from '@/components/monetization/KanbanBoard';
+import { AIPartnerChat } from '@/components/monetization/AIPartnerChat';
 import type { ProjectDetail, TemplateDetail, DecisionPoint } from '@/types/monetization-v2';
 import { CATEGORY_INFO } from '@/types/monetization-v2';
 
@@ -423,10 +424,30 @@ export default function ProjectDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Kanban Board */}
-      <div>
-        <h2 className="text-lg font-semibold text-primary-dark mb-4">Task Board</h2>
-        <KanbanBoard projectId={projectId} onTaskUpdate={loadProject} />
+      {/* Kanban Board and AI Partner */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Kanban Board - 2/3 width on large screens */}
+        <div className="lg:col-span-2">
+          <h2 className="text-lg font-semibold text-primary-dark mb-4">Task Board</h2>
+          <KanbanBoard projectId={projectId} onTaskUpdate={loadProject} />
+        </div>
+
+        {/* AI Partner Chat - 1/3 width on large screens */}
+        <div className="lg:col-span-1">
+          <div className="dashboard-card h-[600px] flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-[var(--border)] flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-600" />
+              <h2 className="text-lg font-semibold text-primary-dark">AI Partner</h2>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <AIPartnerChat
+                projectId={projectId}
+                projectTitle={project.title}
+                onActionExecuted={loadProject}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -268,3 +268,46 @@ class AIRecommendationsResponse(BaseModel):
     creator_summary: str  # Brief text summary
     creator_profile: Optional[CreatorProfileSummary] = None  # Structured profile data
     generated_at: datetime
+
+
+# ==================== AI Partner Schemas ====================
+
+class AIPartnerMessage(BaseModel):
+    """A message in the AI partner conversation."""
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class AIPartnerChatRequest(BaseModel):
+    """Request to send a message to the AI partner."""
+    project_id: UUID
+    messages: List[AIPartnerMessage]
+
+
+class ToolCallInfo(BaseModel):
+    """Information about a tool call from the AI."""
+    id: str
+    name: str
+    arguments: Dict[str, Any]
+
+
+class AIPartnerChatResponse(BaseModel):
+    """Response from the AI partner."""
+    content: str
+    tool_calls: List[ToolCallInfo] = []
+    requires_confirmation: bool = False
+
+
+class ExecuteToolRequest(BaseModel):
+    """Request to execute a confirmed tool call."""
+    project_id: UUID
+    tool_name: str
+    tool_arguments: Dict[str, Any]
+
+
+class ExecuteToolResponse(BaseModel):
+    """Response from executing a tool."""
+    success: bool
+    message: str
+    data: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
