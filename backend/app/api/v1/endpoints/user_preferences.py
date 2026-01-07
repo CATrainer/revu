@@ -16,6 +16,18 @@ from app.models.user import User
 
 router = APIRouter()
 
+# --- Archive Settings Models ---
+from pydantic import BaseModel, Field
+
+class ArchiveSettings(BaseModel):
+    archive_inactive_days: int = Field(7, ge=3, le=30)
+    archive_delete_days: int = Field(30, ge=7, le=90)
+
+# --- Profile Update Model ---
+class ProfileUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+
 
 class UserAIPreferences(BaseModel):
     custom_instructions: Optional[str] = None
@@ -61,6 +73,59 @@ async def get_ai_preferences(
         "tone": prefs.tone or "friendly",
         "preferences": prefs.preferences or {}
     }
+
+
+    # --- Archive Settings Endpoints ---
+    @router.get("/archive-settings", response_model=ArchiveSettings)
+    async def get_archive_settings(
+        db: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_active_user),
+    ):
+        user = await db.get(User, current_user.id)
+        return ArchiveSettings(
+            archive_inactive_days=getattr(user, 'archive_inactive_days', 7) or 7,
+            archive_delete_days=getattr(user, 'archive_delete_days', 30) or 30
+        )
+
+    @router.put("/archive-settings", response_model=ArchiveSettings)
+    async def update_archive_settings(
+        settings: ArchiveSettings,
+        db: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_active_user),
+    ):
+        user = await db.get(User, current_user.id)
+        user.archive_inactive_days = settings.archive_inactive_days
+        user.archive_delete_days = settings.archive_delete_days
+        await db.commit()
+        return settings
+
+    # --- Profile Endpoints ---
+    @router.get("/profile")
+    async def get_profile(
+        db: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_active_user),
+    ):
+        user = await db.get(User, current_user.id)
+        return {
+            "full_name": user.full_name,
+            "phone": user.phone,
+            "email": user.email,
+            "created_at": user.created_at,
+        }
+
+    @router.put("/profile")
+    async def update_profile(
+        update: ProfileUpdate,
+        db: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_active_user),
+    ):
+        user = await db.get(User, current_user.id)
+        if update.full_name is not None:
+            user.full_name = update.full_name
+        if update.phone is not None:
+            user.phone = update.phone
+        await db.commit()
+        return {"message": "Profile updated"}
 
 
 @router.put("/preferences")
