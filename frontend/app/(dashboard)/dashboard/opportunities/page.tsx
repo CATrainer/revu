@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Building2,
@@ -14,9 +13,19 @@ import {
   Send,
   ChevronRight,
   Briefcase,
-  ArrowLeft,
+  Search,
+  Loader2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+
+interface Agency {
+  agency_id: string;
+  agency_name: string;
+  agency_slug: string;
+  agency_logo_url: string | null;
+  role: string;
+  joined_at: string | null;
+}
 
 interface Opportunity {
   id: string;
@@ -45,37 +54,54 @@ const statusConfig = {
   cancelled: { label: 'Cancelled', color: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500', icon: XCircle },
 };
 
-export default function CreatorOpportunitiesPage() {
-  const router = useRouter();
+export default function OpportunitiesPage() {
+  const [agency, setAgency] = useState<Agency | null>(null);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [counts, setCounts] = useState<OpportunityCounts | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'pending' | 'all'>('pending');
 
   useEffect(() => {
-    loadOpportunities();
-    loadCounts();
-  }, [activeTab]);
+    loadAgencyStatus();
+  }, []);
 
-  const loadOpportunities = async () => {
+  useEffect(() => {
+    if (agency) {
+      loadOpportunities();
+      loadCounts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agency, activeTab]);
+
+  const loadAgencyStatus = async () => {
     try {
       setLoading(true);
-      const endpoint = activeTab === 'pending'
-        ? '/creator/opportunities/pending'
-        : '/creator/opportunities/';
-      const data = await api.get(endpoint);
-      setOpportunities(data);
+      const response = await api.get('/creator/agency/current');
+      setAgency(response.data);
     } catch (error) {
-      console.error('Failed to load opportunities:', error);
+      console.error('Failed to load agency status:', error);
+      setAgency(null);
     } finally {
       setLoading(false);
     }
   };
 
+  const loadOpportunities = async () => {
+    try {
+      const endpoint = activeTab === 'pending'
+        ? '/creator/opportunities/pending'
+        : '/creator/opportunities/';
+      const response = await api.get(endpoint);
+      setOpportunities(response.data);
+    } catch (error) {
+      console.error('Failed to load opportunities:', error);
+    }
+  };
+
   const loadCounts = async () => {
     try {
-      const data = await api.get('/creator/opportunities/count');
-      setCounts(data);
+      const response = await api.get('/creator/opportunities/count');
+      setCounts(response.data);
     } catch (error) {
       console.error('Failed to load counts:', error);
     }
@@ -90,25 +116,74 @@ export default function CreatorOpportunitiesPage() {
     });
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="p-6 max-w-6xl mx-auto">
+        <div className="dashboard-card p-12 text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-green-600 mx-auto" />
+          <p className="text-secondary-dark mt-4">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not connected to agency state
+  if (!agency) {
+    return (
+      <div className="p-6 max-w-6xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-primary-dark">Opportunities</h1>
+          <p className="text-secondary-dark mt-1">
+            Brand partnership opportunities from your agency
+          </p>
+        </div>
+
+        <div className="dashboard-card p-12 text-center max-w-lg mx-auto">
+          <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Building2 className="h-10 w-10 text-green-600 dark:text-green-400" />
+          </div>
+          
+          <h2 className="text-xl font-semibold text-primary-dark mb-3">
+            Connect with an Agency
+          </h2>
+          
+          <p className="text-secondary-dark mb-6 max-w-sm mx-auto">
+            Opportunities are sent by talent agencies to their creators. Connect with your agency to receive brand partnership opportunities.
+          </p>
+
+          <Link
+            href="/dashboard/find-agency"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
+          >
+            <Search className="h-5 w-5" />
+            Find My Agency
+          </Link>
+
+          <p className="text-sm text-secondary-dark mt-6">
+            Already have an invitation?{' '}
+            <Link href="/dashboard/invitations" className="text-green-600 hover:text-green-700 font-medium">
+              Check your invitations
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Connected to agency - show opportunities
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* Header */}
+      {/* Header with Agency Info */}
       <div className="mb-8">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center text-sm text-secondary-dark hover:text-primary-dark mb-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Dashboard
-        </Link>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-primary-dark">Sponsorship Opportunities</h1>
-            <p className="text-secondary-dark mt-1">
-              Opportunities from your agency for brand partnerships
-            </p>
-          </div>
+        <div className="flex items-center gap-2 text-sm text-secondary-dark mb-2">
+          <Building2 className="h-4 w-4" />
+          <span>{agency.agency_name}</span>
         </div>
+        <h1 className="text-2xl font-bold text-primary-dark">Opportunities</h1>
+        <p className="text-secondary-dark mt-1">
+          Brand partnership opportunities from your agency
+        </p>
       </div>
 
       {/* Stats Cards */}
@@ -167,7 +242,7 @@ export default function CreatorOpportunitiesPage() {
           onClick={() => setActiveTab('pending')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             activeTab === 'pending'
-              ? 'brand-background brand-text'
+              ? 'bg-green-600 text-white'
               : 'bg-gray-100 dark:bg-gray-800 text-secondary-dark hover:text-primary-dark'
           }`}
         >
@@ -180,7 +255,7 @@ export default function CreatorOpportunitiesPage() {
           onClick={() => setActiveTab('all')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             activeTab === 'all'
-              ? 'brand-background brand-text'
+              ? 'bg-green-600 text-white'
               : 'bg-gray-100 dark:bg-gray-800 text-secondary-dark hover:text-primary-dark'
           }`}
         >
@@ -189,12 +264,7 @@ export default function CreatorOpportunitiesPage() {
       </div>
 
       {/* Opportunities List */}
-      {loading ? (
-        <div className="dashboard-card p-12 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-          <p className="text-secondary-dark mt-4">Loading opportunities...</p>
-        </div>
-      ) : opportunities.length === 0 ? (
+      {opportunities.length === 0 ? (
         <div className="dashboard-card p-12 text-center">
           <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
             <Briefcase className="h-8 w-8 text-gray-400" />
@@ -226,10 +296,6 @@ export default function CreatorOpportunitiesPage() {
                       <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${config.color}`}>
                         <StatusIcon className="h-3 w-3" />
                         {config.label}
-                      </span>
-                      <span className="text-sm text-secondary-dark flex items-center gap-1">
-                        <Building2 className="h-3.5 w-3.5" />
-                        {opp.agency_name}
                       </span>
                     </div>
 
