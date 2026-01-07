@@ -60,6 +60,8 @@ from app.api.v1.endpoints import currency
 from app.api.v1.endpoints import notifications, agency_notifications
 # Support and Newsletter endpoints
 from app.api.v1.endpoints import agency_support, newsletter
+# Billing and Stripe webhooks
+from app.api.v1.endpoints import billing, stripe_webhooks
 
 # Create the main API router
 api_router = APIRouter()
@@ -422,6 +424,20 @@ api_router.include_router(
     newsletter.router,
     prefix="/newsletter",
     tags=["newsletter"],
+)
+
+# Billing endpoints
+api_router.include_router(
+    billing.router,
+    prefix="/billing",
+    tags=["billing"],
+)
+
+# Stripe webhook endpoints
+api_router.include_router(
+    stripe_webhooks.router,
+    prefix="/webhooks",
+    tags=["webhooks", "stripe"],
 )
 
 
