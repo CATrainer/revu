@@ -174,6 +174,7 @@ class AgencyInvitationResponse(BaseModel):
     id: UUID
     agency_id: UUID
     email: str
+    role: AgencyMemberRole
     status: AgencyInvitationStatus
     invited_by: UUID
     expires_at: datetime
@@ -192,6 +193,7 @@ class AgencyInvitationListResponse(BaseModel):
     """Simplified invitation list response."""
     id: UUID
     email: str
+    role: AgencyMemberRole
     status: AgencyInvitationStatus
     expires_at: datetime
     created_at: datetime

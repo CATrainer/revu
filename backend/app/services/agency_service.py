@@ -348,6 +348,7 @@ class AgencyService:
         agency_id: UUID,
         email: str,
         invited_by: UUID,
+        role: str = "member",
         expires_in_days: int = 7,
     ) -> AgencyInvitation:
         """Create an invitation for a non-user to join an agency."""
@@ -358,6 +359,7 @@ class AgencyService:
             agency_id=agency_id,
             email=email.lower(),
             token=token,
+            role=role,
             invited_by=invited_by,
             expires_at=expires_at,
             status="pending",
@@ -366,7 +368,7 @@ class AgencyService:
         await self.db.commit()
         await self.db.refresh(invitation)
 
-        logger.info(f"Invitation created: email={email}, agency_id={agency_id}")
+        logger.info(f"Invitation created: email={email}, agency_id={agency_id}, role={role}")
         return invitation
 
     async def get_invitation_by_token(self, token: str) -> Optional[AgencyInvitation]:

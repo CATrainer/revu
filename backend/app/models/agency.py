@@ -120,6 +120,14 @@ class AgencyInvitation(Base):
     )
     email = Column(String(255), nullable=False, comment="Email address of invitee")
     token = Column(String(255), unique=True, nullable=False, comment="Unique invitation token")
+    
+    # Role the invitee will have upon acceptance
+    role = Column(
+        PG_ENUM('owner', 'admin', 'member', name='agency_member_role_enum', create_type=False),
+        nullable=False,
+        default='member',
+        comment="Role to assign when invitation is accepted"
+    )
 
     invited_by = Column(
         PGUUID(as_uuid=True),

@@ -502,10 +502,8 @@ async def invite_team_member(
         agency_id=agency_id,
         email=invite_data.email,
         invited_by=current_user.id,
+        role=invite_data.role,
     )
-
-    # Store the role in invitation metadata or handle on accept
-    # For now, team invitations default to 'member' role
 
     agency = await agency_service.get_by_id(agency_id)
 
@@ -517,6 +515,7 @@ async def invite_team_member(
             invitation_token=invitation.token,
             inviter_name=current_user.full_name,
             is_team_invite=True,
+            role=invite_data.role,
         )
     except Exception as e:
         logger.error(f"Failed to queue team invitation email: {e}")
@@ -525,6 +524,7 @@ async def invite_team_member(
         id=invitation.id,
         agency_id=invitation.agency_id,
         email=invitation.email,
+        role=invitation.role,
         status=invitation.status,
         invited_by=invitation.invited_by,
         expires_at=invitation.expires_at,

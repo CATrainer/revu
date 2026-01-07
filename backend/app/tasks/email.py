@@ -1294,6 +1294,7 @@ def send_creator_invitation_email(
     invitation_token: str,
     inviter_name: str,
     is_team_invite: bool = False,
+    role: str = "member",
 ) -> bool:
     """
     Send invitation email to a creator or team member to join an agency.
@@ -1304,15 +1305,31 @@ def send_creator_invitation_email(
         invitation_token: Unique token for accepting the invitation
         inviter_name: Name of the person who sent the invite
         is_team_invite: Whether this is a team member invite (vs creator)
+        role: Role being offered (member, admin) - only for team invites
 
     Returns:
         bool: Success status
     """
     try:
-        invite_type = "team member" if is_team_invite else "creator"
+        if is_team_invite:
+            role_display = "Admin" if role == "admin" else "Team Member"
+            invite_type = role_display.lower()
+        else:
+            invite_type = "creator"
+            role_display = None
         accept_url = f"{settings.FRONTEND_URL}/invite/accept?token={invitation_token}"
 
         subject = f"You're invited to join {agency_name} on Repruv"
+
+        # Role badge for team invites
+        role_badge = ""
+        if is_team_invite and role_display:
+            badge_color = "#3b82f6" if role == "admin" else "#6b7280"  # Blue for admin, gray for member
+            role_badge = f"""
+                <span style="display:inline-block;background:{badge_color};color:#ffffff;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;margin-left:8px;">
+                    {role_display}
+                </span>
+            """
 
         html_content = f"""
         <!doctype html>
@@ -1328,7 +1345,7 @@ def send_creator_invitation_email(
                 </p>
 
                 <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:24px;">
-                    <strong>{inviter_name}</strong> has invited you to join <strong>{agency_name}</strong> as a {invite_type} on Repruv.
+                    <strong>{inviter_name}</strong> has invited you to join <strong>{agency_name}</strong> as a {invite_type} on Repruv.{role_badge}
                 </p>
 
                 <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:20px;margin:24px 0;border-radius:8px;">
