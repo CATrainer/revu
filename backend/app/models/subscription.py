@@ -109,7 +109,7 @@ class UserSubscription(Base):
     last_payment_currency = Column(String(3), nullable=True)
     
     # Metadata
-    metadata = Column(JSONB, default=dict, nullable=False)
+    extra_metadata = Column("metadata", JSONB, default=dict, nullable=False)
     
     # Relationships
     user = relationship("User", backref="subscriptions")
@@ -173,7 +173,7 @@ class SubscriptionInvoice(Base):
     hosted_invoice_url = Column(String(500), nullable=True)
     
     # Metadata
-    metadata = Column(JSONB, default=dict, nullable=False)
+    extra_metadata = Column("metadata", JSONB, default=dict, nullable=False)
     
     # Relationships
     subscription = relationship("UserSubscription", back_populates="invoices")
@@ -206,7 +206,7 @@ class PaymentMethod(Base):
     is_default = Column(Boolean, default=False, nullable=False)
     
     # Metadata
-    metadata = Column(JSONB, default=dict, nullable=False)
+    extra_metadata = Column("metadata", JSONB, default=dict, nullable=False)
     
     # Relationships
     user = relationship("User", backref="payment_methods")
