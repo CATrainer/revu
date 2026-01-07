@@ -39,8 +39,6 @@ from app.api.v1.endpoints import (
     action_plans,
     onboarding,
     applications,
-    monetization,
-    monetization_discovery,
     monetization_v2,
 )
 from app.api.v1.endpoints import workflows as workflows_endpoints
@@ -321,22 +319,11 @@ api_router.include_router(
     tags=["jobs"],
 )
 
-api_router.include_router(
-    monetization.router,
-    prefix="/monetization",
-    tags=["monetization"],
-)
-
-api_router.include_router(
-    monetization_discovery.router,
-    tags=["monetization", "discovery"],
-)
-
-# Monetization Engine V2 (revamped with 100 templates, Kanban tasks)
+# Monetization Engine (revamped with 100 templates, Kanban tasks, AI Partner)
 api_router.include_router(
     monetization_v2.router,
     prefix="/monetization",
-    tags=["monetization", "v2"],
+    tags=["monetization"],
 )
 
 # Agency endpoints

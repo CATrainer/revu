@@ -24,12 +24,12 @@ export default function NewProjectPage() {
       setView('browse');
       setSelectedTemplateId(null);
     } else {
-      router.push('/monetization-v2');
+      router.push('/monetization');
     }
   };
 
   const handleComplete = (projectId: string) => {
-    router.push(`/monetization-v2/project/${projectId}`);
+    router.push(`/monetization/project/${projectId}`);
   };
 
   return (

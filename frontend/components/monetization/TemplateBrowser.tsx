@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { getTemplates, getAIRecommendations } from '@/lib/monetization-v2-api';
-import type { TemplateListItem, TemplateListResponse, AIRecommendation, AIRecommendationsResponse } from '@/types/monetization-v2';
-import { CATEGORY_INFO } from '@/types/monetization-v2';
+import { getTemplates, getAIRecommendations } from '@/lib/monetization-api';
+import type { TemplateListItem, TemplateListResponse, AIRecommendation, AIRecommendationsResponse } from '@/types/monetization';
+import { CATEGORY_INFO } from '@/types/monetization';
 
 interface TemplateBrowserProps {
   onSelectTemplate: (templateId: string) => void;

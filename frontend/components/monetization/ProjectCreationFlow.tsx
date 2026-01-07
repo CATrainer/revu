@@ -8,9 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { getTemplate, createProject } from '@/lib/monetization-v2-api';
-import type { TemplateDetail, DecisionPoint } from '@/types/monetization-v2';
-import { CATEGORY_INFO } from '@/types/monetization-v2';
+import { getTemplate, createProject } from '@/lib/monetization-api';
+import type { TemplateDetail, DecisionPoint } from '@/types/monetization';
+import { CATEGORY_INFO } from '@/types/monetization';
 
 interface ProjectCreationFlowProps {
   templateId: string;

@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy import text
-from app.core.database import async_engine, AsyncSessionLocal
+from app.core.database import engine, async_session_maker
 from app.models.monetization_v2 import MonetizationTemplate
 
 
@@ -142,7 +142,7 @@ TEMPLATES = [
 
 async def seed_templates():
     """Seed the database with monetization templates."""
-    async with AsyncSessionLocal() as session:
+    async with async_session_maker() as session:
         # Check if templates already exist
         result = await session.execute(text("SELECT COUNT(*) FROM monetization_templates"))
         count = result.scalar()

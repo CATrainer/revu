@@ -1,485 +1,150 @@
 /**
- * Monetization Engine API Client
+ * Monetization Engine V2 API Client
+ * 
+ * API functions for the revamped monetization system.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+import { api } from './api';
+import type {
+  TemplateListResponse,
+  TemplateDetail,
+  ProjectListResponse,
+  ProjectDetail,
+  ProjectCreateRequest,
+  ProjectUpdateRequest,
+  TasksByStatus,
+  Task,
+  TaskUpdateRequest,
+  TaskReorderRequest,
+  AIRecommendationsResponse,
+} from '@/types/monetization';
 
-export interface ProfileData {
-  primary_platform: 'youtube' | 'instagram' | 'tiktok' | 'twitch';
-  follower_count: number;
-  engagement_rate: number;
-  niche: string;
-  platform_url?: string;
-  avg_content_views?: number;
-  content_frequency?: number;
-  time_available_hours_per_week?: number;
+const BASE_URL = '/monetization';
+
+// ==================== Templates ====================
+
+export async function getTemplates(category?: string, subcategory?: string): Promise<TemplateListResponse> {
+  const params = new URLSearchParams();
+  if (category) params.append('category', category);
+  if (subcategory) params.append('subcategory', subcategory);
+  
+  const url = params.toString() ? `${BASE_URL}/templates?${params}` : `${BASE_URL}/templates`;
+  const response = await api.get<TemplateListResponse>(url);
+  return response.data;
 }
 
-export interface CreatorProfile extends ProfileData {
-  id: string;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
+export async function getTemplate(templateId: string): Promise<TemplateDetail> {
+  const response = await api.get<TemplateDetail>(`${BASE_URL}/templates/${templateId}`);
+  return response.data;
 }
 
-export interface Decision {
-  id: string;
-  category: 'pricing' | 'platform' | 'structure' | 'timeline' | 'content';
-  value: string;
-  rationale?: string;
-  confidence: 'high' | 'medium' | 'low';
-  decided_at: string;
+export interface GetRecommendationsOptions {
+  limit?: number;
+  category?: string;
+  useAI?: boolean;
 }
 
-export interface TaskCompletion {
-  id: string;
-  task_id: string;
-  task_title: string;
-  completed_at: string;
-  completed_via: 'manual' | 'ai_auto' | 'ai_confirmed';
-  notes?: string;
+export async function getAIRecommendations(options: GetRecommendationsOptions = {}): Promise<AIRecommendationsResponse> {
+  const { limit = 5, category, useAI = false } = options;
+  const params = new URLSearchParams();
+  params.append('limit', limit.toString());
+  if (category) params.append('category', category);
+  if (useAI) params.append('use_ai', 'true');
+  
+  const response = await api.get<AIRecommendationsResponse>(`${BASE_URL}/templates/recommendations?${params}`);
+  return response.data;
 }
 
-export interface ChatMessage {
-  id: string;
+// ==================== Projects ====================
+
+export async function getProjects(status?: string): Promise<ProjectListResponse> {
+  const url = status ? `${BASE_URL}/projects?status=${status}` : `${BASE_URL}/projects`;
+  const response = await api.get<ProjectListResponse>(url);
+  return response.data;
+}
+
+export async function getProject(projectId: string): Promise<ProjectDetail> {
+  const response = await api.get<ProjectDetail>(`${BASE_URL}/projects/${projectId}`);
+  return response.data;
+}
+
+export async function createProject(data: ProjectCreateRequest): Promise<ProjectDetail> {
+  const response = await api.post<ProjectDetail>(`${BASE_URL}/projects`, data);
+  return response.data;
+}
+
+export async function updateProject(projectId: string, data: ProjectUpdateRequest): Promise<ProjectDetail> {
+  const response = await api.patch<ProjectDetail>(`${BASE_URL}/projects/${projectId}`, data);
+  return response.data;
+}
+
+export async function deleteProject(projectId: string): Promise<void> {
+  await api.delete(`${BASE_URL}/projects/${projectId}`);
+}
+
+// ==================== Tasks ====================
+
+export async function getProjectTasks(projectId: string): Promise<TasksByStatus> {
+  const response = await api.get<TasksByStatus>(`${BASE_URL}/projects/${projectId}/tasks`);
+  return response.data;
+}
+
+export async function updateTask(taskId: string, data: TaskUpdateRequest): Promise<Task> {
+  const response = await api.patch<Task>(`${BASE_URL}/tasks/${taskId}`, data);
+  return response.data;
+}
+
+export async function reorderTask(taskId: string, data: TaskReorderRequest): Promise<Task> {
+  const response = await api.post<Task>(`${BASE_URL}/tasks/${taskId}/reorder`, data);
+  return response.data;
+}
+
+// ==================== AI Partner ====================
+
+export interface AIPartnerMessage {
   role: 'user' | 'assistant';
   content: string;
-  created_at: string;
-  detected_actions?: any[];
 }
 
-export interface ActiveProject {
+export interface ToolCallInfo {
   id: string;
-  opportunity_id: string;
-  opportunity_title: string;
-  status: 'active' | 'completed' | 'abandoned';
-  current_phase_index: number;
-  overall_progress: number;
-  planning_progress: number;
-  execution_progress: number;
-  timeline_progress?: number;
-  started_at: string;
-  target_launch_date?: string;
-  last_activity_at: string;
-  customized_plan: any[];
-  decisions: Decision[];
-  completed_tasks: TaskCompletion[];
-  message_count: number;
+  name: string;
+  arguments: Record<string, any>;
 }
 
-export interface ProgressUpdate {
-  overall_progress: number;
-  planning_progress: number;
-  execution_progress: number;
-  timeline_progress?: number;
+export interface AIPartnerChatResponse {
+  content: string;
+  tool_calls: ToolCallInfo[];
+  requires_confirmation: boolean;
 }
 
-async function getAuthHeaders(): Promise<HeadersInit> {
-  // Get token from your auth system
-  const token = localStorage.getItem('access_token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-  };
-}
-
-export interface AutoDetectResult {
-  data_source: 'demo' | 'youtube' | 'instagram' | null;
-  is_demo: boolean;
-  profile_data: Partial<ProfileData>;
-  missing_fields: string[];
-  can_auto_create: boolean;
-}
-
-export async function autoDetectProfile(): Promise<AutoDetectResult> {
-  const response = await fetch(`${API_BASE}/monetization/profile/auto-detect`, {
-    method: 'GET',
-    headers: await getAuthHeaders()
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to auto-detect profile');
-  }
-
-  return response.json();
-}
-
-export async function createProfile(data: ProfileData): Promise<CreatorProfile> {
-  const response = await fetch(`${API_BASE}/monetization/profile`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify(data)
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to create profile');
-  }
-
-  return response.json();
-}
-
-export async function resetMonetizationProfile(): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_BASE}/monetization/profile/reset`, {
-    method: 'DELETE',
-    headers: await getAuthHeaders()
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to reset profile');
-  }
-
-  return response.json();
-}
-
-export async function getProfile(): Promise<CreatorProfile | null> {
-  const response = await fetch(`${API_BASE}/monetization/profile`, {
-    headers: await getAuthHeaders()
-  });
-
-  if (response.status === 404) {
-    return null;
-  }
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch profile');
-  }
-
-  return response.json();
-}
-
-export interface OpportunityTemplate {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  ideal_for: {
-    min_followers?: number;
-    engagement_rate_min?: number;
-    content_types?: string[];
-    audience_signals?: string[];
-  };
-  revenue_model: {
-    pricing_range?: number[];
-    typical_revenue_month_6?: number;
-    typical_revenue_year_1?: number;
-  };
-  success_patterns?: {
-    what_works?: string[];
-    common_failures?: string[];
-    key_metrics?: string[];
-  };
-}
-
-export async function getOpportunityTemplates(): Promise<{ templates: OpportunityTemplate[]; total: number }> {
-  const response = await fetch(`${API_BASE}/monetization/templates`, {
-    headers: await getAuthHeaders()
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch templates');
-  }
-
-  return response.json();
-}
-
-export async function createProject(opportunityId: string): Promise<{ project_id: string; redirect_url: string }> {
-  const response = await fetch(`${API_BASE}/monetization/projects`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify({ opportunity_id: opportunityId })
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to create project');
-  }
-
-  return response.json();
-}
-
-export async function getAllProjects(status?: 'active' | 'completed' | 'abandoned'): Promise<{ projects: ActiveProject[]; total: number }> {
-  const url = status
-    ? `${API_BASE}/monetization/projects?status=${status}`
-    : `${API_BASE}/monetization/projects`;
-
-  const response = await fetch(url, {
-    headers: await getAuthHeaders()
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch projects');
-  }
-
-  return response.json();
-}
-
-export async function getProjectById(projectId: string): Promise<ActiveProject | null> {
-  const response = await fetch(`${API_BASE}/monetization/projects/${projectId}`, {
-    headers: await getAuthHeaders()
-  });
-
-  if (response.status === 404) {
-    return null;
-  }
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch project');
-  }
-
-  return response.json();
-}
-
-export async function getActiveProject(): Promise<ActiveProject | null> {
-  const response = await fetch(`${API_BASE}/monetization/projects/active`, {
-    headers: await getAuthHeaders()
-  });
-
-  if (response.status === 404) {
-    return null;
-  }
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch project');
-  }
-
-  return response.json();
-}
-
-export async function deleteProject(projectId: string): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_BASE}/monetization/projects/${projectId}`, {
-    method: 'DELETE',
-    headers: await getAuthHeaders()
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to delete project');
-  }
-
-  return response.json();
-}
-
-export async function getProjectMessages(
-  projectId: string,
-  limit: number = 50,
-  offset: number = 0
-): Promise<{ messages: ChatMessage[]; total: number; has_more: boolean }> {
-  const response = await fetch(
-    `${API_BASE}/monetization/projects/${projectId}/messages?limit=${limit}&offset=${offset}`,
-    { headers: await getAuthHeaders() }
-  );
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch messages');
-  }
-
-  return response.json();
-}
-
-export async function sendMessage(
-  projectId: string,
-  message: string
-): Promise<ReadableStream<Uint8Array>> {
-  const response = await fetch(
-    `${API_BASE}/monetization/projects/${projectId}/messages`,
-    {
-      method: 'POST',
-      headers: await getAuthHeaders(),
-      body: JSON.stringify({ message })
-    }
-  );
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to send message');
-  }
-
-  if (!response.body) {
-    throw new Error('No response body');
-  }
-
-  return response.body;
-}
-
-export async function toggleTask(
-  projectId: string,
-  taskId: string,
-  completed: boolean,
-  notes?: string
-): Promise<{ success: boolean; progress: ProgressUpdate }> {
-  const response = await fetch(
-    `${API_BASE}/monetization/projects/${projectId}/tasks/${taskId}/toggle`,
-    {
-      method: 'POST',
-      headers: await getAuthHeaders(),
-      body: JSON.stringify({ completed, notes })
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error('Failed to toggle task');
-  }
-
-  return response.json();
-}
-
-export async function updateProject(
-  projectId: string,
-  updates: {
-    target_launch_date?: string;
-    status?: 'active' | 'completed' | 'abandoned';
-  }
-): Promise<{ success: boolean }> {
-  const response = await fetch(
-    `${API_BASE}/monetization/projects/${projectId}`,
-    {
-      method: 'PATCH',
-      headers: await getAuthHeaders(),
-      body: JSON.stringify(updates)
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error('Failed to update project');
-  }
-
-  return response.json();
-}
-
-/**
- * Parse SSE stream from sendMessage
- */
-export async function* parseSSEStream(
-  stream: ReadableStream<Uint8Array>
-): AsyncGenerator<{
-  type: 'content' | 'done' | 'error';
-  delta?: string;
-  actions?: any[];
-  progress?: ProgressUpdate;
-  message?: string;
-}> {
-  const reader = stream.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          try {
-            const parsed = JSON.parse(data);
-            yield parsed;
-          } catch (e) {
-            console.error('Failed to parse SSE data:', data);
-          }
-        }
-      }
-    }
-  } finally {
-    reader.releaseLock();
-  }
-}
-
-// ==================== AI Discovery System ====================
-
-export interface AIOpportunity {
-  id: string;
-  title: string;
-  description: string;
-  fit_score: number;
-  fit_explanation: string;
-  estimated_monthly_revenue: number;
-  time_investment_hours_per_week: number;
-  template_basis: string[];
-  implementation_plan: any;
-}
-
-export interface AnalysisStatus {
-  analysis_id: string;
-  status: 'analyzing' | 'generating' | 'complete' | 'error';
-  progress: number;
-  current_step?: string;
+export interface ExecuteToolResponse {
+  success: boolean;
+  message: string;
+  data?: Record<string, any>;
   error?: string;
 }
 
-export async function startAIAnalysis(): Promise<{ analysis_id: string; status: string }> {
-  const response = await fetch(`${API_BASE}/monetization/discover/analyze`, {
-    method: 'POST',
-    headers: await getAuthHeaders()
+export async function sendAIPartnerMessage(
+  projectId: string,
+  messages: AIPartnerMessage[]
+): Promise<AIPartnerChatResponse> {
+  const response = await api.post<AIPartnerChatResponse>(`${BASE_URL}/ai-partner/chat`, {
+    project_id: projectId,
+    messages,
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to start analysis');
-  }
-
-  return response.json();
+  return response.data;
 }
 
-export async function checkAnalysisStatus(analysisId: string): Promise<AnalysisStatus> {
-  const response = await fetch(`${API_BASE}/monetization/discover/analyze/status/${analysisId}`, {
-    headers: await getAuthHeaders()
+export async function executeAIPartnerTool(
+  projectId: string,
+  toolName: string,
+  toolArguments: Record<string, any>
+): Promise<ExecuteToolResponse> {
+  const response = await api.post<ExecuteToolResponse>(`${BASE_URL}/ai-partner/execute-tool`, {
+    project_id: projectId,
+    tool_name: toolName,
+    tool_arguments: toolArguments,
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to check analysis status');
-  }
-
-  return response.json();
-}
-
-export async function getAIOpportunities(): Promise<{ opportunities: AIOpportunity[]; generated_at: string } | { status: string; redirect: string }> {
-  const response = await fetch(`${API_BASE}/monetization/discover/opportunities`, {
-    headers: await getAuthHeaders()
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to fetch AI opportunities');
-  }
-
-  return response.json();
-}
-
-export async function refineAIOpportunities(feedback: string): Promise<{ opportunities: AIOpportunity[]; message: string }> {
-  const response = await fetch(`${API_BASE}/monetization/discover/refine`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify({ message: feedback })
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to refine opportunities');
-  }
-
-  return response.json();
-}
-
-export async function selectAIOpportunity(opportunityId: string): Promise<{ project_id: string; redirect_url: string }> {
-  const response = await fetch(`${API_BASE}/monetization/discover/select`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify({ opportunity_id: opportunityId })
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to select opportunity');
-  }
-
-  return response.json();
+  return response.data;
 }

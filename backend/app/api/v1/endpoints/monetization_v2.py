@@ -36,7 +36,7 @@ from app.schemas.monetization_v2 import (
 from sqlalchemy import select
 
 
-router = APIRouter(prefix="/v2", tags=["monetization-v2"])
+router = APIRouter(tags=["monetization"])
 
 
 # ==================== Template Endpoints ====================

@@ -5,8 +5,8 @@ import { Loader2, GripVertical, Check, Clock, Circle, ChevronDown, ChevronUp } f
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { getProjectTasks, updateTask, reorderTask } from '@/lib/monetization-v2-api';
-import type { Task, TasksByStatus } from '@/types/monetization-v2';
+import { getProjectTasks, updateTask, reorderTask } from '@/lib/monetization-api';
+import type { Task, TasksByStatus } from '@/types/monetization';
 
 interface KanbanBoardProps {
   projectId: string;

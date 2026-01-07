@@ -19,7 +19,7 @@ import {
   executeAIPartnerTool,
   AIPartnerMessage,
   ToolCallInfo,
-} from '@/lib/monetization-v2-api';
+} from '@/lib/monetization-api';
 
 interface AIPartnerChatProps {
   projectId: string;
