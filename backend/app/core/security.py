@@ -215,3 +215,45 @@ async def get_current_admin_user(
             detail="Admin access required"
         )
     return current_user
+
+
+# Optional OAuth2 scheme that doesn't require authentication
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_PREFIX}/auth/login", auto_error=False)
+
+
+async def get_optional_current_user(
+    db: AsyncSession = Depends(get_async_session),
+    token: Optional[str] = Depends(oauth2_scheme_optional)
+) -> Optional["User"]:
+    """
+    Get the current user if authenticated, or None if not.
+    
+    Useful for endpoints that work for both authenticated and anonymous users.
+    
+    Args:
+        db: Database session
+        token: Optional JWT token from Authorization header
+    
+    Returns:
+        User or None: Current user if authenticated, None otherwise
+    """
+    if token is None:
+        return None
+    
+    from app.models.user import User
+    from app.services.user import UserService
+    
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        user_id: str = payload.get("sub")
+        
+        if user_id is None:
+            return None
+        
+        user_service = UserService(db)
+        user = await user_service.get(user_id)
+        return user
+    except JWTError:
+        return None
