@@ -80,12 +80,21 @@ export interface TemplateListResponse {
 
 // ==================== Projects ====================
 
+export interface PhaseProgress {
+  phase: number;
+  phase_name: string;
+  total: number;
+  done: number;
+  percentage: number;
+}
+
 export interface TaskStatus {
   todo: number;
   in_progress: number;
   done: number;
   total: number;
   percentage: number;
+  by_phase?: PhaseProgress[];
 }
 
 export interface ProjectListItem {

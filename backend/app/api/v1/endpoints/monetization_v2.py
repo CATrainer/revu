@@ -10,7 +10,7 @@ This module provides the API for the revamped monetization engine:
 from typing import Optional, List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
@@ -22,10 +22,11 @@ from app.models.monetization_v2 import MonetizationTemplate, MonetizationProject
 from app.services.monetization_template_service import MonetizationTemplateService
 from app.services.monetization_project_service import MonetizationProjectService, MonetizationTaskService
 from app.services.monetization_recommendation_service import MonetizationRecommendationService
+from app.services.monetization_customization_service import MonetizationCustomizationService
 from app.schemas.monetization_v2 import (
     TemplateListItem, TemplateDetail, TemplateListResponse,
     ProjectCreate, ProjectUpdate, ProjectListItem, ProjectDetail, ProjectListResponse,
-    TaskBase, TaskUpdate, TaskReorder, TasksByStatus, TaskStatus,
+    TaskBase, TaskUpdate, TaskReorder, TasksByStatus, TaskStatus, PhaseProgress,
     AIRecommendation, AIRecommendationsResponse, PersonalizedRevenueRange, CreatorProfileSummary,
     SuitableFor, RevenueRange
 )
@@ -278,15 +279,34 @@ async def get_ai_recommendations(
 @router.post("/projects", response_model=ProjectDetail)
 async def create_project(
     data: ProjectCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user)
 ):
     """
     Create a new monetization project from a template.
     
-    Optionally provide decision values to customize the project.
-    Tasks are automatically created from the template's action plan.
+    - Checks for existing active project (only one allowed at a time)
+    - Creates project with tasks from template action plan
+    - Triggers AI customization in background
+    - Returns project ready for workspace
     """
+    # Check for existing active project
+    existing_result = await db.execute(
+        select(MonetizationProject)
+        .where(
+            MonetizationProject.user_id == current_user.id,
+            MonetizationProject.status == 'active'
+        )
+    )
+    existing = existing_result.scalar_one_or_none()
+    
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"You already have an active project: '{existing.title}'. Complete or abandon it first."
+        )
+    
     service = MonetizationProjectService(db)
     
     try:
@@ -298,6 +318,13 @@ async def create_project(
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    
+    # Trigger AI customization in background
+    background_tasks.add_task(
+        _customize_project_background,
+        project.id,
+        current_user.id
+    )
     
     progress = await service.get_project_progress(project.id)
     
@@ -316,6 +343,15 @@ async def create_project(
         updated_at=project.updated_at,
         progress=TaskStatus(**progress)
     )
+
+
+async def _customize_project_background(project_id: UUID, user_id: UUID):
+    """Background task to customize project with AI."""
+    from app.core.database import AsyncSessionLocal
+    
+    async with AsyncSessionLocal() as db:
+        service = MonetizationCustomizationService(db)
+        await service.customize_project_with_ai(project_id, user_id)
 
 
 @router.get("/projects", response_model=ProjectListResponse)
@@ -365,7 +401,7 @@ async def get_project(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    progress = await service.get_project_progress(project.id)
+    progress = await service.get_project_progress(project.id, include_phases=True)
     
     # Get template info
     template_item = None
@@ -405,11 +441,19 @@ async def get_project(
 async def update_project(
     project_id: UUID,
     data: ProjectUpdate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Update a project's title, status, or decision values."""
+    """
+    Update a project's title, status, or decision values.
+    
+    When decision values are updated, triggers re-customization of affected tasks.
+    """
     service = MonetizationProjectService(db)
+    
+    # Track which decision keys are being changed for re-customization
+    changed_decision_keys = list(data.decision_values.keys()) if data.decision_values else []
     
     project = await service.update_project(
         project_id=project_id,
@@ -421,6 +465,15 @@ async def update_project(
     
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Trigger re-customization if decisions changed
+    if changed_decision_keys:
+        background_tasks.add_task(
+            _recustomize_tasks_background,
+            project_id,
+            current_user.id,
+            changed_decision_keys
+        )
     
     progress = await service.get_project_progress(project.id)
     
@@ -439,6 +492,15 @@ async def update_project(
         updated_at=project.updated_at,
         progress=TaskStatus(**progress)
     )
+
+
+async def _recustomize_tasks_background(project_id: UUID, user_id: UUID, changed_keys: List[str]):
+    """Background task to re-customize tasks when decisions change."""
+    from app.core.database import AsyncSessionLocal
+    
+    async with AsyncSessionLocal() as db:
+        service = MonetizationCustomizationService(db)
+        await service.recustomize_tasks_for_decisions(project_id, user_id, changed_keys)
 
 
 @router.delete("/projects/{project_id}")

@@ -238,83 +238,68 @@ function TaskCard({ task, isUpdating, onStatusChange }: TaskCardProps) {
   return (
     <div
       className={cn(
-        'p-3 rounded-lg border border-[var(--border)] bg-white dark:bg-gray-900 transition-all',
+        'p-3 rounded-lg border border-[var(--border)] bg-white dark:bg-gray-900 transition-all shadow-sm',
         isUpdating && 'opacity-50',
         task.status === 'done' && 'bg-green-50/50 dark:bg-green-900/10'
       )}
     >
-      <div className="flex items-start gap-2">
-        <button
-          onClick={() => {
-            if (task.status === 'todo') onStatusChange('in_progress');
-            else if (task.status === 'in_progress') onStatusChange('done');
-            else onStatusChange('todo');
-          }}
+      {/* Phase badge */}
+      <div className="text-xs text-secondary-dark mb-1">Phase {task.phase}</div>
+      
+      {/* Task title */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="text-left w-full"
+      >
+        <h4 className={cn(
+          'font-medium text-sm mb-1',
+          task.status === 'done' ? 'text-secondary-dark line-through' : 'text-primary-dark'
+        )}>
+          {task.title}
+        </h4>
+      </button>
+
+      {/* Description (truncated or expanded) */}
+      <p className={cn(
+        'text-xs text-secondary-dark mb-3',
+        isExpanded ? '' : 'line-clamp-2'
+      )}>
+        {task.description}
+      </p>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between">
+        {task.estimated_hours ? (
+          <span className="text-xs text-secondary-dark flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {task.estimated_hours}h
+          </span>
+        ) : (
+          <span />
+        )}
+
+        {/* Status dropdown */}
+        <select
+          value={task.status}
+          onChange={(e) => onStatusChange(e.target.value as 'todo' | 'in_progress' | 'done')}
           disabled={isUpdating}
           className={cn(
-            'mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors',
-            task.status === 'done'
-              ? 'bg-green-500 border-green-500 text-white'
-              : task.status === 'in_progress'
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
-              : 'border-gray-300 hover:border-gray-400'
+            'text-xs border rounded px-2 py-1 bg-white dark:bg-gray-800 cursor-pointer',
+            'focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-opacity-50',
+            isUpdating && 'cursor-not-allowed'
           )}
         >
-          {isUpdating ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : task.status === 'done' ? (
-            <Check className="h-3 w-3" />
-          ) : null}
-        </button>
-
-        <div className="flex-1 min-w-0">
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-left w-full"
-          >
-            <div className={cn(
-              'text-sm font-medium',
-              task.status === 'done' ? 'text-secondary-dark line-through' : 'text-primary-dark'
-            )}>
-              {task.title}
-            </div>
-          </button>
-
-          {isExpanded && (
-            <div className="mt-2 text-xs text-secondary-dark">
-              {task.description}
-              {task.estimated_hours && (
-                <div className="mt-2 flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  <span>~{task.estimated_hours}h estimated</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+          <option value="todo">To Do</option>
+          <option value="in_progress">In Progress</option>
+          <option value="done">Done</option>
+        </select>
       </div>
 
-      {/* Quick Actions */}
-      {!isExpanded && task.status !== 'done' && (
-        <div className="mt-2 flex gap-1">
-          {task.status === 'todo' && (
-            <button
-              onClick={() => onStatusChange('in_progress')}
-              disabled={isUpdating}
-              className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400"
-            >
-              Start
-            </button>
-          )}
-          {task.status === 'in_progress' && (
-            <button
-              onClick={() => onStatusChange('done')}
-              disabled={isUpdating}
-              className="text-xs text-green-600 hover:text-green-700 dark:text-green-400"
-            >
-              Complete
-            </button>
-          )}
+      {/* Completed indicator */}
+      {task.status === 'done' && task.completed_at && (
+        <div className="mt-2 text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+          <Check className="h-3 w-3" />
+          Completed
         </div>
       )}
     </div>

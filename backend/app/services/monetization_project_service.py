@@ -169,7 +169,7 @@ class MonetizationProjectService:
         
         return True
     
-    async def get_project_progress(self, project_id: UUID) -> Dict[str, Any]:
+    async def get_project_progress(self, project_id: UUID, include_phases: bool = False) -> Dict[str, Any]:
         """Calculate project progress based on task completion."""
         result = await self.db.execute(
             select(
@@ -187,13 +187,52 @@ class MonetizationProjectService:
         done = counts.get("done", 0)
         total = todo + in_progress + done
         
-        return {
+        progress = {
             "todo": todo,
             "in_progress": in_progress,
             "done": done,
             "total": total,
             "percentage": round((done / total) * 100) if total > 0 else 0
         }
+        
+        # Calculate phase-by-phase progress if requested
+        if include_phases:
+            phase_result = await self.db.execute(
+                select(
+                    MonetizationTask.phase,
+                    MonetizationTask.phase_name,
+                    MonetizationTask.status,
+                    func.count(MonetizationTask.id).label("count")
+                )
+                .where(MonetizationTask.project_id == project_id)
+                .group_by(MonetizationTask.phase, MonetizationTask.phase_name, MonetizationTask.status)
+                .order_by(MonetizationTask.phase)
+            )
+            
+            # Aggregate by phase
+            phases_data: Dict[int, Dict[str, Any]] = {}
+            for row in phase_result:
+                if row.phase not in phases_data:
+                    phases_data[row.phase] = {
+                        "phase": row.phase,
+                        "phase_name": row.phase_name,
+                        "total": 0,
+                        "done": 0
+                    }
+                phases_data[row.phase]["total"] += row.count
+                if row.status == "done":
+                    phases_data[row.phase]["done"] += row.count
+            
+            # Calculate percentages and build list
+            by_phase = []
+            for phase_num in sorted(phases_data.keys()):
+                phase_info = phases_data[phase_num]
+                phase_info["percentage"] = round((phase_info["done"] / phase_info["total"]) * 100) if phase_info["total"] > 0 else 0
+                by_phase.append(phase_info)
+            
+            progress["by_phase"] = by_phase
+        
+        return progress
 
 
 class MonetizationTaskService:

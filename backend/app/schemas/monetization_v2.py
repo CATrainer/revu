@@ -124,13 +124,23 @@ class ProjectUpdate(BaseModel):
     decision_values: Optional[Dict[str, Any]] = None
 
 
+class PhaseProgress(BaseModel):
+    """Progress for a single phase."""
+    phase: int
+    phase_name: str
+    total: int
+    done: int
+    percentage: int
+
+
 class TaskStatus(BaseModel):
-    """Task status counts."""
+    """Task status counts with phase breakdown."""
     todo: int
     in_progress: int
     done: int
     total: int
     percentage: int
+    by_phase: Optional[List[PhaseProgress]] = None
 
 
 class ProjectListItem(BaseModel):

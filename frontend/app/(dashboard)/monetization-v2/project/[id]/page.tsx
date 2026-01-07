@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Settings, Trash2, Loader2, Pause, Play, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Settings, Trash2, Loader2, Pause, Play, CheckCircle, AlertCircle, Sparkles, RefreshCw, Edit2, X, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,10 +18,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { getProject, updateProject, deleteProject } from '@/lib/monetization-v2-api';
+import { getProject, updateProject, deleteProject, getTemplate } from '@/lib/monetization-v2-api';
 import { KanbanBoard } from '@/components/monetization/KanbanBoard';
-import type { ProjectDetail } from '@/types/monetization-v2';
+import type { ProjectDetail, TemplateDetail, DecisionPoint } from '@/types/monetization-v2';
 import { CATEGORY_INFO } from '@/types/monetization-v2';
 
 export default function ProjectDetailPage() {
@@ -29,9 +38,13 @@ export default function ProjectDetailPage() {
   const projectId = params.id as string;
 
   const [project, setProject] = useState<ProjectDetail | null>(null);
+  const [template, setTemplate] = useState<TemplateDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showDecisionEditor, setShowDecisionEditor] = useState(false);
+  const [editingDecisions, setEditingDecisions] = useState<Record<string, string | number | boolean>>({});
 
   useEffect(() => {
     if (projectId) {
@@ -45,11 +58,60 @@ export default function ProjectDetailPage() {
     try {
       const data = await getProject(projectId);
       setProject(data);
+      
+      // Load template for decision point metadata
+      if (data.template_id) {
+        try {
+          const templateData = await getTemplate(data.template_id);
+          setTemplate(templateData);
+        } catch (err) {
+          console.error('Error loading template:', err);
+        }
+      }
     } catch (err) {
       setError('Failed to load project.');
       console.error('Error loading project:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const refreshProject = async () => {
+    setIsRefreshing(true);
+    try {
+      const data = await getProject(projectId);
+      setProject(data);
+    } catch (err) {
+      console.error('Error refreshing project:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const openDecisionEditor = () => {
+    if (project) {
+      setEditingDecisions({ ...project.decision_values });
+      setShowDecisionEditor(true);
+    }
+  };
+
+  const handleSaveDecisions = async () => {
+    if (!project) return;
+    
+    setIsUpdating(true);
+    try {
+      const updated = await updateProject(projectId, { decision_values: editingDecisions });
+      setProject(updated);
+      setShowDecisionEditor(false);
+      
+      // Refresh after a delay to get AI-customized tasks
+      setTimeout(() => {
+        refreshProject();
+      }, 3000);
+    } catch (err) {
+      console.error('Error updating decisions:', err);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -204,51 +266,257 @@ export default function ProjectDetailPage() {
             {project.progress.percentage}%
           </span>
         </div>
+        
+        {/* Overall progress bar */}
         <Progress value={project.progress.percentage} className="h-3 mb-4" />
-        <div className="grid grid-cols-4 gap-4 text-center">
-          <div>
-            <div className="text-2xl font-bold text-primary-dark">{project.progress.total}</div>
-            <div className="text-xs text-secondary-dark">Total Tasks</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-gray-500">{project.progress.todo}</div>
-            <div className="text-xs text-secondary-dark">To Do</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-blue-500">{project.progress.in_progress}</div>
-            <div className="text-xs text-secondary-dark">In Progress</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-green-500">{project.progress.done}</div>
-            <div className="text-xs text-secondary-dark">Done</div>
+        
+        {/* Task counts */}
+        <div className="flex items-center justify-between text-sm text-secondary-dark mb-6">
+          <span>{project.progress.done}/{project.progress.total} tasks complete</span>
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-gray-400" /> {project.progress.todo} to do
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-blue-500" /> {project.progress.in_progress} in progress
+            </span>
           </div>
         </div>
-      </div>
-
-      {/* Decision Values Summary */}
-      {Object.keys(project.decision_values).length > 0 && (
-        <div className="dashboard-card p-6">
-          <h2 className="text-lg font-semibold text-primary-dark mb-4">Your Configuration</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(project.decision_values).map(([key, value]) => (
-              <div key={key} className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                <div className="text-xs text-secondary-dark capitalize">
-                  {key.replace(/_/g, ' ')}
+        
+        {/* Phase-by-phase progress */}
+        {project.progress.by_phase && project.progress.by_phase.length > 0 && (
+          <div className="space-y-3 pt-4 border-t border-[var(--border)]">
+            {project.progress.by_phase.map((phase) => (
+              <div key={phase.phase} className="flex items-center gap-4">
+                <div className="w-32 text-sm text-secondary-dark truncate">
+                  Phase {phase.phase}: {phase.phase_name}
                 </div>
-                <div className="text-sm font-medium text-primary-dark mt-1">
-                  {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
+                <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className={cn(
+                      'h-full transition-all duration-500',
+                      phase.percentage === 100 ? 'bg-green-500' : 'bg-[var(--brand-primary)]'
+                    )}
+                    style={{ width: `${phase.percentage}%` }}
+                  />
+                </div>
+                <div className="w-12 text-right text-sm font-medium text-primary-dark">
+                  {phase.percentage}%
                 </div>
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* AI Customization Notes */}
+      {project.ai_customization_notes && (
+        <div className="dashboard-card p-6 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 border-purple-200 dark:border-purple-800">
+          <div className="flex items-start gap-3">
+            <Sparkles className="h-5 w-5 text-purple-600 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-primary-dark mb-1">AI Customization</h3>
+              <p className="text-sm text-secondary-dark">{project.ai_customization_notes}</p>
+            </div>
+          </div>
         </div>
       )}
+
+      {/* Decision Values Summary */}
+      {(Object.keys(project.decision_values).length > 0 || (template && template.decision_points.length > 0)) && (
+        <div className="dashboard-card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-primary-dark">Your Configuration</h2>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refreshProject}
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={cn("h-4 w-4 mr-2", isRefreshing && "animate-spin")} />
+                Refresh
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={openDecisionEditor}
+              >
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            </div>
+          </div>
+          {Object.keys(project.decision_values).length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(project.decision_values).map(([key, value]) => {
+                const dp = template?.decision_points.find(d => d.key === key);
+                const label = dp?.label || key.replace(/_/g, ' ');
+                let displayValue = String(value);
+                
+                if (dp?.type === 'select' && dp.options) {
+                  const option = dp.options.find(o => o.value === value);
+                  if (option) displayValue = option.label;
+                } else if (dp?.type === 'boolean' || typeof value === 'boolean') {
+                  displayValue = value ? 'Yes' : 'No';
+                }
+                
+                return (
+                  <div key={key} className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                    <div className="text-xs text-secondary-dark capitalize">
+                      {label}
+                    </div>
+                    <div className="text-sm font-medium text-primary-dark mt-1">
+                      {displayValue}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-secondary-dark">
+              No configuration options set. Click "Edit" to configure your project.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Decision Editor Dialog */}
+      <Dialog open={showDecisionEditor} onOpenChange={setShowDecisionEditor}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Configuration</DialogTitle>
+            <DialogDescription>
+              Update your project configuration. Changes will trigger AI re-customization of affected tasks.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {template?.decision_points.map((dp) => (
+              <DecisionPointEditor
+                key={dp.key}
+                decisionPoint={dp}
+                value={editingDecisions[dp.key]}
+                onChange={(value) => setEditingDecisions(prev => ({ ...prev, [dp.key]: value }))}
+              />
+            ))}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDecisionEditor(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveDecisions} disabled={isUpdating}>
+              {isUpdating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Kanban Board */}
       <div>
         <h2 className="text-lg font-semibold text-primary-dark mb-4">Task Board</h2>
         <KanbanBoard projectId={projectId} onTaskUpdate={loadProject} />
       </div>
+    </div>
+  );
+}
+
+
+// ==================== Decision Point Editor ====================
+
+interface DecisionPointEditorProps {
+  decisionPoint: DecisionPoint;
+  value: string | number | boolean | undefined;
+  onChange: (value: string | number | boolean) => void;
+}
+
+function DecisionPointEditor({ decisionPoint, value, onChange }: DecisionPointEditorProps) {
+  const { key, label, type, options } = decisionPoint;
+
+  return (
+    <div className="space-y-2">
+      <label htmlFor={key} className="text-sm font-medium text-primary-dark">
+        {label}
+      </label>
+
+      {type === 'select' && options && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(option.value)}
+              className={cn(
+                'p-3 rounded-lg border-2 text-left transition-all text-sm',
+                value === option.value
+                  ? 'border-[var(--brand-primary)] bg-purple-50 dark:bg-purple-950/20'
+                  : 'border-[var(--border)] hover:border-gray-300'
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {type === 'text' && (
+        <Input
+          id={key}
+          value={(value as string) || ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={`Enter ${label.toLowerCase()}`}
+        />
+      )}
+
+      {type === 'number' && (
+        <Input
+          id={key}
+          type="number"
+          value={(value as number) || ''}
+          onChange={(e) => onChange(Number(e.target.value))}
+          placeholder={`Enter ${label.toLowerCase()}`}
+        />
+      )}
+
+      {type === 'boolean' && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onChange(true)}
+            className={cn(
+              'px-4 py-2 rounded-lg border-2 transition-all text-sm',
+              value === true
+                ? 'border-[var(--brand-primary)] bg-purple-50 dark:bg-purple-950/20'
+                : 'border-[var(--border)] hover:border-gray-300'
+            )}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange(false)}
+            className={cn(
+              'px-4 py-2 rounded-lg border-2 transition-all text-sm',
+              value === false
+                ? 'border-[var(--brand-primary)] bg-purple-50 dark:bg-purple-950/20'
+                : 'border-[var(--border)] hover:border-gray-300'
+            )}
+          >
+            No
+          </button>
+        </div>
+      )}
     </div>
   );
 }
