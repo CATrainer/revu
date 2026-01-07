@@ -16,3 +16,8 @@ export { default as ViewToggle } from './ViewToggle';
 
 // Utility components
 export * from './Skeletons';
+
+// V2 Monetization Engine Components
+export { TemplateBrowser } from './TemplateBrowser';
+export { ProjectCreationFlow } from './ProjectCreationFlow';
+export { KanbanBoard } from './KanbanBoard';

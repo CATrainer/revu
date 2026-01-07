@@ -56,9 +56,67 @@ def run_migrations():
                 print("❌ All migration attempts failed")
                 sys.exit(1)
 
+
+def seed_monetization_templates():
+    """Seed monetization templates if they don't exist. TEMPORARY - remove after first deploy."""
+    print("Checking monetization templates...")
+    try:
+        import asyncio
+        from sqlalchemy import text
+        from app.core.database import AsyncSessionLocal
+        from app.models.monetization_v2 import MonetizationTemplate
+        
+        async def _seed():
+            async with AsyncSessionLocal() as session:
+                # Check if templates already exist
+                result = await session.execute(text("SELECT COUNT(*) FROM monetization_templates"))
+                count = result.scalar()
+                
+                if count > 0:
+                    print(f"✅ Found {count} existing templates. Skipping seed.")
+                    return
+                
+                # Import templates from seed script
+                from scripts.seed_monetization_templates import TEMPLATES
+                
+                print(f"Seeding {len(TEMPLATES)} monetization templates...")
+                
+                for i, template_data in enumerate(TEMPLATES):
+                    template = MonetizationTemplate(
+                        id=template_data["id"],
+                        category=template_data["category"],
+                        subcategory=template_data["subcategory"],
+                        title=template_data["title"],
+                        description=template_data["description"],
+                        prerequisites=template_data.get("prerequisites", []),
+                        suitable_for=template_data["suitable_for"],
+                        revenue_model=template_data["revenue_model"],
+                        expected_timeline=template_data["expected_timeline"],
+                        expected_revenue_range=template_data["expected_revenue_range"],
+                        decision_points=template_data.get("decision_points", []),
+                        action_plan=template_data.get("action_plan", []),
+                        display_order=i,
+                    )
+                    session.add(template)
+                
+                await session.commit()
+                print(f"✅ Successfully seeded {len(TEMPLATES)} templates!")
+        
+        # Run the async function
+        try:
+            asyncio.get_event_loop().run_until_complete(_seed())
+        except RuntimeError:
+            asyncio.run(_seed())
+            
+    except Exception as e:
+        print(f"⚠️ Template seeding skipped (non-fatal): {e}")
+
 if __name__ == "__main__":
     # Run migrations first
     run_migrations()
+    
+    # Seed monetization templates (TEMPORARY - remove after first successful deploy)
+    seed_monetization_templates()
     
     # Then start the app
     import uvicorn

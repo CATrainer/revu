@@ -41,6 +41,7 @@ from app.api.v1.endpoints import (
     applications,
     monetization,
     monetization_discovery,
+    monetization_v2,
 )
 from app.api.v1.endpoints import workflows as workflows_endpoints
 from app.api.v1.endpoints import marketing_admin
@@ -329,6 +330,13 @@ api_router.include_router(
 api_router.include_router(
     monetization_discovery.router,
     tags=["monetization", "discovery"],
+)
+
+# Monetization Engine V2 (revamped with 100 templates, Kanban tasks)
+api_router.include_router(
+    monetization_v2.router,
+    prefix="/monetization",
+    tags=["monetization", "v2"],
 )
 
 # Agency endpoints

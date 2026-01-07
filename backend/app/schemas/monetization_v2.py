@@ -1,0 +1,238 @@
+"""Pydantic schemas for Monetization Engine V2."""
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any, Literal
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+
+# ==================== Decision Point Schemas ====================
+
+class DecisionPointOption(BaseModel):
+    """Option for a select-type decision point."""
+    value: str
+    label: str
+
+
+class DecisionPoint(BaseModel):
+    """A decision point that users configure when starting a project."""
+    key: str  # e.g., "course_topic", "price_point"
+    label: str  # e.g., "What will your course teach?"
+    type: Literal["select", "number", "text", "boolean"]
+    options: Optional[List[DecisionPointOption]] = None  # For select type
+    default: Optional[Any] = None
+
+
+# ==================== Action Plan Schemas ====================
+
+class ActionTask(BaseModel):
+    """A single task within an action phase."""
+    id: str  # e.g., "1.1", "2.3"
+    title: str
+    description: str
+    estimated_hours: Optional[float] = None
+    depends_on_decisions: Optional[List[str]] = None  # Which decision_points affect this task
+
+
+class ActionPhase(BaseModel):
+    """A phase containing multiple tasks."""
+    phase: int  # 1, 2, 3, etc.
+    phase_name: str  # e.g., "Validation", "Content Creation"
+    tasks: List[ActionTask]
+
+
+# ==================== Template Schemas ====================
+
+class SuitableFor(BaseModel):
+    """Who this template is suitable for."""
+    min_followers: int
+    niches: List[str]
+    platforms: List[str]
+
+
+class RevenueRange(BaseModel):
+    """Expected revenue range."""
+    low: int
+    high: int
+    unit: str  # "per_month", "per_launch", "per_sale"
+
+
+class TemplateBase(BaseModel):
+    """Base template fields."""
+    id: str
+    category: str
+    subcategory: str
+    title: str
+    description: str
+    prerequisites: List[str]
+    suitable_for: SuitableFor
+    revenue_model: str
+    expected_timeline: str
+    expected_revenue_range: RevenueRange
+    decision_points: List[DecisionPoint]
+    action_plan: List[ActionPhase]
+
+
+class TemplateListItem(BaseModel):
+    """Simplified template for list view."""
+    id: str
+    category: str
+    subcategory: str
+    title: str
+    description: str
+    revenue_model: str
+    expected_timeline: str
+    expected_revenue_range: RevenueRange
+    suitable_for: SuitableFor
+    
+    class Config:
+        from_attributes = True
+
+
+class TemplateDetail(TemplateBase):
+    """Full template details."""
+    is_active: bool = True
+    display_order: int = 0
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class TemplateListResponse(BaseModel):
+    """Response for template list endpoint."""
+    templates: List[TemplateListItem]
+    total: int
+    categories: Dict[str, int]  # Category counts
+
+
+# ==================== Project Schemas ====================
+
+class ProjectCreate(BaseModel):
+    """Request to create a new project."""
+    template_id: str
+    title: Optional[str] = None  # If not provided, uses template title
+    decision_values: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ProjectUpdate(BaseModel):
+    """Request to update a project."""
+    title: Optional[str] = None
+    status: Optional[Literal["active", "paused", "completed", "abandoned"]] = None
+    decision_values: Optional[Dict[str, Any]] = None
+
+
+class TaskStatus(BaseModel):
+    """Task status counts."""
+    todo: int
+    in_progress: int
+    done: int
+    total: int
+    percentage: int
+
+
+class ProjectListItem(BaseModel):
+    """Simplified project for list view."""
+    id: UUID
+    template_id: str
+    title: str
+    status: str
+    progress: TaskStatus
+    started_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class ProjectDetail(BaseModel):
+    """Full project details."""
+    id: UUID
+    user_id: UUID
+    template_id: str
+    title: str
+    status: str
+    customized_plan: Optional[List[ActionPhase]] = None
+    decision_values: Dict[str, Any]
+    ai_customization_notes: Optional[str] = None
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    progress: TaskStatus
+    template: Optional[TemplateListItem] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class ProjectListResponse(BaseModel):
+    """Response for project list endpoint."""
+    projects: List[ProjectListItem]
+    total: int
+
+
+# ==================== Task Schemas ====================
+
+class TaskBase(BaseModel):
+    """Base task fields."""
+    id: UUID
+    project_id: UUID
+    phase: int
+    phase_name: str
+    task_id: str
+    title: str
+    description: str
+    status: Literal["todo", "in_progress", "done"]
+    estimated_hours: Optional[float] = None
+    sort_order: int
+    depends_on_decisions: Optional[List[str]] = None
+    completed_at: Optional[datetime] = None
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class TaskUpdate(BaseModel):
+    """Request to update a task."""
+    status: Optional[Literal["todo", "in_progress", "done"]] = None
+    notes: Optional[str] = None
+    sort_order: Optional[int] = None
+
+
+class TaskReorder(BaseModel):
+    """Request to reorder tasks (for Kanban drag-and-drop)."""
+    task_id: UUID
+    new_status: Literal["todo", "in_progress", "done"]
+    new_sort_order: int
+
+
+class TasksByStatus(BaseModel):
+    """Tasks grouped by status for Kanban view."""
+    todo: List[TaskBase]
+    in_progress: List[TaskBase]
+    done: List[TaskBase]
+
+
+# ==================== AI Recommendation Schemas ====================
+
+class AIRecommendation(BaseModel):
+    """AI-recommended template with fit score."""
+    template: TemplateListItem
+    fit_score: float  # 0-100
+    fit_reasons: List[str]
+    potential_challenges: List[str]
+    estimated_monthly_revenue: int
+    personalized_tips: List[str]
+
+
+class AIRecommendationsResponse(BaseModel):
+    """Response for AI recommendations endpoint."""
+    recommendations: List[AIRecommendation]
+    creator_summary: str  # Brief summary of creator's profile used for recommendations
+    generated_at: datetime
