@@ -93,6 +93,7 @@ from app.models.notification import (
 from app.models.sent_response import SentResponse
 from app.models.auto_moderator_settings import AutoModeratorSettings
 from app.models.response_queue import ResponseQueue, PlatformRateLimit
+from app.models.support_ticket import SupportTicket, SupportTicketResponse, NewsletterSubscription
 
 __all__ = [
     "Organization",
@@ -180,4 +181,8 @@ __all__ = [
     "AutoModeratorSettings",
     "ResponseQueue",
     "PlatformRateLimit",
+    # Support Ticket System
+    "SupportTicket",
+    "SupportTicketResponse",
+    "NewsletterSubscription",
 ]

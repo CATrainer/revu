@@ -92,7 +92,7 @@ class Notification(Base):
 
 
 class NotificationPreference(Base):
-    """User notification preferences."""
+    """User notification preferences - supports both creator and agency users."""
 
     __tablename__ = "notification_preferences"
 
@@ -103,7 +103,27 @@ class NotificationPreference(Base):
         unique=True
     )
 
-    # In-app notifications (always on, but can adjust thresholds)
+    # Global toggles for notification channels
+    in_app_enabled = Column(Boolean, default=True, nullable=False, comment="Master toggle for in-app notifications")
+    email_enabled = Column(Boolean, default=True, nullable=False, comment="Master toggle for email notifications")
+    
+    # Email delivery settings
+    email_frequency = Column(
+        String(20),
+        default="instant",
+        comment="Frequency: instant or daily_digest"
+    )
+    digest_hour = Column(Integer, default=9, comment="Hour (0-23) to send daily digest")
+    
+    # Per-notification-type settings (JSONB for flexibility)
+    # Format: {"deal_won": {"in_app": true, "email": true}, "deal_lost": {"in_app": true, "email": false}, ...}
+    type_settings = Column(JSONB, default=dict, comment="Per-type notification preferences")
+    
+    # Muted entities (don't notify about these)
+    # Format: [{"type": "campaign", "id": "uuid"}, {"type": "deal", "id": "uuid"}]
+    muted_entities = Column(JSONB, default=list, comment="Entities to mute notifications for")
+
+    # Legacy fields (keep for backward compatibility with creator tools)
     notify_unanswered_comments = Column(Boolean, default=True, nullable=False)
     unanswered_threshold = Column(Integer, default=10, comment="Alert after N unanswered")
     unanswered_hours = Column(Integer, default=24, comment="Consider unanswered after N hours")
@@ -116,15 +136,6 @@ class NotificationPreference(Base):
     notify_deal_updates = Column(Boolean, default=True, nullable=False)
     notify_content_reminders = Column(Boolean, default=True, nullable=False)
 
-    # Email notifications
-    email_enabled = Column(Boolean, default=True, nullable=False)
-    email_digest_frequency = Column(
-        String(20),
-        default="daily",
-        comment="Frequency: realtime, daily, weekly, never"
-    )
-    email_urgent_only = Column(Boolean, default=False, comment="Only email for urgent")
-
     # Quiet hours
     quiet_hours_enabled = Column(Boolean, default=False, nullable=False)
     quiet_hours_start = Column(Time, comment="Start of quiet hours (local time)")
@@ -136,8 +147,8 @@ class NotificationPreference(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "email_digest_frequency IN ('realtime', 'daily', 'weekly', 'never')",
-            name="valid_digest_frequency"
+            "email_frequency IN ('instant', 'daily_digest')",
+            name="valid_email_frequency"
         ),
     )
 

@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   ArrowLeft,
   Sparkles,
@@ -15,8 +16,12 @@ import {
   ChevronDown,
   ChevronUp,
   Bell,
+  Loader2,
+  CheckCircle2,
+  Mail,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/auth';
 
 interface ChangelogEntry {
   version: string;
@@ -30,73 +35,25 @@ interface ChangelogEntry {
   isLatest?: boolean;
 }
 
+// Real release entries only - actual shipped features
 const changelog: ChangelogEntry[] = [
   {
-    version: '2.4.0',
-    date: 'December 5, 2024',
-    title: 'AI Assistant & Task Management',
-    description: 'Introducing our new AI-powered assistant and comprehensive task management system.',
+    version: '1.0.0',
+    date: 'January 15, 2025',
+    title: 'Initial Release',
+    description: 'The first public release of Repruv Agency Management Platform.',
     isLatest: true,
     changes: [
-      { type: 'feature', text: 'AI Assistant with natural language queries about your agency data' },
-      { type: 'feature', text: 'Task management system with auto-generated tasks' },
-      { type: 'feature', text: 'Dashboard customization - show/hide widgets' },
-      { type: 'improvement', text: 'Enhanced notification system with real-time updates' },
-      { type: 'improvement', text: 'Better mobile responsiveness across all pages' },
-      { type: 'fix', text: 'Fixed pipeline drag-and-drop issues on Safari' },
-    ],
-  },
-  {
-    version: '2.3.0',
-    date: 'November 20, 2024',
-    title: 'Enhanced Finance Module',
-    description: 'Major updates to invoicing, payouts, and financial reporting.',
-    changes: [
-      { type: 'feature', text: 'Batch payout processing for multiple creators' },
-      { type: 'feature', text: 'Invoice templates with custom branding' },
-      { type: 'feature', text: 'Financial analytics dashboard' },
-      { type: 'improvement', text: 'Faster invoice generation' },
-      { type: 'fix', text: 'Fixed currency conversion in multi-currency invoices' },
-    ],
-  },
-  {
-    version: '2.2.0',
-    date: 'November 5, 2024',
-    title: 'Pipeline Improvements',
-    description: 'New pipeline views and automation features.',
-    changes: [
-      { type: 'feature', text: 'List view option for pipeline' },
-      { type: 'feature', text: 'Pipeline analytics with conversion tracking' },
-      { type: 'feature', text: 'Deal templates for faster creation' },
-      { type: 'improvement', text: 'Improved deal card design' },
-      { type: 'fix', text: 'Fixed deal sorting by value' },
-    ],
-  },
-  {
-    version: '2.1.0',
-    date: 'October 15, 2024',
-    title: 'Campaign Management',
-    description: 'New campaign features and creator availability tracking.',
-    changes: [
-      { type: 'feature', text: 'Campaign timeline view' },
-      { type: 'feature', text: 'Creator availability calendar' },
-      { type: 'feature', text: 'Deliverable status tracking' },
-      { type: 'improvement', text: 'Better campaign performance metrics' },
-      { type: 'fix', text: 'Fixed date picker timezone issues' },
-    ],
-  },
-  {
-    version: '2.0.0',
-    date: 'October 1, 2024',
-    title: 'ReVu Agency 2.0',
-    description: 'Complete platform redesign with new features and improved performance.',
-    changes: [
-      { type: 'feature', text: 'Completely redesigned dashboard' },
+      { type: 'feature', text: 'Agency dashboard with key metrics and analytics' },
+      { type: 'feature', text: 'Creator management and roster tracking' },
+      { type: 'feature', text: 'Deal pipeline with customizable stages' },
+      { type: 'feature', text: 'Campaign tracking and management' },
+      { type: 'feature', text: 'Task management system' },
+      { type: 'feature', text: 'Finance module with invoicing and payouts' },
+      { type: 'feature', text: 'Reporting and analytics' },
+      { type: 'feature', text: 'Team collaboration and role-based access' },
       { type: 'feature', text: 'Dark mode support' },
-      { type: 'feature', text: 'New reporting engine' },
-      { type: 'feature', text: 'Integrations marketplace' },
-      { type: 'breaking', text: 'API v1 deprecated - migrate to v2' },
-      { type: 'improvement', text: '50% faster page load times' },
+      { type: 'feature', text: 'AI Assistant for agency insights' },
     ],
   },
 ];
@@ -109,8 +66,34 @@ const changeTypeConfig = {
 };
 
 export default function ChangelogPage() {
-  const [expandedVersions, setExpandedVersions] = React.useState<string[]>([changelog[0].version]);
-  const [subscribed, setSubscribed] = React.useState(false);
+  const { user } = useAuth();
+  const [expandedVersions, setExpandedVersions] = useState<string[]>([changelog[0].version]);
+  const [subscribed, setSubscribed] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [email, setEmail] = useState('');
+  const [showEmailInput, setShowEmailInput] = useState(false);
+  const [checkingSubscription, setCheckingSubscription] = useState(true);
+
+  // Check if user is already subscribed
+  useEffect(() => {
+    const checkSubscription = async () => {
+      try {
+        const response = await fetch('/api/newsletter/status');
+        if (response.ok) {
+          const data = await response.json();
+          setSubscribed(data.subscribed);
+          if (user?.email) {
+            setEmail(user.email);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check subscription:', error);
+      } finally {
+        setCheckingSubscription(false);
+      }
+    };
+    checkSubscription();
+  }, [user]);
 
   const toggleVersion = (version: string) => {
     setExpandedVersions(prev =>
@@ -120,9 +103,49 @@ export default function ChangelogPage() {
     );
   };
 
-  const handleSubscribe = () => {
-    setSubscribed(true);
-    toast.success('Subscribed to changelog updates!');
+  const handleSubscribe = async () => {
+    // If user is logged in, use their email directly
+    if (user?.email) {
+      await subscribeToNewsletter(user.email);
+    } else if (!showEmailInput) {
+      // Show email input for non-logged in users
+      setShowEmailInput(true);
+    } else {
+      // Submit the email
+      if (!email || !email.includes('@')) {
+        toast.error('Please enter a valid email address');
+        return;
+      }
+      await subscribeToNewsletter(email);
+    }
+  };
+
+  const subscribeToNewsletter = async (emailAddress: string) => {
+    setIsSubscribing(true);
+    try {
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: emailAddress,
+          lists: ['changelog_updates']
+        }),
+      });
+
+      if (response.ok) {
+        setSubscribed(true);
+        setShowEmailInput(false);
+        toast.success('Successfully subscribed to changelog updates!');
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to subscribe');
+      }
+    } catch (error) {
+      console.error('Failed to subscribe:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to subscribe. Please try again.');
+    } finally {
+      setIsSubscribing(false);
+    }
   };
 
   return (
@@ -138,15 +161,32 @@ export default function ChangelogPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">What&apos;s New</h1>
           <p className="text-gray-600 dark:text-gray-400">Stay up to date with the latest updates</p>
         </div>
-        <Button
-          variant={subscribed ? 'outline' : 'default'}
-          className={subscribed ? '' : 'bg-green-600 hover:bg-green-700'}
-          onClick={handleSubscribe}
-          disabled={subscribed}
-        >
-          <Bell className="h-4 w-4 mr-2" />
-          {subscribed ? 'Subscribed' : 'Get Updates'}
-        </Button>
+        <div className="flex items-center gap-2">
+          {showEmailInput && !user?.email && (
+            <Input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-48"
+            />
+          )}
+          <Button
+            variant={subscribed ? 'outline' : 'default'}
+            className={subscribed ? '' : 'bg-green-600 hover:bg-green-700'}
+            onClick={handleSubscribe}
+            disabled={subscribed || isSubscribing || checkingSubscription}
+          >
+            {isSubscribing ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : subscribed ? (
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+            ) : (
+              <Bell className="h-4 w-4 mr-2" />
+            )}
+            {checkingSubscription ? 'Loading...' : subscribed ? 'Subscribed' : showEmailInput ? 'Subscribe' : 'Get Updates'}
+          </Button>
+        </div>
       </div>
 
       {/* Latest Release Highlight */}

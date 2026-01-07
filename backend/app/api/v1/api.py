@@ -58,6 +58,8 @@ from app.api.v1.endpoints import creator_tools
 from app.api.v1.endpoints import currency
 # Notification endpoints
 from app.api.v1.endpoints import notifications, agency_notifications
+# Support and Newsletter endpoints
+from app.api.v1.endpoints import agency_support, newsletter
 
 # Create the main API router
 api_router = APIRouter()
@@ -406,6 +408,20 @@ api_router.include_router(
     agency_notifications.router,
     prefix="/agency",
     tags=["agency", "notifications"],
+)
+
+# Agency support ticket system
+api_router.include_router(
+    agency_support.router,
+    prefix="/agency/support",
+    tags=["agency", "support"],
+)
+
+# Newsletter subscription endpoints
+api_router.include_router(
+    newsletter.router,
+    prefix="/newsletter",
+    tags=["newsletter"],
 )
 
 

@@ -8,16 +8,16 @@ import { Input } from '@/components/ui/input';
 import {
   ArrowLeft,
   Search,
-  BookOpen,
   Users,
   Megaphone,
   GitBranch,
   DollarSign,
-  FileText,
-  Settings,
-  Zap,
   ChevronRight,
-  ExternalLink,
+  Bot,
+  LayoutDashboard,
+  ListTodo,
+  FileBarChart,
+  Zap,
 } from 'lucide-react';
 
 const documentationSections = [
@@ -26,10 +26,21 @@ const documentationSections = [
     description: 'Learn the basics of managing your agency',
     icon: Zap,
     articles: [
-      'Setting up your agency profile',
-      'Inviting team members',
-      'Connecting integrations',
-      'Understanding the dashboard',
+      { title: 'Setting up your agency profile', href: '#' },
+      { title: 'Inviting team members', href: '#' },
+      { title: 'Understanding the dashboard', href: '#' },
+      { title: 'Navigation and shortcuts', href: '#' },
+    ],
+  },
+  {
+    title: 'Dashboard & Overview',
+    description: 'Your agency command center',
+    icon: LayoutDashboard,
+    articles: [
+      { title: 'Understanding key metrics', href: '#' },
+      { title: 'Customizing your dashboard', href: '#' },
+      { title: 'Activity feed and notifications', href: '#' },
+      { title: 'Quick actions and shortcuts', href: '#' },
     ],
   },
   {
@@ -37,10 +48,10 @@ const documentationSections = [
     description: 'Master your deal flow',
     icon: GitBranch,
     articles: [
-      'Creating and managing deals',
-      'Customizing pipeline stages',
-      'Deal automation rules',
-      'Pipeline analytics',
+      { title: 'Creating and managing deals', href: '#' },
+      { title: 'Customizing pipeline stages', href: '#' },
+      { title: 'Deal automation rules', href: '#' },
+      { title: 'Pipeline analytics and forecasting', href: '#' },
     ],
   },
   {
@@ -48,10 +59,10 @@ const documentationSections = [
     description: 'Run successful campaigns',
     icon: Megaphone,
     articles: [
-      'Creating a campaign',
-      'Managing deliverables',
-      'Tracking campaign performance',
-      'Client reporting',
+      { title: 'Creating a campaign', href: '#' },
+      { title: 'Managing deliverables', href: '#' },
+      { title: 'Campaign timeline view', href: '#' },
+      { title: 'Using campaign templates', href: '#' },
     ],
   },
   {
@@ -59,10 +70,21 @@ const documentationSections = [
     description: 'Build and manage your roster',
     icon: Users,
     articles: [
-      'Adding creators to your roster',
-      'Tracking creator availability',
-      'Performance analytics',
-      'Contract management',
+      { title: 'Adding creators to your roster', href: '#' },
+      { title: 'Tracking creator availability', href: '#' },
+      { title: 'Performance analytics', href: '#' },
+      { title: 'Creator groups and tags', href: '#' },
+    ],
+  },
+  {
+    title: 'Task Management',
+    description: 'Stay organized and on track',
+    icon: ListTodo,
+    articles: [
+      { title: 'Creating and assigning tasks', href: '#' },
+      { title: 'Auto-generated tasks', href: '#' },
+      { title: 'Task priorities and due dates', href: '#' },
+      { title: 'Team task views', href: '#' },
     ],
   },
   {
@@ -70,21 +92,32 @@ const documentationSections = [
     description: 'Handle payments and reporting',
     icon: DollarSign,
     articles: [
-      'Creating invoices',
-      'Managing payouts',
-      'Financial reporting',
-      'Tax documentation',
+      { title: 'Creating invoices', href: '#' },
+      { title: 'Managing creator payouts', href: '#' },
+      { title: 'Financial analytics', href: '#' },
+      { title: 'Currency settings', href: '#' },
     ],
   },
   {
     title: 'Reports & Analytics',
     description: 'Generate insights',
-    icon: FileText,
+    icon: FileBarChart,
     articles: [
-      'Creating custom reports',
-      'Scheduling automated reports',
-      'Understanding metrics',
-      'Exporting data',
+      { title: 'Creating custom reports', href: '#' },
+      { title: 'Scheduling automated reports', href: '#' },
+      { title: 'Understanding metrics', href: '#' },
+      { title: 'Exporting data', href: '#' },
+    ],
+  },
+  {
+    title: 'AI Assistant',
+    description: 'Your intelligent agency helper',
+    icon: Bot,
+    articles: [
+      { title: 'Getting started with the assistant', href: '#' },
+      { title: 'Asking questions about your data', href: '#' },
+      { title: 'Generating insights and reports', href: '#' },
+      { title: 'Tips for better responses', href: '#' },
     ],
   },
 ];
@@ -98,7 +131,7 @@ export default function DocumentationPage() {
     return (
       section.title.toLowerCase().includes(query) ||
       section.description.toLowerCase().includes(query) ||
-      section.articles.some(article => article.toLowerCase().includes(query))
+      section.articles.some(article => article.title.toLowerCase().includes(query))
     );
   });
 
@@ -113,7 +146,7 @@ export default function DocumentationPage() {
         </Link>
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Documentation</h1>
-          <p className="text-gray-600 dark:text-gray-400">Learn how to use ReVu Agency</p>
+          <p className="text-gray-600 dark:text-gray-400">Learn how to use Repruv Agency</p>
         </div>
       </div>
 
@@ -128,21 +161,15 @@ export default function DocumentationPage() {
         />
       </div>
 
-      {/* Quick Links */}
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" className="gap-2">
-          <BookOpen className="h-4 w-4" />
-          Quick Start Guide
-        </Button>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Settings className="h-4 w-4" />
-          API Reference
-        </Button>
-        <Button variant="outline" size="sm" className="gap-2">
-          <ExternalLink className="h-4 w-4" />
-          Community Forum
-        </Button>
-      </div>
+      {/* Coming Soon Notice */}
+      <Card className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+        <CardContent className="p-4">
+          <p className="text-sm text-amber-800 dark:text-amber-200">
+            <strong>Documentation in Progress:</strong> We&apos;re working on comprehensive guides for every feature. 
+            In the meantime, explore the sections below or contact support for help.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Documentation Sections */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -164,11 +191,14 @@ export default function DocumentationPage() {
               <CardContent>
                 <ul className="space-y-2">
                   {section.articles.map((article) => (
-                    <li key={article}>
-                      <button className="flex items-center justify-between w-full text-left text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                        <span>{article}</span>
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
+                    <li key={article.title}>
+                      <Link 
+                        href={article.href}
+                        className="flex items-center justify-between w-full text-left text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors group"
+                      >
+                        <span>{article.title}</span>
+                        <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -187,7 +217,7 @@ export default function DocumentationPage() {
                 Can&apos;t find what you&apos;re looking for?
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Our support team is here to help you get the most out of ReVu.
+                Our support team is here to help you get the most out of Repruv.
               </p>
             </div>
             <Link href="/agency/help/support">

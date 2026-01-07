@@ -24,7 +24,6 @@ import {
   Command,
   Keyboard,
   BookOpen,
-  Video,
   MessageSquare,
   Sparkles,
   FileCheck,
@@ -106,7 +105,6 @@ const quickActions = [
 // Help menu items
 const helpMenuItems = [
   { name: 'Documentation', icon: BookOpen, href: '/agency/help/documentation' },
-  { name: 'Video Tutorials', icon: Video, href: '/agency/help/tutorials' },
   { name: 'Keyboard Shortcuts', icon: Keyboard, action: 'shortcuts' },
   { name: 'Contact Support', icon: MessageSquare, href: '/agency/help/support' },
   { name: "What's New", icon: Sparkles, href: '/agency/help/changelog' },
