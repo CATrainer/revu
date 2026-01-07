@@ -63,11 +63,11 @@ def seed_monetization_templates():
     try:
         import asyncio
         from sqlalchemy import text
-        from app.core.database import AsyncSessionLocal
+        from app.core.database import async_session_maker
         from app.models.monetization_v2 import MonetizationTemplate
         
         async def _seed():
-            async with AsyncSessionLocal() as session:
+            async with async_session_maker() as session:
                 # Check if templates already exist
                 result = await session.execute(text("SELECT COUNT(*) FROM monetization_templates"))
                 count = result.scalar()
