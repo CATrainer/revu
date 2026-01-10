@@ -108,6 +108,12 @@ class CreateCheckoutRequest(BaseModel):
     trial_days: int = Field(default=0, ge=0, le=30, description="Trial period in days")
 
 
+class StartTrialRequest(BaseModel):
+    """Request for starting a creator's 30-day free trial."""
+    success_url: str = Field(..., description="URL to redirect to on success")
+    cancel_url: str = Field(..., description="URL to redirect to on cancel")
+
+
 class CreateCheckoutResponse(BaseModel):
     """Response for checkout session creation."""
     session_id: str
@@ -391,4 +397,80 @@ async def create_portal_session(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create portal session"
+        )
+
+
+@router.post("/start-trial", response_model=CreateCheckoutResponse)
+async def start_creator_trial(
+    request: StartTrialRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Start a 30-day free trial for a creator account.
+    
+    This endpoint:
+    1. Validates the user is a creator account
+    2. Checks they haven't already started a trial
+    3. Creates a Stripe Checkout session with 30-day trial (card required)
+    4. Returns the checkout URL to redirect the user
+    
+    After checkout, the Stripe webhook will:
+    - Set subscription_tier to 'pro'
+    - Set has_payment_method to True
+    - Set trial_start_date and trial_end_date
+    
+    When trial expires (or payment fails), the webhook will:
+    - Set subscription_tier back to 'free'
+    """
+    # Validate user is a creator
+    if current_user.account_type != "creator":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only creator accounts can start a trial"
+        )
+    
+    # Check if already has an active subscription or trial
+    if current_user.subscription_tier == "pro":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You already have an active subscription or trial"
+        )
+    
+    # Get the Creator plan price ID
+    from sqlalchemy import select
+    result = await db.execute(
+        select(SubscriptionPlan).where(
+            SubscriptionPlan.plan_type == SubscriptionPlanType.CREATOR,
+            SubscriptionPlan.is_active == True
+        ).limit(1)
+    )
+    creator_plan = result.scalar_one_or_none()
+    
+    if not creator_plan or not creator_plan.stripe_price_id_monthly:
+        logger.error("Creator plan not found or missing Stripe price ID")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Creator plan not configured. Please contact support."
+        )
+    
+    try:
+        # Create checkout session with 30-day trial
+        result = await StripeService.create_checkout_session(
+            db=db,
+            user=current_user,
+            price_id=creator_plan.stripe_price_id_monthly,
+            success_url=request.success_url,
+            cancel_url=request.cancel_url,
+            trial_days=30,  # 30-day free trial
+        )
+        
+        logger.info(f"Created trial checkout session for creator {current_user.id}")
+        return CreateCheckoutResponse(**result)
+        
+    except Exception as e:
+        logger.error(f"Failed to create trial checkout session: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to start trial. Please try again."
         )

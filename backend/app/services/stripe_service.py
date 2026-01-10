@@ -294,11 +294,21 @@ class StripeService:
             
             db.add(subscription)
         
-        # Update user's subscription_status field
+        # Update user's subscription_status and tier fields
         result = await db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
         if user:
             user.subscription_status = stripe_subscription.status
+            user.has_payment_method = True
+            # Set tier to 'pro' for active/trial subscriptions (creators only)
+            if user.account_type == "creator":
+                if stripe_subscription.status in ["active", "trialing"]:
+                    user.subscription_tier = "pro"
+                    # Set trial dates if in trial
+                    if stripe_subscription.trial_start:
+                        user.trial_start_date = datetime.fromtimestamp(stripe_subscription.trial_start, tz=timezone.utc)
+                    if stripe_subscription.trial_end:
+                        user.trial_end_date = datetime.fromtimestamp(stripe_subscription.trial_end, tz=timezone.utc)
         
         await db.commit()
         logger.info(f"Processed checkout.session.completed for user {user_id}")
@@ -352,11 +362,17 @@ class StripeService:
             if plan:
                 subscription.plan_id = plan.id
         
-        # Update user's subscription_status
+        # Update user's subscription_status and tier
         result = await db.execute(select(User).where(User.id == subscription.user_id))
         user = result.scalar_one_or_none()
         if user:
             user.subscription_status = stripe_subscription.status
+            # Update tier for creators based on subscription status
+            if user.account_type == "creator":
+                if stripe_subscription.status in ["active", "trialing"]:
+                    user.subscription_tier = "pro"
+                elif stripe_subscription.status in ["canceled", "unpaid", "past_due", "incomplete_expired"]:
+                    user.subscription_tier = "free"
         
         await db.commit()
         logger.info(f"Processed subscription.updated for subscription {subscription.id}")
@@ -388,11 +404,14 @@ class StripeService:
         subscription.status = SubscriptionStatus.CANCELED
         subscription.canceled_at = datetime.now(timezone.utc)
         
-        # Update user's subscription_status
+        # Update user's subscription_status and tier
         result = await db.execute(select(User).where(User.id == subscription.user_id))
         user = result.scalar_one_or_none()
         if user:
             user.subscription_status = "canceled"
+            # Downgrade creator to free tier when subscription is deleted
+            if user.account_type == "creator":
+                user.subscription_tier = "free"
         
         await db.commit()
         logger.info(f"Processed subscription.deleted for subscription {subscription.id}")

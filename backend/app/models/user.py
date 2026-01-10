@@ -120,6 +120,23 @@ class User(Base):
     trial_notified_1d = Column(Boolean, default=False, nullable=False, comment="1-day expiration notice sent")
     subscription_status = Column(String(20), default="trial", nullable=False, comment="trial, active, cancelled, expired")
     
+    # Creator subscription tier (only applies to creator accounts)
+    # 'free' = can only access Opportunities + Settings
+    # 'pro' = full platform access (during trial or paid subscription)
+    subscription_tier = Column(
+        String(20),
+        default='free',
+        nullable=False,
+        comment="Creator tier: 'free' (Opportunities+Settings only) or 'pro' (full access). Only applies to creators."
+    )
+    # Track if creator has ever entered payment info (required to start trial)
+    has_payment_method = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+        comment="Whether creator has added payment method (required for trial)"
+    )
+    
     # Demo mode for simulated platform connections (with state tracking)
     demo_mode = Column(Boolean, default=False, nullable=False, comment="DEPRECATED: Use demo_mode_status")
     demo_mode_enabled_at = Column(DateTime(timezone=True), nullable=True, comment="When demo mode was first enabled")
@@ -226,6 +243,55 @@ class User(Base):
         self.demo_requested = True
         if not self.demo_requested_at:
             self.demo_requested_at = datetime.utcnow()
+
+    @property
+    def is_creator(self) -> bool:
+        """Check if user is a creator account."""
+        return self.account_type == "creator"
+    
+    @property
+    def is_agency(self) -> bool:
+        """Check if user is an agency account."""
+        return self.account_type == "agency"
+    
+    @property
+    def is_pro_tier(self) -> bool:
+        """Check if creator has Pro tier access (trial or paid)."""
+        return self.subscription_tier == "pro"
+    
+    @property
+    def is_free_tier(self) -> bool:
+        """Check if creator is on Free tier."""
+        return self.subscription_tier == "free"
+    
+    @property
+    def has_full_platform_access(self) -> bool:
+        """
+        Check if user has full platform access.
+        - Agency accounts: always have full access (free)
+        - Admin accounts: always have full access
+        - Creator accounts: only if Pro tier (trial or paid)
+        """
+        if self.is_admin:
+            return True
+        if self.is_agency:
+            return True
+        if self.is_creator:
+            return self.is_pro_tier
+        # Legacy accounts default to full access
+        return True
+    
+    @property
+    def allowed_pages(self) -> List[str]:
+        """
+        Get list of pages this user can access.
+        Free tier creators can only access: opportunities, settings
+        Everyone else gets full access.
+        """
+        if self.has_full_platform_access:
+            return ["all"]
+        # Free tier creators - limited access
+        return ["opportunities", "settings"]
 
 
 # UserMembership class removed - not needed for social media focus

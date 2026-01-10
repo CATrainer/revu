@@ -7,11 +7,39 @@ import { useAuth } from '@/lib/auth';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { TierGate } from '@/components/shared/TierGate';
+
+// Pages that Free tier creators can access
+const FREE_TIER_ALLOWED_PATHS = [
+  '/dashboard/opportunities',
+  '/settings',
+];
+
+// Helper to check if a path is allowed for free tier
+function isPathAllowedForFreeTier(pathname: string): boolean {
+  return FREE_TIER_ALLOWED_PATHS.some(allowed => 
+    pathname === allowed || pathname.startsWith(allowed + '/')
+  );
+}
+
+// Helper to get page name from pathname for TierGate
+function getPageNameFromPath(pathname: string): string {
+  if (pathname.startsWith('/dashboard/opportunities') || pathname.startsWith('/opportunities')) return 'opportunities';
+  if (pathname.startsWith('/settings')) return 'settings';
+  if (pathname.startsWith('/dashboard')) return 'dashboard';
+  if (pathname.startsWith('/ai-assistant')) return 'ai-assistant';
+  if (pathname.startsWith('/analytics')) return 'analytics';
+  if (pathname.startsWith('/interactions')) return 'interactions';
+  if (pathname.startsWith('/comments')) return 'comments';
+  if (pathname.startsWith('/insights')) return 'insights';
+  if (pathname.startsWith('/monetization')) return 'monetization';
+  return 'dashboard';
+}
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isLoading, checkAuth, user, canAccessDashboard } = useAuth();
+  const { isAuthenticated, isLoading, checkAuth, user, canAccessDashboard, isCreator, isFreeTier } = useAuth();
 
   useEffect(() => {
     checkAuth();
@@ -54,10 +82,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   // Removed waiting area logic - simplified for social media focus
 
+  // Get page name for tier gating
+  const pageName = getPageNameFromPath(pathname);
+  
+  // Check if this is a free tier creator trying to access restricted pages
+  const needsTierGate = isCreator() && isFreeTier() && !isPathAllowedForFreeTier(pathname);
+
   // For users with dashboard access, show normal dashboard layout
+  // Wrap with TierGate for creators on restricted pages
   return (
     <CurrencyProvider>
-      <DashboardLayout>{children}</DashboardLayout>
+      <DashboardLayout>
+        {needsTierGate ? (
+          <TierGate page={pageName}>
+            {children}
+          </TierGate>
+        ) : (
+          children
+        )}
+      </DashboardLayout>
     </CurrencyProvider>
   );
 }

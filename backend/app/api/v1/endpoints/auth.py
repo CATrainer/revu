@@ -285,6 +285,10 @@ async def get_current_user_info(
         demo_prep_notes=current_user.demo_prep_notes,
         follow_up_reminders=current_user.follow_up_reminders,
         user_qualification_notes=current_user.user_qualification_notes,
+        subscription_tier=current_user.subscription_tier,
+        has_payment_method=current_user.has_payment_method,
+        trial_start_date=current_user.trial_start_date,
+        trial_end_date=current_user.trial_end_date,
     )
 
 
@@ -424,20 +428,28 @@ async def get_my_access_status(
     current_user: User = Depends(get_current_user),
 ) -> Any:
     """
-    Get current user's access status.
+    Get current user's access status including subscription tier.
 
     Args:
         current_user: Current authenticated user
 
     Returns:
-        dict: User access status info
+        dict: User access status info including tier and allowed pages
     """
     return {
         "access_status": current_user.access_status,
         "user_kind": getattr(current_user, "user_kind", None),
+        "account_type": current_user.account_type,
         "can_access_dashboard": current_user.can_access_dashboard,
         "joined_waiting_list_at": current_user.joined_waiting_list_at,
         "early_access_granted_at": current_user.early_access_granted_at,
         "demo_requested": current_user.demo_requested,
         "demo_requested_at": current_user.demo_requested_at,
+        # Subscription tier info (for creators)
+        "subscription_tier": current_user.subscription_tier,
+        "has_payment_method": current_user.has_payment_method,
+        "has_full_platform_access": current_user.has_full_platform_access,
+        "allowed_pages": current_user.allowed_pages,
+        "trial_start_date": current_user.trial_start_date,
+        "trial_end_date": current_user.trial_end_date,
     }

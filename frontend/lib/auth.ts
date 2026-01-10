@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { api } from './api';
 import type { AccessStatus, UserKind } from './types';
 
+export type SubscriptionTier = 'free' | 'pro';
+
 interface User {
   id: string;
   email: string;
@@ -27,6 +29,11 @@ interface User {
   rejected_at?: string | null;
   rejected_by?: string | null;
   rejection_reason?: string | null;
+  // Subscription tier fields (for creators)
+  subscription_tier?: SubscriptionTier;
+  has_payment_method?: boolean;
+  trial_start_date?: string | null;
+  trial_end_date?: string | null;
 }
 
 interface AuthState {
@@ -48,9 +55,22 @@ interface AuthState {
     early_access_granted_at: string | null;
     demo_requested: boolean;
     demo_requested_at: string | null;
+    subscription_tier?: SubscriptionTier;
+    has_payment_method?: boolean;
+    has_full_platform_access?: boolean;
+    allowed_pages?: string[];
+    trial_start_date?: string | null;
+    trial_end_date?: string | null;
   }>;
   canAccessDashboard: () => boolean;
   getRedirectPath: () => string;
+  // Creator tier helpers
+  isCreator: () => boolean;
+  isAgency: () => boolean;
+  isFreeTier: () => boolean;
+  isProTier: () => boolean;
+  hasFullPlatformAccess: () => boolean;
+  canAccessPage: (page: string) => boolean;
 }
 
 export const useAuth = create<AuthState>((set, get) => ({
@@ -305,5 +325,63 @@ export const useAuth = create<AuthState>((set, get) => ({
     
     // Fallback - send to account type selection
     return '/onboarding/account-type';
+  },
+
+  // Creator tier helper methods
+  isCreator: (): boolean => {
+    const { user } = get();
+    return user?.account_type === 'creator';
+  },
+
+  isAgency: (): boolean => {
+    const { user } = get();
+    return user?.account_type === 'agency';
+  },
+
+  isFreeTier: (): boolean => {
+    const { user } = get();
+    if (!user) return true;
+    // Only creators have tiers - agencies always have full access
+    if (user.account_type !== 'creator') return false;
+    return user.subscription_tier === 'free' || !user.subscription_tier;
+  },
+
+  isProTier: (): boolean => {
+    const { user } = get();
+    if (!user) return false;
+    // Only creators have tiers
+    if (user.account_type !== 'creator') return false;
+    return user.subscription_tier === 'pro';
+  },
+
+  hasFullPlatformAccess: (): boolean => {
+    const { user } = get();
+    if (!user) return false;
+    
+    // Admin always has full access
+    if (user.is_admin) return true;
+    
+    // Agency accounts always have full access (free)
+    if (user.account_type === 'agency') return true;
+    
+    // Creator accounts: only if Pro tier (trial or paid)
+    if (user.account_type === 'creator') {
+      return user.subscription_tier === 'pro';
+    }
+    
+    // Legacy accounts default to full access
+    return true;
+  },
+
+  canAccessPage: (page: string): boolean => {
+    const { user, hasFullPlatformAccess } = get();
+    if (!user) return false;
+    
+    // If user has full platform access, they can access any page
+    if (hasFullPlatformAccess()) return true;
+    
+    // Free tier creators can only access opportunities and settings
+    const allowedPagesForFreeTier = ['opportunities', 'settings'];
+    return allowedPagesForFreeTier.includes(page.toLowerCase());
   },
 }));

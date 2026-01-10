@@ -14,6 +14,7 @@ AccessStatus = Literal["pending", "full"]
 UserKind = Literal["content", "business"]
 AccountType = Literal["creator", "agency", "legacy"]
 ApprovalStatus = Literal["pending", "approved", "rejected"]
+SubscriptionTier = Literal["free", "pro"]
 
 
 class UserBase(BaseModel):
@@ -131,6 +132,12 @@ class User(UserBase):
     demo_prep_notes: Optional[str] = None
     follow_up_reminders: Optional[str] = None
     user_qualification_notes: Optional[str] = None
+    
+    # Subscription tier fields (for creators)
+    subscription_tier: SubscriptionTier = "free"
+    has_payment_method: bool = False
+    trial_start_date: Optional[datetime] = None
+    trial_end_date: Optional[datetime] = None
 
     class Config:
         from_attributes = True
