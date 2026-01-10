@@ -1,7 +1,7 @@
 """Add creator subscription tier fields
 
 Revision ID: 20260109_2230
-Revises: 20260106_1755-b9f567acd2a8
+Revises: 5243743b10c2
 Create Date: 2026-01-09 22:30:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '20260109_2230'
-down_revision = '20260106_1755-b9f567acd2a8'
+down_revision = '5243743b10c2'
 branch_labels = None
 depends_on = None
 
