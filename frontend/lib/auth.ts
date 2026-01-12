@@ -82,8 +82,9 @@ export const useAuth = create<AuthState>((set, get) => ({
   googleLogin: async () => {
     try {
       // Redirect to backend OAuth endpoint which will redirect to Supabase
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      window.location.href = `${backendUrl}/api/v1/auth/oauth/google`;
+      // NEXT_PUBLIC_API_URL already includes /api/v1, so we just append the path
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+      window.location.href = `${backendUrl}/auth/oauth/google`;
     } catch (error) {
       console.error('Google login error:', error);
       throw error;
@@ -93,8 +94,9 @@ export const useAuth = create<AuthState>((set, get) => ({
   instagramLogin: async () => {
     try {
       // Redirect to backend OAuth endpoint which will redirect to Supabase
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      window.location.href = `${backendUrl}/api/v1/auth/oauth/instagram`;
+      // NEXT_PUBLIC_API_URL already includes /api/v1, so we just append the path
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+      window.location.href = `${backendUrl}/auth/oauth/instagram`;
     } catch (error) {
       console.error('Instagram login error:', error);
       throw error;

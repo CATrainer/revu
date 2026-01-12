@@ -127,6 +127,8 @@ You already have a Google Cloud project with OAuth configured for YouTube. We'll
 
 ### Step 4: Verify Your Domain (Production)
 
+> **Note:** If you already verified your domain for YouTube OAuth, you can **skip this step**. Domain verification is done at the project level and applies to all OAuth credentials in the project.
+
 For production, Google requires domain verification:
 
 1. Go to **APIs & Services** → **OAuth consent screen**
