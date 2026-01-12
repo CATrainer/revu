@@ -11,6 +11,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 from loguru import logger
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -78,12 +79,16 @@ async def instagram_oauth_redirect():
     return RedirectResponse(url=oauth_url)
 
 
+class OAuthCallbackRequest(BaseModel):
+    access_token: str
+    refresh_token: Optional[str] = None
+
+
 @router.post("/callback")
 async def oauth_callback(
     *,
     db: AsyncSession = Depends(get_async_session),
-    access_token: str,
-    refresh_token: Optional[str] = None,
+    data: OAuthCallbackRequest,
 ) -> Any:
     """
     Handle OAuth callback from Supabase.
@@ -92,12 +97,13 @@ async def oauth_callback(
     It creates or links the user account in our database.
     
     Args:
-        access_token: Supabase access token from OAuth
-        refresh_token: Supabase refresh token (optional)
+        data: OAuthCallbackRequest with access_token and optional refresh_token
         
     Returns:
         dict: Our app's access and refresh tokens, plus user info
     """
+    access_token = data.access_token
+    refresh_token = data.refresh_token
     supabase_auth = get_supabase_auth()
     user_service = UserService(db)
     
