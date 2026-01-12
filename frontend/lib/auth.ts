@@ -44,6 +44,7 @@ interface AuthState {
   signup: (email: string, password: string, fullName: string) => Promise<void>;
   googleLogin: () => Promise<void>;
   instagramLogin: () => Promise<void>;
+  handleOAuthCallback: (accessToken: string, refreshToken?: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   requestDemo: () => Promise<void>;
@@ -80,15 +81,9 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   googleLogin: async () => {
     try {
-      // This would typically redirect to Google OAuth flow
-      // For now, we'll just simulate this with a console message
-      console.log('Google OAuth login initiated');
-      
-      // In a real implementation, we would redirect to something like:
-      // window.location.href = '/api/auth/google';
-      
-      // For demonstration purposes only - this would be handled by the OAuth callback
-      alert('Google login feature is coming soon!');
+      // Redirect to backend OAuth endpoint which will redirect to Supabase
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      window.location.href = `${backendUrl}/api/v1/auth/oauth/google`;
     } catch (error) {
       console.error('Google login error:', error);
       throw error;
@@ -97,17 +92,34 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   instagramLogin: async () => {
     try {
-      // This would typically redirect to Instagram OAuth flow
-      // For now, we'll just simulate this with a console message
-      console.log('Instagram OAuth login initiated');
-      
-      // In a real implementation, we would redirect to something like:
-      // window.location.href = '/api/auth/instagram';
-      
-      // For demonstration purposes only - this would be handled by the OAuth callback
-      alert('Instagram login feature is coming soon!');
+      // Redirect to backend OAuth endpoint which will redirect to Supabase
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      window.location.href = `${backendUrl}/api/v1/auth/oauth/instagram`;
     } catch (error) {
       console.error('Instagram login error:', error);
+      throw error;
+    }
+  },
+
+  handleOAuthCallback: async (accessToken: string, refreshToken?: string) => {
+    try {
+      // Exchange Supabase tokens for our app tokens
+      const response = await api.post('/auth/oauth/callback', {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+
+      // Store our app's tokens
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('access_token', response.data.access_token);
+        localStorage.setItem('refresh_token', response.data.refresh_token);
+      }
+
+      // Get full user data
+      const userResponse = await api.get('/auth/me');
+      set({ user: userResponse.data, isAuthenticated: true, isLoading: false });
+    } catch (error) {
+      console.error('OAuth callback error:', error);
       throw error;
     }
   },
@@ -273,22 +285,21 @@ export const useAuth = create<AuthState>((set, get) => ({
     // Admin users go to admin dashboard
     if (user.is_admin) return '/admin';
     
+    // Agency users always go to agency dashboard (they're auto-approved via /signup/agency)
+    if (user.account_type === 'agency') {
+      return '/agency';
+    }
+    
     // New approval workflow routing (users with approval_status field)
     if (user.approval_status) {
-      // Step 1: Select account type
+      // Step 1: Select account type (creator only - agencies use separate signup)
       if (!user.account_type || user.account_type === null) {
         return '/onboarding/account-type';
       }
       
-      // Step 2: Submit application
-      if (!user.application_submitted_at) {
-        if (user.account_type === 'creator') {
-          return '/onboarding/creator-application';
-        } else if (user.account_type === 'agency') {
-          return '/onboarding/agency-application';
-        }
-        // Fallback if account_type is set but not creator/agency
-        return '/onboarding/account-type';
+      // Step 2: Submit application (creator only)
+      if (!user.application_submitted_at && user.account_type === 'creator') {
+        return '/onboarding/creator-application';
       }
       
       // Step 3: Check approval status
@@ -301,10 +312,6 @@ export const useAuth = create<AuthState>((set, get) => ({
       }
       
       if (user.approval_status === 'approved') {
-        // Agency users go to agency dashboard
-        if (user.account_type === 'agency') {
-          return '/agency';
-        }
         return '/dashboard';
       }
     }
@@ -323,7 +330,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       }
     }
     
-    // Fallback - send to account type selection
+    // Fallback - send to account type selection (for creators)
     return '/onboarding/account-type';
   },
 

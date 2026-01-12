@@ -12,6 +12,7 @@ from app.api.v1.endpoints import (
     admin_credits,
     ai,
     auth,
+    oauth,
     early_warning,
     debug,
     test_utils,
@@ -89,6 +90,12 @@ api_router.include_router(
     auth.router,
     prefix="/auth",
     tags=["authentication"],
+)
+
+api_router.include_router(
+    oauth.router,
+    prefix="/auth/oauth",
+    tags=["authentication", "oauth"],
 )
 
 api_router.include_router(

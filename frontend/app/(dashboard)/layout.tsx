@@ -54,6 +54,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading || !isAuthenticated || !user) return;
     
+    // Agency users should not access creator dashboard - redirect to agency dashboard
+    if (user.account_type === 'agency') {
+      router.push('/agency');
+      return;
+    }
+    
     // Users without dashboard access -> redirect to appropriate page
     if (!canAccessDashboard()) {
       const { getRedirectPath } = useAuth.getState();

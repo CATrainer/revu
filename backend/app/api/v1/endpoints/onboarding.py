@@ -36,12 +36,22 @@ async def set_account_type(
     """
     Set the account type for the user during onboarding.
     This is the first step after account creation.
+    
+    Note: Only 'creator' is allowed here. Agencies must use /signup/agency
+    which auto-approves them and creates the agency entity.
     """
     # Check if user already has account_type set
     if current_user.account_type and current_user.account_type != 'legacy':
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Account type already set"
+        )
+    
+    # Only allow 'creator' - agencies use separate signup flow
+    if data.account_type != 'creator':
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only 'creator' account type is allowed. Agencies must sign up at /signup/agency"
         )
     
     # Update account type
@@ -55,7 +65,7 @@ async def set_account_type(
     return {
         "message": "Account type set successfully",
         "account_type": data.account_type,
-        "next_step": f"/onboarding/{data.account_type}-application"
+        "next_step": "/onboarding/creator-application"
     }
 
 
@@ -142,71 +152,16 @@ async def submit_agency_application(
     application_data: AgencyApplicationData,
 ):
     """
-    Submit an agency application.
+    DEPRECATED: Agency application endpoint.
+    
+    Agencies should sign up via /signup/agency which auto-approves them
+    and creates the agency entity. This endpoint is kept for backwards
+    compatibility but will reject all requests.
     """
-    # Check if user has already submitted an application
-    existing_app = await db.execute(
-        select(Application).where(Application.user_id == current_user.id)
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Agency applications are not accepted through this endpoint. Please sign up at /signup/agency for instant access."
     )
-    existing_application = existing_app.scalar_one_or_none()
-    
-    if existing_application:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Application already submitted"
-        )
-    
-    # Check account type is agency
-    if current_user.account_type != 'agency':
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Account type must be 'agency' to submit agency application"
-        )
-    
-    # Create application
-    application = Application(
-        user_id=current_user.id,
-        account_type='agency',
-        application_data=application_data.model_dump(),
-        submitted_at=datetime.now(timezone.utc),
-        status='pending',
-    )
-    
-    # Update user
-    current_user.application_submitted_at = datetime.now(timezone.utc)
-    current_user.approval_status = 'pending'
-    
-    db.add(application)
-    await db.commit()
-    await db.refresh(application)
-    
-    logger.info(f"Agency application submitted: {current_user.email} (HIGH PRIORITY)")
-    
-    # Send acknowledgment email to user
-    from app.tasks.email import send_application_submitted_acknowledgment, send_new_application_notification_to_admins
-    try:
-        send_application_submitted_acknowledgment.delay(
-            user_email=current_user.email,
-            user_name=current_user.full_name or current_user.email.split('@')[0],
-            account_type='agency'
-        )
-        logger.info(f"Acknowledgment email queued for {current_user.email}")
-    except Exception as e:
-        logger.error(f"Failed to queue acknowledgment email: {e}")
-    
-    # Send HIGH PRIORITY notification emails to admins
-    try:
-        send_new_application_notification_to_admins.delay(
-            applicant_email=current_user.email,
-            applicant_name=current_user.full_name or current_user.email.split('@')[0],
-            account_type='agency',
-            application_id=str(application.id)
-        )
-        logger.info(f"Admin notifications queued for agency application {application.id}")
-    except Exception as e:
-        logger.error(f"Failed to queue admin notifications: {e}")
-    
-    return application
 
 
 @router.get("/status", response_model=dict)

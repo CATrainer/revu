@@ -413,6 +413,116 @@ class SupabaseAuth:
                 logger.error(f"Sign in failed: {e}")
                 return None
 
+    def get_oauth_url(self, provider: str, redirect_to: str) -> Optional[str]:
+        """
+        Get the OAuth authorization URL for a provider.
+        
+        Args:
+            provider: OAuth provider ('google', 'instagram', etc.)
+            redirect_to: URL to redirect to after OAuth completes
+            
+        Returns:
+            str: OAuth authorization URL, or None if not configured
+        """
+        if not self.base_url or not self.anon_key:
+            logger.warning("Supabase credentials not configured for OAuth")
+            return None
+        
+        # Supabase OAuth URL format
+        # The redirect_to parameter tells Supabase where to send the user after auth
+        oauth_url = (
+            f"{self.base_url}/auth/v1/authorize"
+            f"?provider={provider}"
+            f"&redirect_to={redirect_to}"
+        )
+        
+        return oauth_url
+
+    async def exchange_code_for_session(self, code: str) -> Optional[Dict[str, Any]]:
+        """
+        Exchange an OAuth authorization code for a session.
+        
+        Args:
+            code: Authorization code from OAuth callback
+            
+        Returns:
+            dict: Session data with user info and tokens, or None if failed
+        """
+        if not self.base_url or not self.anon_key:
+            return None
+        
+        async with httpx.AsyncClient(trust_env=False) as client:
+            try:
+                response = await client.post(
+                    f"{self.base_url}/auth/v1/token?grant_type=authorization_code",
+                    headers={
+                        "apikey": self.anon_key,
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "auth_code": code,
+                    },
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    return {
+                        "user": {
+                            "id": data["user"]["id"],
+                            "email": data["user"]["email"],
+                            "metadata": data["user"].get("user_metadata", {}),
+                            "app_metadata": data["user"].get("app_metadata", {}),
+                            "identities": data["user"].get("identities", []),
+                        },
+                        "access_token": data["access_token"],
+                        "refresh_token": data["refresh_token"],
+                        "expires_in": data.get("expires_in"),
+                        "token_type": data.get("token_type", "bearer"),
+                    }
+                
+                logger.error(f"OAuth code exchange failed: {response.status_code} - {response.text}")
+                return None
+            except Exception as e:
+                logger.error(f"OAuth code exchange error: {e}")
+                return None
+
+    async def get_user_from_token(self, access_token: str) -> Optional[Dict[str, Any]]:
+        """
+        Get user data from a Supabase access token.
+        
+        Args:
+            access_token: Supabase JWT access token
+            
+        Returns:
+            dict: User data, or None if invalid
+        """
+        if not self.base_url or not self.anon_key:
+            return None
+        
+        async with httpx.AsyncClient(trust_env=False) as client:
+            try:
+                response = await client.get(
+                    f"{self.base_url}/auth/v1/user",
+                    headers={
+                        "apikey": self.anon_key,
+                        "Authorization": f"Bearer {access_token}",
+                    },
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    return {
+                        "id": data["id"],
+                        "email": data["email"],
+                        "metadata": data.get("user_metadata", {}),
+                        "app_metadata": data.get("app_metadata", {}),
+                        "identities": data.get("identities", []),
+                    }
+                
+                return None
+            except Exception as e:
+                logger.error(f"Get user from token failed: {e}")
+                return None
 
 # Global instance - lazy loaded to avoid import-time issues
 _supabase_auth_instance = None
