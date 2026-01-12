@@ -52,22 +52,21 @@ async def google_oauth_redirect():
 @router.get("/instagram")
 async def instagram_oauth_redirect():
     """
-    Initiate Instagram OAuth flow.
+    Initiate Instagram/Facebook OAuth flow.
     
-    Redirects user to Supabase's Instagram OAuth authorization page.
+    Redirects user to Supabase's Facebook OAuth authorization page.
+    Instagram login is handled through Facebook's OAuth system.
     After successful auth, user is redirected to /auth/callback.
     
-    Note: Instagram OAuth requires additional setup in Supabase dashboard
-    and a Facebook Developer account.
+    Note: Requires Facebook provider to be configured in Supabase dashboard.
     """
     supabase_auth = get_supabase_auth()
     
     # Callback URL where Supabase will redirect after OAuth
     callback_url = f"{settings.FRONTEND_URL}/auth/callback"
     
-    # Instagram uses Facebook's OAuth - provider name in Supabase is 'facebook'
-    # for Instagram Basic Display API, or 'instagram' if configured separately
-    oauth_url = supabase_auth.get_oauth_url("instagram", callback_url)
+    # Instagram uses Facebook's OAuth system - use 'facebook' provider in Supabase
+    oauth_url = supabase_auth.get_oauth_url("facebook", callback_url)
     
     if not oauth_url:
         raise HTTPException(

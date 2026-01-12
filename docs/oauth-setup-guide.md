@@ -147,95 +147,83 @@ After setup, you'll have TWO OAuth credentials:
 
 ---
 
-## Meta (Instagram) Setup
+## Meta (Facebook/Instagram) Setup
 
-Instagram OAuth requires a Meta (Facebook) Developer account and app.
+> **Note:** Supabase uses **Facebook Login** for Instagram authentication. When users click "Sign in with Instagram" in Repruv, they authenticate via Facebook's OAuth system.
 
 ### Step 1: Create Meta Developer Account
 
 1. Go to [Meta for Developers](https://developers.facebook.com/)
-2. Click **Get Started** or **My Apps**
-3. If you don't have an account, create one using your Facebook account
-4. Complete any required verification steps
+2. Log in with your Facebook account
+3. If prompted, complete the developer registration
 
 ### Step 2: Create a New App
 
-1. Click **Create App**
-2. Select **Consumer** as the app type (or "None" if that option appears)
-3. Fill in:
-   - **App name:** Repruv
+1. Click **My Apps** (top right) → **Create App**
+2. You'll see the new app creation flow:
+   - **What do you want your app to do?** → Select **Allow people to log in with their Facebook account**
+   - Click **Next**
+3. **App Details:**
+   - **App name:** `Repruv`
    - **App contact email:** Your email
+   - **Business portfolio:** Select one or create new (optional for testing)
 4. Click **Create App**
 
-### Step 3: Add Instagram Basic Display Product
+### Step 3: Configure Facebook Login Settings
 
-> **Note:** For sign-in, we use "Instagram Basic Display" not "Instagram Graph API"
+After app creation, you'll be in the app dashboard:
 
-1. In your app dashboard, find **Add Products**
-2. Find **Instagram Basic Display** and click **Set Up**
-3. Click **Create New App** under Instagram Basic Display settings
+1. In the left sidebar, click **Use cases** → **Customize** (under "Authentication and account creation")
+2. Or navigate to: **Facebook Login** → **Settings** in the left sidebar
+3. Find **Valid OAuth Redirect URIs** and add:
+   ```
+   https://vbbtlcwxapbtmqdkexcq.supabase.co/auth/v1/callback
+   ```
+   (Replace with your actual Supabase project reference)
+4. Ensure these are enabled:
+   - ✅ **Client OAuth login** = Yes
+   - ✅ **Web OAuth login** = Yes
+5. Click **Save Changes**
 
-### Step 4: Configure Instagram Basic Display
+### Step 4: Get Your App Credentials
 
-1. Go to **Instagram Basic Display** → **Basic Display**
-2. Fill in:
-   - **Valid OAuth Redirect URIs:**
-     ```
-     https://your-project-ref.supabase.co/auth/v1/callback
-     ```
-   - **Deauthorize Callback URL:**
-     ```
-     https://your-domain.com/auth/instagram/deauthorize
-     ```
-   - **Data Deletion Request URL:**
-     ```
-     https://your-domain.com/auth/instagram/delete
-     ```
+1. In the left sidebar, click **App settings** → **Basic**
+2. You'll see:
+   - **App ID** - Copy this
+   - **App secret** - Click **Show**, enter your Facebook password, then copy
+3. Save both values - you'll need them for Supabase
 
-3. Click **Save Changes**
+### Step 5: Add Test Users (Development Mode)
 
-### Step 5: Get Instagram App Credentials
+While your app is in Development mode, only approved users can log in:
 
-1. Go to **Instagram Basic Display** → **Basic Display**
-2. Note down:
-   - **Instagram App ID**
-   - **Instagram App Secret**
+1. In the left sidebar, click **App roles** → **Roles**
+2. Under **People**, click **Add People**
+3. Enter the Facebook profile name or email of testers
+4. Select role: **Tester** or **Developer**
+5. Click **Add**
+6. The person must accept the invitation from their Facebook account
 
-### Step 6: Add Test Users (Development)
+**Alternative - Use Test Users:**
+1. Go to **App roles** → **Test Users**
+2. Click **Create** to generate test accounts
+3. Use these accounts to test the login flow
 
-While in development mode, only test users can authenticate:
+### Step 6: Go Live (Production)
 
-1. Go to **Roles** → **Roles**
-2. Click **Add Instagram Testers**
-3. Enter the Instagram username of testers
-4. Testers must accept the invitation from their Instagram app:
-   - Open Instagram app
-   - Go to Settings → Apps and Websites → Tester Invites
-   - Accept the invitation
+To allow any Facebook user to log in:
 
-### Step 7: App Review (Production)
+1. Go to **App settings** → **Basic**
+2. Fill in required fields:
+   - **Privacy Policy URL:** `https://www.repruv.co.uk/privacy`
+   - **Terms of Service URL:** `https://www.repruv.co.uk/terms` (optional)
+   - **App Icon:** Upload a 1024x1024 image
+   - **Category:** Select appropriate category
+3. At the top of the page, find the **App Mode** toggle
+4. Switch from **Development** to **Live**
+5. Confirm the switch
 
-For production (allowing any user to sign in):
-
-1. Go to **App Review** → **Permissions and Features**
-2. Request the following permissions:
-   - `instagram_graph_user_profile` - Basic profile info
-   - `instagram_graph_user_media` - (optional, if you need media access)
-3. Submit for review with:
-   - Detailed description of how you use Instagram login
-   - Screen recordings showing the login flow
-   - Privacy policy URL
-   - Terms of service URL
-
-> **Timeline:** App review typically takes 1-5 business days
-
-### Step 8: Go Live
-
-Once approved:
-
-1. Go to **Settings** → **Basic**
-2. Toggle **App Mode** from "Development" to "Live"
-3. Confirm the switch
+> **Note:** For basic login (email + public profile), you typically don't need App Review. The `email` and `public_profile` permissions are granted by default.
 
 ---
 
@@ -257,14 +245,14 @@ Once approved:
 5. Note the **Callback URL** shown - this should match what you configured in Google Cloud
 6. Click **Save**
 
-### Step 3: Configure Instagram Provider
+### Step 3: Configure Facebook Provider (for Instagram login)
 
 1. Go to **Authentication** → **Providers**
-2. Find **Instagram** and click to expand
-3. Toggle **Enable Sign in with Instagram** to ON
+2. Find **Facebook** and click to expand
+3. Toggle **Enable Sign in with Facebook** to ON
 4. Fill in:
-   - **Client ID:** (Instagram App ID from Meta)
-   - **Client Secret:** (Instagram App Secret from Meta)
+   - **Facebook Client ID:** (App ID from Meta)
+   - **Facebook Client Secret:** (App Secret from Meta)
 5. Note the **Callback URL** shown - this should match what you configured in Meta
 6. Click **Save**
 
